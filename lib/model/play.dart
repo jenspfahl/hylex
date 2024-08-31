@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:hyle_9/model/chip.dart';
 
 import 'ai/ai.dart';
@@ -53,9 +54,13 @@ class StockEntry {
 
 class Stock extends ChangeNotifier {
   final _available = HashMap<GameChip, int>();
+  int _count = 0;
 
   Stock(Map<GameChip, int> initialStock) {
     _available.addAll(initialStock);
+    initialStock.forEach((key, value) {
+      _count = _count + value;
+    });
   }
 
   Stock.fromJsonMap(Map<String, dynamic> map) {
@@ -73,22 +78,37 @@ class Stock extends ChangeNotifier {
 
   incStock(GameChip type) {
     _available[type] = getStock(type) + 1;
+    _count++;
     notifyListeners();
   }
 
   decStock(GameChip type) {
     final curr = getStock(type);
     _available[type] = max(0, curr - 1);
+    _count--;
     notifyListeners();
   }
 
   Map<String, dynamic> toJson() => {
-    'available' : _available.map((key, value) => MapEntry(key.value, value)),
+    'available' : _available.map((key, value) => MapEntry(key.index, value)),
   };
 
   GameChip? drawNext() {
-    //TODO implement random next
-    return GameChip(diceInt(7) + 1, Color.fromARGB(200, 200.fuzzyIncrease(1, 50), 200.fuzzyDecrease(1, 150), 0.fuzzyIncrease(1, 250)));
+    if (_count <= 0) {
+      return null;
+    }
+    final nextChipIndex = diceInt(_available.length);
+    final nextChip = _available.keys.indexed.firstWhere((e) => e.$1 == nextChipIndex).$2;
+    final stockForChip = _available[nextChip]??0;
+    if (stockForChip <= 0) {
+      return drawNext();
+    }
+    decStock(nextChip);
+    return nextChip;
+  }
+
+  bool isEmpty() {
+    return _count <= 0;
   }
 
 }
@@ -105,7 +125,7 @@ class Cursor extends ChangeNotifier {
     final Map<String, dynamic>? where = map["where"];
     if (where != null && where.isNotEmpty) {
       _where = Coordinate.fromJsonMap(where);
-      _currentChip = _matrix.get(_where!);
+      _currentChip = _matrix.getChip(_where!);
     }
   }
 
@@ -114,14 +134,14 @@ class Cursor extends ChangeNotifier {
 
   update(Coordinate where) {
     _where = where;
-    _currentChip = _matrix.get(where);
+    _currentChip = _matrix.getChip(where);
 
     notifyListeners();
   }
 
   void refresh() {
     if (_where != null) {
-      _currentChip = _matrix.get(_where!);
+      _currentChip = _matrix.getChip(_where!);
     }
   }
 
@@ -152,32 +172,47 @@ class Cursor extends ChangeNotifier {
 
 class Play extends ChangeNotifier {
 
-
-  int dimension = 11;
   int _currentRound = 0;
   Role _currentRole = Role.Chaos;
 
   late Stats _stats;
   late Stock _stock;
   late Cursor _cursor;
+  late int _dimension;
   late Matrix _matrix;
   GameChip? _currentChip;
   late AiConfig _aiConfig;
   late List<PlayAi> matrixAis;
   late List<SpotAi> spotAis;
 
-  Play() {
+  Play(this._dimension) {
     _stats = Stats();
-    _stock = Stock({
-      GameChip(1, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(2, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(3, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(4, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(5, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(6, Color.fromARGB(255, 203, 0, 16)): 7,
-      GameChip(7, Color.fromARGB(255, 203, 0, 16)): 7,
 
-    });
+    var chips = HashMap<GameChip, int>();
+    for (int i = 0; i < dimension; i++) {
+      Color color;
+      if (i.isEven) {
+        color = Color.fromARGB(
+            200, 200.fuzzyIncrease(1, 50), 0.fuzzyDecrease(1, 150),
+            200.fuzzyIncrease(1, 250));
+      }
+      else {
+        color = Color.fromARGB(
+            200, 200.fuzzyIncrease(1, 50), 200.fuzzyDecrease(1, 150),
+            0.fuzzyIncrease(1, 250));
+      }
+      color = Color.fromARGB(
+          200,
+          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+          );
+      final chip = GameChip(String.fromCharCode('a'.codeUnitAt(0) + i), color);
+
+      chips[chip] = dimension;
+    }
+
+    _stock = Stock(chips);
 
     _matrix = Matrix(Coordinate(dimension, dimension), this);
     _cursor = Cursor(_matrix);
@@ -262,6 +297,7 @@ class Play extends ChangeNotifier {
   int get currentRound => _currentRound;
   Stats get stats => _stats;
   Stock get stock => _stock;
+  int get dimension => _dimension;
   Matrix get matrix => _matrix;
   Cursor get cursor => _cursor;
   AiConfig get aiConfig => _aiConfig;
@@ -293,6 +329,10 @@ class Play extends ChangeNotifier {
     'currentChip' : _currentChip,
     'aiConfig': _aiConfig
   };
+
+  bool isGameOver() {
+    return _stock.isEmpty();
+  }
 
 
 }

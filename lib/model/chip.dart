@@ -1,22 +1,34 @@
+import 'dart:ffi';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:hyle_9/model/matrix.dart';
 
 
 
 class GameChip {
-  final int value;
+  final String index;
   final Color color;
 
-  GameChip(this.value, this.color);
+  GameChip(this.index, this.color);
 
   Map<String, dynamic> toJson() => {
-    'value' : value,
+    'index' : index,
   };
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GameChip &&
+          runtimeType == other.runtimeType &&
+          index == other.index;
+
+  @override
+  int get hashCode => index.hashCode;
+
+  @override
   String toString() {
-    return 'Chip{value: $value, color: $color}';
+    return 'Chip-$index';
   }
 
 }
@@ -38,7 +50,7 @@ class Journal {
 
 
   Map<String, dynamic> toJson() => {
-    'v' : type.value,
+    'v' : type.index,
   //  'pI' : _placedInRound,
     //'pB' : _placedBy.index,
   };

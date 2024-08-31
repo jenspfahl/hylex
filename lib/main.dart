@@ -15,9 +15,8 @@ class Hyle9Ground extends StatefulWidget {
   State<Hyle9Ground> createState() => _Hyle9GroundState();
 }
 
-class _Hyle9GroundState extends State<Hyle9Ground>
-    with SingleTickerProviderStateMixin {
-  // The board should be in square shape so we only need one size
+class _Hyle9GroundState extends State<Hyle9Ground> {
+
   late Play _play;
 
   @override
@@ -38,19 +37,14 @@ class _Hyle9GroundState extends State<Hyle9Ground>
     );
   }
 
-  List<List<double>> _initEmptyBoard() =>
-      List.generate(_play.matrix.dimension.x, (_) => List.filled(_play.matrix.dimension.y, 0));
-
   void _resetGame() {
-    _play = Play();
+    _play = Play(7); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
   }
 
   Widget _buildGameBody() {
     return Scaffold(
         appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
           title: const Text('Hyle 9'),
         ),
         body: Center(
@@ -61,17 +55,15 @@ class _Hyle9GroundState extends State<Hyle9Ground>
                 AspectRatio(
                   aspectRatio: 1,
                   child: Container(
-                   // width: 365,
-                    //height: 365,
                     margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                         border: Border.all(color: Colors.black, width: 2.0)),
                     child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: _play.matrix.dimension.x,
+                          crossAxisCount: _play.dimension,
                         ),
-                        itemBuilder: _buildAgentBoardItems,
-                        itemCount: _play.matrix.dimension.x * _play.matrix.dimension.y,
+                        itemBuilder: _buildBoardGrid,
+                        itemCount: _play.dimension * _play.dimension,
                         physics: const NeverScrollableScrollPhysics()),
                   ),
                 ),
@@ -98,10 +90,10 @@ class _Hyle9GroundState extends State<Hyle9Ground>
         ));
   }
 
-  Widget _buildAgentBoardItems(BuildContext context, int index) {
+  Widget _buildBoardGrid(BuildContext context, int index) {
     int x, y = 0;
     x = (index / _play.matrix.dimension.x).floor();
-    y = (index % _play.matrix.dimension.x);
+    y = (index % _play.matrix.dimension.y);
     return GestureDetector(
       onTap: () {
         _gridItemTapped(context, x, y);
@@ -109,52 +101,71 @@ class _Hyle9GroundState extends State<Hyle9Ground>
       child: GridTile(
         child: Container(
           decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 0.5)),
+              border: Border.all(color: Colors.black.withAlpha(80), width: 0.5)),
           child: Center(
-            child: _buildGridItem(x, y, 'agent'),
+            child: _buildGridItem(x, y),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGridItem(int x, int y, String agentOrPlayer) {
+  Widget _buildGridItem(int x, int y) {
 
-    Color gridItemColor;
-    final chip = _play.matrix.get(Coordinate(x, y));
+    final spot = _play.matrix.getSpot(Coordinate(x, y));
+    final chip = spot.content;
     if (chip != null) {
-      gridItemColor = chip.color;
+      return Padding(
+        padding: EdgeInsets.all(_play.dimension > 5 ? 3 : 0),
+        child: CircleAvatar(
+          backgroundColor: chip.color,
+          child: Text(spot.point.toString(),
+              style: TextStyle(
+                fontSize: _play.dimension > 7 ? 12 : 16,
+                color: Colors.white, 
+                fontWeight: FontWeight.bold,
+              )),
+        ),
+      );
     }
     else {
-      gridItemColor = Colors.white;
+      return Container();
     }
 
-
-    return Padding(
-      padding: const EdgeInsets.all(3.0),
-      child: CircleAvatar(
-        backgroundColor: gridItemColor,
-      ),
-    );
   }
 
   Future<void> _gridItemTapped(BuildContext context, int x, int y) async {
 
     setState(() {
       if (_play.matrix.isFree(Coordinate(x, y))) {
-        _play.matrix.put(Coordinate(x, y), _play.currentChip!);
-        _play.nextChip();
-        _play.switchRole();
-        _play.incRound();
+        final currentChip = _play.currentChip;
+        if (currentChip != null) {
+          _play.matrix.put(Coordinate(x, y), currentChip);
+          if (_play.isGameOver()) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                "Game overs",
+                textAlign: TextAlign.center,
+              ),
+              duration: const Duration(seconds: 2),
+            ));
+          }
+          else {
+            _play.nextChip();
+            _play.switchRole();
+            _play.incRound();
+          }
+        }
       }
       else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        _play.matrix.remove(Coordinate(x, y));
+        /*ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             "Not allowed",
             textAlign: TextAlign.center,
           ),
           duration: const Duration(seconds: 2),
-        ));
+        ));*/
       }
     });
 

@@ -12,10 +12,13 @@ class Spot {
   Play _play;
   Coordinate _coordinate;
   GameChip? _content;
-  
-  Spot(this._play, this._coordinate, this._content);
+  int _point;
+
+  Spot(this._play, this._coordinate, this._content, this._point);
 
   GameChip? get content => _content;
+
+  int get point => _point;
 
   Coordinate get where => _coordinate;
 
@@ -99,41 +102,41 @@ class Spot {
   
   Spot getLeftNeighbor() {
     final left = where.left();
-    return Spot(_play, left, _play.matrix.get(left));
+    return Spot(_play, left, _play.matrix.getChip(left), _play.matrix.getPoint(left));
   }
     
   Spot getRightNeighbor() {
     final right = where.right();
-    return Spot(_play, right, _play.matrix.get(right));
+    return Spot(_play, right, _play.matrix.getChip(right), _play.matrix.getPoint(right));
   }
     
   Spot getTopNeighbor() {
     final top = where.top();
-    return Spot(_play, top, _play.matrix.get(top));
+    return Spot(_play, top, _play.matrix.getChip(top), _play.matrix.getPoint(top));
   }
     
   Spot getBottomNeighbor() {
     final bottom = where.bottom();
-    return Spot(_play, bottom, _play.matrix.get(bottom));
+    return Spot(_play, bottom, _play.matrix.getChip(bottom), _play.matrix.getPoint(bottom));
   }
 
   Spot getTopLeftNeighbor() {
     final topLeft = where.top().left();
-    return Spot(_play, topLeft, _play.matrix.get(topLeft));
+    return Spot(_play, topLeft, _play.matrix.getChip(topLeft), _play.matrix.getPoint(topLeft));
   }
   
   Spot getTopRightNeighbor() {
     final topRight = where.top().right();
-    return Spot(_play, topRight, _play.matrix.get(topRight));
+    return Spot(_play, topRight, _play.matrix.getChip(topRight), _play.matrix.getPoint(topRight));
   }
   
   Spot getBottomLeftNeighbor() {
     final bottomLeft = where.bottom().left();
-    return Spot(_play, bottomLeft, _play.matrix.get(bottomLeft));
+    return Spot(_play, bottomLeft, _play.matrix.getChip(bottomLeft), _play.matrix.getPoint(bottomLeft));
   }
   
   Spot getBottomRightNeighbor() {
     final bottomRight = where.bottom().right();
-    return Spot(_play, bottomRight, _play.matrix.get(bottomRight));
+    return Spot(_play, bottomRight, _play.matrix.getChip(bottomRight), _play.matrix.getPoint(bottomRight));
   }
 }

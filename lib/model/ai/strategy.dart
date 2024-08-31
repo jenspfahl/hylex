@@ -75,7 +75,7 @@ class SurroundOtherStrategy extends OrderStrategy {
   bool _hasNeighborOfType(Spot spot, List<String> typeIds) {
     return spot
       .streamNeighbors()
-      .where((neighbor) => neighbor.content != null && typeIds.contains(neighbor.content!.value))
+      .where((neighbor) => neighbor.content != null && typeIds.contains(neighbor.content!.index))
       .isNotEmpty;
   }
 }

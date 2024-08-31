@@ -1,5 +1,7 @@
 import 'dart:collection';
+import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:hyle_9/model/play.dart';
 import 'package:hyle_9/model/spot.dart';
 
@@ -56,7 +58,8 @@ class Matrix {
 
   late final Coordinate _dimension;
   final Play _play;
-  final _map = HashMap<Coordinate, GameChip>();
+  final _chipMap = HashMap<Coordinate, GameChip>();
+  final _pointMap = HashMap<Coordinate, int>();
 
   Matrix(this._dimension, this._play);
 
@@ -87,15 +90,17 @@ class Matrix {
 
   Coordinate get dimension => _dimension;
 
-  GameChip? get(Coordinate where) => _map[where];
+  GameChip? getChip(Coordinate where) => _chipMap[where];
+  int getPoint(Coordinate where) => _pointMap[where] ?? 0;
 
   Spot getSpot(Coordinate where) {
-    final piece = get(where);
-    return Spot(_play, where, piece);
+    final piece = getChip(where);
+    final point = getPoint(where);
+    return Spot(_play, where, piece, point);
   }
 
   bool isFree(Coordinate where) {
-    final curr = get(where);
+    final curr = getChip(where);
     return curr == null;
   }
 
@@ -105,7 +110,9 @@ class Matrix {
     }
 
     remove(where);
-    _map[where] = piece;
+    _chipMap[where] = piece;
+
+    _calcPoints(where);
 
     //_play.stats.in(piece.type);
 
@@ -114,13 +121,16 @@ class Matrix {
   }
 
   GameChip? remove(Coordinate where) {
-    final removedPiece = _map.remove(where);
+    final removedPiece = _chipMap.remove(where);
     if (removedPiece != null) {
 
-      //_play.stats.decPieces(removedPiece.type);
+    //  _play.stats.decPoints(removedPiece.type);
 
     }
     //debugPrint("mx: rm piece $removedPiece");
+
+    _pointMap.remove(where);
+    _calcPoints(where);
 
     return removedPiece;
   }
@@ -131,9 +141,92 @@ class Matrix {
 
   Map<String, dynamic> toJson() => {
     'dimension' : _dimension,
-    'map' : _map.map((key, value) => MapEntry(key.toJsonKey(), value)),
+    'map' : _chipMap.map((key, value) => MapEntry(key.toJsonKey(), value)),
     // shards can be derived from map during deserialization
   };
 
+  void _calcPoints(Coordinate where) {
+    final words = <Word>[];
+    var word = Word();
+    var y = where.y;
+    for (int x = 0; x < _dimension.x; x++) {
+      
+      var coordinate = Coordinate(x, y);
+      _pointMap.remove(coordinate);
+      final chip = getChip(coordinate);
+      if (chip == null && !word.isEmpty()) {
+        words.add(word);
+        word = Word();
+      }
+      else if (chip != null) {
+        word.add(PointKey(x, chip.index));
+      }
+    }
+    if (!word.isEmpty()) {
+      words.add(word);
+    }
 
+    debugPrint("Words: $words");
+
+    for (var word in words) {
+      _findPalindromes(y, word);
+    }
+  }
+
+  void _findPalindromes(int y, Word word) {
+    if (word.isWordPalindrome()) {
+      for (PointKey pointKey in word.pointKeys) {
+        final where = Coordinate(pointKey.where, y);
+        final currPoints = _pointMap[where];
+        _pointMap[where] = currPoints ?? 0 + 1;
+      }
+    }
+
+    //_findPalindromes(y, word);
+  }
+  
+
+
+}
+
+class PointKey {
+  final int _where;
+  final String _index;
+  
+  PointKey(this._where, this._index);
+
+  String get index => _index;
+  int get where => _where;
+
+  @override
+  String toString() {
+    return '$_index@$_where';
+  }
+}
+
+class Word {
+  final List<PointKey> _pointKeys = [];
+
+  add(PointKey pointKey) {
+    _pointKeys.add(pointKey);
+  }
+  
+  String toWord() {
+    return _pointKeys.map((e) => e.index).join();
+  }  
+  
+  String toReversedWord() => _pointKeys.reversed.map((e) => e.index).join();
+  
+  bool isWord() => _pointKeys.length >= 2;
+  
+  bool isWordPalindrome() => isWord() && toWord() == toReversedWord();
+
+  bool isEmpty() => _pointKeys.isEmpty;
+
+  List<PointKey> get pointKeys => _pointKeys;
+
+  @override
+  String toString() {
+    return '"${toWord()}" - ($_pointKeys)';
+  }
 }
