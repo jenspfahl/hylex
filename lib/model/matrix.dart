@@ -49,7 +49,7 @@ class Coordinate {
 
   @override
   String toString() {
-    return 'Coordinates{x: $x, y: $y}';
+    return '{$x,$y}';
   }
 
 }
@@ -59,7 +59,8 @@ class Matrix {
   late final Coordinate _dimension;
   final Play _play;
   final _chipMap = HashMap<Coordinate, GameChip>();
-  final _pointMap = HashMap<Coordinate, int>();
+  final _pointMapX = HashMap<Coordinate, int>();
+  final _pointMapY = HashMap<Coordinate, int>();
 
   Matrix(this._dimension, this._play);
 
@@ -91,7 +92,7 @@ class Matrix {
   Coordinate get dimension => _dimension;
 
   GameChip? getChip(Coordinate where) => _chipMap[where];
-  int getPoint(Coordinate where) => _pointMap[where] ?? 0;
+  int getPoint(Coordinate where) => (_pointMapX[where] ?? 0) + (_pointMapY[where] ?? 0);
 
   Spot getSpot(Coordinate where) {
     final piece = getChip(where);
@@ -129,7 +130,8 @@ class Matrix {
     }
     //debugPrint("mx: rm piece $removedPiece");
 
-    _pointMap.remove(where);
+    _pointMapX.remove(where);
+    _pointMapY.remove(where);
     _calcPoints(where);
 
     return removedPiece;
@@ -148,40 +150,66 @@ class Matrix {
   void _calcPoints(Coordinate where) {
     final words = <Word>[];
     var word = Word();
-    var y = where.y;
-    for (int x = 0; x < _dimension.x; x++) {
-      
+    
+    // on x-axis
+    final x = where.x;
+    for (int y = 0; y < _dimension.y; y++) {
       var coordinate = Coordinate(x, y);
-      _pointMap.remove(coordinate);
+      _pointMapX.remove(coordinate);
       final chip = getChip(coordinate);
       if (chip == null && !word.isEmpty()) {
         words.add(word);
         word = Word();
       }
       else if (chip != null) {
-        word.add(PointKey(x, chip.index));
+        word.add(PointKey(Coordinate(x, y), chip.index));
       }
     }
     if (!word.isEmpty()) {
       words.add(word);
     }
 
-    debugPrint("Words: $words");
+    debugPrint("X-Words: $words");
 
     for (var word in words) {
-      _findPalindromes(y, word);
+      _findPalindromes(word, _pointMapX);
+    }
+
+    words.clear();
+
+    // on y-axis
+    final y = where.y;
+    for (int x = 0; x < _dimension.x; x++) {
+      var coordinate = Coordinate(x, y);
+      _pointMapY.remove(coordinate);
+      final chip = getChip(coordinate);
+      if (chip == null && !word.isEmpty()) {
+        words.add(word);
+        word = Word();
+      }
+      else if (chip != null) {
+        word.add(PointKey(Coordinate(x, y), chip.index));
+      }
+    }
+    if (!word.isEmpty()) {
+      words.add(word);
+    }
+
+    debugPrint("Y-Words: $words");
+
+    for (var word in words) {
+      _findPalindromes(word, _pointMapY);
     }
   }
 
-  void _findPalindromes(int y, Word word) {
+  void _findPalindromes(Word word, Map<Coordinate, int> pointMap) {
 
     final wordLength = word.length();
     for (int start = 0; start < wordLength - 1; start++ ) {
       for (int end = wordLength; end > 1; end-- ) {
         if (start + 1 < end) {
           var subword = word.subword(start, end);
-
-          final isPalindrome = _findPalindrome(y, subword);
+          final isPalindrome = _findPalindrome(subword, pointMap);
           debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
 
         }
@@ -189,12 +217,11 @@ class Matrix {
     }
   }
 
-  bool _findPalindrome(int y, Word word) {
+  bool _findPalindrome(Word word, Map<Coordinate, int> pointMap) {
     if (word.isWordPalindrome()) {
       for (PointKey pointKey in word.pointKeys) {
-        final where = Coordinate(pointKey.where, y);
-        final currPoints = _pointMap[where];
-        _pointMap[where] = (currPoints ?? 0) + 1;
+        final currPoints = pointMap[pointKey.where];
+        pointMap[pointKey.where] = (currPoints ?? 0) + 1;
       }
       return true;
     }
@@ -206,13 +233,13 @@ class Matrix {
 }
 
 class PointKey {
-  final int _where;
+  final Coordinate _where;
   final String _index;
   
   PointKey(this._where, this._index);
 
   String get index => _index;
-  int get where => _where;
+  Coordinate get where => _where;
 
   @override
   String toString() {
