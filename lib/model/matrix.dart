@@ -174,15 +174,31 @@ class Matrix {
   }
 
   void _findPalindromes(int y, Word word) {
+
+    final wordLength = word.length();
+    for (int start = 0; start < wordLength - 1; start++ ) {
+      for (int end = wordLength; end > 1; end-- ) {
+        if (start + 1 < end) {
+          var subword = word.subword(start, end);
+
+          final isPalindrome = _findPalindrome(y, subword);
+          debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
+
+        }
+      }
+    }
+  }
+
+  bool _findPalindrome(int y, Word word) {
     if (word.isWordPalindrome()) {
       for (PointKey pointKey in word.pointKeys) {
         final where = Coordinate(pointKey.where, y);
         final currPoints = _pointMap[where];
-        _pointMap[where] = currPoints ?? 0 + 1;
+        _pointMap[where] = (currPoints ?? 0) + 1;
       }
+      return true;
     }
-
-    //_findPalindromes(y, word);
+    return false;
   }
   
 
@@ -207,6 +223,12 @@ class PointKey {
 class Word {
   final List<PointKey> _pointKeys = [];
 
+  Word();
+
+  Word.data(List<PointKey> pKs) {
+    _pointKeys.addAll(pKs);
+  }
+
   add(PointKey pointKey) {
     _pointKeys.add(pointKey);
   }
@@ -229,4 +251,12 @@ class Word {
   String toString() {
     return '"${toWord()}" - ($_pointKeys)';
   }
+
+  int length() => _pointKeys.length;
+
+  Word subword(int start, int end) {
+    return Word.data(_pointKeys.sublist(start, end));
+  }
+
+
 }
