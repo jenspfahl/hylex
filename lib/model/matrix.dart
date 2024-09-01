@@ -196,6 +196,13 @@ class Matrix {
     for (var word in words) {
       _findPalindromes(word, _pointMapY);
     }
+    
+  }
+
+  int getTotalPoints() {
+    return
+      (_pointMapX.isNotEmpty ? _pointMapX.values.reduce((v, v1) => v + v1) : 0) +
+      (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, v1) => v + v1) : 0);
   }
 
   void _findPalindromes(Word word, Map<Coordinate, int> pointMap) {

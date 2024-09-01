@@ -25,6 +25,11 @@ class Stats extends ChangeNotifier {
   
   int getPoints(Role role) => _points[role] ?? 0;
 
+  void setPoints(Role role, int points) {
+    _points[role] = points;
+  }
+
+
   incPoints(Role role) {
     _points[role] = getPoints(role) + 1;
     notifyListeners();
@@ -42,6 +47,7 @@ class Stats extends ChangeNotifier {
    // 'resources' : _resources.map((key, value) => MapEntry(key.id, value)),
    // 'ever' : _ever.map((key, value) => MapEntry(key.id, value)),
   };
+
 }
 
 class StockEntry {
@@ -116,6 +122,8 @@ class Stock extends ChangeNotifier {
   bool isEmpty() {
     return _count <= 0;
   }
+
+  int getChips() => _available.length;
 
 
 }
@@ -200,7 +208,7 @@ class Play extends ChangeNotifier {
       Color color;
       do {
         color = diceColor();
-      } while (chips.keys.any((c) => isTooClose(c.color, color, 200)) || tooDark(color) || tooLight(color));
+      } while (chips.keys.any((c) => isTooClose(c.color, color, 100)) || tooDark(color) || tooLight(color));
 
       final chip = GameChip(
           String.fromCharCode('a'.codeUnitAt(0) + i), color);
@@ -223,7 +231,7 @@ class Play extends ChangeNotifier {
 
   Color diceColor() {
     return Color.fromARGB(
-        200,
+        210,
         127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
         127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
         127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
@@ -285,6 +293,8 @@ class Play extends ChangeNotifier {
   }
 
   void nextRound() {
+    _stats.setPoints(Role.Order, _matrix.getTotalPoints());
+
     if (currentRole == Role.Order) {
       // round is over
       nextChip();

@@ -41,7 +41,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   }
 
   void _resetGame() {
-    _play = Play(7); //must be odd: 5, 7, 9, 11 or 13
+    _play = Play(13); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
   }
 
@@ -50,72 +50,78 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
         appBar: AppBar(
           title: const Text('Hyle 9'),
         ),
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildRoleIndicator(Role.Chaos, true),
-                        Text("Round ${_play.currentRound}"),
-                        _buildRoleIndicator(Role.Order, false),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
+        body: SingleChildScrollView(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
                         mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: _buildChipStock()),
-                  ),
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black, width: 2.0)),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildRoleIndicator(Role.Chaos, true),
+                          Text("Round ${_play.currentRound}"),
+                          _buildRoleIndicator(Role.Order, false),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.all(8),
+                      height: 70 - (_play.dimension.toDouble() * 2), //TODO calc cel lheight and use this
                       child: GridView.builder(
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _play.dimension,
+                            crossAxisCount: _play.stock.getChips(),
                           ),
-                          itemBuilder: _buildBoardGrid,
-                          itemCount: _play.dimension * _play.dimension,
+                          itemBuilder: _buildChipStock,
+                          itemCount: _play.stock.getChips(),
                           physics: const NeverScrollableScrollPhysics()),
                     ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 0, top: 20, right: 0, bottom: 0),
-                    child: FilledButton(
-                      onPressed: () {
-                        if (_play.isGameOver()) {
-                          toastError(context, "GAME OVER!");
-                        }
-                        else {
-                          setState(() {
-                            _play.nextRound();
-                          });
-                        }
-                      },
-                      onLongPress: () {
-                        setState(() {
-                          _resetGame();
-                        });
-                      },
-                      child: const Text('Submit move'),
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 2.0)),
+                        child: GridView.builder(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: _play.dimension,
+                            ),
+                            itemBuilder: _buildBoardGrid,
+                            itemCount: _play.dimension * _play.dimension,
+                            physics: const NeverScrollableScrollPhysics()),
+                      ),
                     ),
-                  ),
-                ]),
+          
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 0, top: 20, right: 0, bottom: 0),
+                      child: FilledButton(
+                        onPressed: () {
+                          if (_play.isGameOver()) {
+                            toastError(context, "GAME OVER!");
+                          }
+                          else {
+                            setState(() {
+                              _play.nextRound();
+                            });
+                          }
+                        },
+                        onLongPress: () {
+                          setState(() {
+                            _resetGame();
+                          });
+                        },
+                        child: const Text('Submit move'),
+                      ),
+                    ),
+                  ]),
+            ),
           ),
         ));
   }
@@ -126,7 +132,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       shape: isLeftElseRight
           ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
           : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
-      label: Text(role.name, style: TextStyle(color: isSelected ? Colors.white : null)),
+      label: Text("${role.name} - ${_play.stats.getPoints(role)}", style: TextStyle(color: isSelected ? Colors.white : null)),
       backgroundColor: isSelected ? Colors.black : null
     );
   }
@@ -157,10 +163,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     final chip = spot.content;
     final pointText = spot.point > 0 ? spot.point.toString() : "";
     if (chip != null) {
-      return Padding(
-        padding: EdgeInsets.all(_play.dimension > 5 ? 3 : 0),
-        child: _buildChip(chip, pointText),
-      );
+      return _buildChip(chip, pointText);
     }
     else {
       return Container();
@@ -168,16 +171,19 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   }
 
-  CircleAvatar _buildChip(GameChip chip, String text) {
-    return CircleAvatar(
-        backgroundColor: chip.color,
-        child: Text(text,
-            style: TextStyle(
-              fontSize: _play.dimension > 7 ? 12 : 16,
-              color: Colors.white, 
-              fontWeight: FontWeight.bold,
-            )),
-      );
+  Widget _buildChip(GameChip chip, String text) {
+    return Padding(
+      padding: EdgeInsets.all(_play.dimension > 5 ? 3 : 0),
+      child: CircleAvatar(
+          backgroundColor: chip.color,
+          child: Text(text,
+              style: TextStyle(
+                fontSize: _play.dimension > 7 ? 12 : 16,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              )),
+        ),
+    );
   }
 
   Future<void> _gridItemTapped(BuildContext context, int x, int y) async {
@@ -209,24 +215,31 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   }
 
-  List<Widget> _buildChipStock() {
-    /*if (_play.currentRole != Role.Chaos) {
-      return [];
-    }*/
+  Widget _buildChipStock(BuildContext context, int index) {
     final stockEntries = _play.stock.getStockEntries();
-    return stockEntries.map((entry) {
-      if (_play.currentChip == entry.chip) {
-        return Container(
-          decoration: BoxDecoration(
-            color: entry.chip.color.withOpacity(0.9),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(10.0),
+    if (stockEntries.length <= index) {
+      return const Text("?");
+    }
+    final entry = stockEntries.toList()[index];
+    final text = _play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
+
+    if (_play.currentChip == entry.chip) {
+      return Padding(
+        padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 2 : 4),
+        child: Container(
+            decoration: BoxDecoration(
+              color: entry.chip.color.withOpacity(0.9),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(10.0),
+              ),
             ),
-          ),
-          child: _buildChip(entry.chip, "${entry.amount}x")
-        );
-      }
-      return _buildChip(entry.chip, "${entry.amount}x");
-    }).toList();
+            child: _buildChip(entry.chip, text)
+        ),
+      );
+    }
+    return Padding(
+      padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 4 : 8),
+      child: _buildChip(entry.chip, text),
+    );
   }
 }
