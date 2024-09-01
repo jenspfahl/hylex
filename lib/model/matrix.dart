@@ -105,36 +105,31 @@ class Matrix {
     return curr == null;
   }
 
-  put(Coordinate where, GameChip piece) {
+  put(Coordinate where, GameChip chip) {
     if (!_inDimensions(where, dimension)) {
       return;
     }
+    _play.stock.decStock(chip);
 
-    remove(where);
-    _chipMap[where] = piece;
-
+    _chipMap[where] = chip;
     _calcPoints(where);
-
-    //_play.stats.in(piece.type);
-
-
-    //debugPrint("mx: put piece $piece");
   }
 
   GameChip? remove(Coordinate where) {
-    final removedPiece = _chipMap.remove(where);
-    if (removedPiece != null) {
-
-    //  _play.stats.decPoints(removedPiece.type);
-
+    if (!_inDimensions(where, dimension)) {
+      return null;
     }
-    //debugPrint("mx: rm piece $removedPiece");
 
-    _pointMapX.remove(where);
-    _pointMapY.remove(where);
-    _calcPoints(where);
+    final removedChip = _chipMap.remove(where);
+    if (removedChip != null) {
+      _pointMapX.remove(where);
+      _pointMapY.remove(where);
+      _calcPoints(where);
 
-    return removedPiece;
+      _play.stock.putBack(removedChip);
+    }
+
+    return removedChip;
   }
 
   bool _inDimensions(Coordinate where, Coordinate dimension) =>
@@ -162,7 +157,7 @@ class Matrix {
         word = Word();
       }
       else if (chip != null) {
-        word.add(PointKey(Coordinate(x, y), chip.index));
+        word.add(Letter(chip.id, coordinate));
       }
     }
     if (!word.isEmpty()) {
@@ -176,6 +171,7 @@ class Matrix {
     }
 
     words.clear();
+    word = Word();
 
     // on y-axis
     final y = where.y;
@@ -188,7 +184,7 @@ class Matrix {
         word = Word();
       }
       else if (chip != null) {
-        word.add(PointKey(Coordinate(x, y), chip.index));
+        word.add(Letter(chip.id, coordinate));
       }
     }
     if (!word.isEmpty()) {
@@ -219,9 +215,9 @@ class Matrix {
 
   bool _findPalindrome(Word word, Map<Coordinate, int> pointMap) {
     if (word.isWordPalindrome()) {
-      for (PointKey pointKey in word.pointKeys) {
-        final currPoints = pointMap[pointKey.where];
-        pointMap[pointKey.where] = (currPoints ?? 0) + 1;
+      for (Letter letter in word.letters) {
+        final currPoints = pointMap[letter.where];
+        pointMap[letter.where] = (currPoints ?? 0) + 1;
       }
       return true;
     }
@@ -232,57 +228,57 @@ class Matrix {
 
 }
 
-class PointKey {
+class Letter {
+  final String _value;
   final Coordinate _where;
-  final String _index;
   
-  PointKey(this._where, this._index);
+  Letter(this._value, this._where);
 
-  String get index => _index;
+  String get value => _value;
   Coordinate get where => _where;
 
   @override
   String toString() {
-    return '$_index@$_where';
+    return '$_value@$_where';
   }
 }
 
 class Word {
-  final List<PointKey> _pointKeys = [];
+  final List<Letter> _letters = [];
 
   Word();
 
-  Word.data(List<PointKey> pKs) {
-    _pointKeys.addAll(pKs);
+  Word.data(List<Letter> letters) {
+    _letters.addAll(letters);
   }
 
-  add(PointKey pointKey) {
-    _pointKeys.add(pointKey);
+  add(Letter pointKey) {
+    _letters.add(pointKey);
   }
   
   String toWord() {
-    return _pointKeys.map((e) => e.index).join();
+    return _letters.map((e) => e.value).join();
   }  
   
-  String toReversedWord() => _pointKeys.reversed.map((e) => e.index).join();
+  String toReversedWord() => _letters.reversed.map((e) => e.value).join();
   
-  bool isWord() => _pointKeys.length >= 2;
+  bool isWord() => _letters.length >= 2;
   
   bool isWordPalindrome() => isWord() && toWord() == toReversedWord();
 
-  bool isEmpty() => _pointKeys.isEmpty;
+  bool isEmpty() => _letters.isEmpty;
 
-  List<PointKey> get pointKeys => _pointKeys;
+  List<Letter> get letters => _letters;
 
   @override
   String toString() {
-    return '"${toWord()}" - ($_pointKeys)';
+    return '"${toWord()}" - ($_letters)';
   }
 
-  int length() => _pointKeys.length;
+  int length() => _letters.length;
 
   Word subword(int start, int end) {
-    return Word.data(_pointKeys.sublist(start, end));
+    return Word.data(_letters.sublist(start, end));
   }
 
 

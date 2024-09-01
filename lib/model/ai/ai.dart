@@ -46,14 +46,15 @@ class AiConfig {
   };
 }
 
-abstract class Ai<T> {
+abstract class Ai { // OrderAi, ChaosAi, TensorFlowOrderAi, ProgrammaticOrderAi, ...
 
   static final P_SHOULD_THINK = "should_think";
 
   final AiConfig _aiConfig;
   final String _aiIdentifier;
+  final Play _play;
 
-  Ai(this._aiConfig, this._aiIdentifier);
+  Ai(this._aiConfig, this._aiIdentifier, this._play);
 
   String get id => _aiIdentifier;
   defaultAiParams();
@@ -66,19 +67,18 @@ abstract class Ai<T> {
     _aiConfig.setParam(_aiIdentifier, key, value);
   }
 
-  bool shouldThink(T data);
-  think(T data);
+  think(Play play);
 }
 
-abstract class PlayAi extends Ai<Play> {
-  PlayAi(super._aiConfig, super._aiIdentifier);
+abstract class ChaosAi extends Ai {
+  ChaosAi(super._aiConfig, super._aiIdentifier, super._play);
 }
 
-class SprinkleResourcesAi extends PlayAi {
+class TensorFlowChaosAi extends ChaosAi {
 
   final strategy = RandomFreeSpotStrategy();
 
-  SprinkleResourcesAi(AiConfig config) : super(config, (SprinkleResourcesAi).toString());
+  TensorFlowChaosAi(AiConfig config, Play play) : super(config, (TensorFlowChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -86,63 +86,16 @@ class SprinkleResourcesAi extends PlayAi {
   }
 
   @override
-  bool shouldThink(Play play) => probabilityOf(getP(Ai.P_SHOULD_THINK));
-
-  @override
   think(Play play) {
-    final freePlace = strategy.getFreePlace(play);
+    /*final freePlace = strategy.getFreePlace(play);
     if (freePlace != null) {
-     // play.matrix.put(freePlace, piece, parentCellSpot: null);
-    }
+      play.matrix.put(freePlace, piece, parentCellSpot: null);
+    }*/
   }
 
 }
 
-class SprinkleAlienCellsAi extends PlayAi {
 
-  final strategy = RandomFreeSpotStrategy();
-
-  SprinkleAlienCellsAi(AiConfig config) : super(config, (SprinkleAlienCellsAi).toString());
-
-  @override
-  defaultAiParams()  {
-    setP(Ai.P_SHOULD_THINK, 0.5 * 0.75);
-  }
-
-  @override
-  bool shouldThink(Play play) => probabilityOf(getP(Ai.P_SHOULD_THINK));
-
-  @override
-  think(Play play) {
-    final freePlace = strategy.getFreePlace(play);
-    if (freePlace != null) {
-      //play.matrix.put(freePlace, piece, parentCellSpot: null);
-    }
-  }
-}
-
-abstract class SpotAi extends Ai<Spot> {
-  SpotAi(super.aiConfig, super.aiIdentifier);
-
-  think(Spot spot);
-}
-class OrderAi extends SpotAi {
-  OrderAi(super.aiConfig, super.aiIdentifier);
-
-  think(Spot spot) {
-    // TODO: implement think
-    throw UnimplementedError();
-  }
-
-  @override
-  defaultAiParams() {
-    // TODO: implement defaultAiParams
-    throw UnimplementedError();
-  }
-
-  @override
-  bool shouldThink(Spot data) {
-    // TODO: implement shouldThink
-    throw UnimplementedError();
-  }
+abstract class OrderAi extends Ai {
+  OrderAi(super._aiConfig, super._aiIdentifier, super._play);
 }

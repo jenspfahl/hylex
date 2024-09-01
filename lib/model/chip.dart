@@ -7,13 +7,13 @@ import 'package:hyle_9/model/matrix.dart';
 
 
 class GameChip {
-  final String index;
+  final String id;
   final Color color;
 
-  GameChip(this.index, this.color);
+  GameChip(this.id, this.color);
 
   Map<String, dynamic> toJson() => {
-    'index' : index,
+    'id' : id,
   };
 
   @override
@@ -21,14 +21,14 @@ class GameChip {
       identical(this, other) ||
       other is GameChip &&
           runtimeType == other.runtimeType &&
-          index == other.index;
+          id == other.id;
 
   @override
-  int get hashCode => index.hashCode;
+  int get hashCode => id.hashCode;
 
   @override
   String toString() {
-    return 'Chip-$index';
+    return 'Chip-$id';
   }
 
 }
@@ -50,7 +50,7 @@ class Journal {
 
 
   Map<String, dynamic> toJson() => {
-    'v' : type.index,
+    'v' : type.id,
   //  'pI' : _placedInRound,
     //'pB' : _placedBy.index,
   };

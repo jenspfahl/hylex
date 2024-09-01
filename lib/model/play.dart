@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hyle_9/model/chip.dart';
 
+import '../utils.dart';
 import 'ai/ai.dart';
 import 'fortune.dart';
 import 'matrix.dart';
@@ -44,10 +45,10 @@ class Stats extends ChangeNotifier {
 }
 
 class StockEntry {
-  GameChip type;
+  GameChip chip;
   int amount;
 
-  StockEntry(this.type, this.amount);
+  StockEntry(this.chip, this.amount);
 
   bool isEmpty() => amount == 0;
 }
@@ -72,25 +73,25 @@ class Stock extends ChangeNotifier {
       .entries
       .map((e) => StockEntry(e.key, e.value));
 
-  int getStock(GameChip type) => _available[type] ?? 0;
+  int getStock(GameChip chip) => _available[chip] ?? 0;
 
-  bool hasStock(GameChip type) => getStock(type) > 0;
+  bool hasStock(GameChip chip) => getStock(chip) > 0;
 
-  incStock(GameChip type) {
-    _available[type] = getStock(type) + 1;
+  incStock(GameChip chip) {
+    _available[chip] = getStock(chip) + 1;
     _count++;
     notifyListeners();
   }
 
-  decStock(GameChip type) {
-    final curr = getStock(type);
-    _available[type] = max(0, curr - 1);
+  decStock(GameChip chip) {
+    final curr = getStock(chip);
+    _available[chip] = max(0, curr - 1);
     _count--;
     notifyListeners();
   }
 
   Map<String, dynamic> toJson() => {
-    'available' : _available.map((key, value) => MapEntry(key.index, value)),
+    'available' : _available.map((key, value) => MapEntry(key.id, value)),
   };
 
   GameChip? drawNext() {
@@ -103,13 +104,19 @@ class Stock extends ChangeNotifier {
     if (stockForChip <= 0) {
       return drawNext();
     }
-    decStock(nextChip);
     return nextChip;
   }
+
+  void putBack(GameChip chip) {
+    final stockForChip = _available[chip]??0;
+    _available[chip] = stockForChip + 1;
+  }
+
 
   bool isEmpty() {
     return _count <= 0;
   }
+
 
 }
 
@@ -172,7 +179,7 @@ class Cursor extends ChangeNotifier {
 
 class Play extends ChangeNotifier {
 
-  int _currentRound = 0;
+  int _currentRound = 1;
   Role _currentRole = Role.Chaos;
 
   late Stats _stats;
@@ -182,8 +189,8 @@ class Play extends ChangeNotifier {
   late Matrix _matrix;
   GameChip? _currentChip;
   late AiConfig _aiConfig;
-  late List<PlayAi> matrixAis;
-  late List<SpotAi> spotAis;
+  ChaosAi? chaosAi;
+  OrderAi? orderAi;
 
   Play(this._dimension) {
     _stats = Stats();
@@ -191,26 +198,15 @@ class Play extends ChangeNotifier {
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
       Color color;
-      if (i.isEven) {
-        color = Color.fromARGB(
-            200, 200.fuzzyIncrease(1, 50), 0.fuzzyDecrease(1, 150),
-            200.fuzzyIncrease(1, 250));
-      }
-      else {
-        color = Color.fromARGB(
-            200, 200.fuzzyIncrease(1, 50), 200.fuzzyDecrease(1, 150),
-            0.fuzzyIncrease(1, 250));
-      }
-      color = Color.fromARGB(
-          200,
-          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-          128.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-          );
-      final chip = GameChip(String.fromCharCode('a'.codeUnitAt(0) + i), color);
+      do {
+        color = diceColor();
+      } while (chips.keys.any((c) => isTooClose(c.color, color, 200)) || tooDark(color) || tooLight(color));
 
-      chips[chip] = dimension;
+      final chip = GameChip(
+          String.fromCharCode('a'.codeUnitAt(0) + i), color);
+      chips[chip] = dimension; // the stock per chip is the dimension value
     }
+
 
     _stock = Stock(chips);
 
@@ -223,6 +219,15 @@ class Play extends ChangeNotifier {
 
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
+  }
+
+  Color diceColor() {
+    return Color.fromARGB(
+        200,
+        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
+        );
   }
 
   Play.fromJsonMap(Map<String, dynamic> map) {
@@ -279,8 +284,17 @@ class Play extends ChangeNotifier {
     _currentRole = currentRole == Role.Chaos ? Role.Order : Role.Chaos;
   }
 
+  void nextRound() {
+    if (currentRole == Role.Order) {
+      // round is over
+      nextChip();
+      incRound();
+    }
+    switchRole();
+  }
+
   void _initAis({required bool useDefaultParams}) {
-    spotAis = [
+    /*spotAis = [
     ];
 
     matrixAis = [
@@ -291,7 +305,7 @@ class Play extends ChangeNotifier {
     if (useDefaultParams) {
       spotAis.forEach((ai) => ai.defaultAiParams());
       matrixAis.forEach((ai) => ai.defaultAiParams());
-    }
+    }*/
   }
 
   int get currentRound => _currentRound;
@@ -333,6 +347,5 @@ class Play extends ChangeNotifier {
   bool isGameOver() {
     return _stock.isEmpty();
   }
-
 
 }
