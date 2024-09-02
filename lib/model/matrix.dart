@@ -91,6 +91,7 @@ class Matrix {
 
   Coordinate get dimension => _dimension;
 
+
   GameChip? getChip(Coordinate where) => _chipMap[where];
   int getPoint(Coordinate where) => (_pointMapX[where] ?? 0) + (_pointMapY[where] ?? 0);
 
@@ -132,6 +133,8 @@ class Matrix {
     return removedChip;
   }
 
+  bool isInDimensions(Coordinate where) => _inDimensions(where, dimension);
+
   bool _inDimensions(Coordinate where, Coordinate dimension) =>
       where.x >= 0 && where.x < dimension.x && where.y >= 0 && where.y < dimension.y;
 
@@ -150,7 +153,7 @@ class Matrix {
     final x = where.x;
     for (int y = 0; y < _dimension.y; y++) {
       var coordinate = Coordinate(x, y);
-      _pointMapX.remove(coordinate);
+      _pointMapX[coordinate] = 0;
       final chip = getChip(coordinate);
       if (chip == null && !word.isEmpty()) {
         words.add(word);
@@ -177,7 +180,7 @@ class Matrix {
     final y = where.y;
     for (int x = 0; x < _dimension.x; x++) {
       var coordinate = Coordinate(x, y);
-      _pointMapY.remove(coordinate);
+      _pointMapY[coordinate] = 0;
       final chip = getChip(coordinate);
       if (chip == null && !word.isEmpty()) {
         words.add(word);
@@ -199,11 +202,6 @@ class Matrix {
     
   }
 
-  int getTotalPoints() {
-    return
-      (_pointMapX.isNotEmpty ? _pointMapX.values.reduce((v, v1) => v + v1) : 0) +
-      (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, v1) => v + v1) : 0);
-  }
 
   void _findPalindromes(Word word, Map<Coordinate, int> pointMap) {
 
@@ -214,7 +212,6 @@ class Matrix {
           var subword = word.subword(start, end);
           final isPalindrome = _findPalindrome(subword, pointMap);
           debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
-
         }
       }
     }
@@ -230,7 +227,16 @@ class Matrix {
     }
     return false;
   }
-  
+
+  int getTotalPoints() {
+    return
+      (_pointMapX.isNotEmpty ? _pointMapX.values.reduce((v, v1) => v + v1) : 0) +
+          (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, v1) => v + v1) : 0);
+  }
+
+  int getChipsWithNoPoints() {
+    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length;
+  }
 
 
 }

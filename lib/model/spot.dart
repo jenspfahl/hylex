@@ -1,5 +1,7 @@
 
 
+import 'dart:collection';
+
 import 'package:hyle_9/model/play.dart';
 
 import 'chip.dart';
@@ -56,48 +58,47 @@ class Spot {
   }
 
   Iterable<Spot> streamNeighborsForDirection(Direction direction) {
+    final spots = HashSet<Spot>();
+    _streamNeighborsForDirection(direction, spots);
+    return spots;
+  }
+
+  _streamNeighborsForDirection(Direction direction, Set<Spot> spots) {
+    Spot? spot;
     switch (direction) {
-      case Direction.East: return [
-       // getTopRightNeighbor(),
-        getRightNeighbor(),
-       // getBottomRightNeighbor()
-      ];
-      case Direction.West: return [
-      //  getTopLeftNeighbor(),
-        getLeftNeighbor(),
-      //  getBottomLeftNeighbor()
-      ];
-      case Direction.North: return [
-      //  getTopLeftNeighbor(),
-        getTopNeighbor(),
-      //  getTopRightNeighbor(),
-      ];
-      case Direction.South: return [
-      //  getBottomLeftNeighbor(),
-        getBottomNeighbor(),
-       // getBottomRightNeighbor()
-      ];
-      case Direction.NorthEast: return [
-       // getTopNeighbor(),
-        getTopRightNeighbor(),
-      //  getRightNeighbor()
-      ];
-      case Direction.NorthWest: return [
-       // getLeftNeighbor(),
-        getTopLeftNeighbor(),
-        //getTopNeighbor()
-      ];
-      case Direction.SouthEast: return [
-       // getRightNeighbor(),
-        getBottomRightNeighbor(),
-       // getBottomNeighbor(),
-      ];
-      case Direction.SouthWest: return [
-      //  getLeftNeighbor(),
-        getBottomLeftNeighbor(),
-      //  getBottomNeighbor()
-      ];
+      case Direction.East:
+        spot = getRightNeighbor();
+        break;
+      case Direction.West:
+        spot = getLeftNeighbor();
+        break;
+      case Direction.North:
+        spot = getTopNeighbor();
+        break;
+      case Direction.South:
+        spot = getBottomNeighbor();
+        break;
+      case Direction.NorthEast:
+        spot = getTopRightNeighbor();
+        break;
+      case Direction.NorthWest:
+        spot = getTopLeftNeighbor();
+        break;
+      case Direction.SouthEast:
+        spot = getBottomRightNeighbor();
+        break;
+      case Direction.SouthWest:
+        spot = getBottomLeftNeighbor();
+        break;
     }
+    if (spot.content == null && spot.isInMatrixDimensions()) {
+      spots.add(spot);
+      spot._streamNeighborsForDirection(direction, spots);
+    }
+    else {
+      return spots;
+    }
+
   }
   
   Spot getLeftNeighbor() {
@@ -139,4 +140,6 @@ class Spot {
     final bottomRight = where.bottom().right();
     return Spot(_play, bottomRight, _play.matrix.getChip(bottomRight), _play.matrix.getPoint(bottomRight));
   }
+
+  bool isInMatrixDimensions() => _play.matrix.isInDimensions(where);
 }

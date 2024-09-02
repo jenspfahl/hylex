@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hyle_9/model/chip.dart';
+import 'package:hyle_9/model/spot.dart';
 
 import '../utils.dart';
 import 'ai/ai.dart';
@@ -129,44 +130,44 @@ class Stock extends ChangeNotifier {
 }
 
 class Cursor extends ChangeNotifier {
-  final Matrix _matrix;
-  Coordinate? _previousWhere;
+  Coordinate? _startWhere;
   Coordinate? _where;
-  GameChip? _currentChip;
+  final _possibleTargets = HashSet<Coordinate>();
 
-  Cursor(this._matrix);
+  Cursor();
 
-  Cursor.fromJsonMap(Map<String, dynamic> map, this._matrix) {
+  Cursor.fromJsonMap(Map<String, dynamic> map) {
     final Map<String, dynamic>? where = map["where"];
     if (where != null && where.isNotEmpty) {
       _where = Coordinate.fromJsonMap(where);
-      _currentChip = _matrix.getChip(_where!);
     }
   }
 
-  GameChip? get currentChip => _currentChip;
   Coordinate? get where => _where;
+  Coordinate? get startWhere => _startWhere;
+  HashSet<Coordinate> get possibleTargets => _possibleTargets;
+
+  bool get hasCursor => where != null;
+  bool get hasStartCursor => startWhere != null;
 
   update(Coordinate where) {
     _where = where;
-    _currentChip = _matrix.getChip(where);
 
     notifyListeners();
   }
 
-  void refresh() {
-    if (_where != null) {
-      _currentChip = _matrix.getChip(_where!);
-    }
+  updateStart(Coordinate where) {
+    _startWhere = where;
+
+    notifyListeners();
   }
 
-  clear({bool keepForLater = false}) {
-    if (keepForLater) {
-      _previousWhere = _where;
+  clear({bool keepStart = false}) {
+    if (!keepStart) {
+      _startWhere = null;
+      _possibleTargets.clear();
     }
-    
     _where = null;
-    _currentChip = null;
 
     notifyListeners();
   }
@@ -175,12 +176,20 @@ class Cursor extends ChangeNotifier {
     'where' : _where, //currentPiece should loaded when deserialized
   };
 
-  void recoverPrevious() {
-    if (_previousWhere != null) {
-      update(_previousWhere!);
-      _previousWhere = null;
-    }
+  void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
+    _possibleTargets.clear();
+    
+    _possibleTargets.addAll(
+      matrix.getSpot(where).findFreeNeighborsInDirection(Direction.West).map((spot) => spot.where));
+    _possibleTargets.addAll(
+        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.East).map((spot) => spot.where));
+    _possibleTargets.addAll(
+        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.North).map((spot) => spot.where));
+    _possibleTargets.addAll(
+        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.South).map((spot) => spot.where));
+    debugPrint("pos:"+_possibleTargets.toString());
   }
+
 
 }
 
@@ -219,7 +228,7 @@ class Play extends ChangeNotifier {
     _stock = Stock(chips);
 
     _matrix = Matrix(Coordinate(dimension, dimension), this);
-    _cursor = Cursor(_matrix);
+    _cursor = Cursor();
 
     _stats.addListener(() => notifyListeners());
     _stock.addListener(() => notifyListeners());
@@ -277,7 +286,7 @@ class Play extends ChangeNotifier {
 
     final Map<String, dynamic> cursorMap = map["cursor"];
     if (cursorMap.isNotEmpty) {
-      _cursor = Cursor.fromJsonMap(cursorMap, _matrix);
+      _cursor = Cursor.fromJsonMap(cursorMap);
     }
 
     _currentChip = map["selectedCellTypeId"];
@@ -294,6 +303,7 @@ class Play extends ChangeNotifier {
 
   void nextRound() {
     _stats.setPoints(Role.Order, _matrix.getTotalPoints());
+    _stats.setPoints(Role.Chaos, _matrix.getChipsWithNoPoints());
 
     if (currentRole == Role.Order) {
       // round is over
@@ -301,6 +311,7 @@ class Play extends ChangeNotifier {
       incRound();
     }
     switchRole();
+    _cursor.clear();
   }
 
   void _initAis({required bool useDefaultParams}) {
@@ -337,7 +348,6 @@ class Play extends ChangeNotifier {
 
   incRound() {
     _currentRound++;
-    _cursor.refresh();
     notifyListeners();
   }
 
