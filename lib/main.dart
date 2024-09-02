@@ -200,8 +200,17 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
           && _play.currentRole == Role.Order
           && _play.cursor.hasStartCursor
           && _play.cursor.possibleTargets.contains(where);
+      Spot? start;
+      if (_play.currentRole == Role.Order) {
+        if (_play.cursor.hasCursor) {
+          start = _play.matrix.getSpot(_play.cursor.where!);
+        }
+        else if (_play.cursor.hasStartCursor) {
+          start = _play.matrix.getSpot(_play.cursor.startWhere!);
+        }
+      }
       return Container(
-        color: possibleTarget ? Colors.limeAccent : null,
+        color: possibleTarget ? start?.content?.color.withOpacity(0.2)??Colors.limeAccent : null,
       );
     }
     return Padding(

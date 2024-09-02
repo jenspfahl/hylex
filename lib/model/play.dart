@@ -172,6 +172,12 @@ class Cursor extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  @override
+  String toString() {
+    return 'Cursor{_startWhere: $_startWhere, _where: $_where, _possibleTargets: $_possibleTargets}';
+  }
+
   Map<String, dynamic> toJson() => {
     'where' : _where, //currentPiece should loaded when deserialized
   };
