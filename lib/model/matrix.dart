@@ -230,8 +230,8 @@ class Matrix {
 
   int getTotalPoints() {
     return
-      (_pointMapX.isNotEmpty ? _pointMapX.values.reduce((v, v1) => v + v1) : 0) +
-          (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, v1) => v + v1) : 0);
+      _pointMapX.values.reduce((v, e) => v + e) +
+          _pointMapY.values.reduce((v, e) => v + e);
   }
 
   int getChipsWithNoPoints() {

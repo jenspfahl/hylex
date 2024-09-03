@@ -44,7 +44,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   }
 
   void _resetGame() {
-    _play = Play(7); //must be odd: 5, 7, 9, 11 or 13
+    _play = Play(5); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
   }
 
@@ -90,10 +90,10 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                           height: 70 - (_play.dimension.toDouble() * 2), //TODO calc cel lheight and use this
                           child: GridView.builder(
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: _play.stock.getChips(),
+                                crossAxisCount: _play.stock.getChipTypes(),
                               ),
                               itemBuilder: _buildChipStock,
-                              itemCount: _play.stock.getChips(),
+                              itemCount: _play.stock.getChipTypes(),
                               physics: const NeverScrollableScrollPhysics()),
                         ),
                         AspectRatio(
@@ -118,7 +118,11 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                           child: FilledButton(
                             onPressed: () {
                               if (_play.isGameOver()) {
-                                toastError(context, "GAME OVER!");
+                                setState(() {
+                                  final winner = _play.finishGame();
+                                  toastError(context, "GAME OVER, ${winner.name} WINS!");
+
+                                });
                               }
                               else if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
                                 toastInfo(context, "Chaos has to place one chip!");

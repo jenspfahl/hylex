@@ -49,6 +49,13 @@ class Stats extends ChangeNotifier {
    // 'ever' : _ever.map((key, value) => MapEntry(key.id, value)),
   };
 
+  Role getWinner() {
+    if (getPoints(Role.Order) > getPoints(Role.Chaos)) {
+      return Role.Order;
+    }
+    return Role.Chaos;
+  }
+
 }
 
 class StockEntry {
@@ -62,13 +69,9 @@ class StockEntry {
 
 class Stock extends ChangeNotifier {
   final _available = HashMap<GameChip, int>();
-  int _count = 0;
 
   Stock(Map<GameChip, int> initialStock) {
     _available.addAll(initialStock);
-    initialStock.forEach((key, value) {
-      _count = _count + value;
-    });
   }
 
   Stock.fromJsonMap(Map<String, dynamic> map) {
@@ -86,14 +89,12 @@ class Stock extends ChangeNotifier {
 
   incStock(GameChip chip) {
     _available[chip] = getStock(chip) + 1;
-    _count++;
     notifyListeners();
   }
 
   decStock(GameChip chip) {
     final curr = getStock(chip);
     _available[chip] = max(0, curr - 1);
-    _count--;
     notifyListeners();
   }
 
@@ -102,7 +103,7 @@ class Stock extends ChangeNotifier {
   };
 
   GameChip? drawNext() {
-    if (_count <= 0) {
+    if (isEmpty()) {
       return null;
     }
     final nextChipIndex = diceInt(_available.length);
@@ -119,12 +120,14 @@ class Stock extends ChangeNotifier {
     _available[chip] = stockForChip + 1;
   }
 
+  int getTotalStock() => _available.values.reduce((v, e) => v + e);
 
   bool isEmpty() {
-    return _count <= 0;
+
+    return getTotalStock() == 0;
   }
 
-  int getChips() => _available.length;
+  int getChipTypes() => _available.length;
 
 
 }
@@ -318,6 +321,17 @@ class Play extends ChangeNotifier {
     }
     switchRole();
     _cursor.clear();
+  }
+  
+  Role finishGame() {
+    _stats.setPoints(Role.Order, _matrix.getTotalPoints());
+    _stats.setPoints(Role.Chaos, _matrix.getChipsWithNoPoints());
+
+    _currentRole = _stats.getWinner();
+    _currentChip = null;
+    _cursor.clear();
+
+    return _currentRole;
   }
 
   void _initAis({required bool useDefaultParams}) {
