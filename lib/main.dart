@@ -23,6 +23,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   late Play _play;
 
+  GameChip? _emphasiseAllChipsOf;
+
   @override
   void initState() {
     super.initState();
@@ -42,7 +44,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   }
 
   void _resetGame() {
-    _play = Play(11); //must be odd: 5, 7, 9, 11 or 13
+    _play = Play(7); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
   }
 
@@ -52,6 +54,15 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
         return Scaffold(
             appBar: AppBar(
               title: const Text('Hyle 9'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.restart_alt_outlined),
+                  onPressed: () => {
+                    setState(() {
+                      _resetGame();
+                    })
+                },)
+              ],
             ),
             body: SingleChildScrollView(
               child: Align(
@@ -112,10 +123,6 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                               else if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
                                 toastInfo(context, "Chaos has to place one chip!");
                               }
-                              else if (_play.currentRole == Role.Order && !_play.cursor.hasCursor) {
-                                //TODO ask to proceed without move
-                                toastInfo(context, "Order did not make a move"); //TODO this is not conform to the rules!
-                              }
                               else {
                                 setState(() {
                                   _play.nextRound();
@@ -124,10 +131,12 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                             },
                             onLongPress: () {
                               setState(() {
-                                _resetGame();
+                                //TODO undo current move
                               });
                             },
-                            child: const Text('Submit move'),
+                            child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
+                                ? 'Skip move'
+                                : 'Submit move'),
                           ),
                         ),
                       ]),
@@ -213,10 +222,20 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
         color: possibleTarget ? start?.content?.color.withOpacity(0.2)??Colors.limeAccent : null,
       );
     }
-    return Padding(
-      padding: EdgeInsets.all(_play.dimension > 5 ? 3 : 0),
+    return GestureDetector(
+      onLongPressStart: (details) => {
+        setState(() {
+          _emphasiseAllChipsOf = chip;
+        })
+      },
+      onLongPressEnd: (details) => {
+        setState(() {
+          _emphasiseAllChipsOf = null;
+        })
+      },
       child: CircleAvatar(
-          backgroundColor: chip.color,
+          backgroundColor: _getChipBackgroundColor(chip),
+          maxRadius: 60,
           child: Text(text,
               style: TextStyle(
                 fontSize: _play.dimension > 7 ? 12 : 16,
@@ -225,6 +244,12 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
               )),
         ),
     );
+  }
+
+  Color _getChipBackgroundColor(GameChip chip) {
+    return _emphasiseAllChipsOf != null && _emphasiseAllChipsOf != chip
+        ? chip.color.withOpacity(0.2)
+        : chip.color;
   }
 
   Future<void> _gridItemTapped(BuildContext context, int x, int y) async {
@@ -332,12 +357,16 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     final entry = stockEntries.toList()[index];
     final text = _play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
 
+    return _buildChipStockItem(entry, text);
+  }
+
+  Padding _buildChipStockItem(StockEntry entry, String text) {
     if (_play.currentChip == entry.chip) {
       return Padding(
         padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 2 : 4),
         child: Container(
             decoration: BoxDecoration(
-              color: entry.chip.color.withOpacity(0.9),
+              color: _getChipBackgroundColor(entry.chip),
               borderRadius: const BorderRadius.all(
                 Radius.circular(10.0),
               ),
