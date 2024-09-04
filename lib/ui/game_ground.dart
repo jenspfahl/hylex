@@ -9,8 +9,13 @@ import '../model/play.dart';
 import '../model/spot.dart';
 import '../utils.dart';
 
+enum HumanPlayer {Order, Chaos, Both, None}
+
 class Hyle9Ground extends StatefulWidget {
-  const Hyle9Ground({super.key});
+  HumanPlayer player;
+  int dimension;
+
+  Hyle9Ground(this.player, this.dimension, {super.key});
 
   @override
   State<Hyle9Ground> createState() => _Hyle9GroundState();
@@ -43,7 +48,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   }
 
   void _resetGame() {
-    _play = Play(5); //must be odd: 5, 7, 9, 11 or 13
+    //final starter = widget.player == HumanPlayer.Order ? Role.Order : Role.Chaos;
+    _play = Play(widget.dimension); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
   }
 

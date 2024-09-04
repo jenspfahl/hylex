@@ -58,16 +58,19 @@ class _StartPageState extends State<StartPage>
               _buildGameLogo(),
               GestureDetector(
                 onTap: () async {
+                  
                   if (context.mounted) {
-                    SmartDialog.showLoading(msg: "Loading game ...");
-                    await Future.delayed(const Duration(seconds: 1));
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                      return const Hyle9Ground();
-                    }));
+                    buildChoiceDialog(330, 220, 'Which ground size?',
+                      "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
+                      "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
+                      "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
+                      "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
+                      "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
+                    );
+
                   }
                 },
-                child: _buildChip("Start", Colors.red, 60, 16, 10),
+                child: _buildChip("Start New", Colors.red, 60, 16, 10),
               ),
               GestureDetector(
                 onTap: () {
@@ -82,42 +85,11 @@ class _StartPageState extends State<StartPage>
               ),
               GestureDetector(
                 onTap: () {
-                  SmartDialog.show(builder: (_) {
-                    return Container(
-                      height: 180,
-                      width: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: const EdgeInsets.all(18.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Leave the game?',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.lightGreenAccent),
-                                onPressed: () {
-                                  SystemNavigator.pop();
-                                },
-                                child: Text("YES")),
-                            OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.lightGreenAccent),
-                                onPressed: () {
-                                  SmartDialog.dismiss();
-                                },
-                                child: Text("NO"))
-                          ],
-                        ),
-                      ),
-                    );
+                  buildChoiceDialog(180, 180, 'Leave the game?',
+                      "YES", () {
+                    SystemNavigator.pop();
+                  },  "NO", () {
+                    SmartDialog.dismiss();
                   });
                 },
                 child: _buildChip("Exit", Colors.brown, 40, 16, 10),
@@ -127,6 +99,97 @@ class _StartPageState extends State<StartPage>
         ),
       ),
     );
+  }
+
+  void _selectPlayerModeAndStartGame(BuildContext context, int dimension) {
+    SmartDialog.dismiss();
+    buildChoiceDialog(280, 220, 'Which role you will take?',
+      "ORDER", () {_startGame(context, HumanPlayer.Order, dimension);},
+      "CHAOS", () {_startGame(context, HumanPlayer.Chaos, dimension);},
+      "BOTH", () {_startGame(context, HumanPlayer.Both, dimension);},
+      "NONE", () {_startGame(context, HumanPlayer.None, dimension);},
+    );
+  }
+
+  Future<void> _startGame(BuildContext context, HumanPlayer player, int dimension) async {
+    SmartDialog.dismiss();
+
+    SmartDialog.showLoading(msg: "Loading game ...");
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+      return Hyle9Ground(player, dimension);
+    }));
+  }
+
+  void buildChoiceDialog(
+      double height,
+      double width,
+      String text,
+      String okString,
+      Function() okHandler,
+      String cancelString,
+      Function() cancelHandler,
+      [
+        String? thirdString,
+        Function()? thirdHandler,
+        String? fourthString,
+        Function()? fourthHandler,
+        String? fifthString,
+        Function()? fifthHandler,
+      ]) {
+    SmartDialog.show(builder: (_) {
+      return Container(
+        height: height,
+        width: width,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                text,
+                style: const TextStyle(color: Colors.white),
+              ),
+              OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.lightGreenAccent),
+                  onPressed: okHandler,
+                  child: Text(okString)),
+              OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.lightGreenAccent),
+                  onPressed: cancelHandler,
+                  child: Text(cancelString)),
+              if (thirdString != null && thirdHandler != null)
+                OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.lightGreenAccent),
+                    onPressed: thirdHandler,
+                    child: Text(thirdString)),
+              if (fourthString != null && fourthHandler != null)
+                OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.lightGreenAccent),
+                    onPressed: fourthHandler,
+                    child: Text(fourthString)),
+              if (fifthString != null && fifthHandler != null)
+                OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.lightGreenAccent),
+                    onPressed: fifthHandler,
+                    child: Text(fifthString)),
+
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildChip(String text, Color color, double radius, double textSize,
