@@ -104,21 +104,21 @@ class _StartPageState extends State<StartPage>
   void _selectPlayerModeAndStartGame(BuildContext context, int dimension) {
     SmartDialog.dismiss();
     buildChoiceDialog(280, 220, 'Which role you will take?',
-      "ORDER", () {_startGame(context, HumanPlayer.Order, dimension);},
-      "CHAOS", () {_startGame(context, HumanPlayer.Chaos, dimension);},
-      "BOTH", () {_startGame(context, HumanPlayer.Both, dimension);},
-      "NONE", () {_startGame(context, HumanPlayer.None, dimension);},
+      "ORDER", () {_startGame(context, Player.Ai, Player.User, dimension);},
+      "CHAOS", () {_startGame(context, Player.User, Player.Ai, dimension);},
+      "BOTH", () {_startGame(context, Player.User, Player.User, dimension);},
+      "NONE", () {_startGame(context, Player.Ai, Player.Ai, dimension);},
     );
   }
 
-  Future<void> _startGame(BuildContext context, HumanPlayer player, int dimension) async {
+  Future<void> _startGame(BuildContext context, Player chaosPlayer, Player orderPlayer, int dimension) async {
     SmartDialog.dismiss();
 
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-      return Hyle9Ground(player, dimension);
+      return Hyle9Ground(chaosPlayer, orderPlayer, dimension);
     }));
   }
 

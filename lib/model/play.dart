@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:hyle_9/model/chip.dart';
 import 'package:hyle_9/model/spot.dart';
 
+import '../ui/game_ground.dart';
 import '../utils.dart';
 import 'ai/ai.dart';
 import 'fortune.dart';
@@ -215,10 +216,12 @@ class Play extends ChangeNotifier {
   late Matrix _matrix;
   GameChip? _currentChip;
   late AiConfig _aiConfig;
+  late Player _chaosPlayer;
+  late Player _orderPlayer;
   ChaosAi? chaosAi;
   OrderAi? orderAi;
 
-  Play(this._dimension) {
+  Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
     _stats = Stats();
 
     var chips = HashMap<GameChip, int>();
@@ -257,6 +260,8 @@ class Play extends ChangeNotifier {
   }
 
   Play.fromJsonMap(Map<String, dynamic> map) {
+    _chaosPlayer = Player.Ai;
+    _orderPlayer = Player.User;
     _currentRound = map["currentGen"]??0;
    /* _ticks = map["ticks"]??0;
     _secondsPerTick = map["secondsPerTick"]??0;
@@ -322,6 +327,8 @@ class Play extends ChangeNotifier {
     switchRole();
     _cursor.clear();
   }
+
+  Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
   
   Role finishGame() {
     _stats.setPoints(Role.Order, _matrix.getTotalPoints());
@@ -335,6 +342,8 @@ class Play extends ChangeNotifier {
   }
 
   void _initAis({required bool useDefaultParams}) {
+    chaosAi = PureRandomChaosAi(_aiConfig, this);
+    orderAi = AlwaysSkipAi(_aiConfig, this);
     /*spotAis = [
     ];
 
@@ -386,6 +395,16 @@ class Play extends ChangeNotifier {
 
   bool isGameOver() {
     return _stock.isEmpty();
+  }
+
+  Future startThinking() {
+    if (_currentRole == Role.Chaos) {
+      chaosAi?.think(this);
+    }
+    else if (_currentRole == Role.Order) {
+      orderAi?.think(this);
+    }
+    return Future.delayed(const Duration(milliseconds: 0 /*200*/));
   }
 
 }

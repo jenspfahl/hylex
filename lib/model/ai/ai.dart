@@ -96,6 +96,52 @@ class TensorFlowChaosAi extends ChaosAi {
 }
 
 
+class PureRandomChaosAi extends ChaosAi {
+
+  final strategy = RandomFreeSpotStrategy();
+
+  PureRandomChaosAi(AiConfig config, Play play) : super(config, (PureRandomChaosAi).toString(), play);
+
+  @override
+  defaultAiParams() {
+    setP(Ai.P_SHOULD_THINK, 0.5 * 0.25);
+  }
+
+  @override
+  think(Play play) {
+    while (true) {
+      if (play.matrix.noFreeSpace()) {
+        return;
+      }
+      final freePlace = strategy.placeChip(play);
+      if (freePlace != null && play.currentChip != null) {
+        play.matrix.put(freePlace, play.currentChip!);
+        return;
+      }
+    }
+
+  }
+}
+
+
 abstract class OrderAi extends Ai {
   OrderAi(super._aiConfig, super._aiIdentifier, super._play);
 }
+
+
+class AlwaysSkipAi extends OrderAi {
+
+
+  AlwaysSkipAi(AiConfig config, Play play) : super(config, (PureRandomChaosAi).toString(), play);
+
+  @override
+  defaultAiParams() {
+    setP(Ai.P_SHOULD_THINK, 0.5 * 0.25);
+  }
+
+  @override
+  think(Play play) {
+     // no move
+  }
+}
+

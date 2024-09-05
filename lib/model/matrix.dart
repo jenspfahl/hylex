@@ -238,6 +238,9 @@ class Matrix {
     return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length;
   }
 
+  bool noFreeSpace() => _chipMap.values.length >= dimension.x * dimension.y;
+
+
 
 }
 

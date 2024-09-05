@@ -9,13 +9,14 @@ import '../model/play.dart';
 import '../model/spot.dart';
 import '../utils.dart';
 
-enum HumanPlayer {Order, Chaos, Both, None}
+enum Player {User, Ai, RemoteUser}
 
 class Hyle9Ground extends StatefulWidget {
-  HumanPlayer player;
+  Player chaosPlayer;
+  Player orderPlayer;
   int dimension;
 
-  Hyle9Ground(this.player, this.dimension, {super.key});
+  Hyle9Ground(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
 
   @override
   State<Hyle9Ground> createState() => _Hyle9GroundState();
@@ -49,8 +50,19 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   void _resetGame() {
     //final starter = widget.player == HumanPlayer.Order ? Role.Order : Role.Chaos;
-    _play = Play(widget.dimension); //must be odd: 5, 7, 9, 11 or 13
+    _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
+    
+    _thinkIfAi();
+  }
+
+  void _thinkIfAi() {
+    if (_play.currentPlayer == Player.Ai) {
+      _play.startThinking().then((_) {
+        debugPrint("ready");
+        _checkEndOfRound(context);
+      });
+    }
   }
 
   Widget _buildGameBody() {
@@ -95,7 +107,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildRoleIndicator(Role.Chaos, true),
-                                Text("Round ${_play.currentRound}"),
+                                Text("Round ${_play.currentRound} of ${_play.dimension * _play.dimension}"),
                                 _buildRoleIndicator(Role.Order, false),
                               ],
                             ),
@@ -130,33 +142,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                           Padding(
                             padding: const EdgeInsets.only(
                                 left: 0, top: 20, right: 0, bottom: 0),
-                            child: FilledButton(
-                              onPressed: () {
-                                if (_play.isGameOver()) {
-                                  setState(() {
-                                    final winner = _play.finishGame();
-                                    toastError(context, "GAME OVER, ${winner.name} WINS!");
-
-                                  });
-                                }
-                                else if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
-                                  toastInfo(context, "Chaos has to place one chip!");
-                                }
-                                else {
-                                  setState(() {
-                                    _play.nextRound();
-                                  });
-                                }
-                              },
-                              onLongPress: () {
-                                setState(() {
-                                  //TODO undo current move
-                                });
-                              },
-                              child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
-                                  ? 'Skip move'
-                                  : 'Submit move'),
-                            ),
+                            child: _buildSubmitButtonOrHint(context),
                           ),
                         ]),
                   ),
@@ -164,6 +150,52 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
               ));
         }
     );
+  }
+
+  Widget _buildSubmitButtonOrHint(BuildContext context) {
+    if (_play.currentPlayer == Player.User) {
+      return FilledButton(
+        onPressed: () {
+           
+          if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
+            toastInfo(context, "Chaos has to place one chip!");
+            return;
+          }
+          
+          _checkEndOfRound(context);
+        },
+        onLongPress: () {
+          setState(() {
+            //TODO undo current move
+          });
+        },
+        child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
+            ? 'Skip move'
+            : 'Submit move'),
+      );
+    }
+    else if (_play.currentPlayer == Player.Ai) {
+      return const Text("Waiting for Computer to move");
+    }
+    else if (_play.currentPlayer == Player.RemoteUser) {
+      return const Text("Waiting for remote opponent to move");
+    }
+    return Container();
+  }
+
+  void _checkEndOfRound(BuildContext context) {
+    if (_play.isGameOver()) {
+      setState(() {
+        final winner = _play.finishGame();
+        toastError(context, "GAME OVER, ${winner.name} WINS!");
+      });
+    }
+    else {
+      setState(() {
+        _play.nextRound();
+      });
+      _thinkIfAi();
+    }
   }
 
   Widget _buildRoleIndicator(Role role, bool isLeftElseRight) {
