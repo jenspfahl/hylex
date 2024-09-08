@@ -1,6 +1,7 @@
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 import '../model/chip.dart';
@@ -8,6 +9,7 @@ import '../model/matrix.dart';
 import '../model/play.dart';
 import '../model/spot.dart';
 import '../utils.dart';
+import 'dialogs.dart';
 
 enum Player {User, Ai, RemoteUser}
 
@@ -31,7 +33,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   @override
   void initState() {
     super.initState();
-    _resetGame();
+    _resetGame(context);
     SmartDialog.dismiss();
 
   }
@@ -48,16 +50,16 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     );
   }
 
-  void _resetGame() {
+  void _resetGame(BuildContext context) {
     //final starter = widget.player == HumanPlayer.Order ? Role.Order : Role.Chaos;
     _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer); //must be odd: 5, 7, 9, 11 or 13
     _play.nextChip();
     
-    _thinkIfAi();
+    _thinkIfAi(context);
   }
 
-  void _thinkIfAi() {
-    if (_play.currentPlayer == Player.Ai) {
+  void _thinkIfAi(BuildContext context) {
+    if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
       _play.startThinking().then((_) {
         debugPrint("ready");
         _checkEndOfRound(context);
@@ -75,18 +77,33 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                   IconButton(
                     icon: const Icon(Icons.restart_alt_outlined),
                     onPressed: () => {
-                      setState(() {
-                        _resetGame();
-                      })
+
+                      buildChoiceDialog(180, 180, 'Restart game?',
+                      "YES", ()
+                          {
+                            setState(() {
+                              _resetGame(context);
+                            });
+                            SmartDialog.dismiss();
+                          },  "NO", () {
+                            SmartDialog.dismiss();
+                          })
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.exit_to_app),
                     onPressed: () => {
-                      setState(() {
-                        // TODO save current game
-                        Navigator.pop(super.context); // go to start page
-                      })
+
+                      buildChoiceDialog(180, 180, 'Leave current game?',
+                          "YES", ()
+                          {
+                            // TODO save current
+                            SmartDialog.dismiss();
+
+                            Navigator.pop(super.context); // go to start page
+                          },  "NO", () {
+                            SmartDialog.dismiss();
+                          })
                     },
                   )
                 ],
@@ -194,7 +211,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       setState(() {
         _play.nextRound();
       });
-      _thinkIfAi();
+      _thinkIfAi(context);
     }
   }
 

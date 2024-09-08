@@ -228,14 +228,14 @@ class Matrix {
     return false;
   }
 
-  int getTotalPoints() {
+  int getTotalPointsForOrder() {
     return
       (_pointMapX.isNotEmpty ? _pointMapX.values.reduce((v, e) => v + e) : 0) +
           (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, e) => v + e) : 0);
   }
 
-  int getChipsWithNoPoints() {
-    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length;
+  int getTotalPointsForChaos() {
+    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * 10;
   }
 
   bool noFreeSpace() => _chipMap.values.length >= dimension.x * dimension.y;

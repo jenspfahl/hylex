@@ -316,8 +316,8 @@ class Play extends ChangeNotifier {
   }
 
   void nextRound() {
-    _stats.setPoints(Role.Order, _matrix.getTotalPoints());
-    _stats.setPoints(Role.Chaos, _matrix.getChipsWithNoPoints());
+    _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
+    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
     if (currentRole == Role.Order) {
       // round is over
@@ -331,8 +331,8 @@ class Play extends ChangeNotifier {
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
   
   Role finishGame() {
-    _stats.setPoints(Role.Order, _matrix.getTotalPoints());
-    _stats.setPoints(Role.Chaos, _matrix.getChipsWithNoPoints());
+    _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
+    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
     _currentRole = _stats.getWinner();
     _currentChip = null;
@@ -404,7 +404,8 @@ class Play extends ChangeNotifier {
     else if (_currentRole == Role.Order) {
       orderAi?.think(this);
     }
-    return Future.delayed(const Duration(milliseconds: 0 /*200*/));
+    final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
+    return Future.delayed(Duration(milliseconds: runAutomatic ? 0 : 500));
   }
 
 }
