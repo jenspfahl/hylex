@@ -1,4 +1,6 @@
 
+import 'package:hyle_9/model/chip.dart';
+
 import '../fortune.dart';
 import '../matrix.dart';
 import '../play.dart';
@@ -29,10 +31,31 @@ class RandomFreeSpotStrategy extends ChaosStrategy {
 }
 
 class Move {
-  Coordinate _from;
-  Coordinate _to;
+  GameChip? chip;
+  Coordinate? from;
+  Coordinate? to;
+  bool skipped = false;
 
-  Move(this._from, this._to);
+  Move({this.chip, this.from, this.to, required this.skipped});
+
+  Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
+  Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
+  Move.skipped(): this(skipped: true);
+
+  bool isMove() => !skipped && from != to;
+
+
+  @override
+  String toString() {
+    if (skipped) {
+      return "-";
+    }
+    if (isMove()) {
+      return "${chip?.id}@$from";
+    }
+    return "${chip?.id}@$from->$to";
+  }
+
 }
 
 abstract class OrderStrategy extends Strategy {

@@ -67,7 +67,7 @@ abstract class Ai { // OrderAi, ChaosAi, TensorFlowOrderAi, ProgrammaticOrderAi,
     _aiConfig.setParam(_aiIdentifier, key, value);
   }
 
-  think(Play play);
+  Move think(Play play);
 }
 
 abstract class ChaosAi extends Ai {
@@ -86,11 +86,13 @@ class TensorFlowChaosAi extends ChaosAi {
   }
 
   @override
-  think(Play play) {
+  Move think(Play play) {
     /*final freePlace = strategy.getFreePlace(play);
     if (freePlace != null) {
       play.matrix.put(freePlace, piece, parentCellSpot: null);
     }*/
+
+    return Move.skipped();
   }
 
 }
@@ -108,15 +110,15 @@ class PureRandomChaosAi extends ChaosAi {
   }
 
   @override
-  think(Play play) {
+  Move think(Play play) {
     while (true) {
       if (play.matrix.noFreeSpace()) {
-        return;
+        return Move.skipped();
       }
       final freePlace = strategy.placeChip(play);
       if (freePlace != null && play.currentChip != null) {
         play.matrix.put(freePlace, play.currentChip!);
-        return;
+        return Move.placed(play.currentChip!, freePlace);
       }
     }
 
@@ -140,8 +142,9 @@ class AlwaysSkipAi extends OrderAi {
   }
 
   @override
-  think(Play play) {
+  Move think(Play play) {
      // no move
+    return Move.skipped();
   }
 }
 

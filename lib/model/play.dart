@@ -10,6 +10,7 @@ import 'package:hyle_9/model/spot.dart';
 import '../ui/game_ground.dart';
 import '../utils.dart';
 import 'ai/ai.dart';
+import 'ai/strategy.dart';
 import 'fortune.dart';
 import 'matrix.dart';
 
@@ -212,6 +213,7 @@ class Play extends ChangeNotifier {
   late Stats _stats;
   late Stock _stock;
   late Cursor _cursor;
+  late Cursor _opponentMove;
   late int _dimension;
   late Matrix _matrix;
   GameChip? _currentChip;
@@ -241,6 +243,7 @@ class Play extends ChangeNotifier {
 
     _matrix = Matrix(Coordinate(dimension, dimension), this);
     _cursor = Cursor();
+    _opponentMove = Cursor();
 
     _stats.addListener(() => notifyListeners());
     _stock.addListener(() => notifyListeners());
@@ -326,6 +329,7 @@ class Play extends ChangeNotifier {
     }
     switchRole();
     _cursor.clear();
+    _opponentMove.clear();
   }
 
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
@@ -364,6 +368,7 @@ class Play extends ChangeNotifier {
   int get dimension => _dimension;
   Matrix get matrix => _matrix;
   Cursor get cursor => _cursor;
+  Cursor get opponentMove => _opponentMove;
   AiConfig get aiConfig => _aiConfig;
 
   GameChip? get currentChip => _currentChip;
@@ -397,15 +402,16 @@ class Play extends ChangeNotifier {
     return _stock.isEmpty();
   }
 
-  Future startThinking() {
+  Future<Move?> startThinking() {
+    Move? move;
     if (_currentRole == Role.Chaos) {
-      chaosAi?.think(this);
+      move = chaosAi?.think(this);
     }
     else if (_currentRole == Role.Order) {
-      orderAi?.think(this);
+      move = orderAi?.think(this);
     }
     final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
-    return Future.delayed(Duration(milliseconds: runAutomatic ? 0 : 500));
+    return Future.delayed(Duration(milliseconds: runAutomatic ? 0 : 500), () => move);
   }
 
 }

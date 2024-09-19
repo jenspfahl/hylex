@@ -1,5 +1,6 @@
 
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -27,15 +28,16 @@ class Hyle9Ground extends StatefulWidget {
 class _Hyle9GroundState extends State<Hyle9Ground> {
 
   late Play _play;
-
   GameChip? _emphasiseAllChipsOf;
+  bool _boardLocked = false;
+
+  late BuildContext _builderContext;
 
   @override
   void initState() {
     super.initState();
-    _resetGame(context);
+    _resetGame(null);
     SmartDialog.dismiss();
-
   }
 
   @override
@@ -50,26 +52,49 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     );
   }
 
-  void _resetGame(BuildContext context) {
-    //final starter = widget.player == HumanPlayer.Order ? Role.Order : Role.Chaos;
-    _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer); //must be odd: 5, 7, 9, 11 or 13
+  void _resetGame(BuildContext? context) {
+    _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
     _play.nextChip();
-    
+    _boardLocked = false;
+
     _thinkIfAi(context);
   }
 
-  void _thinkIfAi(BuildContext context) {
+  void _thinkIfAi(BuildContext? context) {
     if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
-      _play.startThinking().then((_) {
+      _boardLocked = true;
+      _play.startThinking().then((move) {
         debugPrint("ready");
         _checkEndOfRound(context);
+
+        if (move != null) {
+          if (move.skipped) {
+            toastInfo(context ?? _builderContext, "Opponent skipped move");
+            _play.opponentMove.clear();
+          }
+          else if (move.isMove()) {
+            _play.opponentMove.updateStart(move.from!);
+            _play.opponentMove.update(move.to!);
+          }
+          else {
+            _play.opponentMove.update(move.from!);
+          }
+        }
+
       });
     }
+    else {
+      _boardLocked = false;
+    }
+    setState(() {
+      //
+    });
   }
 
   Widget _buildGameBody() {
     return Builder(
         builder: (context) {
+          _builderContext = context;
           return Scaffold(
               appBar: AppBar(
                 title: const Text('Hyle 9'),
@@ -170,21 +195,22 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   }
 
   Widget _buildSubmitButtonOrHint(BuildContext context) {
-    if (_play.currentPlayer == Player.User) {
+    if (_play.isGameOver()) {
+      final winner = _play.finishGame();
+      return Text("Game over! ${winner.name} wins!");
+    }
+    else if (_play.currentPlayer == Player.User) {
       return FilledButton(
         onPressed: () {
-           
+          if (_boardLocked) {
+            return;
+          }
           if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
             toastInfo(context, "Chaos has to place one chip!");
             return;
           }
           
           _checkEndOfRound(context);
-        },
-        onLongPress: () {
-          setState(() {
-            //TODO undo current move
-          });
         },
         child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
             ? 'Skip move'
@@ -200,19 +226,24 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     return Container();
   }
 
-  void _checkEndOfRound(BuildContext context) {
+  void _checkEndOfRound(BuildContext? context) {
     if (_play.isGameOver()) {
-      setState(() {
-        final winner = _play.finishGame();
-        toastError(context, "GAME OVER, ${winner.name} WINS!");
-      });
+      _doGameOver(context);
     }
     else {
       setState(() {
         _play.nextRound();
+        _thinkIfAi(context);
       });
-      _thinkIfAi(context);
     }
+  }
+
+  void _doGameOver(BuildContext? context) {
+    setState(() {
+      final winner = _play.finishGame();
+      toastError(context ?? _builderContext, "GAME OVER, ${winner.name} WINS!");
+      _boardLocked = true;
+    });
   }
 
   Widget _buildRoleIndicator(Role role, bool isLeftElseRight) {
@@ -232,35 +263,35 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     int x, y = 0;
     x = (index / _play.matrix.dimension.x).floor();
     y = (index % _play.matrix.dimension.y);
+    final where = Coordinate(x, y);
     return GestureDetector(
       onTap: () {
-        _gridItemTapped(context, x, y);
+        _gridItemTapped(context, where);
       },
       child: GridTile(
         child: Container(
           decoration: BoxDecoration(
               border: Border.all(color: Colors.black.withAlpha(80), width: 0.5)),
           child: Center(
-            child: _buildGridItem(x, y),
+            child: _wrapLastMove(_buildGridItem(where), where),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGridItem(int x, int y) {
+  Widget _buildGridItem(Coordinate where) {
 
-    var where = Coordinate(x, y);
     final spot = _play.matrix.getSpot(where);
     final chip = spot.content;
     final pointText = spot.point > 0 ? spot.point.toString() : "";
 
-    if (_play.cursor.where == spot.where) {
+    if (_play.cursor.where == where) {
       return DottedBorder(
         child: _buildChip(chip, pointText, where),
       );
     }
-    else if (_play.cursor.startWhere == spot.where) {
+    else if (_play.cursor.startWhere == where) {
       return DottedBorder(
         dashPattern: const [2,4],
         child: _buildChip(chip, pointText, where),
@@ -320,24 +351,27 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
         : chip.color;
   }
 
-  Future<void> _gridItemTapped(BuildContext context, int x, int y) async {
+  Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
-    var coordinate = Coordinate(x, y);
+    if (_boardLocked) {
+      return;
+    }
+
     setState(() {
       if (_play.currentRole == Role.Chaos) {
-        if (_play.matrix.isFree(coordinate)) {
-          _handleFreeFieldForChaos(context, coordinate);
+        if (_play.matrix.isFree(where)) {
+          _handleFreeFieldForChaos(context, where);
         }
         else {
-          _handleOccupiedFieldForChaos(coordinate, context);
+          _handleOccupiedFieldForChaos(where, context);
         }
       }
       if (_play.currentRole == Role.Order) {
-        if (_play.matrix.isFree(coordinate)) {
-          _handleFreeFieldForOrder(context, coordinate);
+        if (_play.matrix.isFree(where)) {
+          _handleFreeFieldForOrder(context, where);
         }
         else {
-          _handleOccupiedFieldForOrder(coordinate, context);
+          _handleOccupiedFieldForOrder(where, context);
         }
       }
     });
@@ -447,5 +481,25 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 4 : 8),
       child: _buildChip(entry.chip, text),
     );
+  }
+
+  Widget _wrapLastMove(Widget widget, Coordinate where) {
+    if (_play.opponentMove.hasStartCursor && _play.opponentMove.startWhere == where) {
+      return DottedBorder(
+          strokeWidth: 1,
+          strokeCap: StrokeCap.butt,
+          borderType: BorderType.Circle,
+          color: Colors.grey,
+          child: widget);
+    }
+    else if (_play.opponentMove.hasCursor && _play.opponentMove.where == where) {
+      return DottedBorder(
+          strokeWidth: 3,
+          strokeCap: StrokeCap.butt,
+          borderType: BorderType.Circle,
+          color: Colors.grey,
+          child: widget);
+    }
+    return widget;
   }
 }
