@@ -91,8 +91,8 @@ class Matrix {
 
   Coordinate get dimension => _dimension;
 
-
   GameChip? getChip(Coordinate where) => _chipMap[where];
+
   int getPoint(Coordinate where) => (_pointMapX[where] ?? 0) + (_pointMapY[where] ?? 0);
 
   Spot getSpot(Coordinate where) {
@@ -131,6 +131,24 @@ class Matrix {
     }
 
     return removedChip;
+  }
+
+  Iterable<Spot> streamOccupiedSpots() {
+    return _chipMap.entries.map((elem) => Spot(_play, elem.key, elem.value, getPoint(elem.key)));
+  }
+
+  Iterable<Spot> streamFreeSpots() {
+    final freeSpots = <Spot>[];
+    for (int x = 0; x < _dimension.x; x++) {
+      for (int y = 0; y < _dimension.y; y++) {
+        final where = Coordinate(x, y);
+        if (isFree(where)) {
+          freeSpots.add(getSpot(where));
+        }
+      }
+    }
+    freeSpots.shuffle();
+    return freeSpots;
   }
 
   bool isInDimensions(Coordinate where) => _inDimensions(where, dimension);

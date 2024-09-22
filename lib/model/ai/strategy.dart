@@ -1,4 +1,7 @@
 
+import 'dart:collection';
+
+import 'package:flutter/cupertino.dart';
 import 'package:hyle_9/model/chip.dart';
 
 import '../fortune.dart';
@@ -29,6 +32,59 @@ class RandomFreeSpotStrategy extends ChaosStrategy {
     }
   }
 }
+class FindMostValuableSpotStrategy extends ChaosStrategy {
+
+  @override
+  Coordinate? placeChip(Play play) {
+
+    final currentChip = play.currentChip;
+    if (currentChip == null) {
+      return null;
+    }
+
+    final currentPointsForOrder = play.stats.getPoints(Role.Order);
+
+    // collect
+    final possiblePoints = SplayTreeMap<int, Coordinate>((a, b) => a.compareTo(b));
+    play.matrix.streamFreeSpots().forEach((spot) {
+      play.matrix.put(spot.where, currentChip);
+      final pointsForOrder = play.matrix.getTotalPointsForOrder();
+      debugPrint("currentPointsForOrder=$currentPointsForOrder points=$pointsForOrder --> ${currentPointsForOrder - pointsForOrder}");
+      possiblePoints.putIfAbsent(currentPointsForOrder - pointsForOrder, () => spot.where);
+      play.matrix.remove(spot.where);
+    });
+
+    debugPrint("ordered" + possiblePoints.toString());
+    // decide
+    final lessPoints = possiblePoints.entries.lastOrNull;
+    if (lessPoints != null) {
+      return lessPoints.value;
+    }
+    return null;
+  }
+}
+
+abstract class OrderStrategy extends Strategy {
+  Move? nextMove(Play play);
+}
+
+class FlatExpandingStrategy extends OrderStrategy {
+
+  @override
+  Move? nextMove(Play play) {
+      /*final freeNeighbors = spot
+          .findFreeNeighbors()
+          .map((e) => e.where);
+      if (freeNeighbors.isNotEmpty) {
+        final idx = diceInt(freeNeighbors.length);
+        return freeNeighbors.toList()[idx];
+      }
+      else {*/
+        return null;
+    /*  }*/
+  }
+}
+
 
 class Move {
   GameChip? chip;
@@ -56,27 +112,6 @@ class Move {
     return "${chip?.id}@$from->$to";
   }
 
-}
-
-abstract class OrderStrategy extends Strategy {
-  Move? nextMove(Play play);
-}
-
-class FlatExpandingStrategy extends OrderStrategy {
-
-  @override
-  Move? nextMove(Play play) {
-      /*final freeNeighbors = spot
-          .findFreeNeighbors()
-          .map((e) => e.where);
-      if (freeNeighbors.isNotEmpty) {
-        final idx = diceInt(freeNeighbors.length);
-        return freeNeighbors.toList()[idx];
-      }
-      else {*/
-        return null;
-    /*  }*/
-  }
 }
 
 

@@ -346,7 +346,7 @@ class Play extends ChangeNotifier {
   }
 
   void _initAis({required bool useDefaultParams}) {
-    chaosAi = PureRandomChaosAi(_aiConfig, this);
+    chaosAi = SimpleChaosAi(_aiConfig, this);
     orderAi = AlwaysSkipAi(_aiConfig, this);
     /*spotAis = [
     ];
