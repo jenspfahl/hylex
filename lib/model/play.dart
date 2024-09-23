@@ -170,7 +170,7 @@ class Cursor extends ChangeNotifier {
   clear({bool keepStart = false}) {
     if (!keepStart) {
       _startWhere = null;
-      _possibleTargets.clear();
+      clearPossibleTargets();
     }
     _where = null;
 
@@ -187,8 +187,12 @@ class Cursor extends ChangeNotifier {
     'where' : _where, //currentPiece should loaded when deserialized
   };
 
-  void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
+  void clearPossibleTargets() {
     _possibleTargets.clear();
+  }
+
+  void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
+    clearPossibleTargets();
     
     _possibleTargets.addAll(
       matrix.getSpot(where).findFreeNeighborsInDirection(Direction.West).map((spot) => spot.where));
@@ -347,7 +351,7 @@ class Play extends ChangeNotifier {
 
   void _initAis({required bool useDefaultParams}) {
     chaosAi = SimpleChaosAi(_aiConfig, this);
-    orderAi = AlwaysSkipAi(_aiConfig, this);
+    orderAi = SimpleOrderAi(_aiConfig, this);
     /*spotAis = [
     ];
 
@@ -411,7 +415,12 @@ class Play extends ChangeNotifier {
       move = orderAi?.think(this);
     }
     final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
-    return Future.delayed(Duration(milliseconds: runAutomatic ? 0 : 500), () => move);
+    if (runAutomatic) {
+      return Future.delayed(const Duration(milliseconds: 500));
+    }
+    else {
+      return Future.value(move);
+    }
   }
 
 }

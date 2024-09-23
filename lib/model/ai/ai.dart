@@ -129,10 +129,10 @@ abstract class OrderAi extends Ai {
 }
 
 
-class AlwaysSkipAi extends OrderAi {
+class SimpleOrderAi extends OrderAi {
 
-
-  AlwaysSkipAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
+  final strategy = FindMostValuableMoveStrategy();
+  SimpleOrderAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -141,8 +141,18 @@ class AlwaysSkipAi extends OrderAi {
 
   @override
   Move think(Play play) {
-     // no move
-    return Move.skipped();
+    if (play.isGameOver()) {
+      return Move.skipped();
+    }
+    final nextMove = strategy.nextMove(play);
+    if (nextMove == null || !nextMove.isMove()) {
+      return Move.skipped();
+    }
+    final chip = play.matrix.remove(nextMove.from!);
+    if (chip != null) {
+      play.matrix.put(nextMove.to!, chip);
+    }
+    return nextMove;
   }
 }
 

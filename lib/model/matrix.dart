@@ -134,7 +134,11 @@ class Matrix {
   }
 
   Iterable<Spot> streamOccupiedSpots() {
-    return _chipMap.entries.map((elem) => Spot(_play, elem.key, elem.value, getPoint(elem.key)));
+    final list = _chipMap.entries
+        .map((elem) => Spot(_play, elem.key, elem.value, getPoint(elem.key)))
+        .toList();
+    list.shuffle();
+    return list;
   }
 
   Iterable<Spot> streamFreeSpots() {
@@ -185,7 +189,7 @@ class Matrix {
       words.add(word);
     }
 
-    debugPrint("X-Words: $words");
+    //debugPrint("X-Words: $words");
 
     for (var word in words) {
       _findPalindromes(word, _pointMapX);
@@ -212,7 +216,7 @@ class Matrix {
       words.add(word);
     }
 
-    debugPrint("Y-Words: $words");
+    //debugPrint("Y-Words: $words");
 
     for (var word in words) {
       _findPalindromes(word, _pointMapY);
@@ -229,7 +233,7 @@ class Matrix {
         if (start + 1 < end) {
           var subword = word.subword(start, end);
           final isPalindrome = _findPalindrome(subword, pointMap);
-          debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
+          //debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
         }
       }
     }

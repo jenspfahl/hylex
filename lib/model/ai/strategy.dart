@@ -49,12 +49,12 @@ class FindMostValuableSpotStrategy extends ChaosStrategy {
     play.matrix.streamFreeSpots().forEach((spot) {
       play.matrix.put(spot.where, currentChip);
       final pointsForOrder = play.matrix.getTotalPointsForOrder();
-      debugPrint("currentPointsForOrder=$currentPointsForOrder points=$pointsForOrder --> ${currentPointsForOrder - pointsForOrder}");
+      //debugPrint("currentPointsForOrder=$currentPointsForOrder points=$pointsForOrder --> ${currentPointsForOrder - pointsForOrder}");
       possiblePoints.putIfAbsent(currentPointsForOrder - pointsForOrder, () => spot.where);
       play.matrix.remove(spot.where);
     });
 
-    debugPrint("ordered" + possiblePoints.toString());
+    //debugPrint("ordered" + possiblePoints.toString());
     // decide
     final lessPoints = possiblePoints.entries.lastOrNull;
     if (lessPoints != null) {
@@ -68,20 +68,42 @@ abstract class OrderStrategy extends Strategy {
   Move? nextMove(Play play);
 }
 
-class FlatExpandingStrategy extends OrderStrategy {
+class FindMostValuableMoveStrategy extends OrderStrategy {
 
   @override
   Move? nextMove(Play play) {
-      /*final freeNeighbors = spot
-          .findFreeNeighbors()
-          .map((e) => e.where);
-      if (freeNeighbors.isNotEmpty) {
-        final idx = diceInt(freeNeighbors.length);
-        return freeNeighbors.toList()[idx];
+
+    final currentPointsForOrder = play.stats.getPoints(Role.Order);
+
+    // collect
+    final possiblePoints = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
+    play.matrix.streamOccupiedSpots().forEach((spot) {
+      final chip = play.matrix.remove(spot.where);
+      if (chip != null) {
+        play.cursor.detectPossibleTargetsFor(spot.where, play.matrix);
+        for (final possibleTarget in play.cursor.possibleTargets) {
+
+          play.matrix.put(possibleTarget, chip);
+          final pointsForOrder = play.matrix.getTotalPointsForOrder();
+          possiblePoints.putIfAbsent(
+              currentPointsForOrder - pointsForOrder, () => Move.moved(chip, spot.where, possibleTarget));
+          play.matrix.remove(possibleTarget);
+
+        }
+
+        play.cursor.clearPossibleTargets();
+        play.matrix.put(spot.where, chip);
+
       }
-      else {*/
-        return null;
-    /*  }*/
+
+    });
+
+    // decide
+    final mostPoints = possiblePoints.entries.firstOrNull;
+    if (mostPoints != null) {
+      return mostPoints.value;
+    }
+    return null;
   }
 }
 
@@ -100,6 +122,17 @@ class Move {
 
   bool isMove() => !skipped && from != to;
 
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Move && runtimeType == other.runtimeType &&
+              chip == other.chip && from == other.from && to == other.to &&
+              skipped == other.skipped;
+
+  @override
+  int get hashCode =>
+      chip.hashCode ^ from.hashCode ^ to.hashCode ^ skipped.hashCode;
 
   @override
   String toString() {
