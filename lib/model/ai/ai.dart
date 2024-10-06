@@ -101,6 +101,8 @@ class TensorFlowChaosAi extends ChaosAi {
 class SimpleChaosAi extends ChaosAi {
 
   final strategy = FindMostValuableSpotStrategy();
+  final nextRoundOrderStrategy = FindMostValuableMoveStrategy();
+
 
   SimpleChaosAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 

@@ -41,17 +41,4 @@ Future<Duration> _calcMessageDuration(String message, bool isError) async {
 }
 
 
-bool isTooClose(Color color, Color otherColor, int radix) {
-  debugPrint("${color.red}/${round(color.red, radix)} == ${otherColor.red}/${round(otherColor.red, radix)}");
-  return round(color.red, radix) == round(otherColor.red, radix)
-      && round(color.green, radix) == round(otherColor.green, radix)
-      && round(color.blue, radix) == round(otherColor.blue, radix);
-}
-
-int round(int value, int radix) => (value ~/ radix) * radix;
-
-bool tooDark(Color color) => color.red < 50 && color.green < 50 && color.blue < 50;
-
-bool tooLight(Color color) => color.red > 200 && color.green > 180 && color.blue > 200;
-
 

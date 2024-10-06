@@ -81,9 +81,15 @@ class Stock extends ChangeNotifier {
  //   _available.addAll(availableMap.map((key, value) => MapEntry(CellType.fromId(key), value as int)));
   }
 
-  Iterable<StockEntry> getStockEntries() => _available
+  Iterable<StockEntry> getStockEntries() {
+    final entries = _available
       .entries
-      .map((e) => StockEntry(e.key, e.value));
+      .map((e) => StockEntry(e.key, e.value))
+      .toList();
+    
+    entries.sort((e1, e2) => e1.chip.id.compareTo(e2.chip.id));
+    return entries;
+  }
 
   int getStock(GameChip chip) => _available[chip] ?? 0;
 
@@ -232,10 +238,7 @@ class Play extends ChangeNotifier {
 
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
-      Color color;
-      do {
-        color = diceColor();
-      } while (chips.keys.any((c) => isTooClose(c.color, color, 100)) || tooDark(color) || tooLight(color));
+      final color = diceColor(i);
 
       final chip = GameChip(
           String.fromCharCode('a'.codeUnitAt(0) + i), color);
@@ -257,13 +260,58 @@ class Play extends ChangeNotifier {
     _initAis(useDefaultParams: true);
   }
 
-  Color diceColor() {
+  Color diceColor(int i) {
+    /**
+     *    rgb
+     *  0 x
+     *  1 xx
+     *  2  x
+     *  3  xx
+     *  4   x
+     *  5 x x
+     *  6 xxx
+     *  7 y
+     *  8 yy
+     *  9  y
+     * 10  yy
+     * 11   y
+     * 12 y y
+     */
+
+    int r,g,b;
+    if (i > 6) {
+      r = 40.fuzzyTo(50);
+      g = 40.fuzzyTo(50);
+      b = 40.fuzzyTo(50);
+    }
+    else {
+      r = 5.fuzzyTo(15);
+      g = 5.fuzzyTo(15);
+      b = 5.fuzzyTo(15);
+    }
+
+    if (i == 0 || i == 1 || i == 5 || i == 6) {
+      r = 200.fuzzyTo(220);
+    }
+    if (i == 1 || i == 2 || i == 3 || i == 6) {
+      g = 200.fuzzyTo(220);
+    }
+    if (i == 3 || i == 4 || i == 5 || i == 6) {
+      b = 200.fuzzyTo(220);
+    }
+
+    if (i == 7 || i == 8 || i == 12) {
+      r = 140.fuzzyTo(150);
+    }
+    if (i == 8 || i == 9 || i == 10) {
+      g = 140.fuzzyTo(150);
+    }
+    if (i == 10 || i == 11 || i == 12) {
+      b = 140.fuzzyTo(150);
+    }
+
     return Color.fromARGB(
-        210,
-        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-        127.fuzzyIncrease(1, 128).fuzzyDecrease(1, 128),
-        );
+        210, r, g, b);
   }
 
   Play.fromJsonMap(Map<String, dynamic> map) {

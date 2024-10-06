@@ -28,6 +28,10 @@ extension DoubleFortuneExtensions on double {
 }
 
 extension IntFortuneExtensions on int {
+  
+  int fuzzyTo(int to) {
+    return rnd.nextInt(to - this + 1) + this;
+  }
 
   int fuzzyIncrease(double probability, int maxDecrease) {
     return flipWithProbability(probability, this + diceInt(maxDecrease), this);
