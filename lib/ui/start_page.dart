@@ -144,7 +144,7 @@ class _StartPageState extends State<StartPage>
         children: [
           _buildChip("H", Colors.redAccent, 30, 20, chipPadding),
           _buildChip("Y", Colors.blueGrey, 30, 20, chipPadding),
-          Text("9",
+          Text("X",
               style: TextStyle(
                   fontSize: _animation.value,
                   fontStyle: FontStyle.italic,

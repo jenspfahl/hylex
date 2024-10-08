@@ -46,7 +46,7 @@ class AiConfig {
   };
 }
 
-abstract class Ai { // OrderAi, ChaosAi, TensorFlowOrderAi, ProgrammaticOrderAi, ...
+abstract class Ai {
 
   static final P_SHOULD_THINK = "should_think";
 
@@ -74,35 +74,9 @@ abstract class ChaosAi extends Ai {
   ChaosAi(super._aiConfig, super._aiIdentifier, super._play);
 }
 
-class TensorFlowChaosAi extends ChaosAi {
-
-  final strategy = RandomFreeSpotStrategy();
-
-  TensorFlowChaosAi(AiConfig config, Play play) : super(config, (TensorFlowChaosAi).toString(), play);
-
-  @override
-  defaultAiParams() {
-    setP(Ai.P_SHOULD_THINK, 0.5 * 0.25);
-  }
-
-  @override
-  Move think(Play play) {
-    /*final freePlace = strategy.getFreePlace(play);
-    if (freePlace != null) {
-      play.matrix.put(freePlace, piece, parentCellSpot: null);
-    }*/
-
-    return Move.skipped();
-  }
-
-}
-
-
 class SimpleChaosAi extends ChaosAi {
 
-  final strategy = FindMostValuableSpotStrategy();
-  final nextRoundOrderStrategy = FindMostValuableMoveStrategy();
-
+  final strategy = LookAheadForChaosStrategy();
 
   SimpleChaosAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 
@@ -114,10 +88,12 @@ class SimpleChaosAi extends ChaosAi {
   @override
   Move think(Play play) {
     if (!play.matrix.noFreeSpace()) {
-      final freePlace = strategy.placeChip(play);
-      if (freePlace != null && play.currentChip != null) {
-        play.matrix.put(freePlace, play.currentChip!);
-        return Move.placed(play.currentChip!, freePlace);
+      final nextMove = strategy.nextMove(play, 3);
+
+      // do move
+      if (nextMove != null && play.currentChip != null && !nextMove.isMove()) {
+        play.matrix.put(nextMove.from!, play.currentChip!);
+        return Move.placed(play.currentChip!, nextMove.from!);
       }
     }
 
@@ -133,7 +109,7 @@ abstract class OrderAi extends Ai {
 
 class SimpleOrderAi extends OrderAi {
 
-  final strategy = FindMostValuableMoveStrategy();
+  final strategy = LookAheadForOrderStrategy();
   SimpleOrderAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 
   @override
@@ -146,13 +122,16 @@ class SimpleOrderAi extends OrderAi {
     if (play.isGameOver()) {
       return Move.skipped();
     }
-    final nextMove = strategy.nextMove(play);
+    final nextMove = strategy.nextMove(play, 3);
     if (nextMove == null || !nextMove.isMove()) {
       return Move.skipped();
     }
-    final chip = play.matrix.remove(nextMove.from!);
-    if (chip != null) {
-      play.matrix.put(nextMove.to!, chip);
+    // do move
+    if (nextMove.isMove()) {
+      final chip = play.matrix.remove(nextMove.from!);
+      if (chip != null) {
+        play.matrix.put(nextMove.to!, chip);
+      }
     }
     return nextMove;
   }

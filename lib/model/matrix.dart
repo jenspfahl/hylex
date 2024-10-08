@@ -106,6 +106,22 @@ class Matrix {
     return curr == null;
   }
 
+
+  Set<Coordinate> getPossibleTargetsFor(Coordinate where) {
+    final targets = HashSet<Coordinate>();
+
+    targets.addAll(
+        getSpot(where).findFreeNeighborsInDirection(Direction.West).map((spot) => spot.where));
+    targets.addAll(
+        getSpot(where).findFreeNeighborsInDirection(Direction.East).map((spot) => spot.where));
+    targets.addAll(
+        getSpot(where).findFreeNeighborsInDirection(Direction.North).map((spot) => spot.where));
+    targets.addAll(
+        getSpot(where).findFreeNeighborsInDirection(Direction.South).map((spot) => spot.where));
+
+    return targets;
+  }
+
   put(Coordinate where, GameChip chip) {
     if (!_inDimensions(where, dimension)) {
       return;

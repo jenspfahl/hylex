@@ -233,8 +233,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     else {
       setState(() {
         _play.nextRound();
-        _thinkIfAi(context);
       });
+      _thinkIfAi(context);
     }
   }
 

@@ -11,7 +11,142 @@ import '../spot.dart';
 
 
 abstract class Strategy {
+
 }
+
+
+
+class LookAheadForChaosStrategy extends Strategy {
+
+  Move? nextMove(Play play, int depth) {
+    final currentChip = play.currentChip;
+    final currentRole = play.currentRole;
+    if (currentChip == null || currentRole != Role.Chaos) {
+      return null;
+    }
+
+    final currentOrderReward = play.matrix.getTotalPointsForOrder();
+
+    // collect reward points for Order and sort points ascending
+    final orderRewards = SplayTreeMap<int, List<Move>>((a, b) => a.compareTo(b));
+
+    tryNextMoves(play.matrix, currentChip, orderRewards, currentRole, depth, []);
+
+    // decide for least points for Order
+    final leastPoints = orderRewards.entries.firstOrNull;
+    if (leastPoints != null) {
+      debugPrint("AI: most beneficial next move for Chaos: ${leastPoints.value.first} (curr $currentOrderReward, most ${leastPoints.key}) - ${leastPoints.value}");
+      return leastPoints.value.first;
+    }
+    return null;
+  }
+
+}
+
+class LookAheadForOrderStrategy extends Strategy {
+
+  Move? nextMove(Play play, int depth) {
+    final currentChip = play.currentChip;
+    final currentRole = play.currentRole;
+    if (currentChip == null || currentRole != Role.Order) {
+      return null;
+    }
+
+    final currentOrderReward = play.matrix.getTotalPointsForOrder();
+
+    // collect reward points for current role and sort points ascending
+    final orderRewards = SplayTreeMap<int, List<Move>>((a, b) => a.compareTo(b));
+
+    tryNextMoves(play.matrix, currentChip, orderRewards, currentRole, depth, []);
+
+
+    // decide for most points for Order
+    final mostPoints = orderRewards.entries.lastOrNull;
+    if (mostPoints != null) {
+      // check whether any move is beneficial
+      if (mostPoints.key > currentOrderReward) {
+        debugPrint("AI: most beneficial next move for Order: ${mostPoints.value.first} (curr $currentOrderReward, most ${mostPoints.key}) - ${mostPoints.value}");
+        return mostPoints.value.first;
+      }
+      else {
+        // if not, just skip
+        debugPrint("AI: no beneficial next move for Order, skipping (curr $currentOrderReward, most ${mostPoints.key})");
+        return Move.skipped();
+      }
+    }
+    return null;
+  }
+}
+
+void tryNextMoves(Matrix matrix, GameChip currentChip, SplayTreeMap<int, List<Move>> orderRewards, Role forRole, int depth, List<Move> moves) {
+
+  if (depth == 0) {
+    // add reward when end of path reached
+    final orderReward = matrix.getTotalPointsForOrder();
+    orderRewards.putIfAbsent(orderReward, () {
+      debugPrint("AI: add reward $orderReward for $forRole ($depth) : $moves");
+      return moves;
+    });
+    return;
+  }
+
+  if (forRole == Role.Chaos) {
+    // Chaos can only place new chips on free spots
+    matrix.streamFreeSpots().forEach((spot) {
+
+      matrix.put(spot.where, currentChip);
+
+      final newMoves = List<Move>.from(moves);
+      final move = Move.placed(currentChip, spot.where);
+      newMoves.add(move);
+
+      debugPrint("AI: try move $move for $forRole ($depth) : $moves");
+
+      // simulate all possible next steps which is Order
+      tryNextMoves(matrix, currentChip, orderRewards, Role.Order, depth - 1, newMoves);
+
+      matrix.remove(spot.where);
+    });
+  }
+  else if (forRole == Role.Order) {
+    // Try to skip
+    final newMoves = List<Move>.from(moves);
+    final move = Move.skipped();
+    newMoves.add(move);
+
+    debugPrint("AI: try skip move $move for $forRole ($depth) : $moves");
+
+    // simulate all possible next steps which is Chaos
+    tryNextMoves(matrix, currentChip, orderRewards, Role.Chaos, depth - 1, newMoves);
+
+
+    // Order can only move placed chips, try that
+    matrix.streamOccupiedSpots().forEach((spot) {
+      final chip = matrix.remove(spot.where);
+      if (chip != null) {
+
+        matrix.getPossibleTargetsFor(spot.where).forEach((possibleTarget) {
+          matrix.put(possibleTarget, chip);
+
+          final newMoves = List<Move>.from(moves);
+          final move = Move.moved(chip, spot.where, possibleTarget);
+          newMoves.add(move);
+
+          debugPrint("AI: try move $move for $forRole ($depth) : $moves");
+
+          // simulate all possible next steps which is Chaos
+          tryNextMoves(matrix, currentChip, orderRewards, Role.Chaos, depth - 1, newMoves);
+
+          matrix.remove(possibleTarget);
+        });
+
+        matrix.put(spot.where, chip);
+      }
+    });
+  }
+}
+
+
 
 abstract class ChaosStrategy extends Strategy {
   Coordinate? placeChip(Play play);
@@ -32,6 +167,7 @@ class RandomFreeSpotStrategy extends ChaosStrategy {
     }
   }
 }
+
 class FindMostValuableSpotStrategy extends ChaosStrategy {
 
   @override
@@ -78,22 +214,19 @@ class FindMostValuableMoveStrategy extends OrderStrategy {
     // collect
     final possiblePoints = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
     play.matrix.streamOccupiedSpots().forEach((spot) {
+
       final chip = play.matrix.remove(spot.where);
       if (chip != null) {
-        play.cursor.detectPossibleTargetsFor(spot.where, play.matrix);
-        for (final possibleTarget in play.cursor.possibleTargets) {
 
+        play.matrix.getPossibleTargetsFor(spot.where).forEach((possibleTarget) {
           play.matrix.put(possibleTarget, chip);
           final pointsForOrder = play.matrix.getTotalPointsForOrder();
           possiblePoints.putIfAbsent(
               currentPointsForOrder - pointsForOrder, () => Move.moved(chip, spot.where, possibleTarget));
           play.matrix.remove(possibleTarget);
+        });
 
-        }
-
-        play.cursor.clearPossibleTargets();
         play.matrix.put(spot.where, chip);
-
       }
 
     });
@@ -140,9 +273,11 @@ class Move {
       return "-";
     }
     if (isMove()) {
+      return "${chip?.id}@$from->$to";
+    }
+    else {
       return "${chip?.id}@$from";
     }
-    return "${chip?.id}@$from->$to";
   }
 
 }

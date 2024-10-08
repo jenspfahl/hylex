@@ -197,18 +197,12 @@ class Cursor extends ChangeNotifier {
     _possibleTargets.clear();
   }
 
+
   void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
     clearPossibleTargets();
-    
-    _possibleTargets.addAll(
-      matrix.getSpot(where).findFreeNeighborsInDirection(Direction.West).map((spot) => spot.where));
-    _possibleTargets.addAll(
-        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.East).map((spot) => spot.where));
-    _possibleTargets.addAll(
-        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.North).map((spot) => spot.where));
-    _possibleTargets.addAll(
-        matrix.getSpot(where).findFreeNeighborsInDirection(Direction.South).map((spot) => spot.where));
-    debugPrint("pos:"+_possibleTargets.toString());
+
+    _possibleTargets.addAll(matrix.getPossibleTargetsFor(where));
+    debugPrint("pos:$_possibleTargets");
   }
 
 
