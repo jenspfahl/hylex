@@ -92,7 +92,7 @@ class SimpleChaosAi extends ChaosAi {
 
       // do move
       if (nextMove != null && play.currentChip != null && !nextMove.isMove()) {
-        play.matrix.put(nextMove.from!, play.currentChip!);
+        play.matrix.put(nextMove.from!, play.currentChip!, play.stock);
         return Move.placed(play.currentChip!, nextMove.from!);
       }
     }

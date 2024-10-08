@@ -387,7 +387,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       if (!_play.stock.hasStock(currentChip)) {
         toastInfo(context, "No more stock for current chip");
       }
-      _play.matrix.put(coordinate, currentChip);
+      _play.matrix.put(coordinate, currentChip, _play.stock);
       _play.cursor.update(coordinate);
     }
   }
@@ -398,7 +398,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       toastInfo(context, "You can only remove the current placed chip");
     }
     else {
-      _play.matrix.remove(coordinate);
+      _play.matrix.remove(coordinate, _play.stock);
       _play.cursor.clear();
     }
   }
@@ -418,12 +418,12 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     else if (cursor.hasStartCursor) {
       GameChip chip;
       if (cursor.hasCursor) {
-        chip = _play.matrix.remove(cursor.where!)!;
+        chip = _play.matrix.remove(cursor.where!, _play.stock)!;
       }
       else {
-        chip = _play.matrix.remove(cursor.startWhere!)!;
+        chip = _play.matrix.remove(cursor.startWhere!, _play.stock)!;
       }
-      _play.matrix.put(coordinate, chip);
+      _play.matrix.put(coordinate, chip, _play.stock);
       if (cursor.startWhere == coordinate) {
         // move back to start is like a reset
         cursor.clear();

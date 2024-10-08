@@ -1,7 +1,5 @@
 import 'dart:collection';
-import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:hyle_9/model/play.dart';
 import 'package:hyle_9/model/spot.dart';
 
@@ -57,14 +55,13 @@ class Coordinate {
 class Matrix {
 
   late final Coordinate _dimension;
-  final Play _play;
   final _chipMap = HashMap<Coordinate, GameChip>();
   final _pointMapX = HashMap<Coordinate, int>();
   final _pointMapY = HashMap<Coordinate, int>();
 
-  Matrix(this._dimension, this._play);
+  Matrix(this._dimension);
 
-  Matrix.fromJsonMap(Map<String, dynamic> map, this._play) {
+  Matrix.fromJsonMap(Map<String, dynamic> map) {
     _dimension = Coordinate.fromJsonMap(map['dimension']!);
 
 /*
@@ -98,7 +95,7 @@ class Matrix {
   Spot getSpot(Coordinate where) {
     final piece = getChip(where);
     final point = getPoint(where);
-    return Spot(_play, where, piece, point);
+    return Spot(this, where, piece, point);
   }
 
   bool isFree(Coordinate where) {
@@ -122,17 +119,17 @@ class Matrix {
     return targets;
   }
 
-  put(Coordinate where, GameChip chip) {
+  put(Coordinate where, GameChip chip, [Stock? stock]) {
     if (!_inDimensions(where, dimension)) {
       return;
     }
-    _play.stock.decStock(chip);
+    stock?.decStock(chip);
 
     _chipMap[where] = chip;
     _calcPoints(where);
   }
 
-  GameChip? remove(Coordinate where) {
+  GameChip? remove(Coordinate where, [Stock? stock]) {
     if (!_inDimensions(where, dimension)) {
       return null;
     }
@@ -143,7 +140,7 @@ class Matrix {
       _pointMapY.remove(where);
       _calcPoints(where);
 
-      _play.stock.putBack(removedChip);
+      stock?.putBack(removedChip);
     }
 
     return removedChip;
@@ -151,7 +148,7 @@ class Matrix {
 
   Iterable<Spot> streamOccupiedSpots() {
     final list = _chipMap.entries
-        .map((elem) => Spot(_play, elem.key, elem.value, getPoint(elem.key)))
+        .map((elem) => Spot(this, elem.key, elem.value, getPoint(elem.key)))
         .toList();
     list.shuffle();
     return list;

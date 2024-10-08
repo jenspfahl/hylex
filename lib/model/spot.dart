@@ -1,8 +1,4 @@
-
-
 import 'dart:collection';
-
-import 'package:hyle_9/model/play.dart';
 
 import 'chip.dart';
 import 'matrix.dart';
@@ -11,12 +7,12 @@ enum Direction { North, NorthEast, East, SouthEast, South, SouthWest, West, Nort
 
 
 class Spot {
-  Play _play;
+  Matrix _matrix;
   Coordinate _coordinate;
   GameChip? _content;
   int _point;
 
-  Spot(this._play, this._coordinate, this._content, this._point);
+  Spot(this._matrix, this._coordinate, this._content, this._point);
 
   GameChip? get content => _content;
 
@@ -24,7 +20,7 @@ class Spot {
 
   Coordinate get where => _coordinate;
 
-  Play get play => _play;
+  Matrix get matrix => _matrix;
 
   isFree() => _content == null;
 
@@ -103,43 +99,43 @@ class Spot {
   
   Spot getLeftNeighbor() {
     final left = where.left();
-    return Spot(_play, left, _play.matrix.getChip(left), _play.matrix.getPoint(left));
+    return Spot(_matrix, left, _matrix.getChip(left), _matrix.getPoint(left));
   }
     
   Spot getRightNeighbor() {
     final right = where.right();
-    return Spot(_play, right, _play.matrix.getChip(right), _play.matrix.getPoint(right));
+    return Spot(_matrix, right, _matrix.getChip(right), _matrix.getPoint(right));
   }
     
   Spot getTopNeighbor() {
     final top = where.top();
-    return Spot(_play, top, _play.matrix.getChip(top), _play.matrix.getPoint(top));
+    return Spot(_matrix, top, _matrix.getChip(top), _matrix.getPoint(top));
   }
     
   Spot getBottomNeighbor() {
     final bottom = where.bottom();
-    return Spot(_play, bottom, _play.matrix.getChip(bottom), _play.matrix.getPoint(bottom));
+    return Spot(_matrix, bottom, _matrix.getChip(bottom), _matrix.getPoint(bottom));
   }
 
   Spot getTopLeftNeighbor() {
     final topLeft = where.top().left();
-    return Spot(_play, topLeft, _play.matrix.getChip(topLeft), _play.matrix.getPoint(topLeft));
+    return Spot(_matrix, topLeft, _matrix.getChip(topLeft), _matrix.getPoint(topLeft));
   }
   
   Spot getTopRightNeighbor() {
     final topRight = where.top().right();
-    return Spot(_play, topRight, _play.matrix.getChip(topRight), _play.matrix.getPoint(topRight));
+    return Spot(_matrix, topRight, _matrix.getChip(topRight), _matrix.getPoint(topRight));
   }
   
   Spot getBottomLeftNeighbor() {
     final bottomLeft = where.bottom().left();
-    return Spot(_play, bottomLeft, _play.matrix.getChip(bottomLeft), _play.matrix.getPoint(bottomLeft));
+    return Spot(_matrix, bottomLeft, _matrix.getChip(bottomLeft), _matrix.getPoint(bottomLeft));
   }
   
   Spot getBottomRightNeighbor() {
     final bottomRight = where.bottom().right();
-    return Spot(_play, bottomRight, _play.matrix.getChip(bottomRight), _play.matrix.getPoint(bottomRight));
+    return Spot(_matrix, bottomRight, _matrix.getChip(bottomRight), _matrix.getPoint(bottomRight));
   }
 
-  bool isInMatrixDimensions() => _play.matrix.isInDimensions(where);
+  bool isInMatrixDimensions() => _matrix.isInDimensions(where);
 }

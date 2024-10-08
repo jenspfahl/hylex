@@ -242,7 +242,7 @@ class Play extends ChangeNotifier {
 
     _stock = Stock(chips);
 
-    _matrix = Matrix(Coordinate(dimension, dimension), this);
+    _matrix = Matrix(Coordinate(dimension, dimension));
     _cursor = Cursor();
     _opponentMove = Cursor();
 
@@ -345,7 +345,7 @@ class Play extends ChangeNotifier {
     _stats = Stats.fromJsonMap(map["stats"]!);
     _stock = Stock.fromJsonMap(map["stock"]!);
 
-    _matrix = Matrix.fromJsonMap(map["matrix"]!, this);
+    _matrix = Matrix.fromJsonMap(map["matrix"]!);
 
     final Map<String, dynamic> cursorMap = map["cursor"];
     if (cursorMap.isNotEmpty) {
