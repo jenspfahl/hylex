@@ -36,8 +36,10 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   @override
   void initState() {
     super.initState();
-    _resetGame(null);
     SmartDialog.dismiss();
+
+    _resetGame(null);
+    _thinkIfAi(context);
   }
 
   @override
@@ -56,8 +58,6 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
     _play.nextChip();
     _boardLocked = false;
-
-    _thinkIfAi(context);
   }
 
   void _thinkIfAi(BuildContext? context) {
@@ -65,30 +65,50 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       _boardLocked = true;
       _play.startThinking().then((move) {
         debugPrint("ready");
-        _checkEndOfRound(context);
 
-        if (move != null) {
-          if (move.skipped) {
-            toastInfo(context ?? _builderContext, "Opponent skipped move");
-            _play.opponentMove.clear();
-          }
-          else if (move.isMove()) {
-            _play.opponentMove.updateStart(move.from!);
-            _play.opponentMove.update(move.to!);
-          }
-          else {
-            _play.opponentMove.update(move.from!);
-          }
+        _play.opponentMove.clear();
+        if (move.skipped) {
+          toastInfo(context ?? _builderContext, "Opponent skipped move");
         }
+        else if (move.isMove()) {
+          final chip = _play.matrix.remove(move.from!);
+          if (chip != null) {
+            final test = _play.matrix.getSpot(move.to!);
+            if (test.content != null) {
+              toastError(context ?? _builderContext, "!!! $test");
+            }
+            else {
+              _play.matrix.put(move.to!, chip);
+            }
+          }
+
+          _play.opponentMove.updateStart(move.from!);
+          _play.opponentMove.update(move.to!);
+        }
+        else {
+          _play.matrix.put(move.from!, _play.currentChip!, _play.stock);
+          _play.opponentMove.update(move.from!);
+        }
+
+        if (_play.isGameOver()) {
+          _doGameOver(context);
+          return;
+        }
+
+        _play.nextRound(false);
+
+        setState(() {});
+
+
+        _thinkIfAi(context);
 
       });
     }
     else {
-      _boardLocked = false;
+      setState(() {
+        _boardLocked = false;
+      });
     }
-    setState(() {
-      //
-    });
   }
 
   Widget _buildGameBody() {
@@ -97,7 +117,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
           _builderContext = context;
           return Scaffold(
               appBar: AppBar(
-                title: const Text('Hyle 9'),
+                title: const Text('Hyle X'),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.restart_alt_outlined),
@@ -110,6 +130,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                               _resetGame(context);
                             });
                             SmartDialog.dismiss();
+                            _thinkIfAi(context);
                           },  "NO", () {
                             SmartDialog.dismiss();
                           })
@@ -205,12 +226,19 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
           if (_boardLocked) {
             return;
           }
+          if (_play.isGameOver()) {
+            _doGameOver(context);
+            return;
+          }
           if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
             toastInfo(context, "Chaos has to place one chip!");
             return;
           }
-          
-          _checkEndOfRound(context);
+
+          setState(() {
+            _play.nextRound(true);
+          });
+          _thinkIfAi(context);
         },
         child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
             ? 'Skip move'
@@ -218,24 +246,12 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       );
     }
     else if (_play.currentPlayer == Player.Ai) {
-      return const Text("Waiting for Computer to move");
+      return Text("Waiting for ${_play.currentRole.name} to move");
     }
     else if (_play.currentPlayer == Player.RemoteUser) {
       return const Text("Waiting for remote opponent to move");
     }
     return Container();
-  }
-
-  void _checkEndOfRound(BuildContext? context) {
-    if (_play.isGameOver()) {
-      _doGameOver(context);
-    }
-    else {
-      setState(() {
-        _play.nextRound();
-      });
-      _thinkIfAi(context);
-    }
   }
 
   void _doGameOver(BuildContext? context) {

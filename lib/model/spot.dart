@@ -22,7 +22,7 @@ class Spot {
 
   Matrix get matrix => _matrix;
 
-  isFree() => _content == null;
+  bool isFree() => _content == null;
 
   @override
   String toString() {
@@ -50,7 +50,7 @@ class Spot {
       getBottomLeftNeighbor(),
       getBottomRightNeighbor(),
     ];
-    return neighbors;
+    return neighbors.whereType<Spot>(); // filter out null Spots
   }
 
   Iterable<Spot> streamNeighborsForDirection(Direction direction) {
@@ -87,53 +87,74 @@ class Spot {
         spot = getBottomLeftNeighbor();
         break;
     }
-    if (spot.content == null && spot.isInMatrixDimensions()) {
+    if (spot != null && spot.content == null && spot.isInMatrixDimensions()) {
       spots.add(spot);
       spot._streamNeighborsForDirection(direction, spots);
     }
-    else {
-      return spots;
-    }
 
   }
   
-  Spot getLeftNeighbor() {
+  Spot? getLeftNeighbor() {
     final left = where.left();
+    if (!_matrix.isInDimensions(left)) {
+      return null;
+    }
     return Spot(_matrix, left, _matrix.getChip(left), _matrix.getPoint(left));
   }
     
-  Spot getRightNeighbor() {
+  Spot? getRightNeighbor() {
     final right = where.right();
+    if (!_matrix.isInDimensions(right)) {
+      return null;
+    }
     return Spot(_matrix, right, _matrix.getChip(right), _matrix.getPoint(right));
   }
     
-  Spot getTopNeighbor() {
+  Spot? getTopNeighbor() {
     final top = where.top();
+    if (!_matrix.isInDimensions(top)) {
+      return null;
+    }
     return Spot(_matrix, top, _matrix.getChip(top), _matrix.getPoint(top));
   }
     
-  Spot getBottomNeighbor() {
+  Spot? getBottomNeighbor() {
     final bottom = where.bottom();
+    if (!_matrix.isInDimensions(bottom)) {
+      return null;
+    }
     return Spot(_matrix, bottom, _matrix.getChip(bottom), _matrix.getPoint(bottom));
   }
 
-  Spot getTopLeftNeighbor() {
+  Spot? getTopLeftNeighbor() {
     final topLeft = where.top().left();
+    if (!_matrix.isInDimensions(topLeft)) {
+      return null;
+    }
     return Spot(_matrix, topLeft, _matrix.getChip(topLeft), _matrix.getPoint(topLeft));
   }
   
-  Spot getTopRightNeighbor() {
+  Spot? getTopRightNeighbor() {
     final topRight = where.top().right();
+    if (!_matrix.isInDimensions(topRight)) {
+      return null;
+    }
     return Spot(_matrix, topRight, _matrix.getChip(topRight), _matrix.getPoint(topRight));
   }
   
-  Spot getBottomLeftNeighbor() {
+  Spot? getBottomLeftNeighbor() {
     final bottomLeft = where.bottom().left();
+    if (!_matrix.isInDimensions(bottomLeft)) {
+      return null;
+    }
     return Spot(_matrix, bottomLeft, _matrix.getChip(bottomLeft), _matrix.getPoint(bottomLeft));
   }
   
-  Spot getBottomRightNeighbor() {
+  Spot? getBottomRightNeighbor() {
     final bottomRight = where.bottom().right();
+    if (!_matrix.isInDimensions(bottomRight)) {
+      return null;
+    }
     return Spot(_matrix, bottomRight, _matrix.getChip(bottomRight), _matrix.getPoint(bottomRight));
   }
 

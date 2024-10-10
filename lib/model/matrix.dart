@@ -146,7 +146,7 @@ class Matrix {
     return removedChip;
   }
 
-  Iterable<Spot> streamOccupiedSpots() {
+  List<Spot> streamOccupiedSpots() {
     final list = _chipMap.entries
         .map((elem) => Spot(this, elem.key, elem.value, getPoint(elem.key)))
         .toList();
@@ -154,7 +154,7 @@ class Matrix {
     return list;
   }
 
-  Iterable<Spot> streamFreeSpots() {
+  List<Spot> streamFreeSpots() {
     final freeSpots = <Spot>[];
     for (int x = 0; x < _dimension.x; x++) {
       for (int y = 0; y < _dimension.y; y++) {

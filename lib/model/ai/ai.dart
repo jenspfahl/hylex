@@ -48,7 +48,7 @@ class AiConfig {
 
 abstract class Ai {
 
-  static final P_SHOULD_THINK = "should_think";
+  static const P_SHOULD_THINK = "should_think";
 
   final AiConfig _aiConfig;
   final String _aiIdentifier;
@@ -87,17 +87,7 @@ class SimpleChaosAi extends ChaosAi {
 
   @override
   Move think(Play play) {
-    if (!play.matrix.noFreeSpace()) {
-      final nextMove = strategy.nextMove(play, 3);
-
-      // do move
-      if (nextMove != null && play.currentChip != null && !nextMove.isMove()) {
-        play.matrix.put(nextMove.from!, play.currentChip!, play.stock);
-        return Move.placed(play.currentChip!, nextMove.from!);
-      }
-    }
-
-    return Move.skipped();
+    return strategy.nextMove(play, 4);
   }
 }
 
@@ -119,21 +109,7 @@ class SimpleOrderAi extends OrderAi {
 
   @override
   Move think(Play play) {
-    if (play.isGameOver()) {
-      return Move.skipped();
-    }
-    final nextMove = strategy.nextMove(play, 3);
-    if (nextMove == null || !nextMove.isMove()) {
-      return Move.skipped();
-    }
-    // do move
-    if (nextMove.isMove()) {
-      final chip = play.matrix.remove(nextMove.from!);
-      if (chip != null) {
-        play.matrix.put(nextMove.to!, chip);
-      }
-    }
-    return nextMove;
+    return strategy.nextMove(play, 4);
   }
 }
 

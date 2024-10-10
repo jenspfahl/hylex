@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:ui';
 
@@ -358,13 +359,13 @@ class Play extends ChangeNotifier {
     _initAis(useDefaultParams: false);
   }
 
-  get currentRole => _currentRole;
+  Role get currentRole => _currentRole;
 
   switchRole() {
     _currentRole = currentRole == Role.Chaos ? Role.Order : Role.Chaos;
   }
 
-  void nextRound() {
+  void nextRound(bool clearOpponentCursor) {
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
     _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
@@ -375,7 +376,9 @@ class Play extends ChangeNotifier {
     }
     switchRole();
     _cursor.clear();
-    _opponentMove.clear();
+    if (clearOpponentCursor) {
+      _opponentMove.clear();
+    }
   }
 
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
@@ -445,24 +448,28 @@ class Play extends ChangeNotifier {
   };
 
   bool isGameOver() {
-    return _stock.isEmpty();
+    return _stock.isEmpty() || _matrix.noFreeSpace();
   }
 
-  Future<Move?> startThinking() {
-    Move? move;
-    if (_currentRole == Role.Chaos) {
-      move = chaosAi?.think(this);
-    }
-    else if (_currentRole == Role.Order) {
-      move = orderAi?.think(this);
-    }
-    final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
-    if (runAutomatic) {
-      return Future.delayed(const Duration(milliseconds: 500));
-    }
-    else {
-      return Future.value(move);
-    }
+  Future<Move> startThinking() async {
+    
+    return await Isolate.run<Move>(() {
+      Move move;
+      if (_currentRole == Role.Chaos) {
+        move = chaosAi!.think(this);
+      }
+      else { // _currentRole == Role.Order
+        move = orderAi!.think(this);
+      }
+      final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
+      final future = Future<Move>.value(move);
+      if (runAutomatic) {
+        return Future.delayed(const Duration(milliseconds: 500), () => future);
+      }
+      else {
+        return future;
+      }
+    });
   }
 
 }
