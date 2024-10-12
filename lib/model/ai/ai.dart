@@ -76,7 +76,7 @@ abstract class ChaosAi extends Ai {
 
 class SimpleChaosAi extends ChaosAi {
 
-  final strategy = LookAheadForChaosStrategy();
+  final strategy = MinimaxStrategy();
 
   SimpleChaosAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 
@@ -99,7 +99,7 @@ abstract class OrderAi extends Ai {
 
 class SimpleOrderAi extends OrderAi {
 
-  final strategy = LookAheadForOrderStrategy();
+  final strategy = MinimaxStrategy();
   SimpleOrderAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
 
   @override

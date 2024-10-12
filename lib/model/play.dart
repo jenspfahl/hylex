@@ -203,7 +203,6 @@ class Cursor extends ChangeNotifier {
     clearPossibleTargets();
 
     _possibleTargets.addAll(matrix.getPossibleTargetsFor(where));
-    debugPrint("pos:$_possibleTargets");
   }
 
 

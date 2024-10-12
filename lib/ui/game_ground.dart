@@ -64,7 +64,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
       _boardLocked = true;
       _play.startThinking().then((move) {
-        debugPrint("ready");
+        debugPrint("AI ready");
 
         _play.opponentMove.clear();
         if (move.skipped) {
@@ -390,6 +390,10 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
           _handleOccupiedFieldForOrder(where, context);
         }
       }
+
+      _play.stats.setPoints(Role.Order, _play.matrix.getTotalPointsForOrder());
+      _play.stats.setPoints(Role.Chaos, _play.matrix.getTotalPointsForChaos());
+
     });
   }
 

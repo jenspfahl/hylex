@@ -1,5 +1,6 @@
 
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_9/model/chip.dart';
@@ -43,6 +44,118 @@ class LookAheadForChaosStrategy extends Strategy {
 
   }
 
+}
+
+class MinimaxStrategy extends Strategy {
+  Move nextMove(Play play, int depth) {
+
+    final currentRole = play.currentRole;
+    final currentChip = play.currentChip;
+
+    final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
+
+    minimax(currentChip, currentRole, play.matrix, depth, values);
+
+    if (currentRole == Role.Chaos) {
+      final value = values.firstKey();
+      final move = values[value!]!;
+      debugPrint("AI: ${currentRole.name}  $values");
+      debugPrint("AI: least valuable move for ${currentRole.name} id $move with a value of $value");
+      return move;
+    }
+    else { // Order
+      final value = values.lastKey();
+      final move = values[value!]!;
+      debugPrint("AI: ${currentRole.name}  $values");
+      debugPrint("AI: most valuable move for ${currentRole.name} id $move with a value of $value");
+      return move;
+    }
+  }
+
+  int minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Map<int, Move>? values) {
+    if (_isTerminal(matrix, depth)) {
+      return _getValue(matrix);
+    }
+
+    int value = 0;
+    if (currentRole == Role.Chaos) { // min
+      value = 100000000;
+      for (final move in _getMoves(currentChip, matrix, currentRole)) {
+        _doMove(currentChip, matrix, move);
+        var newValue = minimax(currentChip, Role.Order, matrix, depth - 1, null);
+        _undoMove(currentChip, matrix, move);
+        value = min(value, newValue);
+        values?.putIfAbsent(value, () => move);
+      }
+    }
+    else { //  (currentRole == Role.Order) // max
+      value = -100000000;
+      for (final move in _getMoves(currentChip, matrix, currentRole)) {
+        _doMove(currentChip, matrix, move);
+        var newValue = minimax(currentChip, Role.Chaos, matrix, depth - 1, null);
+        _undoMove(currentChip, matrix, move);
+        value = max(value, newValue);
+        values?.putIfAbsent(value, () => move);
+      }
+    }
+
+    return value;
+  }
+
+  bool _isTerminal(Matrix matrix, int depth) {
+    return depth == 0 || matrix.noFreeSpace();
+  }
+
+  int _getValue(Matrix matrix) {
+    return matrix.getTotalPointsForOrder();
+  }
+
+  Iterable<Move> _getMoves(GameChip? currentChip, Matrix matrix, Role forRole) {
+    if (forRole == Role.Chaos) {
+      // Chaos can only place new chips on free spots
+      return matrix.streamFreeSpots().map(((spot) => Move.placed(currentChip!, spot.where)));
+    }
+    else { // (forRole == Role.Order)
+
+      // Order can only move placed chips, try that
+      final moves = <Move>[];
+      for (final spot in matrix.streamOccupiedSpots()) {
+        final chip = spot.content;
+        if (chip != null) {
+          matrix.getPossibleTargetsFor(spot.where).forEach((possibleTarget) {
+            final move = Move.moved(chip, spot.where, possibleTarget);
+            moves.add(move);
+          });
+        }
+      }
+      // Try to skip
+      moves.add(Move.skipped());
+      moves.shuffle();
+      return moves;
+    }
+  }
+
+  _doMove(GameChip? currentChip, Matrix matrix, Move move) {
+
+    if (move.isMove()) {
+      final chip = matrix.remove(move.from!);
+      matrix.put(move.to!, chip!);
+    }
+    else if (!move.skipped) { // is placed
+      matrix.put(move.from!, currentChip!);
+    }
+  }
+  _undoMove(GameChip? currentChip, Matrix matrix, Move move) {
+
+    if (move.isMove()) {
+      final chip = matrix.remove(move.to!);
+      matrix.put(move.from!, chip!);
+    }
+    else if (!move.skipped) { // is placed
+      matrix.remove(move.from!);
+    }
+    
+  }
 }
 
 class LookAheadForOrderStrategy extends Strategy {
