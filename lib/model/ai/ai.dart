@@ -67,18 +67,18 @@ abstract class Ai {
     _aiConfig.setParam(_aiIdentifier, key, value);
   }
 
-  Move think(Play play);
+  Future<Move> think(Play play);
 }
 
 abstract class ChaosAi extends Ai {
   ChaosAi(super._aiConfig, super._aiIdentifier, super._play);
 }
 
-class SimpleChaosAi extends ChaosAi {
+class DefaultChaosAi extends ChaosAi {
 
   final strategy = MinimaxStrategy();
 
-  SimpleChaosAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
+  DefaultChaosAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -86,21 +86,27 @@ class SimpleChaosAi extends ChaosAi {
   }
 
   @override
-  Move think(Play play) {
-    return strategy.nextMove(play, 4);
+  Future<Move> think(Play play) async {
+    int depth = _getMaxDepthBasedOnWorkload(play);
+    if (play.matrix.numberOfPlacedChips() == 0) {
+      depth = 1;
+    }
+    else if (play.matrix.numberOfPlacedChips() == 1) {
+      depth = 2;
+    }
+    return strategy.nextMove(play, depth);
   }
 }
-
 
 abstract class OrderAi extends Ai {
   OrderAi(super._aiConfig, super._aiIdentifier, super._play);
 }
 
 
-class SimpleOrderAi extends OrderAi {
+class DefaultOrderAi extends OrderAi {
 
   final strategy = MinimaxStrategy();
-  SimpleOrderAi(AiConfig config, Play play) : super(config, (SimpleChaosAi).toString(), play);
+  DefaultOrderAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -108,8 +114,25 @@ class SimpleOrderAi extends OrderAi {
   }
 
   @override
-  Move think(Play play) {
-    return strategy.nextMove(play, 4);
+  Future<Move> think(Play play) async {
+    int depth = _getMaxDepthBasedOnWorkload(play);
+    if (play.matrix.numberOfPlacedChips() == 1) {
+      depth = 2;
+    }
+    return strategy.nextMove(play, depth);
   }
 }
+
+int _getMaxDepthBasedOnWorkload(Play play) {
+  int depth = 4;
+  if (play.matrix.dimension.x == 9) {
+    depth = 3;
+  }
+  else if (play.matrix.dimension.x > 9) {
+    depth = 2;
+  }
+
+  return depth;
+}
+
 

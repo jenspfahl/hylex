@@ -370,7 +370,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
     if (_boardLocked) {
-      return;
+      return; //TODO allow long tab for locked boards
     }
 
     setState(() {

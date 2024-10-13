@@ -104,20 +104,21 @@ class Matrix {
   }
 
 
-  Set<Coordinate> getPossibleTargetsFor(Coordinate where) {
-    final targets = HashSet<Coordinate>();
+  Set<Spot> getPossibleTargetsFor(Coordinate where) {
+    final targets = HashSet<Spot>();
 
     targets.addAll(
-        getSpot(where).findFreeNeighborsInDirection(Direction.West).map((spot) => spot.where));
+        getSpot(where).findFreeNeighborsInDirection(Direction.West));
     targets.addAll(
-        getSpot(where).findFreeNeighborsInDirection(Direction.East).map((spot) => spot.where));
+        getSpot(where).findFreeNeighborsInDirection(Direction.East));
     targets.addAll(
-        getSpot(where).findFreeNeighborsInDirection(Direction.North).map((spot) => spot.where));
+        getSpot(where).findFreeNeighborsInDirection(Direction.North));
     targets.addAll(
-        getSpot(where).findFreeNeighborsInDirection(Direction.South).map((spot) => spot.where));
+        getSpot(where).findFreeNeighborsInDirection(Direction.South));
 
     return targets;
   }
+
 
   put(Coordinate where, GameChip chip, [Stock? stock]) {
     if (!_inDimensions(where, dimension)) {
@@ -126,6 +127,7 @@ class Matrix {
     stock?.decStock(chip);
 
     _chipMap[where] = chip;
+
     _calcPoints(where);
   }
 
@@ -138,6 +140,7 @@ class Matrix {
     if (removedChip != null) {
       _pointMapX.remove(where);
       _pointMapY.remove(where);
+
       _calcPoints(where);
 
       stock?.putBack(removedChip);
@@ -145,6 +148,7 @@ class Matrix {
 
     return removedChip;
   }
+
 
   List<Spot> streamOccupiedSpots() {
     final list = _chipMap.entries
@@ -275,6 +279,15 @@ class Matrix {
 
   bool noFreeSpace() => _chipMap.values.length >= dimension.x * dimension.y;
 
+  int numberOfPlacedChips() => _chipMap.length;
+
+  Matrix clone() {
+    final clonedMatrix = Matrix(_dimension);
+    clonedMatrix._chipMap.addAll(_chipMap);
+    clonedMatrix._pointMapX.addAll(_pointMapX);
+    clonedMatrix._pointMapY.addAll(_pointMapY);
+    return clonedMatrix;
+  }
 
 
 }

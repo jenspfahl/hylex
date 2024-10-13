@@ -202,7 +202,7 @@ class Cursor extends ChangeNotifier {
   void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
     clearPossibleTargets();
 
-    _possibleTargets.addAll(matrix.getPossibleTargetsFor(where));
+    _possibleTargets.addAll(matrix.getPossibleTargetsFor(where).map((spot) => spot.where));
   }
 
 
@@ -394,8 +394,8 @@ class Play extends ChangeNotifier {
   }
 
   void _initAis({required bool useDefaultParams}) {
-    chaosAi = SimpleChaosAi(_aiConfig, this);
-    orderAi = SimpleOrderAi(_aiConfig, this);
+    chaosAi = DefaultChaosAi(_aiConfig, this);
+    orderAi = DefaultOrderAi(_aiConfig, this);
     /*spotAis = [
     ];
 
@@ -451,15 +451,18 @@ class Play extends ChangeNotifier {
   }
 
   Future<Move> startThinking() async {
-    
-    return await Isolate.run<Move>(() {
+
+    return await Isolate.run<Move>(() async {
+      final start = DateTime.now().millisecondsSinceEpoch;
       Move move;
       if (_currentRole == Role.Chaos) {
-        move = chaosAi!.think(this);
+        move = await chaosAi!.think(this);
       }
       else { // _currentRole == Role.Order
-        move = orderAi!.think(this);
+        move = await orderAi!.think(this);
       }
+      final time = DateTime.now().millisecondsSinceEpoch - start;
+      debugPrint("Time to predict next move: $time ms");
       final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
       final future = Future<Move>.value(move);
       if (runAutomatic) {
