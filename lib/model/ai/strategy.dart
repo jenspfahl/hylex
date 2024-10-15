@@ -25,7 +25,9 @@ class MinimaxStrategy extends Strategy {
     final currentChip = play.currentChip;
 
     final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
-    final load = Load(0);
+
+    final loadForecast = _predictLoad(currentRole, play.matrix, depth);
+    final load = Load(loadForecast);
 
     await minimax(currentChip, currentRole, play.matrix, depth, load, values);
 
@@ -64,7 +66,6 @@ class MinimaxStrategy extends Strategy {
 
     final resultPorts = <ReceivePort>[];
     var moves = _getMoves(currentChip, matrix, currentRole);
-    load.incMax(moves.length);
     for (final move in moves) {
       if (_doInParallel(depth, values)) {
         final resultPort = ReceivePort();
@@ -81,20 +82,18 @@ class MinimaxStrategy extends Strategy {
         }
         //debugPrint("  in depth result: $depth: $value $move for $currentRole");
         values?.putIfAbsent(value, () => move);
-        if (values != null) {
-          load.incProgress();
-        }
       }
     }
 
     if (resultPorts.isNotEmpty) {
       final valuesAndMoves = await Future.wait(resultPorts.map((resultPort) => resultPort.first));
-      for (var valueAndMove in valuesAndMoves) {
-        final value = valueAndMove[0];
-        final move = valueAndMove[1];
+      for (var valueAndMoveAndLoad in valuesAndMoves) {
+        int value = valueAndMoveAndLoad[0];
+        Move move = valueAndMoveAndLoad[1];
+        Load singleLoad = valueAndMoveAndLoad[2];
+        load.addProgress(singleLoad.curr);
         //debugPrint("received: $value $move");
         values?.putIfAbsent(value, () => move);
-        load.incProgress();
       }
     }
 
@@ -111,7 +110,7 @@ class MinimaxStrategy extends Strategy {
     Load load = args[6];
 
     _tryNextMove(currentChip, currentRole, matrix, move, depth, load).then((newValue) {
-      resultPort.send([newValue, move]);
+      resultPort.send([newValue, move, load]);
     });
   }
 
@@ -119,6 +118,9 @@ class MinimaxStrategy extends Strategy {
     final clonedMatrix = matrix.clone();
     _doMove(currentChip, clonedMatrix, move);
     var newValue = await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load, null);
+    if (_isTerminal(matrix, depth - 1)) {
+      load.incProgress();
+    }
     return newValue;
   }
 
@@ -168,6 +170,42 @@ class MinimaxStrategy extends Strategy {
   }
 
   bool _doInParallel(int depth, Map<int, Move>? values) => depth >= 3 && values != null;
+
+  int _predictLoad(Role role, Matrix matrix, int depth) {
+    int value = 0;
+    var numberOfPlacedChips = matrix.numberOfPlacedChips();
+    final totalCells = matrix.dimension.x * matrix.dimension.y;
+    final possibleMaxMoves = (matrix.dimension.x + matrix.dimension.y) - 1; // only -1 to consider skip move
+
+    for (int i = 0; i < depth; i++) {
+
+      if (role == Role.Chaos) {
+        final freeCells = totalCells - numberOfPlacedChips;
+
+        final newValue = max(1, freeCells);
+
+        value = max(1, value) * newValue;
+        debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, freeCells: $freeCells ==> $newValue");
+        numberOfPlacedChips++; // add one for each placed chip by Chaos
+
+        role = Role.Order;
+      }
+      else {
+        final fillRatio = (numberOfPlacedChips - 1) / (totalCells - 1); // ratio based on all cells except current, therefore - 1
+        final freeRatio = pow((1 - fillRatio), 2); // trying to determine an avg of moveable free cells
+        final avgPossibleMoves = max(1, possibleMaxMoves * freeRatio);
+        final avgPossibleMoveCount = numberOfPlacedChips * avgPossibleMoves;
+        final newValue = max(1, avgPossibleMoveCount.round());
+
+        value = max(1, value) * newValue;
+        debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, avgPossibleMoves: $avgPossibleMoves, freeRatio: $freeRatio ==> $newValue");
+
+        role = Role.Chaos;
+      }
+    }
+    return value;
+
+  }
 }
 
 
@@ -215,7 +253,7 @@ class Move {
 
 class Load {
   int curr = 0;
-  int max;
+  final int max;
 
   Load(this.max);
 
@@ -223,8 +261,8 @@ class Load {
     curr++;
   }
 
-  incMax(int max) {
-    this.max = this.max + max;
+  addProgress(int val) {
+   curr += val;
   }
 
   double get ratio => curr / max;
@@ -233,6 +271,7 @@ class Load {
   String toString() {
     return '$curr/$max ($ratio)';
   }
+
 }
 
 
