@@ -68,7 +68,7 @@ abstract class Ai {
     _aiConfig.setParam(_aiIdentifier, key, value);
   }
 
-  Future<Move> think(Play play);
+  Future<Move> think(Play play, Function(Load) aiProgressListener);
 }
 
 abstract class ChaosAi extends Ai {
@@ -77,10 +77,9 @@ abstract class ChaosAi extends Ai {
 
 class DefaultChaosAi extends ChaosAi {
 
-  final Function(Load) _loadChangeListener;
   final strategy = MinimaxStrategy();
 
-  DefaultChaosAi(AiConfig config, Play play, this._loadChangeListener) : super(config, (DefaultChaosAi).toString(), play);
+  DefaultChaosAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
 
 
   @override
@@ -89,7 +88,7 @@ class DefaultChaosAi extends ChaosAi {
   }
 
   @override
-  Future<Move> think(Play play) async {
+  Future<Move> think(Play play, Function(Load) aiProgressListener) async {
     int depth = _getMaxDepthBasedOnWorkload(play);
     if (play.matrix.numberOfPlacedChips() == 0) {
       depth = 1;
@@ -97,7 +96,7 @@ class DefaultChaosAi extends ChaosAi {
     else if (play.matrix.numberOfPlacedChips() == 1) {
       depth = 2;
     }
-    return strategy.nextMove(play, depth, _loadChangeListener);
+    return strategy.nextMove(play, depth, aiProgressListener);
   }
 }
 
@@ -108,9 +107,8 @@ abstract class OrderAi extends Ai {
 
 class DefaultOrderAi extends OrderAi {
 
-  final Function(Load) _loadChangeListener;
   final strategy = MinimaxStrategy();
-  DefaultOrderAi(AiConfig config, Play play, this._loadChangeListener) : super(config, (DefaultChaosAi).toString(), play);
+  DefaultOrderAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -118,12 +116,12 @@ class DefaultOrderAi extends OrderAi {
   }
 
   @override
-  Future<Move> think(Play play) async {
+  Future<Move> think(Play play, Function(Load) aiProgressListener) async {
     int depth = _getMaxDepthBasedOnWorkload(play);
     if (play.matrix.numberOfPlacedChips() == 1) {
       depth = 2;
     }
-    return strategy.nextMove(play, depth, _loadChangeListener);
+    return strategy.nextMove(play, depth, aiProgressListener);
   }
 }
 
@@ -133,10 +131,10 @@ int _getMaxDepthBasedOnWorkload(Play play) {
     depth = 4;//5;
   }
   else if (play.matrix.dimension.x > 9) {
-    depth = 3;
+    depth = 4;
   }
   else if (play.matrix.dimension.x > 11) {
-    depth = 3;
+    depth = 4;
   }
 
   return depth;

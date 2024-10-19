@@ -120,7 +120,7 @@ class Matrix {
   }
 
 
-  put(Coordinate where, GameChip chip, [Stock? stock]) {
+  put(Coordinate where, GameChip chip, [Stock? stock,  bool calculate = true]) {
     if (!_inDimensions(where, dimension)) {
       return;
     }
@@ -128,10 +128,10 @@ class Matrix {
 
     _chipMap[where] = chip;
 
-    _calcPoints(where);
+    if (calculate) _calcPoints(where);
   }
 
-  GameChip? remove(Coordinate where, [Stock? stock]) {
+  GameChip? remove(Coordinate where, [Stock? stock, bool calculate = true]) {
     if (!_inDimensions(where, dimension)) {
       return null;
     }
@@ -141,12 +141,32 @@ class Matrix {
       _pointMapX.remove(where);
       _pointMapY.remove(where);
 
-      _calcPoints(where);
+      if (calculate) _calcPoints(where);
 
       stock?.putBack(removedChip);
     }
 
     return removedChip;
+  }
+
+
+  void move(Coordinate from, Coordinate to) {
+    final chip = remove(from, null, false);
+    put(to, chip!, null, false);
+    if (from.x == to.x) { // moved vertically
+      _calcPointsOnXAxis(from.x);
+      _calcPointsOnYAxis(from.y);
+      _calcPointsOnYAxis(to.y);
+    }
+    else if (from.y == to.y) { // moved horizontally
+      _calcPointsOnXAxis(from.x);
+      _calcPointsOnXAxis(to.x);
+      _calcPointsOnYAxis(from.y);
+    }
+    else {
+      _calcPoints(from);
+      _calcPoints(to);
+    }
   }
 
 
@@ -184,12 +204,10 @@ class Matrix {
     // shards can be derived from map during deserialization
   };
 
-  void _calcPoints(Coordinate where) {
+  void _calcPointsOnXAxis(int x) {
     final words = <Word>[];
     var word = Word();
     
-    // on x-axis
-    final x = where.x;
     for (int y = 0; y < _dimension.y; y++) {
       var coordinate = Coordinate(x, y);
       _pointMapX[coordinate] = 0;
@@ -212,11 +230,12 @@ class Matrix {
       _findPalindromes(word, _pointMapX);
     }
 
-    words.clear();
-    word = Word();
+  }
 
-    // on y-axis
-    final y = where.y;
+  void _calcPointsOnYAxis(int y) {
+    final words = <Word>[];
+    var word = Word();
+
     for (int x = 0; x < _dimension.x; x++) {
       var coordinate = Coordinate(x, y);
       _pointMapY[coordinate] = 0;
@@ -238,7 +257,12 @@ class Matrix {
     for (var word in words) {
       _findPalindromes(word, _pointMapY);
     }
-    
+  }
+
+
+  void _calcPoints(Coordinate where) {
+    _calcPointsOnXAxis(where.x);
+    _calcPointsOnYAxis(where.y);
   }
 
 
@@ -248,23 +272,21 @@ class Matrix {
     for (int start = 0; start < wordLength - 1; start++ ) {
       for (int end = wordLength; end > 1; end-- ) {
         if (start + 1 < end) {
-          var subword = word.subword(start, end);
-          final isPalindrome = _findPalindrome(subword, pointMap);
+          final subword = word.subword(start, end);
+          _countIfPalindrome(subword, pointMap);
           //debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
         }
       }
     }
   }
 
-  bool _findPalindrome(Word word, Map<Coordinate, int> pointMap) {
+  _countIfPalindrome(Word word, Map<Coordinate, int> pointMap) {
     if (word.isWordPalindrome()) {
       for (Letter letter in word.letters) {
         final currPoints = pointMap[letter.where];
         pointMap[letter.where] = (currPoints ?? 0) + 1;
       }
-      return true;
     }
-    return false;
   }
 
   int getTotalPointsForOrder() {
@@ -328,7 +350,28 @@ class Word {
   
   bool isWord() => _letters.length >= 2;
   
-  bool isWordPalindrome() => isWord() && toWord() == toReversedWord();
+  bool isWordPalindrome() {
+    final length = _letters.length;
+
+    if (length == 2) {
+      return _letters[0].value == _letters[1].value;
+    }
+    else if (length == 3) {
+      return _letters[0].value == _letters[2].value;
+    }
+    else if (length == 4) {
+      return _letters[0].value == _letters[3].value && _letters[1].value == _letters[2].value;
+    }
+    else if (length == 5) {
+      return _letters[0].value == _letters[4].value && _letters[1].value == _letters[3].value;
+    }
+    else if (length >= 6 ) {
+      return toWord() == toReversedWord();
+    }
+    else {
+      return false;
+    }
+  }
 
   bool isEmpty() => _letters.isEmpty;
 

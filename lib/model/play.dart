@@ -16,7 +16,7 @@ import 'fortune.dart';
 import 'matrix.dart';
 
 
-class Stats extends ChangeNotifier {
+class Stats {
   final _points = HashMap<Role, int>();
  
   Stats();
@@ -36,13 +36,11 @@ class Stats extends ChangeNotifier {
 
   incPoints(Role role) {
     _points[role] = getPoints(role) + 1;
-    notifyListeners();
-  }  
+  }
   
   decPoints(Role role) {
     final curr = getPoints(role);
     _points[role] = max(0, curr - 1);
-    notifyListeners();
   }
 
 
@@ -70,7 +68,7 @@ class StockEntry {
   bool isEmpty() => amount == 0;
 }
 
-class Stock extends ChangeNotifier {
+class Stock {
   final _available = HashMap<GameChip, int>();
 
   Stock(Map<GameChip, int> initialStock) {
@@ -98,13 +96,11 @@ class Stock extends ChangeNotifier {
 
   incStock(GameChip chip) {
     _available[chip] = getStock(chip) + 1;
-    notifyListeners();
   }
 
   decStock(GameChip chip) {
     final curr = getStock(chip);
     _available[chip] = max(0, curr - 1);
-    notifyListeners();
   }
 
   Map<String, dynamic> toJson() => {
@@ -141,7 +137,7 @@ class Stock extends ChangeNotifier {
 
 }
 
-class Cursor extends ChangeNotifier {
+class Cursor {
   Coordinate? _startWhere;
   Coordinate? _where;
   final _possibleTargets = HashSet<Coordinate>();
@@ -164,14 +160,10 @@ class Cursor extends ChangeNotifier {
 
   update(Coordinate where) {
     _where = where;
-
-    notifyListeners();
   }
 
   updateStart(Coordinate where) {
     _startWhere = where;
-
-    notifyListeners();
   }
 
   clear({bool keepStart = false}) {
@@ -180,8 +172,6 @@ class Cursor extends ChangeNotifier {
       clearPossibleTargets();
     }
     _where = null;
-
-    notifyListeners();
   }
 
 
@@ -209,7 +199,7 @@ class Cursor extends ChangeNotifier {
 }
 
 
-class Play extends ChangeNotifier {
+class Play {
 
   int _currentRound = 1;
   Role _currentRole = Role.Chaos;
@@ -245,10 +235,6 @@ class Play extends ChangeNotifier {
     _matrix = Matrix(Coordinate(dimension, dimension));
     _cursor = Cursor();
     _opponentMove = Cursor();
-
-    _stats.addListener(() => notifyListeners());
-    _stock.addListener(() => notifyListeners());
-    _cursor.addListener(() => notifyListeners());
 
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
@@ -307,12 +293,12 @@ class Play extends ChangeNotifier {
     return Color.fromARGB(
         210, r, g, b);
   }
-
+/*
   Play.fromJsonMap(Map<String, dynamic> map) {
     _chaosPlayer = Player.Ai;
     _orderPlayer = Player.User;
     _currentRound = map["currentGen"]??0;
-   /* _ticks = map["ticks"]??0;
+   _ticks = map["ticks"]??0;
     _secondsPerTick = map["secondsPerTick"]??0;
     _paused = map["paused"]??false;
     _lifeTime = map["lifeTime"]??0;
@@ -341,7 +327,7 @@ class Play extends ChangeNotifier {
           currentVisibleRectLeft, currentVisibleRectTop,
           currentVisibleRectRight, currentVisibleRectBottom);
     }
-*/
+
     _stats = Stats.fromJsonMap(map["stats"]!);
     _stock = Stock.fromJsonMap(map["stock"]!);
 
@@ -357,7 +343,7 @@ class Play extends ChangeNotifier {
     _aiConfig = AiConfig.fromJsonMap(map["aiConfig"]);
     _initAis(useDefaultParams: false);
   }
-
+*/
   Role get currentRole => _currentRole;
 
   switchRole() {
@@ -394,8 +380,8 @@ class Play extends ChangeNotifier {
   }
 
   void _initAis({required bool useDefaultParams}) {
-    chaosAi = DefaultChaosAi(_aiConfig, this, _loadChangeListener);
-    orderAi = DefaultOrderAi(_aiConfig, this, _loadChangeListener);
+    chaosAi = DefaultChaosAi(_aiConfig, this);
+    orderAi = DefaultOrderAi(_aiConfig, this);
     /*spotAis = [
     ];
 
@@ -422,7 +408,6 @@ class Play extends ChangeNotifier {
   GameChip? get currentChip => _currentChip;
   GameChip? nextChip() {
     _currentChip = _stock.drawNext();
-    notifyListeners();
     return currentChip;
   }
 
@@ -430,7 +415,6 @@ class Play extends ChangeNotifier {
 
   incRound() {
     _currentRound++;
-    notifyListeners();
   }
 
 
@@ -450,9 +434,43 @@ class Play extends ChangeNotifier {
     return _stock.isEmpty() || _matrix.noFreeSpace();
   }
 
-  Future<Move> startThinking() async {
+  Future<Move> startThinking(Function(Load) aiProgressListener) async {
 
-    return await Isolate.run<Move>(() async {
+    final resultPort = ReceivePort();
+    Move? move;
+    final subscription = resultPort.listen((value) {
+
+      if (value is Move) {
+        // close this stream
+        resultPort.close();
+        move = value;
+      }
+      else if (value is Load) {
+        aiProgressListener(value);
+      }
+    });
+
+    debugPrint("Spawn main $subscription");
+
+    Isolate.spawn(_startThinking, [resultPort.sendPort, this]);
+
+
+    return subscription.asFuture(move);
+
+    /*await Future.wait([subscription.asFuture()]); //TODO this blocks UI!!!
+
+    final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
+    final future = Future<Move>.value(move);
+    if (runAutomatic) {
+      return Future.delayed(const Duration(milliseconds: 500), () => future);
+    }
+    else {
+      return future;
+    }
+*/
+    /*
+
+    return await Isolate.run<Move>(() async {//TODO spawn!!
       final start = DateTime.now().millisecondsSinceEpoch;
       Move move;
       if (_currentRole == Role.Chaos) {
@@ -471,11 +489,31 @@ class Play extends ChangeNotifier {
       else {
         return future;
       }
-    });
+    });*/
   }
 
 
-  _loadChangeListener(Load load) {
-    if (load.curr % 5000 == 0) debugPrint("intermediate load: $load, ${identityHashCode(load)}");
+
+  void _startThinking(List<dynamic> args) {
+    SendPort resultPort = args[0];
+    Play play = args[1];
+
+    final start = DateTime.now().millisecondsSinceEpoch;
+    if (play.currentRole == Role.Chaos) {
+      play.chaosAi!.think(play, (load) => resultPort.send(load)).then((move) {
+        resultPort.send(move);
+        final time = DateTime.now().millisecondsSinceEpoch - start;
+        debugPrint("Time to predict next Chaos move: $time ms");
+      });
+    }
+    else { // _currentRole == Role.Order
+      play.orderAi!.think(play, (load) => resultPort.send(load)).then((move) {
+        resultPort.send(move);
+        final time = DateTime.now().millisecondsSinceEpoch - start;
+        debugPrint("Time to predict next Order move: $time ms");
+      });
+    }
+
+
   }
 }

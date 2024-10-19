@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
+import '../model/ai/strategy.dart';
 import '../model/chip.dart';
 import '../model/matrix.dart';
 import '../model/play.dart';
@@ -33,6 +34,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   late BuildContext _builderContext;
 
+  Load? _load = null;
+
   @override
   void initState() {
     super.initState();
@@ -60,10 +63,20 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     _boardLocked = false;
   }
 
+
+  _aiProgressListener(Load load) {
+    if (load.curr % 10000 == 0) {
+      setState(() {
+        _load = load;
+      });
+      debugPrint("intermediate load: $load, ${identityHashCode(load)}");
+    }
+  }
+
   void _thinkIfAi(BuildContext? context) {
     if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
       _boardLocked = true;
-      _play.startThinking().then((move) {
+      _play.startThinking(_aiProgressListener).then((move) {
         debugPrint("AI ready");
 
         _play.opponentMove.clear();
@@ -246,10 +259,10 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       );
     }
     else if (_play.currentPlayer == Player.Ai) {
-      return Text("Waiting for ${_play.currentRole.name} to move");
+      return Text("Waiting for ${_play.currentRole.name} to move (${_load?.readableRatio??"-" })");
     }
     else if (_play.currentPlayer == Player.RemoteUser) {
-      return const Text("Waiting for remote opponent to move");
+      return Text("Waiting for remote opponent to move (${_load?.readableRatio??"-" })");
     }
     return Container();
   }

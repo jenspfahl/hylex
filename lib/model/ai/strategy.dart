@@ -177,8 +177,7 @@ class MinimaxStrategy extends Strategy {
 
   _doMove(GameChip? currentChip, Matrix matrix, Move move) {
     if (move.isMove()) {
-      final chip = matrix.remove(move.from!);
-      matrix.put(move.to!, chip!);
+      matrix.move(move.from!, move.to!);
     }
     else if (!move.skipped) { // is placed
       matrix.put(move.from!, currentChip!);
@@ -286,6 +285,7 @@ class Load extends ChangeNotifier {
   }
 
   double get ratio => curr / max;
+  int get readableRatio => (ratio * 100).ceil();
 
   @override
   String toString() {
