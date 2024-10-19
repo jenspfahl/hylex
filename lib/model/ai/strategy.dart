@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:collection';
 import 'dart:isolate';
 import 'dart:math';
@@ -14,12 +15,14 @@ import '../spot.dart';
 
 abstract class Strategy {
 
-  Future<Move> nextMove(Play play, int depth);
+  Future<Move> nextMove(Play play, int depth, Function(Load)? loadChangeListener);
 }
 
 class MinimaxStrategy extends Strategy {
+  MinimaxStrategy();
+
   @override
-  Future<Move> nextMove(Play play, int depth) async {
+  Future<Move> nextMove(Play play, int depth, Function(Load)? loadChangeListener) async {
 
     final currentRole = play.currentRole;
     final currentChip = play.currentChip;
@@ -28,6 +31,9 @@ class MinimaxStrategy extends Strategy {
 
     final loadForecast = _predictLoad(currentRole, play.matrix, depth);
     final load = Load(loadForecast);
+    if (loadChangeListener != null) {
+      load.addListener(() => loadChangeListener(load));
+    }
 
     await minimax(currentChip, currentRole, play.matrix, depth, load, values);
 
@@ -50,6 +56,7 @@ class MinimaxStrategy extends Strategy {
 
   Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Load load, Map<int, Move>? values) async {
     if (_isTerminal(matrix, depth)) {
+      load.incProgress();
       return _getValue(matrix);
     }
 
@@ -64,13 +71,32 @@ class MinimaxStrategy extends Strategy {
       opponentRole = Role.Chaos;
     }
 
-    final resultPorts = <ReceivePort>[];
-    var moves = _getMoves(currentChip, matrix, currentRole);
+    final subscriptionWaits = <Future>[];
+    var moves = _getMoves(currentChip, matrix, currentRole); //try to limit
     for (final move in moves) {
       if (_doInParallel(depth, values)) {
-        final resultPort = ReceivePort();
-        Isolate.spawn(_tryNextMoveAsync, [resultPort.sendPort, currentChip, opponentRole, matrix, move, depth, load]);
-        resultPorts.add(resultPort);
+        final resultPort = ReceivePort("sub_for_$move");
+
+        final subscription = resultPort.listen((value) {
+
+              load.incProgress();
+
+              if (value != -1) {
+                //load.addProgress(singleLoad.curr);
+                // debugPrint("received: $value $move");
+
+                values?.putIfAbsent(value, () => move);
+
+                // close this stream
+                resultPort.close();
+              }
+            });
+
+        debugPrint("Spawn sub $subscription");
+        subscriptionWaits.add(subscription.asFuture());
+
+        // Spawning an isolate copies all parameters. They are then completely detached from its originals
+        Isolate.spawn(_tryNextMoveAsync, [resultPort.sendPort, currentChip, opponentRole, matrix, move, depth, load.max]);
       }
       else {
         int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, depth, load);
@@ -85,17 +111,7 @@ class MinimaxStrategy extends Strategy {
       }
     }
 
-    if (resultPorts.isNotEmpty) {
-      final valuesAndMoves = await Future.wait(resultPorts.map((resultPort) => resultPort.first));
-      for (var valueAndMoveAndLoad in valuesAndMoves) {
-        int value = valueAndMoveAndLoad[0];
-        Move move = valueAndMoveAndLoad[1];
-        Load singleLoad = valueAndMoveAndLoad[2];
-        load.addProgress(singleLoad.curr);
-        //debugPrint("received: $value $move");
-        values?.putIfAbsent(value, () => move);
-      }
-    }
+    await Future.wait(subscriptionWaits);
 
     return value;
   }
@@ -107,21 +123,21 @@ class MinimaxStrategy extends Strategy {
     Matrix matrix = args[3];
     Move move = args[4];
     int depth = args[5];
-    Load load = args[6];
+    int maxLoad = args[6];
+
+    // add listener to load of the particular isolate
+    final load = Load(maxLoad);
+    load.addListener(() => resultPort.send(-1)); // -1 indicates an intermediate event, no final calculation
 
     _tryNextMove(currentChip, currentRole, matrix, move, depth, load).then((newValue) {
-      resultPort.send([newValue, move, load]);
+      resultPort.send(newValue);
     });
   }
 
   Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, int depth, Load load) async {
     final clonedMatrix = matrix.clone();
     _doMove(currentChip, clonedMatrix, move);
-    var newValue = await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load, null);
-    if (_isTerminal(matrix, depth - 1)) {
-      load.incProgress();
-    }
-    return newValue;
+    return await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load, null);
   }
 
   bool _isTerminal(Matrix matrix, int depth) {
@@ -251,18 +267,22 @@ class Move {
 
 }
 
-class Load {
+class Load extends ChangeNotifier {
   int curr = 0;
   final int max;
 
-  Load(this.max);
+  Load(this.max) {
+    notifyListeners();
+  }
 
   incProgress() {
     curr++;
+    notifyListeners();
   }
 
   addProgress(int val) {
    curr += val;
+   notifyListeners();
   }
 
   double get ratio => curr / max;

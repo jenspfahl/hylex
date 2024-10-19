@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:ui';
 
 import 'package:hyle_9/model/ai/strategy.dart';
 
@@ -76,9 +77,11 @@ abstract class ChaosAi extends Ai {
 
 class DefaultChaosAi extends ChaosAi {
 
+  final Function(Load) _loadChangeListener;
   final strategy = MinimaxStrategy();
 
-  DefaultChaosAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
+  DefaultChaosAi(AiConfig config, Play play, this._loadChangeListener) : super(config, (DefaultChaosAi).toString(), play);
+
 
   @override
   defaultAiParams() {
@@ -94,7 +97,7 @@ class DefaultChaosAi extends ChaosAi {
     else if (play.matrix.numberOfPlacedChips() == 1) {
       depth = 2;
     }
-    return strategy.nextMove(play, depth);
+    return strategy.nextMove(play, depth, _loadChangeListener);
   }
 }
 
@@ -105,8 +108,9 @@ abstract class OrderAi extends Ai {
 
 class DefaultOrderAi extends OrderAi {
 
+  final Function(Load) _loadChangeListener;
   final strategy = MinimaxStrategy();
-  DefaultOrderAi(AiConfig config, Play play) : super(config, (DefaultChaosAi).toString(), play);
+  DefaultOrderAi(AiConfig config, Play play, this._loadChangeListener) : super(config, (DefaultChaosAi).toString(), play);
 
   @override
   defaultAiParams() {
@@ -119,7 +123,7 @@ class DefaultOrderAi extends OrderAi {
     if (play.matrix.numberOfPlacedChips() == 1) {
       depth = 2;
     }
-    return strategy.nextMove(play, depth);
+    return strategy.nextMove(play, depth, _loadChangeListener);
   }
 }
 
@@ -128,11 +132,11 @@ int _getMaxDepthBasedOnWorkload(Play play) {
   if (play.matrix.dimension.x <= 5) {
     depth = 4;//5;
   }
-  else if (play.matrix.dimension.x == 9) {
+  else if (play.matrix.dimension.x > 9) {
     depth = 3;
   }
-  else if (play.matrix.dimension.x > 9) {
-    depth = 2;
+  else if (play.matrix.dimension.x > 11) {
+    depth = 3;
   }
 
   return depth;

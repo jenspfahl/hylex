@@ -394,8 +394,8 @@ class Play extends ChangeNotifier {
   }
 
   void _initAis({required bool useDefaultParams}) {
-    chaosAi = DefaultChaosAi(_aiConfig, this);
-    orderAi = DefaultOrderAi(_aiConfig, this);
+    chaosAi = DefaultChaosAi(_aiConfig, this, _loadChangeListener);
+    orderAi = DefaultOrderAi(_aiConfig, this, _loadChangeListener);
     /*spotAis = [
     ];
 
@@ -474,4 +474,8 @@ class Play extends ChangeNotifier {
     });
   }
 
+
+  _loadChangeListener(Load load) {
+    if (load.curr % 5000 == 0) debugPrint("intermediate load: $load, ${identityHashCode(load)}");
+  }
 }
