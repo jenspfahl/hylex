@@ -1,4 +1,6 @@
 
+import 'dart:isolate';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +36,11 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   late BuildContext _builderContext;
 
-  Load? _load = null;
+  Load? _load;
+
+  Role? _aiDone;
+
+  SendPort? _aiControlPort;
 
   @override
   void initState() {
@@ -62,60 +68,66 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     _play.nextChip();
     _boardLocked = false;
   }
+  
+  _aiControlHandlerReceived(SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort;
 
+  _aiNextMoveHandler(Move move) async {
+    debugPrint("AI ready");
+    _aiDone = _play.currentRole;
+    _play.opponentMove.clear();
+    if (move.skipped) {
+      toastInfo(context, "Opponent skipped move");
+    }
+    else if (move.isMove()) {
+      final chip = _play.matrix.remove(move.from!);
+      if (chip != null) {
+        final test = _play.matrix.getSpot(move.to!);
+        if (test.content != null) {
+          toastError(context, "!!! $test");
+        }
+        else {
+          _play.matrix.put(move.to!, chip);
+        }
+      }
+
+      _play.opponentMove.updateStart(move.from!);
+      _play.opponentMove.update(move.to!);
+    }
+    else {
+      _play.matrix.put(move.from!, _play.currentChip!, _play.stock);
+      _play.opponentMove.update(move.from!);
+    }
+
+    if (_play.isGameOver()) {
+      _doGameOver(context);
+      return;
+    }
+
+    _play.nextRound(false);
+
+    setState(() {});
+
+    await Future.delayed(const Duration(seconds: 2), (){});
+
+    _thinkIfAi(context);
+  }
 
   _aiProgressListener(Load load) {
-    if (load.curr % 10000 == 0) {
-      setState(() {
-        _load = load;
-      });
-      debugPrint("intermediate load: $load, ${identityHashCode(load)}");
-    }
+
+    setState(() {
+      _load = load;
+    });
+    debugPrint("intermediate load: $load, ${identityHashCode(load)}");
+
   }
 
   void _thinkIfAi(BuildContext? context) {
     if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
       _boardLocked = true;
-      _play.startThinking(_aiProgressListener).then((move) {
-        debugPrint("AI ready");
-
-        _play.opponentMove.clear();
-        if (move.skipped) {
-          toastInfo(context ?? _builderContext, "Opponent skipped move");
-        }
-        else if (move.isMove()) {
-          final chip = _play.matrix.remove(move.from!);
-          if (chip != null) {
-            final test = _play.matrix.getSpot(move.to!);
-            if (test.content != null) {
-              toastError(context ?? _builderContext, "!!! $test");
-            }
-            else {
-              _play.matrix.put(move.to!, chip);
-            }
-          }
-
-          _play.opponentMove.updateStart(move.from!);
-          _play.opponentMove.update(move.to!);
-        }
-        else {
-          _play.matrix.put(move.from!, _play.currentChip!, _play.stock);
-          _play.opponentMove.update(move.from!);
-        }
-
-        if (_play.isGameOver()) {
-          _doGameOver(context);
-          return;
-        }
-
-        _play.nextRound(false);
-
-        setState(() {});
-
-
-        _thinkIfAi(context);
-
-      });
+      _aiDone = null;
+      _load = null;
+      _play.startThinking(
+          _aiProgressListener, _aiNextMoveHandler, _aiControlHandlerReceived);
     }
     else {
       setState(() {
@@ -140,6 +152,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                       "YES", ()
                           {
                             setState(() {
+                              _killAiThinking();
+
                               _resetGame(context);
                             });
                             SmartDialog.dismiss();
@@ -158,6 +172,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
                           {
                             // TODO save current
                             SmartDialog.dismiss();
+
+                            _killAiThinking();
 
                             Navigator.pop(super.context); // go to start page
                           },  "NO", () {
@@ -228,6 +244,10 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
     );
   }
 
+  void _killAiThinking() {
+    _aiControlPort?.send('KILL');
+  }
+
   Widget _buildSubmitButtonOrHint(BuildContext context) {
     if (_play.isGameOver()) {
       final winner = _play.finishGame();
@@ -259,10 +279,33 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
       );
     }
     else if (_play.currentPlayer == Player.Ai) {
-      return Text("Waiting for ${_play.currentRole.name} to move (${_load?.readableRatio??"-" })");
+      if (_aiDone != null) {
+        if (_aiDone == Role.Order) {
+          if (_play.opponentMove.hasStartCursor && _play.opponentMove.hasCursor) {
+            return Text("${_aiDone!.name} has moved from ${_play.opponentMove.startWhere} to ${_play.opponentMove.where}.");
+          }
+          else {
+            return Text("${_aiDone!.name} has skipped its move.");
+          }
+        }
+        else {
+          return Text("${_aiDone!.name} has placed at ${_play.opponentMove.where}.");
+
+        }
+      }
+      else {
+        if (_aiDone == Role.Order) {
+          return Text("Waiting for ${_play.currentRole.name} to move (${_load
+              ?.readableRatio ?? "0" }%)...");
+        }
+        else {
+          return Text("Waiting for ${_play.currentRole.name} to place (${_load
+              ?.readableRatio ?? "0" }%)...");
+        }
+      }
     }
     else if (_play.currentPlayer == Player.RemoteUser) {
-      return Text("Waiting for remote opponent to move (${_load?.readableRatio??"-" })");
+      return Text("Waiting for remote opponent to move...");
     }
     return Container();
   }

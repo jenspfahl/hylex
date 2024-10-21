@@ -32,7 +32,9 @@ class MinimaxStrategy extends Strategy {
     final loadForecast = _predictLoad(currentRole, play.matrix, depth);
     final load = Load(loadForecast);
     if (loadChangeListener != null) {
-      load.addListener(() => loadChangeListener(load));
+      load.addListener(() {
+        if (load.curr == 1 || load.curr % 10000 == 0) loadChangeListener(load);
+      });
     }
 
     await minimax(currentChip, currentRole, play.matrix, depth, load, values);
@@ -96,7 +98,7 @@ class MinimaxStrategy extends Strategy {
         subscriptionWaits.add(subscription.asFuture());
 
         // Spawning an isolate copies all parameters. They are then completely detached from its originals
-        Isolate.spawn(_tryNextMoveAsync, [resultPort.sendPort, currentChip, opponentRole, matrix, move, depth, load.max]);
+        final isolate = await Isolate.spawn(_tryNextMoveAsync, [resultPort.sendPort, currentChip, opponentRole, matrix, move, depth, load.max]);
       }
       else {
         int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, depth, load);
@@ -271,7 +273,7 @@ class Load extends ChangeNotifier {
   final int max;
 
   Load(this.max) {
-    notifyListeners();
+    notifyListeners(); //TODO can we get rid of this?
   }
 
   incProgress() {
@@ -279,13 +281,9 @@ class Load extends ChangeNotifier {
     notifyListeners();
   }
 
-  addProgress(int val) {
-   curr += val;
-   notifyListeners();
-  }
 
   double get ratio => curr / max;
-  int get readableRatio => (ratio * 100).ceil();
+  int get readableRatio => (ratio * 100).ceil().clamp(0, 100);
 
   @override
   String toString() {

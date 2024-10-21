@@ -434,81 +434,60 @@ class Play {
     return _stock.isEmpty() || _matrix.noFreeSpace();
   }
 
-  Future<Move> startThinking(Function(Load) aiProgressListener) async {
+  startThinking(
+      Function(Load) aiProgressListener,
+      Function(Move) nextMoveHandler,
+      Function(SendPort) aiControlHandlerReceived) async {
 
     final resultPort = ReceivePort();
-    Move? move;
-    final subscription = resultPort.listen((value) {
+    resultPort.listen((message) {
 
-      if (value is Move) {
+      if (message is Move) {
+        nextMoveHandler(message);
+
         // close this stream
         resultPort.close();
-        move = value;
       }
-      else if (value is Load) {
-        aiProgressListener(value);
+      else if (message is Load) {
+        aiProgressListener(message);
+      }
+      else if (message is SendPort) {
+        aiControlHandlerReceived(message);
       }
     });
-
-    debugPrint("Spawn main $subscription");
-
-    Isolate.spawn(_startThinking, [resultPort.sendPort, this]);
-
-
-    return subscription.asFuture(move);
-
-    /*await Future.wait([subscription.asFuture()]); //TODO this blocks UI!!!
-
-    final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
-    final future = Future<Move>.value(move);
-    if (runAutomatic) {
-      return Future.delayed(const Duration(milliseconds: 500), () => future);
-    }
-    else {
-      return future;
-    }
-*/
-    /*
-
-    return await Isolate.run<Move>(() async {//TODO spawn!!
-      final start = DateTime.now().millisecondsSinceEpoch;
-      Move move;
-      if (_currentRole == Role.Chaos) {
-        move = await chaosAi!.think(this);
-      }
-      else { // _currentRole == Role.Order
-        move = await orderAi!.think(this);
-      }
-      final time = DateTime.now().millisecondsSinceEpoch - start;
-      debugPrint("Time to predict next move: $time ms");
-      final runAutomatic = _chaosPlayer != Player.User && _orderPlayer != Player.User;
-      final future = Future<Move>.value(move);
-      if (runAutomatic) {
-        return Future.delayed(const Duration(milliseconds: 500), () => future);
-      }
-      else {
-        return future;
-      }
-    });*/
+    debugPrint("Spawn main");
+    final sendPort = resultPort.sendPort;
+    Isolate.spawn(_startThinking, [sendPort, this]);
+    debugPrint("End spawn main");
   }
 
 
 
   void _startThinking(List<dynamic> args) {
-    SendPort resultPort = args[0];
+    SendPort sendPort = args[0];
     Play play = args[1];
+
+    final controlPort = ReceivePort();
+    sendPort.send(controlPort.sendPort);
+
+    controlPort.listen((message) {
+      if (message == 'KILL') {
+        debugPrint("Killing AI...");
+        Isolate.current.kill(priority:  Isolate.immediate);
+      }
+    });
 
     final start = DateTime.now().millisecondsSinceEpoch;
     if (play.currentRole == Role.Chaos) {
-      play.chaosAi!.think(play, (load) => resultPort.send(load)).then((move) {
-        resultPort.send(move);
+      play.chaosAi!.think(play, (load) => sendPort.send(load)).then((move) {
+        sendPort.send(move);
         final time = DateTime.now().millisecondsSinceEpoch - start;
         debugPrint("Time to predict next Chaos move: $time ms");
       });
     }
     else { // _currentRole == Role.Order
-      play.orderAi!.think(play, (load) => resultPort.send(load)).then((move) {
-        resultPort.send(move);
+      play.orderAi!.think(play, (load) => sendPort.send(load)).then((move) {
+        sendPort.send(move);
         final time = DateTime.now().millisecondsSinceEpoch - start;
         debugPrint("Time to predict next Order move: $time ms");
       });
