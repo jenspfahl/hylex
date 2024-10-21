@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
@@ -12,6 +13,7 @@ import '../matrix.dart';
 import '../play.dart';
 import '../spot.dart';
 
+final parallelCount = max(Platform.numberOfProcessors - 2, 2); // save two processors for UI
 
 abstract class Strategy {
 
@@ -33,13 +35,76 @@ class MinimaxStrategy extends Strategy {
     final load = Load(loadForecast);
     if (loadChangeListener != null) {
       load.addListener(() {
-        if (load.curr == 1 || load.curr % 10000 == 0) loadChangeListener(load);
+        if (load.curr <= 10 || load.curr % 10000 == 0) loadChangeListener(load);
       });
     }
 
-    await minimax(currentChip, currentRole, play.matrix, depth, load, values);
+    final subscriptionWaits = <Future>[];
+    final sendPorts = HashMap<int, SendPort>();
 
-    debugPrint("Load: $load");
+    for (int i = 0; i < parallelCount; i++) {
+      final resultPort = ReceivePort("sub_for_$i");
+      final subscription = resultPort.listen((message) {
+
+        if (message == "DONE") {
+          // close this stream
+         // debugPrint("Close sub $i");
+          resultPort.close();
+        }
+        else if (message is SendPort) {
+         // debugPrint("put send port: $message for $i");
+
+          sendPorts.putIfAbsent(i, () => message);
+        }
+        else if (message == -1) {
+          load.incProgress();
+        }
+        else if (message is List) {
+          int value = message[0];
+          Move move = message[1];
+          //debugPrint("next move received with value $value: $move");
+
+          values.putIfAbsent(value, () => move);
+
+        }
+      },
+      onError: (e) => debugPrint("isolate $i error: $e"),
+      );
+
+      //debugPrint("Spawn sub $subscription on $i");
+      subscriptionWaits.add(subscription.asFuture());
+
+      // Spawning an isolate copies all parameters. They are then completely detached from its originals
+      await Isolate.spawn(_initiateNextMoveAsync, [resultPort.sendPort, load.max]);
+    }
+
+    while (sendPorts.length < subscriptionWaits.length) {
+      //debugPrint("Waiting for send ports, missing ${subscriptionWaits.length - sendPorts.length}");
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
+    debugPrint("$parallelCount isolates ready to work!");
+
+    var moves = _getMoves(currentChip, play.matrix, currentRole);
+    int round = 0;
+    for (final move in moves) {
+      final slot = round % parallelCount;
+      debugPrint("send $move to $slot");
+      await Future.delayed(const Duration(milliseconds: 50));
+      sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, depth]);
+      round ++;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 200));
+    for (int i = 0; i < parallelCount; i++) {
+      sendPorts[i]?.send("DONE");
+    }
+
+    // wait for all isolate subs to be done
+    await Future.wait(subscriptionWaits);
+
+
+    debugPrint("All isolates are done, load: $load");
     if (currentRole == Role.Chaos) {
       final value = values.firstKey();
       final move = values[value!]!;
@@ -56,7 +121,7 @@ class MinimaxStrategy extends Strategy {
     }
   }
 
-  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Load load, Map<int, Move>? values) async {
+  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Load load) async {
     if (_isTerminal(matrix, depth)) {
       load.incProgress();
       return _getValue(matrix);
@@ -73,73 +138,61 @@ class MinimaxStrategy extends Strategy {
       opponentRole = Role.Chaos;
     }
 
-    final subscriptionWaits = <Future>[];
     var moves = _getMoves(currentChip, matrix, currentRole); //try to limit
     for (final move in moves) {
-      if (_doInParallel(depth, values)) {
-        final resultPort = ReceivePort("sub_for_$move");
 
-        final subscription = resultPort.listen((value) {
-
-              load.incProgress();
-
-              if (value != -1) {
-                //load.addProgress(singleLoad.curr);
-                // debugPrint("received: $value $move");
-
-                values?.putIfAbsent(value, () => move);
-
-                // close this stream
-                resultPort.close();
-              }
-            });
-
-        debugPrint("Spawn sub $subscription");
-        subscriptionWaits.add(subscription.asFuture());
-
-        // Spawning an isolate copies all parameters. They are then completely detached from its originals
-        final isolate = await Isolate.spawn(_tryNextMoveAsync, [resultPort.sendPort, currentChip, opponentRole, matrix, move, depth, load.max]);
+      int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, depth, load);
+      if (currentRole == Role.Chaos) { // min
+        value = min(value, newValue);
       }
-      else {
-        int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, depth, load);
-        if (currentRole == Role.Chaos) { // min
-          value = min(value, newValue);
-        }
-        else { // (currentRole == Role.Order) // max
-          value = max(value, newValue);
-        }
-        //debugPrint("  in depth result: $depth: $value $move for $currentRole");
-        values?.putIfAbsent(value, () => move);
+      else { // (currentRole == Role.Order) // max
+        value = max(value, newValue);
       }
     }
-
-    await Future.wait(subscriptionWaits);
 
     return value;
   }
 
-  _tryNextMoveAsync(List<dynamic> args) {
-    SendPort resultPort = args[0];
-    GameChip? currentChip = args[1];
-    Role currentRole = args[2];
-    Matrix matrix = args[3];
-    Move move = args[4];
-    int depth = args[5];
-    int maxLoad = args[6];
+  _initiateNextMoveAsync(List<dynamic> initArgs) async {
+    SendPort resultPort = initArgs[0];
+    int maxLoad = initArgs[1];
 
     // add listener to load of the particular isolate
     final load = Load(maxLoad);
     load.addListener(() => resultPort.send(-1)); // -1 indicates an intermediate event, no final calculation
 
-    _tryNextMove(currentChip, currentRole, matrix, move, depth, load).then((newValue) {
-      resultPort.send(newValue);
+
+    final controlPort = ReceivePort();
+    resultPort.send(controlPort.sendPort);
+
+    final subscription = controlPort.listen((message) async {
+
+      debugPrint("receive $message");
+
+      if (message == "DONE") {
+        resultPort.send(message);
+      }
+      else {
+        GameChip? currentChip = message[0];
+        Role currentRole = message[1];
+        Matrix matrix = message[2];
+        Move move = message[3];
+        int depth = message[4];
+
+        final newValue = await _tryNextMove(currentChip, currentRole, matrix, move, depth, load);
+        resultPort.send([newValue, move]);
+      }
     });
+
+
+    await Future.wait([subscription.asFuture()]);
+
   }
 
   Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, int depth, Load load) async {
     final clonedMatrix = matrix.clone();
     _doMove(currentChip, clonedMatrix, move);
-    return await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load, null);
+    return await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load);
   }
 
   bool _isTerminal(Matrix matrix, int depth) {
@@ -186,8 +239,6 @@ class MinimaxStrategy extends Strategy {
     }
   }
 
-  bool _doInParallel(int depth, Map<int, Move>? values) => depth >= 3 && values != null;
-
   int _predictLoad(Role role, Matrix matrix, int depth) {
     int value = 0;
     var numberOfPlacedChips = matrix.numberOfPlacedChips();
@@ -202,7 +253,7 @@ class MinimaxStrategy extends Strategy {
         final newValue = max(1, freeCells);
 
         value = max(1, value) * newValue;
-        debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, freeCells: $freeCells ==> $newValue");
+       // debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, freeCells: $freeCells ==> $newValue");
         numberOfPlacedChips++; // add one for each placed chip by Chaos
 
         role = Role.Order;
@@ -215,7 +266,7 @@ class MinimaxStrategy extends Strategy {
         final newValue = max(1, avgPossibleMoveCount.round());
 
         value = max(1, value) * newValue;
-        debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, avgPossibleMoves: $avgPossibleMoves, freeRatio: $freeRatio ==> $newValue");
+       // debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, avgPossibleMoves: $avgPossibleMoves, freeRatio: $freeRatio ==> $newValue");
 
         role = Role.Chaos;
       }

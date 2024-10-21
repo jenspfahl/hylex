@@ -128,7 +128,7 @@ class DefaultOrderAi extends OrderAi {
 int _getMaxDepthBasedOnWorkload(Play play) {
   int depth = 4;
   if (play.matrix.dimension.x >= 9) {
-    depth = 3;
+    depth = 4;//3
   }
 
   return depth;
