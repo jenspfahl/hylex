@@ -273,7 +273,7 @@ class Load extends ChangeNotifier {
   final int max;
 
   Load(this.max) {
-    notifyListeners(); //TODO can we get rid of this?
+    notifyListeners();
   }
 
   incProgress() {

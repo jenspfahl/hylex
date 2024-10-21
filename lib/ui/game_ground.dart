@@ -333,8 +333,8 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
 
   Widget _buildBoardGrid(BuildContext context, int index) {
     int x, y = 0;
-    x = (index / _play.matrix.dimension.x).floor();
-    y = (index % _play.matrix.dimension.y);
+    x = (index % _play.matrix.dimension.x);
+    y = (index / _play.matrix.dimension.y).floor();
     final where = Coordinate(x, y);
     return GestureDetector(
       onTap: () {
