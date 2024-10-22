@@ -1,6 +1,6 @@
-# hyle_9
+# HyleX
 
-A Hyle7 (Entropy) clone
+A Hyle (Entropy) clone
 
 
-Download the alpha here: https://hyle9.jepfa.de/hyle9.apk
+Download the alpha here: https://hyleX.jepfa.de/hylex.apk

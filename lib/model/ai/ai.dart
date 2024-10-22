@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:ui';
 
-import 'package:hyle_9/model/ai/strategy.dart';
+import 'package:hyle_x/model/ai/strategy.dart';
 
 import '../fortune.dart';
 import '../matrix.dart';

@@ -17,18 +17,18 @@ import 'dialogs.dart';
 
 enum Player {User, Ai, RemoteUser}
 
-class Hyle9Ground extends StatefulWidget {
+class HyleXGround extends StatefulWidget {
   Player chaosPlayer;
   Player orderPlayer;
   int dimension;
 
-  Hyle9Ground(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
+  HyleXGround(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
 
   @override
-  State<Hyle9Ground> createState() => _Hyle9GroundState();
+  State<HyleXGround> createState() => _HyleXGroundState();
 }
 
-class _Hyle9GroundState extends State<Hyle9Ground> {
+class _HyleXGroundState extends State<HyleXGround> {
 
   late Play _play;
   GameChip? _emphasiseAllChipsOf;
@@ -54,7 +54,7 @@ class _Hyle9GroundState extends State<Hyle9Ground> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hyle9',
+      title: 'HyleX',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

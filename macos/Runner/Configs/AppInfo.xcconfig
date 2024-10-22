@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = hyle_9
+PRODUCT_NAME = hyle_x
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = de.jepfa.hyle9
+PRODUCT_BUNDLE_IDENTIFIER = de.jepfa.hyle_x
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2024 de.jepfa. All rights reserved.

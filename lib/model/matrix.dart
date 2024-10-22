@@ -1,7 +1,7 @@
 import 'dart:collection';
 
-import 'package:hyle_9/model/play.dart';
-import 'package:hyle_9/model/spot.dart';
+import 'package:hyle_x/model/play.dart';
+import 'package:hyle_x/model/spot.dart';
 
 import 'chip.dart';
 

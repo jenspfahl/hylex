@@ -5,8 +5,8 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hyle_9/model/chip.dart';
-import 'package:hyle_9/model/spot.dart';
+import 'package:hyle_x/model/chip.dart';
+import 'package:hyle_x/model/spot.dart';
 
 import '../ui/game_ground.dart';
 import '../utils.dart';

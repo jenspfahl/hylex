@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "de.jepfa" "\0"
-            VALUE "FileDescription", "hyle_9" "\0"
+            VALUE "FileDescription", "hyle_x" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "hyle_9" "\0"
+            VALUE "InternalName", "hyle_x" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 de.jepfa. All rights reserved." "\0"
-            VALUE "OriginalFilename", "hyle_9.exe" "\0"
-            VALUE "ProductName", "hyle_9" "\0"
+            VALUE "OriginalFilename", "hyle_x.exe" "\0"
+            VALUE "ProductName", "hyle_x" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

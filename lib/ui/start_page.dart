@@ -114,7 +114,7 @@ class _StartPageState extends State<StartPage>
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-      return Hyle9Ground(chaosPlayer, orderPlayer, dimension);
+      return HyleXGround(chaosPlayer, orderPlayer, dimension);
     }));
   }
 

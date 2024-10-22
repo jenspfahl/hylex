@@ -6,7 +6,7 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
-import 'package:hyle_9/model/chip.dart';
+import 'package:hyle_x/model/chip.dart';
 
 import '../fortune.dart';
 import '../matrix.dart';
