@@ -39,9 +39,13 @@ class MinimaxStrategy extends Strategy {
       });
     }
 
+    var moves = _getMoves(currentChip, play.matrix, currentRole);
+
+
     final subscriptionWaits = <Future>[];
     final sendPorts = HashMap<int, SendPort>();
 
+    int collected = 0;
     for (int i = 0; i < parallelCount; i++) {
       final resultPort = ReceivePort("sub_for_$i");
       final subscription = resultPort.listen((message) {
@@ -49,7 +53,7 @@ class MinimaxStrategy extends Strategy {
         if (message == "DONE") {
           // close this stream
          // debugPrint("Close sub $i");
-          resultPort.close();
+         resultPort.close();
         }
         else if (message is SendPort) {
          // debugPrint("put send port: $message for $i");
@@ -62,9 +66,20 @@ class MinimaxStrategy extends Strategy {
         else if (message is List) {
           int value = message[0];
           Move move = message[1];
-          //debugPrint("next move received with value $value: $move");
 
-          values.putIfAbsent(value, () => move);
+          values.putIfAbsent(value, () {
+            debugPrint("move received with value $value: $move ");
+            return move;
+          });
+
+          collected++;
+
+          if (collected >= moves.length) {
+            debugPrint("All values collected, trigger close isolates");
+            for (int i = 0; i < parallelCount; i++) {
+              sendPorts[i]?.send("DONE");
+            }
+          }
 
         }
       },
@@ -85,20 +100,15 @@ class MinimaxStrategy extends Strategy {
 
     debugPrint("$parallelCount isolates ready to work!");
 
-    var moves = _getMoves(currentChip, play.matrix, currentRole);
     int round = 0;
     for (final move in moves) {
       final slot = round % parallelCount;
-      debugPrint("send $move to $slot");
-      await Future.delayed(const Duration(milliseconds: 50));
+      //debugPrint("send $move to $slot");
       sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, depth]);
       round ++;
     }
 
-    await Future.delayed(const Duration(milliseconds: 200));
-    for (int i = 0; i < parallelCount; i++) {
-      sendPorts[i]?.send("DONE");
-    }
+
 
     // wait for all isolate subs to be done
     await Future.wait(subscriptionWaits);
@@ -127,6 +137,17 @@ class MinimaxStrategy extends Strategy {
       return _getValue(matrix);
     }
 
+    if (depth == 1 && currentRole == Role.Chaos) {
+      // Leave out last Chaos round as it IS Chaos who moves
+      // Chaos(3)--Order(2)--Chaos(1) --> Chaos(3)--Order(2)--Order(1)
+      currentRole = Role.Order;
+    }
+    if (depth == 2 && currentRole == Role.Chaos) {
+      // Leave out second Chaos round as it we don't know which chip haos draws
+      // Order(3)--Chaos(2)--Order(1) --> Order(3)--Order(2)--Order(1)
+      currentRole = Role.Order;
+    }
+
     int value;
     Role opponentRole;
     if (currentRole == Role.Chaos) { // min
@@ -137,6 +158,7 @@ class MinimaxStrategy extends Strategy {
       value = -100000000;
       opponentRole = Role.Chaos;
     }
+
 
     var moves = _getMoves(currentChip, matrix, currentRole); //try to limit
     for (final move in moves) {
@@ -167,7 +189,7 @@ class MinimaxStrategy extends Strategy {
 
     final subscription = controlPort.listen((message) async {
 
-      debugPrint("receive $message");
+     // debugPrint("receive $message");
 
       if (message == "DONE") {
         resultPort.send(message);

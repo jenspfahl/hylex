@@ -126,10 +126,11 @@ class DefaultOrderAi extends OrderAi {
 }
 
 int _getMaxDepthBasedOnWorkload(Play play) {
-  int depth = 4;
-  if (play.matrix.dimension.x >= 9) {
-    depth = 4;//3
-  }
+  int depth = 3;
+  // 3 is the max to get reasonable predictions in time
+  // Order--Chaos--Order doesn't need a fourth Chaos as Chaos cannot remove gained points.
+  // Chaos-Order-Chaos is converted to Chaos-Order-Order as Chaos cannot remove gained points.
+  // So in general, a calculation path only makes sense if it ends with Order
 
   return depth;
 }
