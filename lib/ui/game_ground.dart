@@ -75,10 +75,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     debugPrint("AI ready");
     _aiDone = _play.currentRole;
     _play.opponentMove.clear();
-    if (move.skipped) {
-      toastInfo(context, "Opponent skipped move");
-    }
-    else if (move.isMove()) {
+    if (move.isMove()) {
       final chip = _play.matrix.remove(move.from!);
       if (chip != null) {
         final test = _play.matrix.getSpot(move.to!);
@@ -142,7 +139,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           _builderContext = context;
           return Scaffold(
               appBar: AppBar(
-                title: const Text('Hyle X'),
+                title: const Text('HyleX'),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.restart_alt_outlined),
@@ -199,21 +196,40 @@ class _HyleXGroundState extends State<HyleXGround> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildRoleIndicator(Role.Chaos, true),
-                                Text("Round ${_play.currentRound} of ${_play.dimension * _play.dimension}"),
+                                Text("Round ${_play.currentRound} of ${_play.maxRounds}"),
                                 _buildRoleIndicator(Role.Order, false),
                               ],
                             ),
                           ),
-                          Container(
-                            margin: const EdgeInsets.all(8),
-                            height: 70 - (_play.dimension.toDouble() * 2), //TODO calc cel lheight and use this
-                            child: GridView.builder(
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: _play.stock.getChipTypes(),
+                          LinearProgressIndicator(value: _play.progress,),
+                          Column(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.all(8),
+                                child: Center(
+                                  child: GridView.builder(
+                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: _play.stock.getTotalChipTypes(),
+                                      ),
+                                      itemBuilder: _buildChipStock,
+                                      itemCount: _play.stock.getTotalChipTypes(),
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics()),
                                 ),
-                                itemBuilder: _buildChipStock,
-                                itemCount: _play.stock.getChipTypes(),
-                                physics: const NeverScrollableScrollPhysics()),
+                              ),
+                              Container(
+                                margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                height: 20,
+                                child: GridView.builder(
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: _play.stock.getTotalChipTypes(),
+                                    ),
+                                    itemBuilder: _buildChipStockIndicator,
+                                    itemCount: _play.stock.getTotalChipTypes(),
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics()),
+                              ),
+                            ],
                           ),
                           AspectRatio(
                             aspectRatio: 1,
@@ -538,6 +554,19 @@ class _HyleXGroundState extends State<HyleXGround> {
     return _buildChipStockItem(entry, text);
   }
 
+  Widget _buildChipStockIndicator(BuildContext context, int index) {
+    final stockEntries = _play.stock.getStockEntries();
+    final entry = stockEntries.toList()[index];
+    if (_play.currentChip == entry.chip) {
+      return const Align(
+          alignment: Alignment.topCenter,
+          child: Text("▲", style: TextStyle(fontSize: 16),));
+    }
+    else {
+      return Container();
+    }
+  }
+
   Padding _buildChipStockItem(StockEntry entry, String text) {
     if (_play.currentChip == entry.chip) {
       return Padding(
@@ -545,6 +574,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         child: Container(
             decoration: BoxDecoration(
               color: _getChipBackgroundColor(entry.chip),
+              border: Border.all(width: 1),
               borderRadius: const BorderRadius.all(
                 Radius.circular(10.0),
               ),

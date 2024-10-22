@@ -132,7 +132,7 @@ class Stock {
     return getTotalStock() == 0;
   }
 
-  int getChipTypes() => _available.length;
+  int getTotalChipTypes() => _available.length;
 
 
 }
@@ -239,6 +239,9 @@ class Play {
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
   }
+
+  double get progress => currentRound / maxRounds;
+  int get maxRounds => dimension * dimension;
 
   Color diceColor(int i) {
     /**
