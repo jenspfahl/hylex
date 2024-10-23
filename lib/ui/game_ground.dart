@@ -90,7 +90,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       _play.opponentMove.updateStart(move.from!);
       _play.opponentMove.update(move.to!);
     }
-    else {
+    else if (!move.skipped) {
       _play.matrix.put(move.from!, _play.currentChip!, _play.stock);
       _play.opponentMove.update(move.from!);
     }
@@ -296,34 +296,55 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (_play.currentPlayer == Player.Ai) {
       if (_aiDone != null) {
-        if (_aiDone == Role.Order) {
-          if (_play.opponentMove.hasStartCursor && _play.opponentMove.hasCursor) {
-            return Text("${_aiDone!.name} has moved from ${_play.opponentMove.startWhere} to ${_play.opponentMove.where}.");
-          }
-          else {
-            return Text("${_aiDone!.name} has skipped its move.");
-          }
-        }
-        else {
-          return Text("${_aiDone!.name} has placed at ${_play.opponentMove.where}.");
-
-        }
+        return _buildAiDoneText();
       }
       else {
-        if (_aiDone == Role.Order) {
-          return Text("Waiting for ${_play.currentRole.name} to move (${_load
-              ?.readableRatio ?? "0" }%)...");
-        }
-        else {
-          return Text("Waiting for ${_play.currentRole.name} to place (${_load
-              ?.readableRatio ?? "0" }%)...");
-        }
+        final text = _buildAiProcessingText();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            text,
+            const Text("  "),
+            SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeCap: StrokeCap.butt,
+                strokeWidth: 2,
+                value: _load?.ratio,
+                backgroundColor: Colors.grey.shade300,
+              ),
+            ),
+        ],);
       }
     }
     else if (_play.currentPlayer == Player.RemoteUser) {
-      return Text("Waiting for remote opponent to move...");
+      return const Text("Waiting for remote opponent to move...");
     }
     return Container();
+  }
+
+  Text _buildAiDoneText() {
+    if (_aiDone == Role.Order) {
+      if (_play.opponentMove.hasStartCursor && _play.opponentMove.hasCursor) {
+        return Text("${_aiDone!.name} has moved from ${_play.opponentMove.startWhere?.toReadableCoordinates()} to ${_play.opponentMove.where?.toReadableCoordinates()}.");
+      }
+      else {
+        return Text("${_aiDone!.name} has skipped its move.");
+      }
+    }
+    else {
+      return Text("${_aiDone!.name} has placed at ${_play.opponentMove.where?.toReadableCoordinates()}.");
+    }
+  }
+
+  Text _buildAiProcessingText() {
+    if (_play.currentRole == Role.Order) {
+      return Text("Waiting for ${_play.currentRole.name} to move ...");
+    }
+    else {
+      return Text("Waiting for ${_play.currentRole.name} to place ...");
+    }
   }
 
   void _doGameOver(BuildContext? context) {

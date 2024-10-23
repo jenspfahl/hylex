@@ -50,6 +50,12 @@ class Coordinate {
     return '{$x,$y}';
   }
 
+  String toReadableCoordinates() {
+    final x2 = String.fromCharCode('A'.codeUnitAt(0) + x);
+    final y2 = y + 1;
+    return '$x2$y2';
+  }
+
 }
 
 class Matrix {
