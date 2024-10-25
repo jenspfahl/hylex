@@ -33,6 +33,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   late Play _play;
   GameChip? _emphasiseAllChipsOf;
   bool _boardLocked = false;
+  bool _showOpponentTrace = false;
 
   late BuildContext _builderContext;
 
@@ -123,6 +124,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       _boardLocked = true;
       _aiDone = null;
       _load = null;
+      _showOpponentTrace = true;
       _play.startThinking(
           _aiProgressListener, _aiNextMoveHandler, _aiControlHandlerReceived);
     }
@@ -142,11 +144,17 @@ class _HyleXGroundState extends State<HyleXGround> {
                 title: const Text('HyleX'),
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.undo_outlined),
+                    onPressed: () => {
+                      
+                    },
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.restart_alt_outlined),
                     onPressed: () => {
 
                       buildChoiceDialog(180, 180, 'Restart game?',
-                      "YES", ()
+                          "YES", ()
                           {
                             setState(() {
                               _killAiThinking();
@@ -411,45 +419,72 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildChip(GameChip? chip, String text, [Coordinate? where]) {
-    if (chip == null) {
-      final possibleTarget =
+
+    bool possibleTarget = false;
+    Spot? startSpot;
+    if (_play.currentRole == Role.Order && where != null) {
+      possibleTarget =
           where != null
-              && _play.currentRole == Role.Order
               && _play.cursor.hasStartCursor
               && _play.cursor.possibleTargets.contains(where);
-      Spot? start;
-      if (_play.currentRole == Role.Order) {
-        if (_play.cursor.hasCursor) {
-          start = _play.matrix.getSpot(_play.cursor.where!);
+
+      if (_play.cursor.hasCursor) {
+        startSpot = _play.matrix.getSpot(_play.cursor.where!);
+      }
+      else if (_play.cursor.hasStartCursor) {
+        startSpot = _play.matrix.getSpot(_play.cursor.startWhere!);
+      }
+    }
+
+    // show trace of opponent move
+    if (_showOpponentTrace && _play.opponentMove.hasCursor && where != null) {
+      startSpot ??= _play.matrix.getSpot(_play.opponentMove.where!);
+      possibleTarget |= _play.opponentMove.where! == where;
+      if (_play.opponentMove.hasStartCursor) {
+        if (_play.opponentMove.isHorizontalMove()) {
+          possibleTarget |= _play.opponentMove.where!.y == where.y &&
+              (_play.opponentMove.startWhere!.x <= where.x  && _play.opponentMove.where!.x >= where.x ||
+                  _play.opponentMove.where!.x <= where.x  && _play.opponentMove.startWhere!.x >= where.x);
         }
-        else if (_play.cursor.hasStartCursor) {
-          start = _play.matrix.getSpot(_play.cursor.startWhere!);
+        else if (_play.opponentMove.isVerticalMove()) {
+          possibleTarget |= _play.opponentMove.where!.x == where.x &&
+              (_play.opponentMove.startWhere!.y <= where.y  && _play.opponentMove.where!.y >= where.y ||
+                  _play.opponentMove.where!.y <= where.y  && _play.opponentMove.startWhere!.y >= where.y);
         }
       }
+    }
+
+    var shadedColor = startSpot?.content?.color.withOpacity(0.2);
+
+
+    if (chip == null) {
       return Container(
-        color: possibleTarget ? start?.content?.color.withOpacity(0.2)??Colors.limeAccent : null,
+        color: possibleTarget ? shadedColor : null,
       );
     }
-    return GestureDetector(
-      onLongPressStart: (details) => {
-        setState(() {
-          _emphasiseAllChipsOf = chip;
-        })
-      },
-      onLongPressEnd: (details) => {
-        setState(() {
-          _emphasiseAllChipsOf = null;
-        })
-      },
-      child: CircleAvatar(
-        backgroundColor: _getChipBackgroundColor(chip),
-        maxRadius: 60,
-        child: Text(text,
-            style: TextStyle(
-              fontSize: _play.dimension > 7 ? 12 : 16,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            )),
+    return Container(
+      color: possibleTarget ? shadedColor : null,
+      child: GestureDetector(
+        onLongPressStart: (details) => {
+          setState(() {
+            _emphasiseAllChipsOf = chip;
+          })
+        },
+        onLongPressEnd: (details) => {
+          setState(() {
+            _emphasiseAllChipsOf = null;
+          })
+        },
+        child: CircleAvatar(
+          backgroundColor: _getChipBackgroundColor(chip),
+          maxRadius: 60,
+          child: Text(text,
+              style: TextStyle(
+                fontSize: _play.dimension > 7 ? 12 : 16,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              )),
+        ),
       ),
     );
   }
@@ -465,6 +500,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (_boardLocked) {
       return; //TODO allow long tab for locked boards
     }
+
+    _showOpponentTrace = false;
 
     setState(() {
       if (_play.currentRole == Role.Chaos) {
@@ -613,6 +650,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _wrapLastMove(Widget widget, Coordinate where) {
     if (_play.opponentMove.hasStartCursor && _play.opponentMove.startWhere == where) {
       return DottedBorder(
+          padding: EdgeInsets.zero,
           strokeWidth: 1,
           strokeCap: StrokeCap.butt,
           borderType: BorderType.Circle,
@@ -621,6 +659,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (_play.opponentMove.hasCursor && _play.opponentMove.where == where) {
       return DottedBorder(
+          padding: EdgeInsets.zero,
           strokeWidth: 3,
           strokeCap: StrokeCap.butt,
           borderType: BorderType.Circle,

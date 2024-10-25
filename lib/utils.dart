@@ -92,6 +92,12 @@ Color getColorFromIdx(int i) {
     b = 145;
   }
 
+  if (i == 6) { // make gray a bit darker
+    r = 110;
+    g = 110;
+    b = 110;
+  }
+
   return Color.fromARGB(
       210, r, g, b);
 }

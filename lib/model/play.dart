@@ -195,6 +195,10 @@ class Cursor {
     _possibleTargets.addAll(matrix.getPossibleTargetsFor(where).map((spot) => spot.where));
   }
 
+  bool isHorizontalMove() => _startWhere != null && _where != null && _startWhere!.y == _where!.y;
+
+  bool isVerticalMove() => _startWhere != null && _where != null && _startWhere!.x == _where!.x;
+
 
 }
 

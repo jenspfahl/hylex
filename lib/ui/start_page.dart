@@ -26,7 +26,7 @@ class _StartPageState extends State<StartPage>
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    _animation = Tween<double>(begin: 24, end: 32).animate(_controller)
+    _animation = Tween<double>(begin: 18, end: 30).animate(_controller)
       ..addListener(() {
         setState(() {});
       });
@@ -61,6 +61,8 @@ class _StartPageState extends State<StartPage>
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildGameLogo(),
+                  Text(""),
+                  Text(""),
                   SizedBox(
                     height: 300,
                     child: GridView.count(
@@ -102,9 +104,9 @@ class _StartPageState extends State<StartPage>
                           ),
 
 
-                    
+
                         ],
-                    
+
                     ),
                   ),
 
@@ -193,8 +195,8 @@ class _StartPageState extends State<StartPage>
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildChip("H", 30, 20, chipPadding, 4),
-          _buildChip("Y", 30, 20, chipPadding, 5),
+          _buildChip("H", 20, 20, chipPadding, 4),
+          _buildChip("Y", 20, 20, chipPadding, 5),
           Text("X",
               style: TextStyle(
                   fontSize: _animation.value,
@@ -204,8 +206,8 @@ class _StartPageState extends State<StartPage>
       ),
       Row(
         children: [
-          _buildChip("L", 30, 20, chipPadding, 6),
-          _buildChip("E", 30, 20, chipPadding, 7),
+          _buildChip("L", 20, 20, chipPadding, 6),
+          _buildChip("E", 20, 20, chipPadding, 7),
         ],
       ),
     ]);
