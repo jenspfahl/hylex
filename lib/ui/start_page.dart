@@ -1,7 +1,9 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
+import '../utils.dart';
 import 'dialogs.dart';
 import 'game_ground.dart';
 
@@ -49,50 +51,93 @@ class _StartPageState extends State<StartPage>
   Widget _buildStartPage(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Padding(
-          padding: const EdgeInsets.all(64.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildGameLogo(),
-              GestureDetector(
-                onTap: () async {
-                  
-                  if (context.mounted) {
-                    buildChoiceDialog(330, 220, 'Which ground size?',
-                      "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
-                      "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
-                      "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
-                      "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
-                      "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
-                    );
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.all(64.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildGameLogo(),
+                  SizedBox(
+                    height: 300,
+                    child: GridView.count(
+                        crossAxisCount: 2,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
 
-                  }
-                },
-                child: _buildChip("Start New", Colors.red, 60, 16, 10),
+                              if (context.mounted) {
+                                buildChoiceDialog(330, 220, 'Which ground size?',
+                                  "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
+                                  "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
+                                  "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
+                                  "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
+                                  "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
+                                );
+
+                              }
+                            },
+                            child: _buildChip("New Game",  80, 16, 5, 0),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+                            },
+                            child: _buildChip("Resume Game", 80, 16, 5, 3),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+                            },
+                            child: _buildChip("Multiplayer", 80, 16, 5, 2),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+                            },
+                            child: _buildChip("How it works", 80, 16, 5, 1),
+                          ),
+
+
+                    
+                        ],
+                    
+                    ),
+                  ),
+
+
+                ],
               ),
-              GestureDetector(
-                onTap: () {
-                  buildAlertDialog(NotifyType.error, 'Not yet implemented!');
-                },
-                child: _buildChip("Resume", Colors.lightBlueAccent, 60, 16, 10),
-              ),
-              GestureDetector(
-                onTap: () {
-                  buildChoiceDialog(180, 180, 'Leave the game?',
-                      "YES", () {
-                    SystemNavigator.pop();
-                  },  "NO", () {
-                    SmartDialog.dismiss();
-                  });
-                },
-                child: _buildChip("Exit", Colors.brown, 40, 16, 10),
-              ),
-            ],
+            ),
           ),
-        ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(onPressed: () {
+
+                  }, icon: const Icon(Icons.settings_outlined)),
+
+                  IconButton(onPressed: () {
+                    buildChoiceDialog(180, 180, 'Leave the game?',
+                        "YES", () {
+                          SystemNavigator.pop();
+                        },  "NO", () {
+                          SmartDialog.dismiss();
+                        });
+                  }, icon: const Icon(Icons.exit_to_app_outlined)),
+
+                  IconButton(onPressed: () {
+
+                  }, icon: const Icon(Icons.info_outline)),
+            ]),
+          ),
+        ],
       ),
     );
   }
@@ -119,19 +164,25 @@ class _StartPageState extends State<StartPage>
   }
 
 
-  Widget _buildChip(String text, Color color, double radius, double textSize,
-      double padding) {
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: CircleAvatar(
-        backgroundColor: color,
-        radius: radius,
-        child: Text(text,
-            style: TextStyle(
-              fontSize: textSize,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            )),
+  Widget _buildChip(String text, double radius, double textSize,
+      double padding, int colorIdx) {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(), left: BorderSide())
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: CircleAvatar(
+          backgroundColor: getColorFromIdx(colorIdx),
+          radius: radius,
+          child: Text(text,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: textSize,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              )),
+        ),
       ),
     );
   }
@@ -142,8 +193,8 @@ class _StartPageState extends State<StartPage>
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildChip("H", Colors.redAccent, 30, 20, chipPadding),
-          _buildChip("Y", Colors.blueGrey, 30, 20, chipPadding),
+          _buildChip("H", 30, 20, chipPadding, 4),
+          _buildChip("Y", 30, 20, chipPadding, 5),
           Text("X",
               style: TextStyle(
                   fontSize: _animation.value,
@@ -153,8 +204,8 @@ class _StartPageState extends State<StartPage>
       ),
       Row(
         children: [
-          _buildChip("L", Colors.orangeAccent, 30, 20, chipPadding),
-          _buildChip("E", Colors.cyanAccent, 30, 20, chipPadding),
+          _buildChip("L", 30, 20, chipPadding, 6),
+          _buildChip("E", 30, 20, chipPadding, 7),
         ],
       ),
     ]);
