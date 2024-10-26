@@ -16,6 +16,48 @@ import 'fortune.dart';
 import 'matrix.dart';
 
 
+
+class Move {
+  GameChip? chip;
+  Coordinate? from;
+  Coordinate? to;
+  bool skipped = false;
+
+  Move({this.chip, this.from, this.to, required this.skipped});
+
+  Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
+  Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
+  Move.skipped(): this(skipped: true);
+
+  bool isMove() => !skipped && from != to;
+
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Move && runtimeType == other.runtimeType &&
+              chip == other.chip && from == other.from && to == other.to &&
+              skipped == other.skipped;
+
+  @override
+  int get hashCode =>
+      chip.hashCode ^ from.hashCode ^ to.hashCode ^ skipped.hashCode;
+
+  @override
+  String toString() {
+    if (skipped) {
+      return "-";
+    }
+    if (isMove()) {
+      return "${chip?.id}@$from->$to";
+    }
+    else {
+      return "${chip?.id}@$from";
+    }
+  }
+
+}
+
 class Stats {
   final _points = HashMap<Role, int>();
  
@@ -199,6 +241,17 @@ class Cursor {
 
   bool isVerticalMove() => _startWhere != null && _where != null && _startWhere!.x == _where!.x;
 
+  void adaptFromMove(Move move) {
+    clear();
+    if (move.isMove()) {
+      updateStart(move.from!);
+      update(move.to!);
+    }
+    else if (!move.skipped) {
+      update(move.from!);
+    }
+  }
+
 
 }
 
@@ -220,6 +273,11 @@ class Play {
   late Player _orderPlayer;
   ChaosAi? chaosAi;
   OrderAi? orderAi;
+
+  DateTime startDate = DateTime.timestamp();
+  DateTime? endDate = null;
+  String? name = null;
+  List<Move> journal = [];
 
   Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
     _stats = Stats();
@@ -302,6 +360,25 @@ class Play {
 
   switchRole() {
     _currentRole = currentRole == Role.Chaos ? Role.Order : Role.Chaos;
+  }
+
+  applyMove(Move move) {
+    if (move.isMove()) {
+      final chip = _matrix.remove(move.from!);
+      if (chip != null) {
+        _matrix.put(move.to!, chip);
+      }
+    }
+    else if (!move.skipped) {
+      _matrix.put(move.from!, move.chip!, _stock);
+    }
+
+    journal.add(move);
+  }
+
+  undoLastMove() {
+    //TODO
+    journal.removeLast();
   }
 
   void nextRound(bool clearOpponentCursor) {

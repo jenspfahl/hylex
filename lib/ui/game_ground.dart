@@ -75,26 +75,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   _aiNextMoveHandler(Move move) async {
     debugPrint("AI ready");
     _aiDone = _play.currentRole;
-    _play.opponentMove.clear();
-    if (move.isMove()) {
-      final chip = _play.matrix.remove(move.from!);
-      if (chip != null) {
-        final test = _play.matrix.getSpot(move.to!);
-        if (test.content != null) {
-          toastError(context, "!!! $test");
-        }
-        else {
-          _play.matrix.put(move.to!, chip);
-        }
-      }
 
-      _play.opponentMove.updateStart(move.from!);
-      _play.opponentMove.update(move.to!);
-    }
-    else if (!move.skipped) {
-      _play.matrix.put(move.from!, _play.currentChip!, _play.stock);
-      _play.opponentMove.update(move.from!);
-    }
+    _play.applyMove(move);
+    _play.opponentMove.adaptFromMove(move);
 
     if (_play.isGameOver()) {
       _doGameOver(context);
@@ -146,7 +129,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                   IconButton(
                     icon: const Icon(Icons.undo_outlined),
                     onPressed: () => {
-                      
+
                     },
                   ),
                   IconButton(

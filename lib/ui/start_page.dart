@@ -58,13 +58,15 @@ class _StartPageState extends State<StartPage>
             child: Padding(
               padding: const EdgeInsets.all(64.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildGameLogo(),
-                  Text(""),
-                  Text(""),
-                  SizedBox(
-                    height: 300,
+                  AspectRatio(aspectRatio: 1.7,
+                  child: _buildGameLogo()),
+                //  Text(""),
+                //  Text(""),
+                  AspectRatio(
+                    aspectRatio: 0.75,
+                    //height: 300,
                     child: GridView.count(
                         crossAxisCount: 2,
                         children: [

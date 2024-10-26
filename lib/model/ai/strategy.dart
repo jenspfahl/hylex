@@ -67,8 +67,13 @@ class MinimaxStrategy extends Strategy {
           int value = message[0];
           Move move = message[1];
 
+          // correct value for move to avoid common patterns
+          if (!move.skipped) {
+            value = _simplePatternDetection(play, move, value);
+          }
+
           values.putIfAbsent(value, () {
-            debugPrint("move received with value $value: $move ");
+            debugPrint("move received with value $value: $move");
             return move;
           });
 
@@ -129,6 +134,57 @@ class MinimaxStrategy extends Strategy {
       debugPrint("AI: most valuable move for ${currentRole.name} id $move with a value of $value");
       return move;
     }
+  }
+
+  int _simplePatternDetection(Play play, Move move, int value) {
+    final moveTarget = play.matrix.getSpot(move.to!);
+    var targetChip = play.currentChip;
+    if (move.isMove()) {
+      targetChip = play.matrix.getChip(move.from!);
+    }
+    //top
+    if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip two times on top of $moveTarget");
+      value += 3;
+    }
+    //bottom
+    if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip two times on bottom of $moveTarget");
+      value += 3;
+    }
+    //left
+    if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip two times on left of $moveTarget");
+      value += 3;
+    }
+    //right
+    if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip two times on right of $moveTarget");
+      value += 3;
+    }
+    
+    // one more palin
+    //top
+    if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip four times on top of $moveTarget");
+      value += 3;
+    }
+    //bottom
+    if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip four times on bottom of $moveTarget");
+      value += 3;
+    }
+    //left
+    if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip four times on left of $moveTarget");
+      value += 3;
+    }
+    //right
+    if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
+      debugPrint("found same $targetChip four times on right of $moveTarget");
+      value += 3;
+    }
+    return value;
   }
 
   Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Load load) async {
@@ -299,47 +355,6 @@ class MinimaxStrategy extends Strategy {
 }
 
 
-
-class Move {
-  GameChip? chip;
-  Coordinate? from;
-  Coordinate? to;
-  bool skipped = false;
-
-  Move({this.chip, this.from, this.to, required this.skipped});
-
-  Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
-  Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
-  Move.skipped(): this(skipped: true);
-
-  bool isMove() => !skipped && from != to;
-
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-          other is Move && runtimeType == other.runtimeType &&
-              chip == other.chip && from == other.from && to == other.to &&
-              skipped == other.skipped;
-
-  @override
-  int get hashCode =>
-      chip.hashCode ^ from.hashCode ^ to.hashCode ^ skipped.hashCode;
-
-  @override
-  String toString() {
-    if (skipped) {
-      return "-";
-    }
-    if (isMove()) {
-      return "${chip?.id}@$from->$to";
-    }
-    else {
-      return "${chip?.id}@$from";
-    }
-  }
-
-}
 
 class Load extends ChangeNotifier {
   int curr = 0;
