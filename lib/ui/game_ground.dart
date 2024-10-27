@@ -64,6 +64,12 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
+  @override
+  void dispose() {
+    _killAiThinking();
+    super.dispose();
+  }
+
   void _resetGame(BuildContext? context) {
     _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
     _play.nextChip();
@@ -85,8 +91,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
     _play.nextRound(false);
-
-    setState(() {});
+    
+    setState(() {
+      _boardLocked = false;
+    });
 
     await Future.delayed(const Duration(seconds: 2), (){});
 
@@ -126,40 +134,48 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.undo_outlined),
-                    onPressed: () {
-                      if (_play.isGameOver() || _play.isFullAutomaticPlay || _play.isMultiplayerPlay) { //TODO hide icon in this case
-                        toastError(context, "Undo not possible here");
-                        return;
-                      }
-
-                      setState(() {
-                        if (_play.isDirty) {
-                          _play.undoLastMove();
+                  Visibility(
+                    visible: _isUndoAllowed(),
+                    child: IconButton(
+                      icon: const Icon(Icons.undo_outlined),
+                      onPressed: () {
+                        if (!_isUndoAllowed()) {
+                          toastError(context, "Undo not possible here");
+                          return;
                         }
-                        else {
 
-                          buildChoiceDialog(180, 180, 'Undo last opponent move?',
-                              "YES", ()
-                              {
-                                SmartDialog.dismiss();
+                        setState(() {
+                          if (_play.isDirty) {
+                            _play.undoLastMove();
+                            _play.cursor.clear();
+                          }
+                          else {
 
-                                _play.previousRound();
-                                if (_play.currentPlayer == Player.Ai) {
-                                  // undo AI move also
-                                  _play.previousRound();
+                            buildChoiceDialog(180, 180, 'Undo last opponent move?',
+                                "YES", ()
+                                {
+                                  SmartDialog.dismiss();
+
+                                  var lastMove =_play.previousRound();
+                                  if (_play.currentPlayer == Player.Ai) {
+                                    // undo AI move also
+                                    lastMove = _play.previousRound();
+                                  }
+                                  if (lastMove != null) {
+                                    _play.cursor.adaptFromMove(lastMove);
+                                    _play.cursor.temporary = true;
+                                  }
                                   _thinkIfAi(context);
-                                }
 
-                              },  "NO", () {
-                                SmartDialog.dismiss();
-                              });
+                                },  "NO", () {
+                                  SmartDialog.dismiss();
+                                });
 
-                        }
-                      });
+                          }
+                        });
 
-                    },
+                      },
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.restart_alt_outlined),
@@ -280,6 +296,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
+  bool _isUndoAllowed() => !_boardLocked && !_play.isGameOver() && !_play.isFullAutomaticPlay && !_play.isMultiplayerPlay && _play.journal.isNotEmpty;
+
   void _killAiThinking() {
     _aiControlPort?.send('KILL');
   }
@@ -310,7 +328,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           });
           _thinkIfAi(context);
         },
-        child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
+        child: Text(_play.currentRole == Role.Order && !_play.cursor.hasEnd
             ? 'Skip move'
             : 'Submit move',
         style: TextStyle(fontWeight: isDirty ? FontWeight.bold : null)),
@@ -348,15 +366,15 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Text _buildAiDoneText() {
     if (_aiDone == Role.Order) {
-      if (_play.opponentMove.hasStartCursor && _play.opponentMove.hasCursor) {
-        return Text("${_aiDone!.name} has moved from ${_play.opponentMove.startWhere?.toReadableCoordinates()} to ${_play.opponentMove.where?.toReadableCoordinates()}.");
+      if (_play.opponentMove.hasStart && _play.opponentMove.hasEnd) {
+        return Text("${_aiDone!.name} has moved from ${_play.opponentMove.start?.toReadableCoordinates()} to ${_play.opponentMove.end?.toReadableCoordinates()}.");
       }
       else {
         return Text("${_aiDone!.name} has skipped its move.");
       }
     }
     else {
-      return Text("${_aiDone!.name} has placed at ${_play.opponentMove.where?.toReadableCoordinates()}.");
+      return Text("${_aiDone!.name} has placed at ${_play.opponentMove.end?.toReadableCoordinates()}.");
     }
   }
 
@@ -417,12 +435,12 @@ class _HyleXGroundState extends State<HyleXGround> {
     final chip = spot.content;
     final pointText = spot.point > 0 ? spot.point.toString() : "";
 
-    if (_play.cursor.where == where) {
+    if (_play.cursor.end == where) {
       return DottedBorder(
         child: _buildChip(chip, pointText, where),
       );
     }
-    else if (_play.cursor.startWhere == where) {
+    else if (_play.cursor.start == where) {
       return DottedBorder(
         dashPattern: const [2,4],
         child: _buildChip(chip, pointText, where),
@@ -439,31 +457,31 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (_play.currentRole == Role.Order && where != null) {
       possibleTarget =
           where != null
-              && _play.cursor.hasStartCursor
+              && _play.cursor.hasStart
               && _play.cursor.possibleTargets.contains(where);
 
-      if (_play.cursor.hasCursor) {
-        startSpot = _play.matrix.getSpot(_play.cursor.where!);
+      if (_play.cursor.hasEnd) {
+        startSpot = _play.matrix.getSpot(_play.cursor.end!);
       }
-      else if (_play.cursor.hasStartCursor) {
-        startSpot = _play.matrix.getSpot(_play.cursor.startWhere!);
+      else if (_play.cursor.hasStart) {
+        startSpot = _play.matrix.getSpot(_play.cursor.start!);
       }
     }
 
     // show trace of opponent move
-    if (_showOpponentTrace && _play.opponentMove.hasCursor && where != null) {
-      startSpot ??= _play.matrix.getSpot(_play.opponentMove.where!);
-      possibleTarget |= _play.opponentMove.where! == where;
-      if (_play.opponentMove.hasStartCursor) {
+    if (_showOpponentTrace && _play.opponentMove.hasEnd && where != null) {
+      startSpot ??= _play.matrix.getSpot(_play.opponentMove.end!);
+      possibleTarget |= _play.opponentMove.end! == where;
+      if (_play.opponentMove.hasStart) {
         if (_play.opponentMove.isHorizontalMove()) {
-          possibleTarget |= _play.opponentMove.where!.y == where.y &&
-              (_play.opponentMove.startWhere!.x <= where.x  && _play.opponentMove.where!.x >= where.x ||
-                  _play.opponentMove.where!.x <= where.x  && _play.opponentMove.startWhere!.x >= where.x);
+          possibleTarget |= _play.opponentMove.end!.y == where.y &&
+              (_play.opponentMove.start!.x <= where.x  && _play.opponentMove.end!.x >= where.x ||
+                  _play.opponentMove.end!.x <= where.x  && _play.opponentMove.start!.x >= where.x);
         }
         else if (_play.opponentMove.isVerticalMove()) {
-          possibleTarget |= _play.opponentMove.where!.x == where.x &&
-              (_play.opponentMove.startWhere!.y <= where.y  && _play.opponentMove.where!.y >= where.y ||
-                  _play.opponentMove.where!.y <= where.y  && _play.opponentMove.startWhere!.y >= where.y);
+          possibleTarget |= _play.opponentMove.end!.x == where.x &&
+              (_play.opponentMove.start!.y <= where.y  && _play.opponentMove.end!.y >= where.y ||
+                  _play.opponentMove.end!.y <= where.y  && _play.opponentMove.start!.y >= where.y);
         }
       }
     }
@@ -518,6 +536,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     _showOpponentTrace = false;
 
     setState(() {
+      if (_play.cursor.temporary) {
+        _play.cursor.clear();
+      }
       if (_play.currentRole == Role.Chaos) {
         if (_play.matrix.isFree(where)) {
           _handleFreeFieldForChaos(context, where);
@@ -539,7 +560,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
     final cursor = _play.cursor;
-    if (cursor.where != null && !_play.matrix.isFree(cursor.where!)) {
+    if (cursor.end != null && !_play.matrix.isFree(cursor.end!)) {
       toastInfo(context, "You have already placed a chip");
     }
     else {
@@ -549,13 +570,13 @@ class _HyleXGroundState extends State<HyleXGround> {
       }
       _play.applyMove(Move.placed(currentChip, coordinate));
       //_play.matrix.put(coordinate, currentChip, _play.stock);
-      _play.cursor.update(coordinate);
+      _play.cursor.updateEnd(coordinate);
     }
   }
 
   void _handleOccupiedFieldForChaos(Coordinate coordinate, BuildContext context) {
     final cursor = _play.cursor;
-    if (cursor.where != coordinate) {
+    if (cursor.end != coordinate) {
       toastInfo(context, "You can only remove the current placed chip");
     }
     else {
@@ -566,35 +587,35 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
     final cursor = _play.cursor;
-    if (!cursor.hasStartCursor) {
+    if (!cursor.hasStart) {
       toastInfo(context, "Please select a chip to move first");
     }
-    else if (!cursor.hasCursor && cursor.startWhere == coordinate) {
+    else if (/*!cursor.hasEnd && */cursor.start == coordinate) {
       // clear start cursor if not target is selected
       _play.undoLastMove();
       cursor.clear();
     }
-    else if (!cursor.possibleTargets.contains(coordinate) && cursor.startWhere != coordinate) {
+    else if (!cursor.possibleTargets.contains(coordinate) && cursor.start != coordinate) {
       toastInfo(context, "Chip can only move horizontally or vertically in free space");
     }
-    else if (cursor.hasStartCursor) {
-      Spot from;
-      if (cursor.hasCursor) {
-        from = _play.matrix.getSpot(cursor.where!);
+    else if (cursor.hasStart) {
+      if (cursor.hasEnd) {
+        final from = _play.matrix.getSpot(cursor.end!);
         // this is a correction move, so undo last move and apply again below
         _play.undoLastMove();
+        _play.applyMove(Move.moved(from.content!, cursor.start!, coordinate));
       }
       else {
-        from = _play.matrix.getSpot(cursor.startWhere!);
+        final from = _play.matrix.getSpot(cursor.start!);
+        _play.applyMove(Move.moved(from.content!, cursor.start!, coordinate));
       }
-      _play.applyMove(Move.moved(from.content!, cursor.startWhere!, coordinate));
 
-      if (cursor.startWhere == coordinate) {
+      if (cursor.start == coordinate) {
         // move back to start is like a reset
         cursor.clear();
       }
       else {
-        cursor.update(coordinate);
+        cursor.updateEnd(coordinate);
       }
 
     }
@@ -602,12 +623,12 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
     final cursor = _play.cursor;
-    if (cursor.startWhere != null && cursor.startWhere != coordinate && cursor.where != null) {
+    if (cursor.start != null && cursor.start != coordinate && cursor.end != null) {
       toastInfo(context,
           "You can not move the selected chip on another one");
 
     }
-    else if (cursor.startWhere == coordinate) {
+    else if (cursor.start == coordinate) {
       cursor.clear();
     }
     else {
@@ -663,7 +684,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _wrapLastMove(Widget widget, Coordinate where) {
-    if (_play.opponentMove.hasStartCursor && _play.opponentMove.startWhere == where) {
+    if (_play.opponentMove.hasStart && _play.opponentMove.start == where) {
       return DottedBorder(
           padding: EdgeInsets.zero,
           strokeWidth: 1,
@@ -672,7 +693,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           color: Colors.grey,
           child: widget);
     }
-    else if (_play.opponentMove.hasCursor && _play.opponentMove.where == where) {
+    else if (_play.opponentMove.hasEnd && _play.opponentMove.end == where) {
       return DottedBorder(
           padding: EdgeInsets.zero,
           strokeWidth: 3,

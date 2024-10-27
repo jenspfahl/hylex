@@ -159,50 +159,47 @@ class Stock {
 }
 
 class Cursor {
-  Coordinate? _startWhere;
-  Coordinate? _where;
+  Coordinate? _start;
+  Coordinate? _end;
   final _possibleTargets = HashSet<Coordinate>();
+
+  bool temporary = false;
 
   Cursor();
 
-  Cursor.fromJsonMap(Map<String, dynamic> map) {
-    final Map<String, dynamic>? where = map["where"];
-    if (where != null && where.isNotEmpty) {
-      _where = Coordinate.fromJsonMap(where);
-    }
-  }
 
-  Coordinate? get where => _where;
-  Coordinate? get startWhere => _startWhere;
+  Coordinate? get end => _end;
+  Coordinate? get start => _start;
   HashSet<Coordinate> get possibleTargets => _possibleTargets;
 
-  bool get hasCursor => where != null;
-  bool get hasStartCursor => startWhere != null;
+  bool get hasEnd => end != null;
+  bool get hasStart => start != null;
 
-  update(Coordinate where) {
-    _where = where;
+  updateEnd(Coordinate where) {
+    _end = where;
   }
 
   updateStart(Coordinate where) {
-    _startWhere = where;
+    _start = where;
   }
 
   clear({bool keepStart = false}) {
     if (!keepStart) {
-      _startWhere = null;
+      _start = null;
       clearPossibleTargets();
     }
-    _where = null;
+    _end = null;
+    temporary = false;
   }
 
 
   @override
   String toString() {
-    return 'Cursor{_startWhere: $_startWhere, _where: $_where, _possibleTargets: $_possibleTargets}';
+    return 'Cursor{_startWhere: $_start, _where: $_end, _possibleTargets: $_possibleTargets}';
   }
 
   Map<String, dynamic> toJson() => {
-    'where' : _where, //currentPiece should loaded when deserialized
+    'where' : _end, //currentPiece should loaded when deserialized
   };
 
   void clearPossibleTargets() {
@@ -216,20 +213,22 @@ class Cursor {
     _possibleTargets.addAll(matrix.getPossibleTargetsFor(where).map((spot) => spot.where));
   }
 
-  bool isHorizontalMove() => _startWhere != null && _where != null && _startWhere!.y == _where!.y;
+  bool isHorizontalMove() => _start != null && _end != null && _start!.y == _end!.y;
 
-  bool isVerticalMove() => _startWhere != null && _where != null && _startWhere!.x == _where!.x;
+  bool isVerticalMove() => _start != null && _end != null && _start!.x == _end!.x;
 
   void adaptFromMove(Move move) {
     clear();
     if (move.isMove()) {
       updateStart(move.from!);
-      update(move.to!);
+      updateEnd(move.to!);
     }
     else if (!move.skipped) {
-      update(move.from!);
+      updateEnd(move.from!);
     }
   }
+
+  bool contains(Coordinate where) => _start == where || _end == where;
 
 
 }
@@ -350,7 +349,7 @@ class Play {
     _staleMove = null;
   }
 
-  void previousRound() {
+  Move? previousRound() {
     final lastMove = undoLastMove();
     if (lastMove != null) {
       _currentChip = lastMove.chip;
@@ -363,7 +362,10 @@ class Play {
       }
       _cursor.clear();
       _opponentMove.clear();
+
+      return lastMove;
     }
+    return null;
   }
 
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
