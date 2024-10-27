@@ -128,7 +128,36 @@ class _HyleXGroundState extends State<HyleXGround> {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.undo_outlined),
-                    onPressed: () => {
+                    onPressed: () {
+                      if (_play.isGameOver() || _play.isFullAutomaticPlay || _play.isMultiplayerPlay) { //TODO hide icon in this case
+                        toastError(context, "Undo not possible here");
+                        return;
+                      }
+
+                      setState(() {
+                        if (_play.isDirty) {
+                          _play.undoLastMove();
+                        }
+                        else {
+
+                          buildChoiceDialog(180, 180, 'Undo last opponent move?',
+                              "YES", ()
+                              {
+                                SmartDialog.dismiss();
+
+                                _play.previousRound();
+                                if (_play.currentPlayer == Player.Ai) {
+                                  // undo AI move also
+                                  _play.previousRound();
+                                  _thinkIfAi(context);
+                                }
+
+                              },  "NO", () {
+                                SmartDialog.dismiss();
+                              });
+
+                        }
+                      });
 
                     },
                   ),
@@ -261,6 +290,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       return Text("Game over! ${winner.name} wins!");
     }
     else if (_play.currentPlayer == Player.User) {
+      final isDirty = _play.isDirty;
       return FilledButton(
         onPressed: () {
           if (_boardLocked) {
@@ -270,7 +300,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             _doGameOver(context);
             return;
           }
-          if (_play.currentRole == Role.Chaos && !_play.cursor.hasCursor) {
+          if (_play.currentRole == Role.Chaos && !_play.isDirty) {
             toastInfo(context, "Chaos has to place one chip!");
             return;
           }
@@ -282,7 +312,8 @@ class _HyleXGroundState extends State<HyleXGround> {
         },
         child: Text(_play.currentRole == Role.Order && !_play.cursor.hasCursor
             ? 'Skip move'
-            : 'Submit move'),
+            : 'Submit move',
+        style: TextStyle(fontWeight: isDirty ? FontWeight.bold : null)),
       );
     }
     else if (_play.currentPlayer == Player.Ai) {
@@ -503,16 +534,12 @@ class _HyleXGroundState extends State<HyleXGround> {
           _handleOccupiedFieldForOrder(where, context);
         }
       }
-
-      _play.stats.setPoints(Role.Order, _play.matrix.getTotalPointsForOrder());
-      _play.stats.setPoints(Role.Chaos, _play.matrix.getTotalPointsForChaos());
-
     });
   }
 
   void _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
     final cursor = _play.cursor;
-    if (cursor.where != null) {
+    if (cursor.where != null && !_play.matrix.isFree(cursor.where!)) {
       toastInfo(context, "You have already placed a chip");
     }
     else {
@@ -520,7 +547,8 @@ class _HyleXGroundState extends State<HyleXGround> {
       if (!_play.stock.hasStock(currentChip)) {
         toastInfo(context, "No more stock for current chip");
       }
-      _play.matrix.put(coordinate, currentChip, _play.stock);
+      _play.applyMove(Move.placed(currentChip, coordinate));
+      //_play.matrix.put(coordinate, currentChip, _play.stock);
       _play.cursor.update(coordinate);
     }
   }
@@ -531,7 +559,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       toastInfo(context, "You can only remove the current placed chip");
     }
     else {
-      _play.matrix.remove(coordinate, _play.stock);
+      _play.undoLastMove();
       _play.cursor.clear();
     }
   }
@@ -542,21 +570,25 @@ class _HyleXGroundState extends State<HyleXGround> {
       toastInfo(context, "Please select a chip to move first");
     }
     else if (!cursor.hasCursor && cursor.startWhere == coordinate) {
-      // clear source cursor if not target is selected
+      // clear start cursor if not target is selected
+      _play.undoLastMove();
       cursor.clear();
     }
     else if (!cursor.possibleTargets.contains(coordinate) && cursor.startWhere != coordinate) {
       toastInfo(context, "Chip can only move horizontally or vertically in free space");
     }
     else if (cursor.hasStartCursor) {
-      GameChip chip;
+      Spot from;
       if (cursor.hasCursor) {
-        chip = _play.matrix.remove(cursor.where!, _play.stock)!;
+        from = _play.matrix.getSpot(cursor.where!);
+        // this is a correction move, so undo last move and apply again below
+        _play.undoLastMove();
       }
       else {
-        chip = _play.matrix.remove(cursor.startWhere!, _play.stock)!;
+        from = _play.matrix.getSpot(cursor.startWhere!);
       }
-      _play.matrix.put(coordinate, chip, _play.stock);
+      _play.applyMove(Move.moved(from.content!, cursor.startWhere!, coordinate));
+
       if (cursor.startWhere == coordinate) {
         // move back to start is like a reset
         cursor.clear();

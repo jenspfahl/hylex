@@ -27,7 +27,7 @@ class MinimaxStrategy extends Strategy {
   Future<Move> nextMove(Play play, int depth, Function(Load)? loadChangeListener) async {
 
     final currentRole = play.currentRole;
-    final currentChip = play.currentChip;
+    final currentChip = currentRole == Role.Order ? play.stock.getChipOfMostStock(): play.currentChip;
 
     final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
 
@@ -40,6 +40,7 @@ class MinimaxStrategy extends Strategy {
     }
 
     var moves = _getMoves(currentChip, play.matrix, currentRole);
+
 
 
     final subscriptionWaits = <Future>[];
@@ -198,11 +199,11 @@ class MinimaxStrategy extends Strategy {
       // Chaos(3)--Order(2)--Chaos(1) --> Chaos(3)--Order(2)--Order(1)
       currentRole = Role.Order;
     }
-    if (depth == 2 && currentRole == Role.Chaos) {
+    /*if (depth == 2 && currentRole == Role.Chaos) {
       // Leave out second Chaos round as it we don't know which chip haos draws
       // Order(3)--Chaos(2)--Order(1) --> Order(3)--Order(2)--Order(1)
       currentRole = Role.Order;
-    }
+    }*/
 
     int value;
     Role opponentRole;

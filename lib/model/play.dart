@@ -56,6 +56,8 @@ class Move {
     }
   }
 
+  bool isPlaced() => !isMove() && !skipped;
+
 }
 
 class Stats {
@@ -63,34 +65,12 @@ class Stats {
  
   Stats();
 
-  Stats.fromJsonMap(Map<String, dynamic> map) {
- /*   Map<String, dynamic> cellsMap = map["cells"]!;
-    _points.addAll(cellsMap.map((key, value) => MapEntry(CellType.fromId(key), value as int)));
-*/
-  }
   
   int getPoints(Role role) => _points[role] ?? 0;
 
-  void setPoints(Role role, int points) {
+  void _setPoints(Role role, int points) {
     _points[role] = points;
   }
-
-
-  incPoints(Role role) {
-    _points[role] = getPoints(role) + 1;
-  }
-  
-  decPoints(Role role) {
-    final curr = getPoints(role);
-    _points[role] = max(0, curr - 1);
-  }
-
-
-  Map<String, dynamic> toJson() => {
-   // 'cells' : _cells.map((key, value) => MapEntry(key.id, value)),
-   // 'resources' : _resources.map((key, value) => MapEntry(key.id, value)),
-   // 'ever' : _ever.map((key, value) => MapEntry(key.id, value)),
-  };
 
   Role getWinner() {
     if (getPoints(Role.Order) > getPoints(Role.Chaos)) {
@@ -117,11 +97,6 @@ class Stock {
     _available.addAll(initialStock);
   }
 
-  Stock.fromJsonMap(Map<String, dynamic> map) {
- //   Map<String, dynamic> availableMap = map["available"]!;
- //   _available.addAll(availableMap.map((key, value) => MapEntry(CellType.fromId(key), value as int)));
-  }
-
   Iterable<StockEntry> getStockEntries() {
     final entries = _available
       .entries
@@ -135,10 +110,6 @@ class Stock {
   int getStock(GameChip chip) => _available[chip] ?? 0;
 
   bool hasStock(GameChip chip) => getStock(chip) > 0;
-
-  incStock(GameChip chip) {
-    _available[chip] = getStock(chip) + 1;
-  }
 
   decStock(GameChip chip) {
     final curr = getStock(chip);
@@ -167,6 +138,13 @@ class Stock {
     _available[chip] = stockForChip + 1;
   }
 
+  GameChip? getChipOfMostStock() {
+    final entries = getStockEntries().toList();
+    entries.sort((e1, e2) => e2.amount.compareTo(e1.amount));
+    return entries.firstOrNull?.chip;
+  }
+
+
   int getTotalStock() => _available.values.reduce((v, e) => v + e);
 
   bool isEmpty() {
@@ -175,6 +153,7 @@ class Stock {
   }
 
   int getTotalChipTypes() => _available.length;
+
 
 
 }
@@ -265,12 +244,12 @@ class Play {
   late Stock _stock;
   late Cursor _cursor;
   late Cursor _opponentMove;
-  late int _dimension;
+  late final int _dimension;
   late Matrix _matrix;
   GameChip? _currentChip;
   late AiConfig _aiConfig;
-  late Player _chaosPlayer;
-  late Player _orderPlayer;
+  late final Player _chaosPlayer;
+  late final Player _orderPlayer;
   ChaosAi? chaosAi;
   OrderAi? orderAi;
 
@@ -278,6 +257,8 @@ class Play {
   DateTime? endDate = null;
   String? name = null;
   List<Move> journal = [];
+
+  Move? _staleMove = null;
 
   Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
     _stats = Stats();
@@ -305,57 +286,6 @@ class Play {
   double get progress => currentRound / maxRounds;
   int get maxRounds => dimension * dimension;
 
-/*
-  Play.fromJsonMap(Map<String, dynamic> map) {
-    _chaosPlayer = Player.Ai;
-    _orderPlayer = Player.User;
-    _currentRound = map["currentGen"]??0;
-   _ticks = map["ticks"]??0;
-    _secondsPerTick = map["secondsPerTick"]??0;
-    _paused = map["paused"]??false;
-    _lifeTime = map["lifeTime"]??0;
-    _lifeTimeAtLastTick = map["lifeTimeAtLastTick"]??0;
-
-    originZoom = map["originZoom"];
-    final originVisibleRectTop = map["originVisibleRect.top"];
-    final originVisibleRectBottom = map["originVisibleRect.bottom"];
-    final originVisibleRectLeft = map["originVisibleRect.left"];
-    final originVisibleRectRight = map["originVisibleRect.right"];
-    if (originVisibleRectTop != null && originVisibleRectBottom != null 
-        && originVisibleRectLeft != null && originVisibleRectRight != null) {
-      originVisibleRect = Rect.fromLTRB(
-          originVisibleRectLeft, originVisibleRectTop,
-          originVisibleRectRight, originVisibleRectBottom);
-    }
-    
-    currentZoom = map["currentZoom"];
-    final currentVisibleRectTop = map["currentVisibleRect.top"];
-    final currentVisibleRectBottom = map["currentVisibleRect.bottom"];
-    final currentVisibleRectLeft = map["currentVisibleRect.left"];
-    final currentVisibleRectRight = map["currentVisibleRect.right"];
-    if (currentVisibleRectTop != null && currentVisibleRectBottom != null 
-        && currentVisibleRectLeft != null && currentVisibleRectRight != null) {
-      currentVisibleRect = Rect.fromLTRB(
-          currentVisibleRectLeft, currentVisibleRectTop,
-          currentVisibleRectRight, currentVisibleRectBottom);
-    }
-
-    _stats = Stats.fromJsonMap(map["stats"]!);
-    _stock = Stock.fromJsonMap(map["stock"]!);
-
-    _matrix = Matrix.fromJsonMap(map["matrix"]!);
-
-    final Map<String, dynamic> cursorMap = map["cursor"];
-    if (cursorMap.isNotEmpty) {
-      _cursor = Cursor.fromJsonMap(cursorMap);
-    }
-
-    _currentChip = map["selectedCellTypeId"];
-
-    _aiConfig = AiConfig.fromJsonMap(map["aiConfig"]);
-    _initAis(useDefaultParams: false);
-  }
-*/
   Role get currentRole => _currentRole;
 
   switchRole() {
@@ -364,26 +294,47 @@ class Play {
 
   applyMove(Move move) {
     if (move.isMove()) {
-      final chip = _matrix.remove(move.from!);
-      if (chip != null) {
-        _matrix.put(move.to!, chip);
-      }
+      _matrix.move(move.from!, move.to!);
     }
     else if (!move.skipped) {
       _matrix.put(move.from!, move.chip!, _stock);
     }
-
+    debugPrint("add move to journal: $move");
+    _staleMove = move;
     journal.add(move);
+
+    _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
+    _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
+
   }
 
-  undoLastMove() {
-    //TODO
-    journal.removeLast();
+  Move? undoLastMove() {
+    final lastMove = journal.lastOrNull;
+    debugPrint("last move: $lastMove");
+    if (lastMove != null) {
+      if (lastMove.isMove()) {
+        _matrix.move(lastMove.to!, lastMove.from!);
+      }
+      else if (!lastMove.skipped) {
+        _matrix.remove(lastMove.from!, _stock);
+      }
+
+      if (_staleMove == lastMove) {
+        _staleMove = null;
+      }
+
+      _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
+      _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
+
+      return journal.removeLast();
+    }
+    return null;
   }
+
+  bool get isDirty => _staleMove != null;
+  Move? get currentMove => _staleMove;
 
   void nextRound(bool clearOpponentCursor) {
-    _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
     if (currentRole == Role.Order) {
       // round is over
@@ -395,13 +346,33 @@ class Play {
     if (clearOpponentCursor) {
       _opponentMove.clear();
     }
+
+    _staleMove = null;
+  }
+
+  void previousRound() {
+    final lastMove = undoLastMove();
+    if (lastMove != null) {
+      _currentChip = lastMove.chip;
+
+      switchRole();
+
+      if (currentRole == Role.Order) {
+        // undo round is over
+        decRound();
+      }
+      _cursor.clear();
+      _opponentMove.clear();
+    }
   }
 
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
-  
+
+  bool get isMultiplayerPlay => _chaosPlayer == Player.RemoteUser || _orderPlayer == Player.RemoteUser;
+
+  bool get isFullAutomaticPlay => _chaosPlayer == Player.Ai && _orderPlayer == Player.Ai;
+
   Role finishGame() {
-    _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
     _currentRole = _stats.getWinner();
     _currentChip = null;
@@ -446,6 +417,10 @@ class Play {
 
   incRound() {
     _currentRound++;
+  }
+
+  decRound() {
+    _currentRound--;
   }
 
 
@@ -526,4 +501,5 @@ class Play {
 
 
   }
+
 }
