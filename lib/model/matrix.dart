@@ -158,20 +158,22 @@ class Matrix {
 
   void move(Coordinate from, Coordinate to) {
     final chip = remove(from, null, false);
-    put(to, chip!, null, false);
-    if (from.x == to.x) { // moved vertically
-      _calcPointsOnXAxis(from.x);
-      _calcPointsOnYAxis(from.y);
-      _calcPointsOnYAxis(to.y);
-    }
-    else if (from.y == to.y) { // moved horizontally
-      _calcPointsOnXAxis(from.x);
-      _calcPointsOnXAxis(to.x);
-      _calcPointsOnYAxis(from.y);
-    }
-    else {
-      _calcPoints(from);
-      _calcPoints(to);
+    if (chip != null) {
+      put(to, chip!, null, false);
+      if (from.x == to.x) { // moved vertically
+        _calcPointsOnXAxis(from.x);
+        _calcPointsOnYAxis(from.y);
+        _calcPointsOnYAxis(to.y);
+      }
+      else if (from.y == to.y) { // moved horizontally
+        _calcPointsOnXAxis(from.x);
+        _calcPointsOnXAxis(to.x);
+        _calcPointsOnYAxis(from.y);
+      }
+      else {
+        _calcPoints(from);
+        _calcPoints(to);
+      }
     }
   }
 

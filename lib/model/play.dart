@@ -29,7 +29,7 @@ class Move {
   Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
   Move.skipped(): this(skipped: true);
 
-  bool isMove() => !skipped && from != to;
+  bool isMove() => !skipped && from != to && from != null && to != null;
 
 
   @override
@@ -57,6 +57,17 @@ class Move {
   }
 
   bool isPlaced() => !isMove() && !skipped;
+
+  Cursor toCursor() {
+    final cursor = Cursor();
+    if (from != null) {
+      cursor.updateStart(from!);
+    }
+    if (to != null) {
+      cursor.updateEnd(to!);
+    }
+    return cursor;
+  }
 
 }
 
@@ -255,7 +266,7 @@ class Play {
   DateTime startDate = DateTime.timestamp();
   DateTime? endDate = null;
   String? name = null;
-  List<Move> journal = [];
+  List<Move> _journal = [];
 
   Move? _staleMove = null;
 
@@ -291,7 +302,12 @@ class Play {
     _currentRole = currentRole == Role.Chaos ? Role.Order : Role.Chaos;
   }
 
-  applyMove(Move move) {
+  Move? get lastMoveFromJournal => _journal.lastOrNull;
+
+  bool get isJournalEmpty => _journal.isEmpty;
+
+
+  applyStaleMove(Move move) {
     if (move.isMove()) {
       _matrix.move(move.from!, move.to!);
     }
@@ -300,37 +316,53 @@ class Play {
     }
     debugPrint("add move to journal: $move");
     _staleMove = move;
-    journal.add(move);
 
     _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
     _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
   }
 
-  Move? undoLastMove() {
-    final lastMove = journal.lastOrNull;
-    debugPrint("last move: $lastMove");
-    if (lastMove != null) {
-      if (lastMove.isMove()) {
-        _matrix.move(lastMove.to!, lastMove.from!);
-      }
-      else if (!lastMove.skipped) {
-        _matrix.remove(lastMove.from!, _stock);
-      }
-
-      if (_staleMove == lastMove) {
-        _staleMove = null;
-      }
-
-      _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-      _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
-
-      return journal.removeLast();
+  commitMove() {
+    if (_staleMove != null) {
+      _journal.add(_staleMove!);
     }
-    return null;
   }
 
-  bool get isDirty => _staleMove != null;
+  Move? rollbackLastMove() {
+    if (!isJournalEmpty) {
+      return _journal.removeLast();
+    }
+    else {
+      return null;
+    }
+  }
+
+  undoStaleMove() {
+    if (_staleMove != null) {
+      _undoMove(_staleMove!);
+    }
+  }
+  _undoMove(Move move) {
+    debugPrint("undo move: $move");
+    if (move.isMove()) {
+      _matrix.move(move.to!, move.from!);
+    }
+    else if (!move.skipped) {
+      _matrix.remove(move.from!, _stock);
+    }
+
+    if (_staleMove == move) {
+      _staleMove = null;
+    }
+
+    _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
+    _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
+    }
+
+  bool get hasStaleMove => _staleMove != null;
+  
+  Move? get staleMove => _staleMove;
+  
   Move? get currentMove => _staleMove;
 
   void nextRound(bool clearOpponentCursor) {
@@ -350,8 +382,10 @@ class Play {
   }
 
   Move? previousRound() {
-    final lastMove = undoLastMove();
+    final lastMove = rollbackLastMove();
     if (lastMove != null) {
+      _undoMove(lastMove);
+
       _currentChip = lastMove.chip;
 
       switchRole();
@@ -371,6 +405,8 @@ class Play {
   Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
 
   bool get isMultiplayerPlay => _chaosPlayer == Player.RemoteUser || _orderPlayer == Player.RemoteUser;
+
+  bool get isBothSidesSinglePlay => _chaosPlayer == Player.User || _orderPlayer == Player.User;
 
   bool get isFullAutomaticPlay => _chaosPlayer == Player.Ai && _orderPlayer == Player.Ai;
 
