@@ -2,9 +2,7 @@
 import 'dart:isolate';
 
 import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 import '../model/ai/strategy.dart';
@@ -152,7 +150,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                           }
                           else {
 
-                            buildChoiceDialog(180, 180, 'Undo last opponent move?',
+                            final recentRole = _play.opponentRole.name;
+                            buildChoiceDialog(180, 180, 'Undo $recentRole\'s last move?',
                                 "YES", ()
                                 {
                                   SmartDialog.dismiss();
@@ -316,7 +315,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       return Text("Game over! ${winner.name} wins!");
     }
     else if (_aiDone != null) {
-      return _buildDoneText(_aiDone!, _play.opponentMove!);
+      return _buildDoneText(_aiDone!, _play.opponentMove);
     }
     else if (_play.currentPlayer == Player.Ai) {
       final text = _buildAiProcessingText();
@@ -484,10 +483,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     bool possibleTarget = false;
     Spot? startSpot;
     if (_play.currentRole == Role.Order && where != null) {
-      possibleTarget =
-          where != null
-              && _play.cursor.hasStart
-              && _play.cursor.possibleTargets.contains(where);
+      possibleTarget = _play.cursor.hasStart && _play.cursor.possibleTargets.contains(where);
 
       if (_play.cursor.hasEnd) {
         startSpot = _play.matrix.getSpot(_play.cursor.end!);
@@ -519,8 +515,15 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
     if (chip == null) {
+
       return Container(
         color: possibleTarget ? shadedColor : null,
+        child: where != null && text.isEmpty
+            ? Center(child: Text(_getPositionText(where, _play.matrix.dimension),
+                style: TextStyle(
+                    fontSize: _play.dimension > 9 ? 10 : null,
+                    color: Colors.grey[400])))
+            : null,
       );
     }
     return Container(
@@ -559,7 +562,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
     if (_boardLocked) {
-      return; //TODO allow long tab for locked boards
+      return;
     }
 
     _showOpponentTrace = false;
@@ -732,5 +735,23 @@ class _HyleXGroundState extends State<HyleXGround> {
           child: widget);
     }
     return widget;
+  }
+
+  String _getPositionText(Coordinate where, Coordinate dimension) {
+    if (where.x == 0 && where.y == 0 ||
+        where.x == 0 && where.y == dimension.y-1 ||
+        where.x == dimension.x-1 && where.y == 0 ||
+        where.x == dimension.x-1 && where.y == dimension.y-1) {
+      return where.toReadableCoordinates();
+    }
+    else if (where.x > 0 && where.y == 0 || where.x > 0 && where.y == dimension.y-1) {
+      return String.fromCharCode('A'.codeUnitAt(0) + where.x);
+    }
+    else if (where.y > 0 && where.x == 0 || where.y > 0 && where.x == dimension.x-1) {
+      return (where.y + 1).toString();
+    }
+    else {
+      return "";
+    }
   }
 }

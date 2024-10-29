@@ -298,8 +298,10 @@ class Play {
 
   Role get currentRole => _currentRole;
 
+  Role get opponentRole => currentRole == Role.Chaos ? Role.Order : Role.Chaos;
+
   switchRole() {
-    _currentRole = currentRole == Role.Chaos ? Role.Order : Role.Chaos;
+    _currentRole = opponentRole;
   }
 
   Move? get lastMoveFromJournal => _journal.lastOrNull;

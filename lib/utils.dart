@@ -21,6 +21,7 @@ toastInfo(BuildContext context, String message) {
     messenger.showSnackBar(
         SnackBar(
             duration: duration,
+            showCloseIcon: true,
             content: Text(message)));
   });
 }
@@ -33,6 +34,7 @@ toastError(BuildContext context, String message) {
         SnackBar(
             backgroundColor: Colors.red,
             duration: duration,
+            showCloseIcon: true,
             content: Text(message)));
   });
 }
