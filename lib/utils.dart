@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hyle_x/model/fortune.dart';
 
@@ -102,5 +104,11 @@ Color getColorFromIdx(int i) {
 
   return Color.fromARGB(
       210, r, g, b);
+}
+
+
+String getPrettyJSONString(jsonObject){
+  var encoder = const JsonEncoder.withIndent("     ");
+  return encoder.convert(jsonObject);
 }
 

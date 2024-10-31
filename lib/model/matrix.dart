@@ -13,11 +13,10 @@ class Coordinate {
 
   Coordinate(this.x, this.y);
 
-  Coordinate.fromJsonMap(Map<String, dynamic> map)
-      : this(map["x"] as int, map["y"] as int);
-
-  Coordinate.fromJsonKey(String key)
+  Coordinate.fromKey(String key)
       : this(int.parse(key.split("/").first), int.parse(key.split("/").last));
+
+  String toKey() => "$x/$y";
 
   Coordinate left() => Coordinate(x - 1, y);
 
@@ -37,14 +36,7 @@ class Coordinate {
 
   @override
   int get hashCode => x.hashCode ^ y.hashCode;
-
-  Map<String, dynamic> toJson() => {
-    'x' : x,
-    'y' : y,
-  };
-
-  String toJsonKey() => "$x/$y";
-
+  
   @override
   String toString() {
     return '{$x,$y}';
@@ -67,30 +59,36 @@ class Matrix {
 
   Matrix(this._dimension);
 
-  Matrix.fromJsonMap(Map<String, dynamic> map) {
-    _dimension = Coordinate.fromJsonMap(map['dimension']!);
-
-/*
-    final Map<String,dynamic> mapMap = map['map']!;
-    _map.addAll(mapMap.map((key, value) {
-      final where = Coordinate.fromJsonKey(key);
-      final Map<String, dynamic> pieceMap = value;
-      final String typeId = pieceMap["id"];
-      final pieceType = PieceType.fromId(typeId);
-      if (pieceType is CellType) {
-        final cell = Cell.fromJsonMap(pieceMap);
-        return MapEntry(where, cell);
-      }
-      else if (pieceType is ResourceType) {
-        final resource = Resource.fromJsonMap(pieceMap);
-        return MapEntry(where, resource);
-      }
-      else {
-        throw Exception("Unsupported type $pieceType");
-      }
+  Matrix.fromJson(Map<String, dynamic> map) {
+    _dimension = Coordinate.fromKey(map['dimension']!);
+    
+    final Map<String, dynamic> chipMap = map['chipMap']!;
+    _chipMap.addAll(chipMap.map((key, value) {
+      final where = Coordinate.fromKey(key);
+      final gameChip = GameChip.fromKey(value);
+      return MapEntry(where, gameChip);
+    }));   
+    
+    final Map<String, dynamic> pointMapX = map['pointMapX']!;
+    _pointMapX.addAll(chipMap.map((key, value) {
+      final where = Coordinate.fromKey(key);
+      return MapEntry(where, value as int);
     }));
-    */
+        
+    final Map<String, dynamic> pointMapY = map['pointMapY']!;
+    _pointMapY.addAll(chipMap.map((key, value) {
+      final where = Coordinate.fromKey(key);
+      return MapEntry(where, value as int);
+    }));
+    
   }
+  
+  Map<String, dynamic> toJson() => {
+    'dimension' : _dimension.toKey(),
+    'chipMap' : _chipMap.map((key, value) => MapEntry(key.toKey(), value.toKey())),
+    'pointMapX' : _pointMapX.map((key, value) => MapEntry(key.toKey(), value)),
+    'pointMapY' : _pointMapY.map((key, value) => MapEntry(key.toKey(), value)),
+  };
 
   Coordinate get dimension => _dimension;
 
@@ -204,13 +202,7 @@ class Matrix {
 
   bool _inDimensions(Coordinate where, Coordinate dimension) =>
       where.x >= 0 && where.x < dimension.x && where.y >= 0 && where.y < dimension.y;
-
-
-  Map<String, dynamic> toJson() => {
-    'dimension' : _dimension,
-    'map' : _chipMap.map((key, value) => MapEntry(key.toJsonKey(), value)),
-    // shards can be derived from map during deserialization
-  };
+  
 
   void _calcPointsOnXAxis(int x) {
     final words = <Word>[];
@@ -225,7 +217,7 @@ class Matrix {
         word = Word();
       }
       else if (chip != null) {
-        word.add(Letter(chip.id, coordinate));
+        word.add(Letter(chip.name, coordinate));
       }
     }
     if (!word.isEmpty()) {
@@ -253,7 +245,7 @@ class Matrix {
         word = Word();
       }
       else if (chip != null) {
-        word.add(Letter(chip.id, coordinate));
+        word.add(Letter(chip.name, coordinate));
       }
     }
     if (!word.isEmpty()) {
@@ -280,7 +272,7 @@ class Matrix {
     for (int start = 0; start < wordLength - 1; start++ ) {
       for (int end = wordLength; end > 1; end-- ) {
         if (start + 1 < end) {
-          final subword = word.subword(start, end);
+          final subword = word.subWord(start, end);
           _countIfPalindrome(subword, pointMap);
           //debugPrint("Try find palindrome for $start-$end ($wordLength) => $subword   ---> $isPalindrome");
         }
@@ -392,9 +384,8 @@ class Word {
 
   int length() => _letters.length;
 
-  Word subword(int start, int end) {
+  Word subWord(int start, int end) {
     return Word.data(_letters.sublist(start, end));
   }
-
 
 }

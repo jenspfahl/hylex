@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/spot.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 import '../ui/game_ground.dart';
 import '../utils.dart';
@@ -16,6 +17,7 @@ import 'fortune.dart';
 import 'matrix.dart';
 
 
+enum Role {Chaos, Order}
 
 class Move {
   GameChip? chip;
@@ -25,12 +27,47 @@ class Move {
 
   Move({this.chip, this.from, this.to, required this.skipped});
 
+  Move.fromJson(Map<String, dynamic> map) {
+    final chipKey = map['chip'];
+    if (chipKey != null) {
+      chip = GameChip.fromKey(chipKey);
+    }
+
+    final fromKey = map['from'];
+    if (fromKey != null) {
+      from = Coordinate.fromKey(fromKey);
+    }
+
+    final toKey = map['to'];
+    if (toKey != null) {
+      to = Coordinate.fromKey(toKey);
+    }
+
+
+    skipped = map['skipped'] as bool;
+  }
+
+  Map<String, dynamic> toJson() => {
+    if (chip != null) 'chip' : chip!.toKey(),
+    if (from != null) 'from' : from!.toKey(),
+    if (to != null) 'to' : to!.toKey(),
+    'skipped' : skipped
+  };
+
   Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
   Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
   Move.skipped(): this(skipped: true);
 
   bool isMove() => !skipped && from != to && from != null && to != null;
 
+  Role getRole() {
+    if (isPlaced()) {
+      return Role.Chaos;
+    }
+    else {
+      return Role.Order;
+    }
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -49,10 +86,10 @@ class Move {
       return "-";
     }
     if (isMove()) {
-      return "${chip?.id}@$from->$to";
+      return "${chip?.name}@$from->$to";
     }
     else {
-      return "${chip?.id}@$from";
+      return "${chip?.name}@$from";
     }
   }
 
@@ -75,6 +112,19 @@ class Stats {
   final _points = HashMap<Role, int>();
  
   Stats();
+
+  Stats.fromJson(Map<String, dynamic> map) {
+
+    final Map<String, dynamic> pointsMap = map['points']!;
+    _points.addAll(pointsMap.map((key, value) {
+      final role = Role.values.firstWhere((r) => r.name == key);
+      return MapEntry(role, value);
+    }));
+  }
+
+  Map<String, dynamic> toJson() => {
+    'points' : _points.map((key, value) => MapEntry(key.name, value)),
+  };
 
   
   int getPoints(Role role) => _points[role] ?? 0;
@@ -108,13 +158,27 @@ class Stock {
     _available.addAll(initialStock);
   }
 
+  Stock.fromJson(Map<String, dynamic> map) {
+
+    final Map<String, dynamic> stockMap = map['available']!;
+    _available.addAll(stockMap.map((key, value) {
+      final chip = GameChip.fromKey(key);
+      return MapEntry(chip, value);
+    }));
+  }
+
+  Map<String, dynamic> toJson() => {
+    'available' : _available.map((key, value) => MapEntry(key.toKey(), value)),
+  };
+
+
   Iterable<StockEntry> getStockEntries() {
     final entries = _available
       .entries
       .map((e) => StockEntry(e.key, e.value))
       .toList();
     
-    entries.sort((e1, e2) => e1.chip.id.compareTo(e2.chip.id));
+    entries.sort((e1, e2) => e1.chip.name.compareTo(e2.chip.name));
     return entries;
   }
 
@@ -127,9 +191,6 @@ class Stock {
     _available[chip] = max(0, curr - 1);
   }
 
-  Map<String, dynamic> toJson() => {
-    'available' : _available.map((key, value) => MapEntry(key.id, value)),
-  };
 
   GameChip? drawNext() {
     if (isEmpty()) {
@@ -178,6 +239,33 @@ class Cursor {
 
   Cursor();
 
+  Cursor.fromJson(Map<String, dynamic> map) {
+
+    final startKey = map['start'];
+    if (startKey != null) {
+      _start = Coordinate.fromKey(startKey);
+    }
+
+    final endKey = map['end'];
+    if (endKey != null) {
+      _end = Coordinate.fromKey(endKey);
+    }
+
+    final Set<String> targetSet = map['possibleTargets']!;
+    _possibleTargets.addAll(targetSet.map((value) {
+      return Coordinate.fromKey(value);
+    }));
+
+    temporary = map['temporary'] as bool;
+  }
+
+  Map<String, dynamic> toJson() => {
+    if (start != null) 'start' : _start!.toKey(),
+    if (end != null) 'end' : end!.toKey(),
+    'possibleTargets' : _possibleTargets.map((value) => value.toKey()).toList(),
+    "temporary": temporary
+  };
+
 
   Coordinate? get end => _end;
   Coordinate? get start => _start;
@@ -208,10 +296,6 @@ class Cursor {
   String toString() {
     return 'Cursor{_startWhere: $_start, _where: $_end, _possibleTargets: $_possibleTargets}';
   }
-
-  Map<String, dynamic> toJson() => {
-    'where' : _end, //currentPiece should loaded when deserialized
-  };
 
   void clearPossibleTargets() {
     _possibleTargets.clear();
@@ -245,6 +329,7 @@ class Cursor {
 }
 
 
+@JsonSerializable()
 class Play {
 
   int _currentRound = 1;
@@ -264,21 +349,21 @@ class Play {
   OrderAi? orderAi;
 
   DateTime startDate = DateTime.timestamp();
-  DateTime? endDate = null;
-  String? name = null;
-  List<Move> _journal = [];
+  DateTime? endDate;
+  String? name;
+  final List<Move> _journal = [];
 
-  Move? _staleMove = null;
+  Move? _staleMove;
 
   Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
+
     _stats = Stats();
 
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
       final color = getColorFromIdx(i);
 
-      final chip = GameChip(
-          String.fromCharCode('a'.codeUnitAt(0) + i), color);
+      final chip = GameChip(i);
       chips[chip] = dimension; // the stock per chip is the dimension value
     }
 
@@ -292,6 +377,62 @@ class Play {
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
   }
+
+  Play.fromJson(Map<String, dynamic> map) {
+
+    _dimension = map['dimension'];
+    _currentRound = map['currentRound'];
+    _currentRole = map['currentRole'];
+    final startKey = map['currentChip'];
+    if (startKey != null) {
+      _currentChip = GameChip.fromKey(startKey);
+    }
+    _matrix = Matrix.fromJson(map['matrix']);
+    _stats = Stats.fromJson(map['stats']);
+    _stock = Stock.fromJson(map['stock']);
+    _cursor = Cursor.fromJson(map['cursor']);
+    _opponentMove = Cursor.fromJson(map['opponentMove']);
+    _chaosPlayer = Player.values.firstWhere((p) => p.name == map['chaosPlayer']);
+    _orderPlayer = Player.values.firstWhere((p) => p.name == map['orderPlayer']);
+
+    startDate = map['startDate'];
+    final endDateKey = map['endDate'];
+    if (endDateKey != null) {
+      endDate = endDateKey;
+    }
+
+    final staleMoveKey = map['staleMove'];
+    if (staleMoveKey != null) {
+      _staleMove = Move.fromJson(staleMoveKey);
+    }
+
+    final List<Map<String,dynamic>> journalList = map['journal']!;
+    _journal.addAll(journalList.map((value) {
+      return Move.fromJson(value);
+    }));
+
+  }
+
+  Map<String, dynamic> toJson() => {
+    "dimension" : _dimension,
+    "currentRound" : _currentRound,
+    "currentRole" : _currentRole.name,
+    if (_currentChip != null) "currentChip" : _currentChip!.toKey(),
+    "matrix" : _matrix.toJson(),
+    "stats" : _stats.toJson(),
+    "stock" : _stock.toJson(),
+    "cursor" : _cursor.toJson(),
+    "opponentCursor" : _opponentMove.toJson(),
+    "chaosPlay" : _chaosPlayer.name,
+    "orderPlayer" : _orderPlayer.name,
+    "startDate" : startDate.toIso8601String(),
+    if (endDate != null) "endDate" : endDate!.toIso8601String(),
+    if (name != null) "name" : name,
+    if (_staleMove != null) "staleMove" : _staleMove!.toJson(),
+    'journal' : _journal.map((j) => j.toJson()).toList(),
+  };
+
+
 
   double get progress => currentRound / maxRounds;
   int get maxRounds => dimension * dimension;
@@ -424,18 +565,7 @@ class Play {
   void _initAis({required bool useDefaultParams}) {
     chaosAi = DefaultChaosAi(_aiConfig, this);
     orderAi = DefaultOrderAi(_aiConfig, this);
-    /*spotAis = [
-    ];
 
-    matrixAis = [
-      SprinkleResourcesAi(_aiConfig),
-      SprinkleAlienCellsAi(_aiConfig),
-    ];
-
-    if (useDefaultParams) {
-      spotAis.forEach((ai) => ai.defaultAiParams());
-      matrixAis.forEach((ai) => ai.defaultAiParams());
-    }*/
   }
 
   int get currentRound => _currentRound;
@@ -463,18 +593,6 @@ class Play {
     _currentRound--;
   }
 
-
-  Map<String, dynamic> toJson() => {
-    'currentRound' : _currentRound,
-
-
-    'stats' : _stats,
-    'stock' : _stock,
-    'cursor' : _cursor,
-    'matrix' : _matrix,
-    'currentChip' : _currentChip,
-    'aiConfig': _aiConfig
-  };
 
   bool isGameOver() {
     return _stock.isEmpty() || _matrix.noFreeSpace();

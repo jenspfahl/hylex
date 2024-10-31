@@ -1,4 +1,5 @@
 
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dotted_border/dotted_border.dart';
@@ -10,6 +11,7 @@ import '../model/chip.dart';
 import '../model/matrix.dart';
 import '../model/play.dart';
 import '../model/spot.dart';
+import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'dialogs.dart';
 
@@ -133,6 +135,14 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.save),
+                    onPressed: () {
+                      final jsonToSave = jsonEncode(_play);
+                      debugPrint(getPrettyJSONString(_play));
+                      PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
+                    },
+                  ),
                   Visibility(
                     visible: _isUndoAllowed(),
                     child: IconButton(

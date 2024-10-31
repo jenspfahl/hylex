@@ -1,62 +1,44 @@
-import 'dart:ffi';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hyle_x/model/matrix.dart';
 
+import '../utils.dart';
+
 
 
 class GameChip {
-  final String id;
-  final Color color;
 
-  GameChip(this.id, this.color);
+  late final int id;
+  late final String name;
+  late final Color color;
 
-  Map<String, dynamic> toJson() => {
-    'id' : id,
-  };
+  GameChip(this.id) {
+    name = String.fromCharCode('a'.codeUnitAt(0) + id);
+    color = getColorFromIdx(id);
+  }
+
+  factory GameChip.fromKey(String key) {
+    final id = key as int;
+    return GameChip(id);
+  }
+
+  String toKey() => id.toString();
+
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is GameChip &&
           runtimeType == other.runtimeType &&
-          id == other.id;
+          name == other.name;
 
   @override
-  int get hashCode => id.hashCode;
-
-  @override
-  String toString() {
-    return 'Chip-$id';
-  }
-
-}
-
-enum PlacedBy {User, Ai}
-enum Role {Chaos, Order}
-
-class Journal {
-
-  Role role;
-  GameChip type;
-  Coordinate from;
-  Coordinate? to;
-
-  int placedInRound;
-  PlacedBy placedBy;
-
-  Journal(this.role, this.type, this.from, this.to, this.placedInRound, this.placedBy);
-
-
-  Map<String, dynamic> toJson() => {
-    'v' : type.id,
-  //  'pI' : _placedInRound,
-    //'pB' : _placedBy.index,
-  };
+  int get hashCode => name.hashCode;
 
   @override
   String toString() {
-    return 'Journal{role: $role, type: $type, from: $from, to: $to, placedInRound: $placedInRound}';
+    return 'Chip-$name';
   }
+
 }
