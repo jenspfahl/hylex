@@ -1,4 +1,5 @@
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -6,6 +7,14 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import '../utils.dart';
 import 'dialogs.dart';
 import 'game_ground.dart';
+
+enum MenuMode {
+  None,
+  SinglePlay,
+  Multiplayer,
+  MultiplayerNew,
+  More
+}
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -18,6 +27,8 @@ class _StartPageState extends State<StartPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
+  MenuMode _menuMode = MenuMode.None;
 
   @override
   void initState() {
@@ -51,76 +62,105 @@ class _StartPageState extends State<StartPage>
   Widget _buildStartPage(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Padding(
-              padding: const EdgeInsets.all(64.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  AspectRatio(aspectRatio: 1.7,
-                  child: _buildGameLogo()),
-                //  Text(""),
-                //  Text(""),
-                  AspectRatio(
-                    aspectRatio: 0.75,
-                    //height: 300,
-                    child: GridView.count(
-                        crossAxisCount: 2,
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 48, 24, 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
-                              if (context.mounted) {
-                                buildChoiceDialog(330, 220, 'Which ground size?',
-                                  "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
-                                  "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
-                                  "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
-                                  "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
-                                  "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
-                                );
-
-                              }
-                            },
-                            child: _buildChip("New Game",  80, 16, 5, 0),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
-                            },
-                            child: _buildChip("Resume Game", 80, 16, 5, 3),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
-                            },
-                            child: _buildChip("Multiplayer", 80, 16, 5, 2),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              buildAlertDialog(NotifyType.error, 'Not yet implemented!');
-                            },
-                            child: _buildChip("How it works", 80, 16, 5, 1),
-                          ),
-
-
-
-                        ],
-
-                    ),
-                  ),
-
-
-                ],
-              ),
+          children: [
+            Container(
+                child: _buildGameLogo()
             ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
+
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+
+                _buildCell("Single Play", 0,
+                    isMain: true,
+                    icon: Icons.person,
+                    clickHandler: () => setState(
+                                () => _menuMode = _menuMode == MenuMode.SinglePlay
+                                    ? MenuMode.None
+                                    : MenuMode.SinglePlay)
+                ),
+
+                _menuMode == MenuMode.SinglePlay
+                    ? _buildCell("New Game", 0,
+                    icon: CupertinoIcons.game_controller,
+                    clickHandler: () async {
+                      if (context.mounted) {
+                        buildChoiceDialog(330, 220, 'Which ground size?',
+                          "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
+                          "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
+                          "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
+                          "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
+                          "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
+                        );
+                      }
+                    }
+                )
+                    : _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell("Send Invite", 3, icon: Icons.near_me)
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.SinglePlay
+                    ? _buildCell("Resume", 0,
+                  icon: Icons.not_started_outlined,
+                )
+                    : _buildEmptyCell(),
+
+                _buildCell("Multiplayer", 2,
+                    isMain: true,
+                    icon: Icons.group,
+                    clickHandler: () => setState(
+                          () => _menuMode = _menuMode == MenuMode.Multiplayer
+                          ? MenuMode.None
+                          : MenuMode.Multiplayer)
+                ),
+
+                _menuMode == MenuMode.Multiplayer || _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell("New Match", 3,
+                    icon: Icons.sports_score,
+                    clickHandler: () => setState(
+                            () => _menuMode = _menuMode == MenuMode.MultiplayerNew
+                            ? MenuMode.Multiplayer
+                            : MenuMode.MultiplayerNew))
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.Multiplayer || _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell("Continue Match", 4,
+                  icon: Icons.sports_tennis,
+                )
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.More
+                    ? _buildCell("How to Play", 1, icon: CupertinoIcons.question_circle_fill)
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2)
+                    : _menuMode == MenuMode.More
+                    ? _buildCell("Achieve-ments", 1, icon: Icons.leaderboard)
+                    : _buildEmptyCell(),
+
+                _buildCell("More", 1,
+                  isMain: true,
+                    clickHandler: () => setState(
+                            () => _menuMode = _menuMode == MenuMode.More
+                            ? MenuMode.None
+                            : MenuMode.More)
+                ),
+
+
+
+              ],
+
+            ),
+
+            Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(onPressed: () {
@@ -140,10 +180,28 @@ class _StartPageState extends State<StartPage>
 
                   }, icon: const Icon(Icons.info_outline)),
             ]),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildCell(String label, int colorIdx,
+      {Function()? clickHandler, IconData? icon, bool isMain = false}) {
+    return GestureDetector(
+                onTap: clickHandler ?? () {
+                  buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+                },
+                child: _buildChip(label, 80, isMain ? 16: 14, 5, colorIdx, icon),
+              );
+  }
+
+  Container _buildEmptyCell() {
+    return Container(
+                decoration: const BoxDecoration(
+                    border: Border(bottom: BorderSide(), left: BorderSide())
+                ),
+              );
   }
 
   void _selectPlayerModeAndStartGame(BuildContext context, int dimension) {
@@ -168,8 +226,25 @@ class _StartPageState extends State<StartPage>
   }
 
 
-  Widget _buildChip(String text, double radius, double textSize,
-      double padding, int colorIdx) {
+  Widget _buildChip(String label, double radius, double textSize,
+      double padding, int colorIdx, [IconData? icon]) {
+    final text = Text(label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: textSize,
+                    color: Colors.white,
+                    fontWeight: icon == null ? FontWeight.bold : null,
+                  )
+              );
+    final content = icon != null
+        ? Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white),
+              text,
+            ],
+          )
+        : text;
     return Container(
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(), left: BorderSide())
@@ -179,13 +254,7 @@ class _StartPageState extends State<StartPage>
         child: CircleAvatar(
           backgroundColor: getColorFromIdx(colorIdx),
           radius: radius,
-          child: Text(text,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: textSize,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              )),
+          child: content,
         ),
       ),
     );
