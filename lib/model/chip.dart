@@ -19,7 +19,7 @@ class GameChip {
   }
 
   factory GameChip.fromKey(String key) {
-    final id = key as int;
+    final id = int.parse(key);
     return GameChip(id);
   }
 

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
+import '../model/play.dart';
+import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'dialogs.dart';
 import 'game_ground.dart';
@@ -109,6 +113,18 @@ class _StartPageState extends State<StartPage>
                 _menuMode == MenuMode.SinglePlay
                     ? _buildCell("Resume", 0,
                   icon: Icons.not_started_outlined,
+                  clickHandler: () async {
+                    final play = await _loadPlay();
+                    if (play != null) {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                            return HyleXGround.load(play);
+                          }));
+                    }
+                    else {
+                      buildAlertDialog(NotifyType.error, 'No ongoing single play to resume.');
+                    }
+                  }
                 )
                     : _buildEmptyCell(),
 
@@ -143,7 +159,7 @@ class _StartPageState extends State<StartPage>
                 _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2)
                     : _menuMode == MenuMode.More
-                    ? _buildCell("Achieve-ments", 1, icon: Icons.leaderboard)
+                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard)
                     : _buildEmptyCell(),
 
                 _buildCell("More", 1,
@@ -192,7 +208,7 @@ class _StartPageState extends State<StartPage>
                 onTap: clickHandler ?? () {
                   buildAlertDialog(NotifyType.error, 'Not yet implemented!');
                 },
-                child: _buildChip(label, 80, isMain ? 16: 14, 5, colorIdx, icon),
+                child: _buildChip(label, 80, isMain ? 15: 13, 5, colorIdx, icon),
               );
   }
 
@@ -282,5 +298,15 @@ class _StartPageState extends State<StartPage>
         ],
       ),
     ]);
+  }
+
+  Future<Play?> _loadPlay() async {
+    final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
+    if (json == null) return null;
+
+    final map = jsonDecode(json);
+    final play = Play.fromJson(map);
+    debugPrint("Loaded: $play");
+    return play;
   }
 }

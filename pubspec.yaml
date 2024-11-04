@@ -37,6 +37,7 @@ dependencies:
   dotted_border: ^2.1.0
   flutter_smart_dialog: ^4.9.8+1
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

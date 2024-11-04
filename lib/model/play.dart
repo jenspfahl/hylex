@@ -251,7 +251,7 @@ class Cursor {
       _end = Coordinate.fromKey(endKey);
     }
 
-    final Set<String> targetSet = map['possibleTargets']!;
+    final List<dynamic> targetSet = map['possibleTargets']!;
     _possibleTargets.addAll(targetSet.map((value) {
       return Coordinate.fromKey(value);
     }));
@@ -382,7 +382,7 @@ class Play {
 
     _dimension = map['dimension'];
     _currentRound = map['currentRound'];
-    _currentRole = map['currentRole'];
+    _currentRole = Role.values.firstWhere((p) => p.name == map['currentRole']);
     final startKey = map['currentChip'];
     if (startKey != null) {
       _currentChip = GameChip.fromKey(startKey);
@@ -391,14 +391,16 @@ class Play {
     _stats = Stats.fromJson(map['stats']);
     _stock = Stock.fromJson(map['stock']);
     _cursor = Cursor.fromJson(map['cursor']);
+
     _opponentMove = Cursor.fromJson(map['opponentMove']);
+
     _chaosPlayer = Player.values.firstWhere((p) => p.name == map['chaosPlayer']);
     _orderPlayer = Player.values.firstWhere((p) => p.name == map['orderPlayer']);
 
-    startDate = map['startDate'];
+    startDate = DateTime.parse(map['startDate']);
     final endDateKey = map['endDate'];
     if (endDateKey != null) {
-      endDate = endDateKey;
+      endDate = DateTime.parse(endDateKey);
     }
 
     final staleMoveKey = map['staleMove'];
@@ -406,12 +408,18 @@ class Play {
       _staleMove = Move.fromJson(staleMoveKey);
     }
 
-    final List<Map<String,dynamic>> journalList = map['journal']!;
+    final List<dynamic> journalList = map['journal']!;
     _journal.addAll(journalList.map((value) {
       return Move.fromJson(value);
     }));
 
+    _aiConfig = AiConfig();
+    _initAis(useDefaultParams: true);
   }
+
+  Player get chaosPlayer => _chaosPlayer;
+
+  Player get orderPlayer => _orderPlayer;
 
   Map<String, dynamic> toJson() => {
     "dimension" : _dimension,
@@ -422,8 +430,8 @@ class Play {
     "stats" : _stats.toJson(),
     "stock" : _stock.toJson(),
     "cursor" : _cursor.toJson(),
-    "opponentCursor" : _opponentMove.toJson(),
-    "chaosPlay" : _chaosPlayer.name,
+    "opponentMove" : _opponentMove.toJson(),
+    "chaosPlayer" : _chaosPlayer.name,
     "orderPlayer" : _orderPlayer.name,
     "startDate" : startDate.toIso8601String(),
     if (endDate != null) "endDate" : endDate!.toIso8601String(),

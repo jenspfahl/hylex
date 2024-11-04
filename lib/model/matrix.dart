@@ -72,13 +72,13 @@ class Matrix {
     final Map<String, dynamic> pointMapX = map['pointMapX']!;
     _pointMapX.addAll(chipMap.map((key, value) {
       final where = Coordinate.fromKey(key);
-      return MapEntry(where, value as int);
+      return MapEntry(where, int.parse(value));
     }));
         
     final Map<String, dynamic> pointMapY = map['pointMapY']!;
     _pointMapY.addAll(chipMap.map((key, value) {
       final where = Coordinate.fromKey(key);
-      return MapEntry(where, value as int);
+      return MapEntry(where, int.parse(value));
     }));
     
   }

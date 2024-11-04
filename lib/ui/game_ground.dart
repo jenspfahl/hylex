@@ -1,10 +1,12 @@
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
 
 import '../model/ai/strategy.dart';
 import '../model/chip.dart';
@@ -21,11 +23,16 @@ class HyleXGround extends StatefulWidget {
   Player chaosPlayer;
   Player orderPlayer;
   int dimension;
+  Play? loadedPlay;
+  
 
   HyleXGround(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
 
+  HyleXGround.load(Play play, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
+
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
+
 }
 
 class _HyleXGroundState extends State<HyleXGround> {
@@ -36,9 +43,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   bool _showOpponentTrace = false;
 
   late BuildContext _builderContext;
+  late StreamSubscription<FGBGType> fgbgSubscription;
 
   Load? _load;
-
   Role? _aiDone;
 
   SendPort? _aiControlPort;
@@ -48,7 +55,18 @@ class _HyleXGroundState extends State<HyleXGround> {
     super.initState();
     SmartDialog.dismiss();
 
-    _resetGame(null);
+    fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
+      if (event == FGBGType.background) {
+        _savePlay();
+      }
+    });
+
+    if (widget.loadedPlay != null) {
+      _play = widget.loadedPlay!;
+    }
+    else {
+      _resetGame(null);
+    }
     _thinkIfAi(context);
   }
 
@@ -67,6 +85,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   @override
   void dispose() {
     _killAiThinking();
+    fgbgSubscription.cancel();
+    _savePlay();
+    
     super.dispose();
   }
 
@@ -135,14 +156,6 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.save),
-                    onPressed: () {
-                      final jsonToSave = jsonEncode(_play);
-                      debugPrint(getPrettyJSONString(_play));
-                      PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
-                    },
-                  ),
                   Visibility(
                     visible: _isUndoAllowed(),
                     child: IconButton(
@@ -172,6 +185,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                     // undo AI move also
                                     lastMove = _play.previousRound();
                                   }
+
                                   if (lastMove != null) {
                                     _play.cursor.adaptFromMove(lastMove);
                                     _play.cursor.temporary = true;
@@ -220,6 +234,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             SmartDialog.dismiss();
 
                             _killAiThinking();
+                            _savePlay();
 
                             Navigator.pop(super.context); // go to start page
                           },  "NO", () {
@@ -311,6 +326,12 @@ class _HyleXGroundState extends State<HyleXGround> {
               ));
         }
     );
+  }
+
+  void _savePlay() {
+    final jsonToSave = jsonEncode(_play);
+    //debugPrint(getPrettyJSONString(_play));
+    PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
   }
 
   bool _isUndoAllowed() => !_boardLocked && !_play.isGameOver() && !_play.isFullAutomaticPlay && !_play.isMultiplayerPlay && !_play.isJournalEmpty;
