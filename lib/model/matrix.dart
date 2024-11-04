@@ -70,15 +70,15 @@ class Matrix {
     }));   
     
     final Map<String, dynamic> pointMapX = map['pointMapX']!;
-    _pointMapX.addAll(chipMap.map((key, value) {
+    _pointMapX.addAll(pointMapX.map((key, value) {
       final where = Coordinate.fromKey(key);
-      return MapEntry(where, int.parse(value));
+      return MapEntry(where, value);
     }));
         
     final Map<String, dynamic> pointMapY = map['pointMapY']!;
-    _pointMapY.addAll(chipMap.map((key, value) {
+    _pointMapY.addAll(pointMapY.map((key, value) {
       final where = Coordinate.fromKey(key);
-      return MapEntry(where, int.parse(value));
+      return MapEntry(where, value);
     }));
     
   }

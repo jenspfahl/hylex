@@ -113,6 +113,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
     _play.nextRound(false);
+
+    _savePlay();
     
     setState(() {
       _boardLocked = false;
@@ -170,6 +172,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                           if (_play.hasStaleMove) {
                             _play.undoStaleMove();
                             _play.cursor.clear();
+                            _savePlay();
                           }
                           else {
 
@@ -189,6 +192,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                                   if (lastMove != null) {
                                     _play.cursor.adaptFromMove(lastMove);
                                     _play.cursor.temporary = true;
+
+                                    _savePlay();
                                   }
                                   else {
                                     _thinkIfAi(context);
@@ -412,6 +417,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           setState(() {
             _play.nextRound(true);
           });
+          _savePlay();
           _thinkIfAi(context);
         },
         child: Text(_play.currentRole == Role.Order && !_play.cursor.hasEnd
