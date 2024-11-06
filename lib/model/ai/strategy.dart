@@ -296,7 +296,7 @@ class MinimaxStrategy extends Strategy {
 
       // Try to skip at random position
       final finalMoves = moves.toList();
-      int pos = diceInt(finalMoves.length);
+      int pos = finalMoves.isEmpty ? 0 : diceInt(finalMoves.length);
       finalMoves.insert(pos, Move.skipped());
 
       return finalMoves;

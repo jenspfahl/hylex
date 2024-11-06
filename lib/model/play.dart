@@ -332,8 +332,8 @@ class Cursor {
 @JsonSerializable()
 class Play {
 
-  int _currentRound = 1;
-  Role _currentRole = Role.Chaos;
+  late int _currentRound;
+  late Role _currentRole;
 
   late Stats _stats;
   late Stock _stock;
@@ -356,24 +356,31 @@ class Play {
   Move? _staleMove;
 
   Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
+    _init();
+  }
+
+  // initialises the play to get started
+  void _init() {
+
+    _currentRound = 1;
+    _currentRole = Role.Chaos;
 
     _stats = Stats();
-
+    
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
-      final color = getColorFromIdx(i);
-
       final chip = GameChip(i);
       chips[chip] = dimension; // the stock per chip is the dimension value
     }
-
-
+    
+    
     _stock = Stock(chips);
+    nextChip();
 
     _matrix = Matrix(Coordinate(dimension, dimension));
     _cursor = Cursor();
     _opponentMove = Cursor();
-
+    
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
   }
@@ -518,12 +525,14 @@ class Play {
 
   void nextRound(bool clearOpponentCursor) {
 
-    if (currentRole == Role.Order) {
-      // round is over
+    switchRole();
+    if (currentRole == Role.Chaos) {
+      // transition from Order to Chaos
+
       nextChip();
       incRound();
     }
-    switchRole();
+
     _cursor.clear();
     if (clearOpponentCursor) {
       _opponentMove.clear();
@@ -542,7 +551,7 @@ class Play {
       switchRole();
 
       if (currentRole == Role.Order) {
-        // undo round is over
+        // transition from Chaos back to Order
         decRound();
       }
       _cursor.clear();
@@ -667,5 +676,10 @@ class Play {
 
 
   }
+
+  void reset() {
+    _init();
+  }
+
 
 }

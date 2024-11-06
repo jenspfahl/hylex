@@ -80,7 +80,7 @@ class Matrix {
       final where = Coordinate.fromKey(key);
       return MapEntry(where, value);
     }));
-    
+
   }
   
   Map<String, dynamic> toJson() => {
@@ -310,6 +310,8 @@ class Matrix {
     clonedMatrix._pointMapY.addAll(_pointMapY);
     return clonedMatrix;
   }
+
+  bool isEmpty() => _chipMap.isEmpty;
 
 
 }

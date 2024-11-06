@@ -24,7 +24,7 @@ class HyleXGround extends StatefulWidget {
   Player orderPlayer;
   int dimension;
   Play? loadedPlay;
-  
+
 
   HyleXGround(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
 
@@ -37,37 +37,51 @@ class HyleXGround extends StatefulWidget {
 
 class _HyleXGroundState extends State<HyleXGround> {
 
-  late Play _play;
+  late Game game;
+
   GameChip? _emphasiseAllChipsOf;
-  bool _boardLocked = false;
-  bool _showOpponentTrace = false;
+
 
   late BuildContext _builderContext;
   late StreamSubscription<FGBGType> fgbgSubscription;
 
-  Load? _load;
-  Role? _aiDone;
-
-  SendPort? _aiControlPort;
 
   @override
   void initState() {
     super.initState();
+
     SmartDialog.dismiss();
+
+    if (widget.loadedPlay != null) {
+      game = Game(widget.loadedPlay!);
+      debugPrint("Game restored from saved play state");
+    }
+    else {
+      game = Game(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer));
+      debugPrint("New game created");
+
+    }
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
       if (event == FGBGType.background) {
-        _savePlay();
+        game.savePlay();
       }
     });
 
+    game.addListener(_gameListener);
+
     if (widget.loadedPlay != null) {
-      _play = widget.loadedPlay!;
+      game.resumeGame();
     }
     else {
-      _resetGame(null);
+      game.restartGame();
     }
-    _thinkIfAi(context);
+  }
+
+  _gameListener() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -84,70 +98,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   void dispose() {
-    _killAiThinking();
+    game.leave();
+    game.removeListener(_gameListener);
     fgbgSubscription.cancel();
-    _savePlay();
-    
+
     super.dispose();
-  }
-
-  void _resetGame(BuildContext? context) {
-    _play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
-    _play.nextChip();
-    _boardLocked = false;
-  }
-  
-  _aiControlHandlerReceived(SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort;
-
-  _aiNextMoveHandler(Move move) async {
-    debugPrint("AI ready");
-    _aiDone = _play.currentRole;
-
-    _play.applyStaleMove(move);
-    _play.opponentMove.adaptFromMove(move);
-    _play.commitMove();
-
-    if (_play.isGameOver()) {
-      _doGameOver(context);
-      return;
-    }
-
-    _play.nextRound(false);
-
-    _savePlay();
-    
-    setState(() {
-      _boardLocked = false;
-    });
-
-    await Future.delayed(const Duration(seconds: 2), (){});
-
-    _thinkIfAi(context);
-  }
-
-  _aiProgressListener(Load load) {
-
-    setState(() {
-      _load = load;
-    });
-    //debugPrint("intermediate load: $load, ${identityHashCode(load)}");
-
-  }
-
-  void _thinkIfAi(BuildContext? context) {
-    if (!_play.isGameOver() && _play.currentPlayer == Player.Ai) {
-      _boardLocked = true;
-      _aiDone = null;
-      _load = null;
-      _showOpponentTrace = true;
-      _play.startThinking(
-          _aiProgressListener, _aiNextMoveHandler, _aiControlHandlerReceived);
-    }
-    else {
-      setState(() {
-        _boardLocked = false;
-      });
-    }
   }
 
   Widget _buildGameBody() {
@@ -158,6 +113,7 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
+                  IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
                   Visibility(
                     visible: _isUndoAllowed(),
                     child: IconButton(
@@ -169,34 +125,34 @@ class _HyleXGroundState extends State<HyleXGround> {
                         }
 
                         setState(() {
-                          if (_play.hasStaleMove) {
-                            _play.undoStaleMove();
-                            _play.cursor.clear();
-                            _savePlay();
+                          if (game.play.hasStaleMove) {
+                            game.play.undoStaleMove();
+                            game.play.cursor.clear();
+                            game.savePlay();
                           }
                           else {
 
-                            final recentRole = _play.opponentRole.name;
+                            final recentRole = game.play.opponentRole.name;
                             buildChoiceDialog(180, 180, 'Undo $recentRole\'s last move?',
                                 "YES", ()
                                 {
                                   SmartDialog.dismiss();
 
-                                  _aiDone = null;
-                                  var lastMove =_play.previousRound();
-                                  if (_play.currentPlayer == Player.Ai) {
+                                  var lastMove = game.play.previousRound();
+                                  if (game.play.currentPlayer == Player.Ai) {
                                     // undo AI move also
-                                    lastMove = _play.previousRound();
+                                    lastMove = game.play.previousRound();
                                   }
 
                                   if (lastMove != null) {
-                                    _play.cursor.adaptFromMove(lastMove);
-                                    _play.cursor.temporary = true;
+                                    game.play.cursor.adaptFromMove(lastMove);
+                                    game.play.cursor.temporary = true;
 
-                                    _savePlay();
+                                    game.savePlay();
                                   }
                                   else {
-                                    _thinkIfAi(context);
+                                    // beginning of game
+                                    game.restartGame();
                                   }
 
                                 },  "NO", () {
@@ -216,13 +172,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                       buildChoiceDialog(180, 180, 'Restart game?',
                           "YES", ()
                           {
-                            setState(() {
-                              _killAiThinking();
-
-                              _resetGame(context);
-                            });
+                            game.restartGame();
                             SmartDialog.dismiss();
-                            _thinkIfAi(context);
                           },  "NO", () {
                             SmartDialog.dismiss();
                           })
@@ -235,11 +186,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                       buildChoiceDialog(180, 180, 'Leave current game?',
                           "YES", ()
                           {
-                            // TODO save current
                             SmartDialog.dismiss();
 
-                            _killAiThinking();
-                            _savePlay();
+                            game.leave();
 
                             Navigator.pop(super.context); // go to start page
                           },  "NO", () {
@@ -265,12 +214,12 @@ class _HyleXGroundState extends State<HyleXGround> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildRoleIndicator(Role.Chaos, true),
-                                Text("Round ${_play.currentRound} of ${_play.maxRounds}"),
+                                Text("Round ${game.play.currentRound} of ${game.play.maxRounds}"),
                                 _buildRoleIndicator(Role.Order, false),
                               ],
                             ),
                           ),
-                          LinearProgressIndicator(value: _play.progress,),
+                          LinearProgressIndicator(value: game.play.progress,),
                           Column(
                             children: [
                               Container(
@@ -278,10 +227,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 child: Center(
                                   child: GridView.builder(
                                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: _play.stock.getTotalChipTypes(),
+                                        crossAxisCount: game.play.stock.getTotalChipTypes(),
                                       ),
                                       itemBuilder: _buildChipStock,
-                                      itemCount: _play.stock.getTotalChipTypes(),
+                                      itemCount: game.play.stock.getTotalChipTypes(),
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics()),
                                 ),
@@ -291,10 +240,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 height: 20,
                                 child: GridView.builder(
                                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: _play.stock.getTotalChipTypes(),
+                                      crossAxisCount: game.play.stock.getTotalChipTypes(),
                                     ),
                                     itemBuilder: _buildChipStockIndicator,
-                                    itemCount: _play.stock.getTotalChipTypes(),
+                                    itemCount: game.play.stock.getTotalChipTypes(),
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics()),
                               ),
@@ -308,10 +257,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                                   border: Border.all(color: Colors.black, width: 2.0)),
                               child: GridView.builder(
                                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: _play.dimension,
+                                    crossAxisCount: game.play.dimension,
                                   ),
                                   itemBuilder: _buildBoardGrid,
-                                  itemCount: _play.dimension * _play.dimension,
+                                  itemCount: game.play.dimension * game.play.dimension,
                                   physics: const NeverScrollableScrollPhysics()),
                             ),
                           ),
@@ -333,94 +282,85 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
-  void _savePlay() {
-    final jsonToSave = jsonEncode(_play);
-    //debugPrint(getPrettyJSONString(_play));
-    PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
-  }
 
-  bool _isUndoAllowed() => !_boardLocked && !_play.isGameOver() && !_play.isFullAutomaticPlay && !_play.isMultiplayerPlay && !_play.isJournalEmpty;
 
-  void _killAiThinking() {
-    _aiControlPort?.send('KILL');
-  }
+  bool _isUndoAllowed() => !game.isBoardLocked() && !game.play.isGameOver() && !game.play.isFullAutomaticPlay && !game.play.isMultiplayerPlay && !game.play.isJournalEmpty;
+
 
   Widget _buildHint(BuildContext context) {
-    if (_play.isGameOver()) {
-      final winner = _play.finishGame();
+    if (game.play.isGameOver()) {
+      final winner = game.play.finishGame();
       return Text("Game over! ${winner.name} wins!");
     }
-    else if (_aiDone != null) {
-      return _buildDoneText(_aiDone!, _play.opponentMove);
+    else if (game.recentOpponentRole != null) {
+      return _buildDoneText(game.recentOpponentRole!, game.play.opponentMove);
     }
-    else if (_play.currentPlayer == Player.Ai) {
-      final text = _buildAiProcessingText();
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          text,
-          const Text("  "),
-          SizedBox(
-            height: 20,
-            width: 20,
-            child: CircularProgressIndicator(
-              strokeCap: StrokeCap.butt,
-              strokeWidth: 2,
-              value: _load?.ratio,
-              backgroundColor: Colors.grey.shade300,
-            ),
-          ),
-      ],);
+    else if (game.play.currentPlayer == Player.Ai) {
+      return _buildAiProgressText();
     }
-    else if (_play.currentPlayer == Player.RemoteUser) {
+    else if (game.play.currentPlayer == Player.RemoteUser) {
       return const Text("Waiting for remote opponent to move...");
     }
-    else if (_play.isBothSidesSinglePlay && !_play.isJournalEmpty) {
-      final lastMove = _play.lastMoveFromJournal!;
+    else if (game.play.isBothSidesSinglePlay && !game.play.isJournalEmpty) {
+      final lastMove = game.play.lastMoveFromJournal!;
       final previousRole = lastMove.isPlaced() ? Role.Chaos : Role.Order;
       return _buildDoneText(previousRole, lastMove.toCursor());
     }
     else {
-      return const Text(".");
+      return const Text("Place a chip on a free space!");
     }
   }
 
+  Row _buildAiProgressText() {
+    final text = _buildAiProcessingText();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        text,
+        const Text("  "),
+        SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeCap: StrokeCap.butt,
+            strokeWidth: 2,
+            value: game.aiLoad?.ratio,
+            backgroundColor: Colors.grey.shade300,
+          ),
+        ),
+    ],);
+  }
+
   Widget _buildSubmitButton(BuildContext context) {
-    if (_play.isGameOver()) {
+    if (game.play.isGameOver()) {
       return FilledButton(
-        onPressed: () => _resetGame(context),
+        onPressed: () => game.restartGame(),
         child: const Text("Restart"),
       );
     }
-    else if (_play.currentPlayer == Player.User) {
-      final isDirty = _play.hasStaleMove;
+    else if (game.play.currentPlayer == Player.User) {
+      final isDirty = game.play.hasStaleMove;
       return FilledButton(
         onPressed: () {
-          if (_boardLocked) {
+          if (game.isBoardLocked()) {
             return;
           }
-          if (_play.isGameOver()) {
+          if (game.play.isGameOver()) {
             _doGameOver(context);
             return;
           }
-          if (_play.currentRole == Role.Chaos && !_play.hasStaleMove) {
+          if (game.play.currentRole == Role.Chaos && !game.play.hasStaleMove) {
             toastInfo(context, "Chaos has to place one chip!");
             return;
           }
 
-          if (!_play.hasStaleMove && _play.currentRole == Role.Order) {
-            _play.applyStaleMove(Move.skipped());
+          if (!game.play.hasStaleMove && game.play.currentRole == Role.Order) {
+            game.play.applyStaleMove(Move.skipped());
           }
-
-          _play.commitMove();
-
-          setState(() {
-            _play.nextRound(true);
-          });
-          _savePlay();
-          _thinkIfAi(context);
+          game.play.commitMove();
+          game.nextRound();
         },
-        child: Text(_play.currentRole == Role.Order && !_play.cursor.hasEnd
+        child: Text(game.play.currentRole == Role.Order && !game.play.cursor.hasEnd
             ? 'Skip move'
             : 'Submit move',
         style: TextStyle(fontWeight: isDirty ? FontWeight.bold : null)),
@@ -430,53 +370,72 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Text _buildDoneText(Role role, Cursor cursor) {
+    final text = _createDoneString(role, cursor);
+    var appendix = "";
+    if (role == Role.Order) {
+      appendix = "Now it's on Chaos to place a chip!";
+    }
+    else {
+      appendix = "Now it's on Order to move a chip or skip!";
+    }
+
+    if (!game.play.isFullAutomaticPlay) {
+      return Text(
+          textAlign: TextAlign.center, "$text\n$appendix");
+    }
+    else {
+      return Text(
+          textAlign: TextAlign.center, text);
+    }
+  }
+
+  String _createDoneString(Role role, Cursor cursor) {
     if (role == Role.Order) {
       if (cursor.hasStart && cursor.hasEnd) {
-        return Text("${role.name} has moved from ${cursor.start?.toReadableCoordinates()} to ${cursor.end?.toReadableCoordinates()}.");
+        return "${role.name} has moved from ${cursor.start?.toReadableCoordinates()} to ${cursor.end?.toReadableCoordinates()}.";
       }
       else {
-        return Text("${role.name} has skipped its move.");
+        return "${role.name} has skipped its move.";
       }
     }
     else {
-      return Text("${role.name} has placed at ${cursor.end?.toReadableCoordinates()}.");
+      return "${role.name} has placed at ${cursor.end?.toReadableCoordinates()}.";
     }
   }
 
   Text _buildAiProcessingText() {
-    if (_play.currentRole == Role.Order) {
-      return Text("Waiting for ${_play.currentRole.name} to move ...");
+    if (game.play.currentRole == Role.Order) {
+      return Text("Waiting for ${game.play.currentRole.name} to move ...");
     }
     else {
-      return Text("Waiting for ${_play.currentRole.name} to place ...");
+      return Text("Waiting for ${game.play.currentRole.name} to place ...");
     }
   }
 
   void _doGameOver(BuildContext? context) {
     setState(() {
-      final winner = _play.finishGame();
+      final winner = game.play.finishGame();
       toastError(context ?? _builderContext, "GAME OVER, ${winner.name} WINS!");
-      _boardLocked = true;
     });
   }
 
   Widget _buildRoleIndicator(Role role, bool isLeftElseRight) {
-    final isSelected = _play.currentRole == role;
+    final isSelected = game.play.currentRole == role;
     return Chip(
         shape: isLeftElseRight
             ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
             : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
         label: isLeftElseRight
-            ? Text("${role.name} - ${_play.stats.getPoints(role)}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null))
-            : Text(" ${_play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null)),
+            ? Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null))
+            : Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null)),
         backgroundColor: isSelected ? Colors.black : null
     );
   }
 
   Widget _buildBoardGrid(BuildContext context, int index) {
     int x, y = 0;
-    x = (index % _play.matrix.dimension.x);
-    y = (index / _play.matrix.dimension.y).floor();
+    x = (index % game.play.matrix.dimension.x);
+    y = (index / game.play.matrix.dimension.y).floor();
     final where = Coordinate(x, y);
     return GestureDetector(
       onTap: () {
@@ -496,16 +455,16 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildGridItem(Coordinate where) {
 
-    final spot = _play.matrix.getSpot(where);
+    final spot = game.play.matrix.getSpot(where);
     final chip = spot.content;
     final pointText = spot.point > 0 ? spot.point.toString() : "";
 
-    if (_play.cursor.end == where) {
+    if (game.play.cursor.end == where) {
       return DottedBorder(
         child: _buildChip(chip, pointText, where),
       );
     }
-    else if (_play.cursor.start == where) {
+    else if (game.play.cursor.start == where) {
       return DottedBorder(
         dashPattern: const [2,4],
         child: _buildChip(chip, pointText, where),
@@ -519,31 +478,31 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     bool possibleTarget = false;
     Spot? startSpot;
-    if (_play.currentRole == Role.Order && where != null) {
-      possibleTarget = _play.cursor.hasStart && _play.cursor.possibleTargets.contains(where);
+    if (game.play.currentRole == Role.Order && where != null) {
+      possibleTarget = game.play.cursor.hasStart && game.play.cursor.possibleTargets.contains(where);
 
-      if (_play.cursor.hasEnd) {
-        startSpot = _play.matrix.getSpot(_play.cursor.end!);
+      if (game.play.cursor.hasEnd) {
+        startSpot = game.play.matrix.getSpot(game.play.cursor.end!);
       }
-      else if (_play.cursor.hasStart) {
-        startSpot = _play.matrix.getSpot(_play.cursor.start!);
+      else if (game.play.cursor.hasStart) {
+        startSpot = game.play.matrix.getSpot(game.play.cursor.start!);
       }
     }
 
     // show trace of opponent move
-    if (_showOpponentTrace && _play.opponentMove.hasEnd && where != null) {
-      startSpot ??= _play.matrix.getSpot(_play.opponentMove.end!);
-      possibleTarget |= _play.opponentMove.end! == where;
-      if (_play.opponentMove.hasStart) {
-        if (_play.opponentMove.isHorizontalMove()) {
-          possibleTarget |= _play.opponentMove.end!.y == where.y &&
-              (_play.opponentMove.start!.x <= where.x  && _play.opponentMove.end!.x >= where.x ||
-                  _play.opponentMove.end!.x <= where.x  && _play.opponentMove.start!.x >= where.x);
+    if (game.showOpponentTrace && game.play.opponentMove.hasEnd && where != null) {
+      startSpot ??= game.play.matrix.getSpot(game.play.opponentMove.end!);
+      possibleTarget |= game.play.opponentMove.end! == where;
+      if (game.play.opponentMove.hasStart) {
+        if (game.play.opponentMove.isHorizontalMove()) {
+          possibleTarget |= game.play.opponentMove.end!.y == where.y &&
+              (game.play.opponentMove.start!.x <= where.x  && game.play.opponentMove.end!.x >= where.x ||
+                  game.play.opponentMove.end!.x <= where.x  && game.play.opponentMove.start!.x >= where.x);
         }
-        else if (_play.opponentMove.isVerticalMove()) {
-          possibleTarget |= _play.opponentMove.end!.x == where.x &&
-              (_play.opponentMove.start!.y <= where.y  && _play.opponentMove.end!.y >= where.y ||
-                  _play.opponentMove.end!.y <= where.y  && _play.opponentMove.start!.y >= where.y);
+        else if (game.play.opponentMove.isVerticalMove()) {
+          possibleTarget |= game.play.opponentMove.end!.x == where.x &&
+              (game.play.opponentMove.start!.y <= where.y  && game.play.opponentMove.end!.y >= where.y ||
+                  game.play.opponentMove.end!.y <= where.y  && game.play.opponentMove.start!.y >= where.y);
         }
       }
     }
@@ -556,9 +515,9 @@ class _HyleXGroundState extends State<HyleXGround> {
       return Container(
         color: possibleTarget ? shadedColor : null,
         child: where != null && text.isEmpty
-            ? Center(child: Text(_getPositionText(where, _play.matrix.dimension),
+            ? Center(child: Text(_getPositionText(where, game.play.matrix.dimension),
                 style: TextStyle(
-                    fontSize: _play.dimension > 9 ? 10 : null,
+                    fontSize: game.play.dimension > 9 ? 10 : null,
                     color: Colors.grey[400])))
             : null,
       );
@@ -581,7 +540,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           maxRadius: 60,
           child: Text(text,
               style: TextStyle(
-                fontSize: _play.dimension > 7 ? 12 : 16,
+                fontSize: game.play.dimension > 7 ? 12 : 16,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               )),
@@ -598,26 +557,24 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
-    if (_boardLocked) {
+    if (game.isBoardLocked()) {
       return;
     }
 
-    _showOpponentTrace = false;
-
     setState(() {
-      if (_play.cursor.temporary) {
-        _play.cursor.clear();
+      if (game.play.cursor.temporary) {
+        game.play.cursor.clear();
       }
-      if (_play.currentRole == Role.Chaos) {
-        if (_play.matrix.isFree(where)) {
+      if (game.play.currentRole == Role.Chaos) {
+        if (game.play.matrix.isFree(where)) {
           _handleFreeFieldForChaos(context, where);
         }
         else {
           _handleOccupiedFieldForChaos(where, context);
         }
       }
-      if (_play.currentRole == Role.Order) {
-        if (_play.matrix.isFree(where)) {
+      if (game.play.currentRole == Role.Order) {
+        if (game.play.matrix.isFree(where)) {
           _handleFreeFieldForOrder(context, where);
         }
         else {
@@ -628,40 +585,40 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
-    final cursor = _play.cursor;
-    if (cursor.end != null && !_play.matrix.isFree(cursor.end!)) {
+    final cursor = game.play.cursor;
+    if (cursor.end != null && !game.play.matrix.isFree(cursor.end!)) {
       toastInfo(context, "You have already placed a chip");
     }
     else {
-      final currentChip = _play.currentChip!;
-      if (!_play.stock.hasStock(currentChip)) {
+      final currentChip = game.play.currentChip!;
+      if (!game.play.stock.hasStock(currentChip)) {
         toastInfo(context, "No more stock for current chip");
       }
-      _play.applyStaleMove(Move.placed(currentChip, coordinate));
-      //_play.matrix.put(coordinate, currentChip, _play.stock);
-      _play.cursor.updateEnd(coordinate);
+      game.play.applyStaleMove(Move.placed(currentChip, coordinate));
+      //game.play.matrix.put(coordinate, currentChip, game.play.stock);
+      game.play.cursor.updateEnd(coordinate);
     }
   }
 
   void _handleOccupiedFieldForChaos(Coordinate coordinate, BuildContext context) {
-    final cursor = _play.cursor;
+    final cursor = game.play.cursor;
     if (cursor.end != coordinate) {
       toastInfo(context, "You can only remove the current placed chip");
     }
     else {
-      _play.undoStaleMove();
-      _play.cursor.clear();
+      game.play.undoStaleMove();
+      game.play.cursor.clear();
     }
   }
 
   void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
-    final cursor = _play.cursor;
+    final cursor = game.play.cursor;
     if (!cursor.hasStart) {
       toastInfo(context, "Please select a chip to move first");
     }
     else if (/*!cursor.hasEnd && */cursor.start == coordinate) {
       // clear start cursor if not target is selected
-      _play.undoStaleMove();
+      game.play.undoStaleMove();
       cursor.clear();
     }
     else if (!cursor.possibleTargets.contains(coordinate) && cursor.start != coordinate) {
@@ -669,14 +626,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (cursor.hasStart) {
       if (cursor.hasEnd) {
-        final from = _play.matrix.getSpot(cursor.end!);
+        final from = game.play.matrix.getSpot(cursor.end!);
         // this is a correction move, so undo last move and apply again below
-        _play.undoStaleMove();
-        _play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
+        game.play.undoStaleMove();
+        game.play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
       }
       else {
-        final from = _play.matrix.getSpot(cursor.start!);
-        _play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
+        final from = game.play.matrix.getSpot(cursor.start!);
+        game.play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
       }
 
       if (cursor.start == coordinate) {
@@ -691,7 +648,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
-    final cursor = _play.cursor;
+    final cursor = game.play.cursor;
     if (cursor.start != null && cursor.start != coordinate && cursor.end != null) {
       toastInfo(context,
           "You can not move the selected chip on another one");
@@ -702,25 +659,25 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else {
       cursor.updateStart(coordinate);
-      cursor.detectPossibleTargetsFor(coordinate, _play.matrix);
+      cursor.detectPossibleTargetsFor(coordinate, game.play.matrix);
     }
   }
 
   Widget _buildChipStock(BuildContext context, int index) {
-    final stockEntries = _play.stock.getStockEntries();
+    final stockEntries = game.play.stock.getStockEntries();
     if (stockEntries.length <= index) {
       return const Text("?");
     }
     final entry = stockEntries.toList()[index];
-    final text = _play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
+    final text = game.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
 
     return _buildChipStockItem(entry, text);
   }
 
   Widget _buildChipStockIndicator(BuildContext context, int index) {
-    final stockEntries = _play.stock.getStockEntries();
+    final stockEntries = game.play.stock.getStockEntries();
     final entry = stockEntries.toList()[index];
-    if (_play.currentChip == entry.chip) {
+    if (game.play.currentChip == entry.chip) {
       return const Align(
           alignment: Alignment.topCenter,
           child: Text("▲", style: TextStyle(fontSize: 16),));
@@ -731,9 +688,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Padding _buildChipStockItem(StockEntry entry, String text) {
-    if (_play.currentChip == entry.chip) {
+    if (game.play.currentChip == entry.chip) {
       return Padding(
-        padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 2 : 4),
+        padding: EdgeInsets.all(game.play.dimension > 5 ? game.play.dimension > 7 ? 0 : 2 : 4),
         child: Container(
             decoration: BoxDecoration(
               color: _getChipBackgroundColor(entry.chip),
@@ -747,13 +704,13 @@ class _HyleXGroundState extends State<HyleXGround> {
       );
     }
     return Padding(
-      padding: EdgeInsets.all(_play.dimension > 5 ? _play.dimension > 7 ? 0 : 4 : 8),
+      padding: EdgeInsets.all(game.play.dimension > 5 ? game.play.dimension > 7 ? 0 : 4 : 8),
       child: _buildChip(entry.chip, text),
     );
   }
 
   Widget _wrapLastMove(Widget widget, Coordinate where) {
-    if (_play.opponentMove.hasStart && _play.opponentMove.start == where) {
+    if (game.play.opponentMove.hasStart && game.play.opponentMove.start == where) {
       return DottedBorder(
           padding: EdgeInsets.zero,
           strokeWidth: 1,
@@ -762,7 +719,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           color: Colors.grey,
           child: widget);
     }
-    else if (_play.opponentMove.hasEnd && _play.opponentMove.end == where) {
+    else if (game.play.opponentMove.hasEnd && game.play.opponentMove.end == where) {
       return DottedBorder(
           padding: EdgeInsets.zero,
           strokeWidth: 3,
@@ -791,4 +748,114 @@ class _HyleXGroundState extends State<HyleXGround> {
       return "";
     }
   }
+}
+
+
+class Game extends ChangeNotifier {
+
+  Play play;
+  bool waitForOpponent = false;
+  Role? recentOpponentRole;
+  bool showOpponentTrace = false;
+  Load? aiLoad;
+
+  SendPort? _aiControlPort;
+
+  Game(this.play);
+
+  restartGame() {
+    kill();
+    play.reset();
+    waitForOpponent = false;
+    recentOpponentRole = null;
+    savePlay();
+    notifyListeners();
+    if (play.currentPlayer == Player.Ai) {
+      _think();
+    }
+  }
+
+  resumeGame() {
+    if (play.currentPlayer == Player.Ai) {
+      _think();
+    }
+  }
+
+  nextRound() {
+
+    if (play.isGameOver()) {
+      debugPrint("Game over, no next round");
+      return;
+    }
+
+    play.nextRound(!showOpponentTrace);
+    savePlay();
+    notifyListeners();
+
+    if (play.currentPlayer == Player.Ai) {
+      _think();
+    }
+
+  }
+
+
+  bool isBoardLocked() => waitForOpponent || play.isGameOver();
+
+  void _think() {
+    waitForOpponent = true;
+    aiLoad = null;
+    showOpponentTrace = true;
+    notifyListeners();
+
+    Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? 2500 :  0), () {
+      recentOpponentRole = null;
+
+      play.startThinking((Load load)
+      {
+        aiLoad = load;
+        notifyListeners();
+      },
+          _aiNextMoveHandler,
+              (SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort);
+    });
+
+  }
+
+
+  _aiNextMoveHandler(Move move) {
+    debugPrint("AI ready");
+    waitForOpponent = false;
+    recentOpponentRole = play.currentRole;
+
+    play.applyStaleMove(move);
+    play.opponentMove.adaptFromMove(move);
+    play.commitMove();
+
+    if (play.isGameOver()) {
+      play.finishGame();
+      notifyListeners();
+    }
+    else {
+      notifyListeners();
+      nextRound();
+    }
+  }
+
+
+  void kill() {
+    _aiControlPort?.send('KILL');
+  }
+
+  void savePlay() {
+    final jsonToSave = jsonEncode(play);
+    //debugPrint(getPrettyJSONString(game.play));
+    debugPrint("Save current play");
+    PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
+  }
+
+  void leave() {
+    savePlay();
+    kill();
+  }
+
 }
