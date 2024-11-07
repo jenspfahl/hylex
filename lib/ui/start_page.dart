@@ -95,15 +95,13 @@ class _StartPageState extends State<StartPage>
                     ? _buildCell("New Game", 0,
                     icon: CupertinoIcons.game_controller,
                     clickHandler: () async {
-                      if (context.mounted) {
-                        buildChoiceDialog(330, 220, 'Which ground size?',
-                          "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
-                          "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
-                          "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
-                          "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
-                          "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
-                        );
-                      }
+                        if (context.mounted) {
+
+                          final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
+                          confirmOrDo(json != null, 'Starting a new game will delete an ongoing game.', () {
+                            _selectPlayerGroundSize(context);
+                          });
+                        }
                     }
                 )
                     : _menuMode == MenuMode.MultiplayerNew
@@ -184,12 +182,9 @@ class _StartPageState extends State<StartPage>
                   }, icon: const Icon(Icons.settings_outlined)),
 
                   IconButton(onPressed: () {
-                    buildChoiceDialog(180, 180, 'Leave the game?',
-                        "YES", () {
+                    ask('Leave the game?', () {
                           SystemNavigator.pop();
-                        },  "NO", () {
-                          SmartDialog.dismiss();
-                        });
+                    });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
 
                   IconButton(onPressed: () {
@@ -199,6 +194,16 @@ class _StartPageState extends State<StartPage>
           ],
         ),
       ),
+    );
+  }
+
+  void _selectPlayerGroundSize(BuildContext context) {
+    buildChoiceDialog(330, 220, 'Which ground size?',
+      "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
+      "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
+      "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
+      "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
+      "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
     );
   }
 

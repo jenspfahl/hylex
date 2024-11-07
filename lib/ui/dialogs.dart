@@ -13,6 +13,50 @@ void buildAlertDialog(NotifyType type, String text, {int seconds = 3}) {
   );
 }
 
+void confirmOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
+  if (confirmCondition) {
+    confirm(confirmText, () {
+      doHandler();
+    });
+  }
+  else {
+    doHandler();
+  }
+}
+
+void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
+  if (confirmCondition) {
+    ask(confirmText, () {
+      doHandler();
+    });
+  }
+  else {
+    doHandler();
+  }
+}
+
+void confirm(String text, Function() okHandler) {
+  buildChoiceDialog(180 + text.length.toDouble(), 180, text,
+      "OK", () {
+        SmartDialog.dismiss();
+        okHandler();
+      },
+      "CANCEL", () {
+        SmartDialog.dismiss();
+      });
+}
+
+void ask(String text, Function() okHandler) {
+  buildChoiceDialog(180 + text.length.toDouble(), 180, text,
+      "YES", () {
+        SmartDialog.dismiss();
+        okHandler();
+      },
+      "NO", () {
+        SmartDialog.dismiss();
+      });
+}
+
 void buildChoiceDialog(
     double height,
     double width,

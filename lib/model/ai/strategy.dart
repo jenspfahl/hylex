@@ -14,6 +14,7 @@ import '../play.dart';
 import '../spot.dart';
 
 final parallelCount = max(Platform.numberOfProcessors - 2, 2); // save two processors for UI
+const POSSIBLE_PALINDROME_REWARD = 2;
 
 abstract class Strategy {
 
@@ -24,14 +25,14 @@ class MinimaxStrategy extends Strategy {
   MinimaxStrategy();
 
   @override
-  Future<Move> nextMove(Play play, int depth, Function(Load)? loadChangeListener) async {
+  Future<Move> nextMove(Play play, int initialDepth, Function(Load)? loadChangeListener) async {
 
     final currentRole = play.currentRole;
     final currentChip = currentRole == Role.Order ? play.stock.getChipOfMostStock(): play.currentChip;
 
     final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
 
-    final loadForecast = _predictLoad(currentRole, play.matrix, depth);
+    final loadForecast = _predictLoad(currentRole, play.matrix, initialDepth);
     final load = Load(loadForecast);
     if (loadChangeListener != null) {
       load.addListener(() {
@@ -39,9 +40,7 @@ class MinimaxStrategy extends Strategy {
       });
     }
 
-    var moves = _getMoves(currentChip, play.matrix, currentRole);
-
-
+    var moves = _getPossibleMoves(currentChip, play.matrix, currentRole);
 
     final subscriptionWaits = <Future>[];
     final sendPorts = HashMap<int, SendPort>();
@@ -58,7 +57,6 @@ class MinimaxStrategy extends Strategy {
         }
         else if (message is SendPort) {
          // debugPrint("put send port: $message for $i");
-
           sendPorts.putIfAbsent(i, () => message);
         }
         else if (message == -1) {
@@ -95,8 +93,8 @@ class MinimaxStrategy extends Strategy {
       //debugPrint("Spawn sub $subscription on $i");
       subscriptionWaits.add(subscription.asFuture());
 
-      // Spawning an isolate copies all parameters. They are then completely detached from its originals
-      await Isolate.spawn(_initiateNextMoveAsync, [resultPort.sendPort, load.max]);
+      // Spawning an isolate per CPU copies all parameters. They are then completely detached from its originals
+      await Isolate.spawn(_initiateIsolatePerCpu, [resultPort.sendPort, load.max]);
     }
 
     while (sendPorts.length < subscriptionWaits.length) {
@@ -110,10 +108,9 @@ class MinimaxStrategy extends Strategy {
     for (final move in moves) {
       final slot = round % parallelCount;
       //debugPrint("send $move to $slot");
-      sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, depth]);
+      sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, initialDepth]);
       round ++;
     }
-
 
 
     // wait for all isolate subs to be done
@@ -146,64 +143,61 @@ class MinimaxStrategy extends Strategy {
     //top
     if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip two times on top of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //bottom
     if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip two times on bottom of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //left
     if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip two times on left of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //right
     if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip two times on right of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     
-    // one more palin
+    // one more possible palindrome
     //top
     if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip four times on top of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //bottom
     if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip four times on bottom of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //left
     if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip four times on left of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     //right
     if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
       debugPrint("found same $targetChip four times on right of $moveTarget");
-      value += 3;
+      value += POSSIBLE_PALINDROME_REWARD;
     }
     return value;
   }
 
-  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int depth, Load load) async {
+  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int initialDepth, int depth, Load load) async {
     if (_isTerminal(matrix, depth)) {
       load.incProgress();
       return _getValue(matrix);
     }
 
-    if (depth == 1 && currentRole == Role.Chaos) {
+
+    if (initialDepth == 3 && depth == 1 && currentRole == Role.Chaos) {
       // Leave out last Chaos round as it IS Chaos who moves
       // Chaos(3)--Order(2)--Chaos(1) --> Chaos(3)--Order(2)--Order(1)
+
       currentRole = Role.Order;
     }
-    /*if (depth == 2 && currentRole == Role.Chaos) {
-      // Leave out second Chaos round as it we don't know which chip haos draws
-      // Order(3)--Chaos(2)--Order(1) --> Order(3)--Order(2)--Order(1)
-      currentRole = Role.Order;
-    }*/
 
     int value;
     Role opponentRole;
@@ -217,10 +211,10 @@ class MinimaxStrategy extends Strategy {
     }
 
 
-    var moves = _getMoves(currentChip, matrix, currentRole); //try to limit
+    var moves = _getPossibleMoves(currentChip, matrix, currentRole); //try to limit
     for (final move in moves) {
 
-      int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, depth, load);
+      int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, initialDepth, depth, load);
       if (currentRole == Role.Chaos) { // min
         value = min(value, newValue);
       }
@@ -232,7 +226,7 @@ class MinimaxStrategy extends Strategy {
     return value;
   }
 
-  _initiateNextMoveAsync(List<dynamic> initArgs) async {
+  _initiateIsolatePerCpu(List<dynamic> initArgs) async {
     SendPort resultPort = initArgs[0];
     int maxLoad = initArgs[1];
 
@@ -256,9 +250,9 @@ class MinimaxStrategy extends Strategy {
         Role currentRole = message[1];
         Matrix matrix = message[2];
         Move move = message[3];
-        int depth = message[4];
+        int initialDepth = message[4];
 
-        final newValue = await _tryNextMove(currentChip, currentRole, matrix, move, depth, load);
+        final newValue = await _tryNextMove(currentChip, currentRole, matrix, move, initialDepth, initialDepth, load);
         resultPort.send([newValue, move]);
       }
     });
@@ -268,10 +262,10 @@ class MinimaxStrategy extends Strategy {
 
   }
 
-  Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, int depth, Load load) async {
+  Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, int initialDepth, int depth, Load load) async {
     final clonedMatrix = matrix.clone();
     _doMove(currentChip, clonedMatrix, move);
-    return await minimax(currentChip, currentRole, clonedMatrix, depth - 1, load);
+    return await minimax(currentChip, currentRole, clonedMatrix, initialDepth, depth - 1, load);
   }
 
   bool _isTerminal(Matrix matrix, int depth) {
@@ -282,7 +276,7 @@ class MinimaxStrategy extends Strategy {
     return matrix.getTotalPointsForOrder();
   }
 
-  List<Move> _getMoves(GameChip? currentChip, Matrix matrix, Role forRole) {
+  List<Move> _getPossibleMoves(GameChip? currentChip, Matrix matrix, Role forRole) {
     if (forRole == Role.Chaos) {
       // Chaos can only place new chips on free spots
       return matrix.streamFreeSpots().map(((spot) => Move.placed(currentChip!, spot.where))).toList();

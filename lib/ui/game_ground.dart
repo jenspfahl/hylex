@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import '../model/ai/strategy.dart';
 import '../model/chip.dart';
@@ -133,32 +135,28 @@ class _HyleXGroundState extends State<HyleXGround> {
                           else {
 
                             final recentRole = game.play.opponentRole.name;
-                            buildChoiceDialog(180, 180, 'Undo $recentRole\'s last move?',
-                                "YES", ()
-                                {
-                                  SmartDialog.dismiss();
+                            ask('Undo $recentRole\'s last move?', () {
+                                var lastMove = game.play.previousRound();
+                                if (game.play.currentPlayer == Player.Ai) {
+                                  // undo AI move also
+                                  lastMove = game.play.previousRound();
+                                }
 
-                                  var lastMove = game.play.previousRound();
-                                  if (game.play.currentPlayer == Player.Ai) {
-                                    // undo AI move also
-                                    lastMove = game.play.previousRound();
+                                if (lastMove != null) {
+                                  game.play.cursor.adaptFromMove(lastMove);
+                                  game.play.cursor.temporary = true;
+                                  final moveBefore = game.play.lastMoveFromJournal;
+                                  if (moveBefore != null) {
+                                    game.play.opponentMove.adaptFromMove(moveBefore);
                                   }
 
-                                  if (lastMove != null) {
-                                    game.play.cursor.adaptFromMove(lastMove);
-                                    game.play.cursor.temporary = true;
-
-                                    game.savePlay();
-                                  }
-                                  else {
-                                    // beginning of game
-                                    game.restartGame();
-                                  }
-
-                                },  "NO", () {
-                                  SmartDialog.dismiss();
-                                });
-
+                                  game.savePlay();
+                                }
+                                else {
+                                  // beginning of game
+                                  game.restartGame();
+                                }
+                              });
                           }
                         });
 
@@ -169,30 +167,18 @@ class _HyleXGroundState extends State<HyleXGround> {
                     icon: const Icon(Icons.restart_alt_outlined),
                     onPressed: () => {
 
-                      buildChoiceDialog(180, 180, 'Restart game?',
-                          "YES", ()
-                          {
+                      ask('Restart game?', () {
                             game.restartGame();
-                            SmartDialog.dismiss();
-                          },  "NO", () {
-                            SmartDialog.dismiss();
-                          })
+                      })
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.exit_to_app),
                     onPressed: () => {
 
-                      buildChoiceDialog(180, 180, 'Leave current game?',
-                          "YES", ()
-                          {
-                            SmartDialog.dismiss();
-
+                      ask('Leave current game?', () {
                             game.leave();
-
                             Navigator.pop(super.context); // go to start page
-                          },  "NO", () {
-                            SmartDialog.dismiss();
                           })
                     },
                   )
@@ -213,9 +199,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                               mainAxisSize: MainAxisSize.max,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildRoleIndicator(Role.Chaos, true),
+                                _buildRoleIndicator(Role.Chaos, game.play.chaosPlayer, true),
                                 Text("Round ${game.play.currentRound} of ${game.play.maxRounds}"),
-                                _buildRoleIndicator(Role.Order, false),
+                                _buildRoleIndicator(Role.Order, game.play.orderPlayer, false),
                               ],
                             ),
                           ),
@@ -419,15 +405,34 @@ class _HyleXGroundState extends State<HyleXGround> {
     });
   }
 
-  Widget _buildRoleIndicator(Role role, bool isLeftElseRight) {
+  Widget _buildRoleIndicator(Role role, Player player, bool isLeftElseRight) {
     final isSelected = game.play.currentRole == role;
+    final color = isSelected ? Colors.white : null;
+    final icon = player == Player.Ai ? MdiIcons.brain : player == Player.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
     return Chip(
+        padding: EdgeInsets.zero,
         shape: isLeftElseRight
             ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
             : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
         label: isLeftElseRight
-            ? Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null))
-            : Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.bold : null)),
+            ? Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(icon, color: color, size: 16),
+                const Text(" "),
+                Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+              ],
+            )
+            : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                const Text(" "),
+                Icon(icon, color: color, size: 16),
+              ],
+            ),
         backgroundColor: isSelected ? Colors.black : null
     );
   }
@@ -847,10 +852,15 @@ class Game extends ChangeNotifier {
   }
 
   void savePlay() {
-    final jsonToSave = jsonEncode(play);
-    //debugPrint(getPrettyJSONString(game.play));
-    debugPrint("Save current play");
-    PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
+    if (play.isGameOver()) {
+      PreferenceService().remove(PreferenceService.DATA_CURRENT_PLAY);
+    }
+    else {
+      final jsonToSave = jsonEncode(play);
+      //debugPrint(getPrettyJSONString(game.play));
+      debugPrint("Save current play");
+      PreferenceService().setString(PreferenceService.DATA_CURRENT_PLAY, jsonToSave);
+    }
   }
 
   void leave() {
