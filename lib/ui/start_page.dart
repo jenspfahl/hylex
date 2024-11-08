@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/model/achievements.dart';
 
 import '../model/play.dart';
 import '../service/PreferenceService.dart';
@@ -20,6 +22,7 @@ enum MenuMode {
   More
 }
 
+
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
@@ -34,6 +37,8 @@ class _StartPageState extends State<StartPage>
 
   MenuMode _menuMode = MenuMode.None;
 
+  late User _user;
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +51,11 @@ class _StartPageState extends State<StartPage>
         setState(() {});
       });
     _controller.repeat(reverse: true);
+
+
+    _loadOrInitUser().then((user) => setState(() {
+      _user = user;
+    }));
   }
 
   @override
@@ -116,7 +126,7 @@ class _StartPageState extends State<StartPage>
                     if (play != null) {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                            return HyleXGround.load(play);
+                            return HyleXGround.load(_user, play);
                           }));
                     }
                     else {
@@ -157,7 +167,7 @@ class _StartPageState extends State<StartPage>
                 _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2)
                     : _menuMode == MenuMode.More
-                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard)
+                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard, clickHandler: () => _buildAchievementDialog())
                     : _buildEmptyCell(),
 
                 _buildCell("More", 1,
@@ -242,7 +252,7 @@ class _StartPageState extends State<StartPage>
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-      return HyleXGround(chaosPlayer, orderPlayer, dimension);
+      return HyleXGround(_user, chaosPlayer, orderPlayer, dimension);
     }));
   }
 
@@ -305,13 +315,121 @@ class _StartPageState extends State<StartPage>
     ]);
   }
 
+  Future<User> _loadOrInitUser() async {
+    final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_USER);
+    if (json == null) return User();
+
+    final map = jsonDecode(json);
+    final user = User.fromJson(map);
+    debugPrint("Loaded user: $user");
+    return user;
+  }
+
   Future<Play?> _loadPlay() async {
     final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
     if (json == null) return null;
 
     final map = jsonDecode(json);
     final play = Play.fromJson(map);
-    debugPrint("Loaded: $play");
+    debugPrint("Loaded play state: $play");
     return play;
+  }
+
+  _buildAchievementDialog() {
+    SmartDialog.show(builder: (_) {
+      List<Widget> children = [
+              const Text(
+                "Achievements",
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const Divider(),
+              if (_user.name != null) Text(_user.name!),
+              Text("Overall game count: ${_user.achievements.getOverallGameCount()}",
+                style: const TextStyle(color: Colors.white)),
+              Text("Overall score: ${_user.achievements.getOverallScore()}",
+                  style: const TextStyle(color: Colors.white)),
+            ];
+
+      children.addAll(_buildStatsForDimension(5));
+      children.addAll(_buildStatsForDimension(7));
+      children.addAll(_buildStatsForDimension(9));
+      children.addAll(_buildStatsForDimension(11));
+      children.addAll(_buildStatsForDimension(13));
+
+      children.add(const Divider());
+      children.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.lightGreenAccent),
+                onPressed: () => SmartDialog.dismiss(),
+                child: const Text("CLOSE")),
+            OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.lightGreenAccent),
+                onPressed: () {
+                  ask("Reset all stats to zero:", () {
+                    _user.achievements.clearAll();
+                    //TODO _saveUser();
+                    SmartDialog.dismiss();
+                    _buildAchievementDialog();
+                  });
+
+                },
+                child: const Text("RESET")),
+          ],
+        ),
+      );
+
+      return Container(
+        height: 600,
+        width: 300,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: children,
+          ),
+        ),
+      );
+    });
+  }
+
+  List<Widget> _buildStatsForDimension(int dimension) {
+    return [
+      const Divider(),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("$dimension x $dimension", style: const TextStyle(color: Colors.white)),
+          const Text("Chaos", style: TextStyle(color: Colors.white)),
+          const Text("Order", style: TextStyle(color: Colors.white)),
+        ],
+      ),
+      const Divider(),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("Won/Lost/Total Count:", style: TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getWonGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getLostGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("High/Total Score:", style: TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getHighScore(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getHighScore(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
+    ];
   }
 }

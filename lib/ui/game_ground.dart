@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:hyle_x/model/achievements.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 import '../model/ai/strategy.dart';
@@ -22,15 +23,16 @@ import 'dialogs.dart';
 enum Player {User, Ai, RemoteUser}
 
 class HyleXGround extends StatefulWidget {
+  User user;
   Player chaosPlayer;
   Player orderPlayer;
   int dimension;
   Play? loadedPlay;
 
 
-  HyleXGround(this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
+  HyleXGround(this.user, this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
 
-  HyleXGround.load(Play play, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
+  HyleXGround.load(this.user, Play play, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -52,14 +54,15 @@ class _HyleXGroundState extends State<HyleXGround> {
   void initState() {
     super.initState();
 
-    SmartDialog.dismiss();
+    SmartDialog.dismiss(); // dismiss loading dialog
+
 
     if (widget.loadedPlay != null) {
-      game = Game(widget.loadedPlay!);
+      game = Game(widget.loadedPlay!, widget.user);
       debugPrint("Game restored from saved play state");
     }
     else {
-      game = Game(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer));
+      game = Game(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer), widget.user);
       debugPrint("New game created");
 
     }
@@ -275,7 +278,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildHint(BuildContext context) {
     if (game.play.isGameOver()) {
-      final winner = game.play.finishGame();
+      final winner = game.play.stats.getWinner();
       return Text("Game over! ${winner.name} wins!");
     }
     else if (game.recentOpponentRole != null) {
@@ -400,7 +403,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _doGameOver(BuildContext? context) {
     setState(() {
-      final winner = game.play.finishGame();
+      final winner = game.finish();
       toastError(context ?? _builderContext, "GAME OVER, ${winner.name} WINS!");
     });
   }
@@ -758,6 +761,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 class Game extends ChangeNotifier {
 
+  User user;
   Play play;
   bool waitForOpponent = false;
   Role? recentOpponentRole;
@@ -766,7 +770,7 @@ class Game extends ChangeNotifier {
 
   SendPort? _aiControlPort;
 
-  Game(this.play);
+  Game(this.play, this.user);
 
   restartGame() {
     kill();
@@ -837,7 +841,7 @@ class Game extends ChangeNotifier {
     play.commitMove();
 
     if (play.isGameOver()) {
-      play.finishGame();
+      finish();
       notifyListeners();
     }
     else {
@@ -866,6 +870,41 @@ class Game extends ChangeNotifier {
   void leave() {
     savePlay();
     kill();
+  }
+
+  Role finish() {
+    final winner = play.finishGame();
+    if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
+      if (winner == Role.Order) {
+        if (play.orderPlayer == Player.Ai) {
+          user.achievements.incWonGame(Role.Order, play.dimension);
+          user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
+        }
+        if (play.chaosPlayer == Player.Ai) {
+          user.achievements.incLostGame(Role.Chaos, play.dimension);
+        }
+      }
+      else if (winner == Role.Chaos) {
+        if (play.chaosPlayer == Player.Ai) {
+          user.achievements.incWonGame(Role.Chaos, play.dimension);
+          user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
+        }
+        if (play.orderPlayer == Player.Ai) { //TODO USER !!!!
+          user.achievements.incLostGame(Role.Order, play.dimension);
+        }
+      }
+      _saveUser();
+    }
+
+    return winner;
+  }
+
+  void _saveUser() {
+    final jsonToSave = jsonEncode(user);
+    debugPrint(getPrettyJSONString(user));
+    debugPrint("Save current user");
+    PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
+    //TODO notify start widget
   }
 
 }

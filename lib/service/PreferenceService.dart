@@ -10,6 +10,7 @@ class PrefDef {
 }
 class PreferenceService {
 
+  static final DATA_CURRENT_USER = PrefDef('data/user/current', null);
   static final DATA_CURRENT_PLAY = PrefDef('data/play/current', null);
 
   static final PreferenceService _service = PreferenceService._internal();
