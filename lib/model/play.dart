@@ -566,7 +566,7 @@ class Play {
 
   bool get isMultiplayerPlay => _chaosPlayer == Player.RemoteUser || _orderPlayer == Player.RemoteUser;
 
-  bool get isBothSidesSinglePlay => _chaosPlayer == Player.User || _orderPlayer == Player.User;
+  bool get isBothSidesSinglePlay => _chaosPlayer == Player.User && _orderPlayer == Player.User;
 
   bool get isFullAutomaticPlay => _chaosPlayer == Player.Ai && _orderPlayer == Player.Ai;
 

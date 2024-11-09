@@ -24,6 +24,12 @@ toastInfo(BuildContext context, String message) {
         SnackBar(
             duration: duration,
             showCloseIcon: true,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(5),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+            ),
+            elevation: 10,
             content: Text(message)));
   });
 }
@@ -37,6 +43,12 @@ toastError(BuildContext context, String message) {
             backgroundColor: Colors.red,
             duration: duration,
             showCloseIcon: true,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(5),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
+            ),
+            elevation: 10,
             content: Text(message)));
   });
 }
