@@ -876,20 +876,20 @@ class Game extends ChangeNotifier {
     final winner = play.finishGame();
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
       if (winner == Role.Order) {
-        if (play.orderPlayer == Player.Ai) {
+        if (play.orderPlayer == Player.User) {
           user.achievements.incWonGame(Role.Order, play.dimension);
           user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
         }
-        if (play.chaosPlayer == Player.Ai) {
+        if (play.chaosPlayer == Player.User) {
           user.achievements.incLostGame(Role.Chaos, play.dimension);
         }
       }
       else if (winner == Role.Chaos) {
-        if (play.chaosPlayer == Player.Ai) {
+        if (play.chaosPlayer == Player.User) {
           user.achievements.incWonGame(Role.Chaos, play.dimension);
           user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
         }
-        if (play.orderPlayer == Player.Ai) { //TODO USER !!!!
+        if (play.orderPlayer == Player.User) {
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }

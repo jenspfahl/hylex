@@ -409,6 +409,7 @@ class _StartPageState extends State<StartPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text("$dimension x $dimension", style: const TextStyle(color: Colors.white)),
+          const Text("  "),
           const Text("Chaos", style: TextStyle(color: Colors.white)),
           const Text("Order", style: TextStyle(color: Colors.white)),
         ],
@@ -426,8 +427,8 @@ class _StartPageState extends State<StartPage>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text("High/Total Score:", style: TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getHighScore(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getHighScore(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getHighScore(Role.Chaos, dimension)} / ${_user.achievements.getTotalScore(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getHighScore(Role.Order, dimension)} / ${_user.achievements.getTotalScore(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
         ],
       ),
     ];
