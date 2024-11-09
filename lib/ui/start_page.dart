@@ -192,7 +192,7 @@ class _StartPageState extends State<StartPage>
                   }, icon: const Icon(Icons.settings_outlined)),
 
                   IconButton(onPressed: () {
-                    ask('Leave the game?', () {
+                    ask('Quit the app?', () {
                           SystemNavigator.pop();
                     });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
@@ -343,11 +343,12 @@ class _StartPageState extends State<StartPage>
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
               const Divider(),
-              if (_user.name != null) Text(_user.name!),
-              Text("Overall game count: ${_user.achievements.getOverallGameCount()}",
-                style: const TextStyle(color: Colors.white)),
-              Text("Overall score: ${_user.achievements.getOverallScore()}",
-                  style: const TextStyle(color: Colors.white)),
+              //if (_user.name != null) Text(_user.name!),
+              Text("Overall Score: ${_user.achievements.getOverallScore()}",
+                  style: const TextStyle(color: Colors.white, fontSize: 13)),
+              Text("Overall Won/Lost/Total Count: ${_user.achievements.getOverallWonCount()} / ${_user.achievements.getOverallLostCount()} / ${_user.achievements.getOverallGameCount()}",
+                style: const TextStyle(color: Colors.white, fontSize: 13)),
+
             ];
 
       children.addAll(_buildStatsForDimension(5));
@@ -385,7 +386,7 @@ class _StartPageState extends State<StartPage>
 
       return Container(
         height: 600,
-        width: 300,
+        width: 350,
         decoration: BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.circular(10),
@@ -418,19 +419,20 @@ class _StartPageState extends State<StartPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("Won/Lost/Total Count:", style: TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getWonGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getLostGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-        ],
-      ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
           const Text("High/Total Score:", style: TextStyle(color: Colors.white, fontSize: 12)),
           Text("${_user.achievements.getHighScore(Role.Chaos, dimension)} / ${_user.achievements.getTotalScore(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
           Text("${_user.achievements.getHighScore(Role.Order, dimension)} / ${_user.achievements.getTotalScore(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
         ],
       ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("Won/Lost/Total Count:", style: TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getWonGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getLostGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
+
     ];
   }
 }

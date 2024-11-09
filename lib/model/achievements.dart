@@ -128,6 +128,16 @@ class Achievements {
         _lostChaosGames.values.fold(0, (v, e) => v + e);
   }
 
+  num getOverallWonCount() {
+    return _wonOrderGames.values.fold(0, (v, e) => v + e) +
+        _wonChaosGames.values.fold(0, (v, e) => v + e);
+  }
+
+  num getOverallLostCount() {
+    return _lostOrderGames.values.fold(0, (v, e) => v + e) +
+        _lostChaosGames.values.fold(0, (v, e) => v + e);
+  }
+
   int getHighScore(Role role, int dimension) {
     if (role == Role.Order) {
       return _highScoresForOrder[dimension] ?? 0;
