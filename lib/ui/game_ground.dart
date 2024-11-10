@@ -118,7 +118,7 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
-                  IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+                  IconButton(onPressed: () {}, icon: const Icon(Icons.history)),
                   Visibility(
                     visible: _isUndoAllowed(),
                     child: IconButton(
@@ -335,7 +335,6 @@ class _HyleXGroundState extends State<HyleXGround> {
             return;
           }
           if (game.play.isGameOver()) {
-            _doGameOver(context);
             return;
           }
           if (game.play.currentRole == Role.Chaos && !game.play.hasStaleMove) {
@@ -348,6 +347,9 @@ class _HyleXGroundState extends State<HyleXGround> {
           }
           game.play.commitMove();
           game.nextRound();
+          if (game.play.isGameOver()) {
+            _showGameOver(context);
+          }
         },
         child: Text(game.play.currentRole == Role.Order && !game.play.cursor.hasEnd
             ? 'Skip move'
@@ -401,9 +403,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
   }
 
-  void _doGameOver(BuildContext? context) {
+  void _showGameOver(BuildContext? context) {
     setState(() {
-      final winner = game.finish();
+      final winner = game.play.currentRole;
       toastError(context ?? _builderContext, "GAME OVER, ${winner.name} WINS!");
     });
   }
@@ -794,6 +796,7 @@ class Game extends ChangeNotifier {
 
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
+      finish();
       return;
     }
 
@@ -880,7 +883,7 @@ class Game extends ChangeNotifier {
           user.achievements.incWonGame(Role.Order, play.dimension);
           user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
         }
-        if (play.chaosPlayer == Player.User) {
+        else if (play.chaosPlayer == Player.User) {
           user.achievements.incLostGame(Role.Chaos, play.dimension);
         }
       }
@@ -889,7 +892,7 @@ class Game extends ChangeNotifier {
           user.achievements.incWonGame(Role.Chaos, play.dimension);
           user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
         }
-        if (play.orderPlayer == Player.User) {
+        else if (play.orderPlayer == Player.User) {
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }

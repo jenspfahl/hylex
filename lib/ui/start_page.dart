@@ -344,7 +344,7 @@ class _StartPageState extends State<StartPage>
               ),
               const Divider(),
               //if (_user.name != null) Text(_user.name!),
-              Text("Overall Score: ${_user.achievements.getOverallScore()}",
+              Text("Overall Total Score: ${_user.achievements.getOverallScore()}",
                   style: const TextStyle(color: Colors.white, fontSize: 13)),
               Text("Overall Won/Lost/Total Count: ${_user.achievements.getOverallWonCount()} / ${_user.achievements.getOverallLostCount()} / ${_user.achievements.getOverallGameCount()}",
                 style: const TextStyle(color: Colors.white, fontSize: 13)),
@@ -365,11 +365,6 @@ class _StartPageState extends State<StartPage>
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
-                onPressed: () => SmartDialog.dismiss(),
-                child: const Text("CLOSE")),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
                 onPressed: () {
                   ask("Reset all stats to zero:", () {
                     _user.achievements.clearAll();
@@ -380,6 +375,11 @@ class _StartPageState extends State<StartPage>
 
                 },
                 child: const Text("RESET")),
+            OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.lightGreenAccent),
+                onPressed: () => SmartDialog.dismiss(),
+                child: const Text("CLOSE")),
           ],
         ),
       );
@@ -429,7 +429,7 @@ class _StartPageState extends State<StartPage>
         children: [
           const Text("Won/Lost/Total Count:", style: TextStyle(color: Colors.white, fontSize: 12)),
           Text("${_user.achievements.getWonGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getLostGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
         ],
       ),
 

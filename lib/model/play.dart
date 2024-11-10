@@ -472,9 +472,7 @@ class Play {
     else if (!move.skipped) {
       _matrix.put(move.from!, move.chip!, _stock);
     }
-    debugPrint("add move to journal: $move");
     _staleMove = move;
-
     _stats._setPoints(Role.Order, _matrix.getTotalPointsForOrder());
     _stats._setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
 
@@ -482,8 +480,10 @@ class Play {
 
   commitMove() {
     if (_staleMove != null) {
+      debugPrint("add move to journal: $_staleMove");
       _journal.add(_staleMove!);
     }
+    _staleMove = null;
   }
 
   Move? rollbackLastMove() {
@@ -500,6 +500,7 @@ class Play {
       _undoMove(_staleMove!);
     }
   }
+
   _undoMove(Move move) {
     debugPrint("undo move: $move");
     if (move.isMove()) {
@@ -537,8 +538,6 @@ class Play {
     if (clearOpponentCursor) {
       _opponentMove.clear();
     }
-
-    _staleMove = null;
   }
 
   Move? previousRound() {
@@ -612,7 +611,7 @@ class Play {
 
 
   bool isGameOver() {
-    return _stock.isEmpty() || _matrix.noFreeSpace();
+    return !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace());
   }
 
   startThinking(
