@@ -344,10 +344,19 @@ class _StartPageState extends State<StartPage>
               ),
               const Divider(),
               //if (_user.name != null) Text(_user.name!),
-              Text("Overall Total Score: ${_user.achievements.getOverallScore()}",
-                  style: const TextStyle(color: Colors.white, fontSize: 13)),
-              Text("Overall Won/Lost/Total Count: ${_user.achievements.getOverallWonCount()} / ${_user.achievements.getOverallLostCount()} / ${_user.achievements.getOverallGameCount()}",
-                style: const TextStyle(color: Colors.white, fontSize: 13)),
+              _buildHOverallTotalScoreHead(_user.achievements.getOverallScore()),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildWonLostTotalHead(prefix: "Overall ", dense: false),
+                  _buildWonLostTotalCounts(
+                    _user.achievements.getOverallWonCount(),
+                    _user.achievements.getOverallLostCount(),
+                    _user.achievements.getOverallGameCount(),
+                    dense: false,
+                  ),
+                ],
+              ),
 
             ];
 
@@ -395,7 +404,7 @@ class _StartPageState extends State<StartPage>
         child: Padding(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: children,
           ),
         ),
@@ -419,20 +428,124 @@ class _StartPageState extends State<StartPage>
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("High/Total Score:", style: TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getHighScore(Role.Chaos, dimension)} / ${_user.achievements.getTotalScore(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getHighScore(Role.Order, dimension)} / ${_user.achievements.getTotalScore(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          _buildHighAndTotalScoreHead(),
+          _buildHighAndTotalScore(
+              _user.achievements.getHighScore(Role.Chaos, dimension),
+              _user.achievements.getTotalScore(Role.Chaos, dimension)
+          ),
+          _buildHighAndTotalScore(
+              _user.achievements.getHighScore(Role.Order, dimension),
+              _user.achievements.getTotalScore(Role.Order, dimension)
+          ),
         ],
       ),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("Won/Lost/Total Count:", style: TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getWonGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getLostGamesCount(Role.Chaos, dimension)} / ${_user.achievements.getTotalGameCount(Role.Chaos, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
-          Text("${_user.achievements.getWonGamesCount(Role.Order, dimension)} / ${_user.achievements.getLostGamesCount(Role.Order, dimension)} / ${_user.achievements.getTotalGameCount(Role.Order, dimension)}", style: const TextStyle(color: Colors.white, fontSize: 12)),
+          _buildWonLostTotalHead(),
+          _buildWonLostTotalCounts(
+              _user.achievements.getWonGamesCount(Role.Chaos, dimension),
+              _user.achievements.getLostGamesCount(Role.Chaos, dimension),
+              _user.achievements.getTotalGameCount(Role.Chaos, dimension),
+          ),
+          _buildWonLostTotalCounts(
+              _user.achievements.getWonGamesCount(Role.Order, dimension),
+              _user.achievements.getLostGamesCount(Role.Order, dimension),
+              _user.achievements.getTotalGameCount(Role.Order, dimension),
+          ),
+
         ],
       ),
 
     ];
+  }
+
+  Widget _buildHOverallTotalScoreHead(num total) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.white,
+        ),
+        children: <TextSpan>[
+          const TextSpan(text: 'Overall '),
+          const TextSpan(text: "Total Score", style: TextStyle(color: Colors.cyanAccent)),
+          const TextSpan(text: ': '),
+          TextSpan(text: total.toString(), style: const TextStyle(color: Colors.cyanAccent)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighAndTotalScoreHead() {
+    return RichText(
+      text: const TextSpan(
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+        ),
+        children: <TextSpan>[
+          TextSpan(text: "High", style: TextStyle(color: Colors.yellowAccent)),
+          TextSpan(text: '/'),
+          TextSpan(text: "Total Score", style: TextStyle(color: Colors.cyanAccent)),
+          TextSpan(text: ': '),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighAndTotalScore(num high, num total) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+        ),
+        children: <TextSpan>[
+          TextSpan(text: high.toString(), style: const TextStyle(color: Colors.yellowAccent)),
+          const TextSpan(text: ' / '),
+          TextSpan(text: total.toString(), style: const TextStyle(color: Colors.cyanAccent)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWonLostTotalHead({String? prefix, bool dense = true}) {
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: dense ? 12: 14,
+          color: Colors.white,
+        ),
+        children: <TextSpan>[
+          if (prefix != null)
+            TextSpan(text: prefix),
+          const TextSpan(text: "Won", style: TextStyle(color: Colors.lightGreenAccent)),
+          const TextSpan(text: '/'),
+          const TextSpan(text: "Lost", style: TextStyle(color: Colors.redAccent)),
+          const TextSpan(text:'/'),
+          const TextSpan(text: "Total Count", style: TextStyle(color: Colors.lightBlueAccent)),
+          const TextSpan(text: ': '),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWonLostTotalCounts(num won, num lost, num total, {bool dense = true}) {
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: dense ? 12: 14,
+          color: Colors.white,
+        ),
+        children: <TextSpan>[
+          TextSpan(text: won.toString(), style: const TextStyle(color: Colors.lightGreenAccent)),
+          const TextSpan(text: ' / '),
+          TextSpan(text: lost.toString(), style: const TextStyle(color: Colors.redAccent)),
+          const TextSpan(text: ' / '),
+          TextSpan(text: total.toString(), style: const TextStyle(color: Colors.lightBlueAccent)),
+        ],
+      ),
+    );
   }
 }
