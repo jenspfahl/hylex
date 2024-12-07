@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:app_links/app_links.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/achievements.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../model/play.dart';
 import '../service/PreferenceService.dart';
@@ -56,6 +58,21 @@ class _StartPageState extends State<StartPage>
     _loadOrInitUser().then((user) => setState(() {
       _user = user;
     }));
+
+    final sub = AppLinks().uriLinkStream.listen((uri) {
+      buildAlertDialog(NotifyType.warning, "$uri  + ${uri.queryParameters}");
+      /*
+      to trigger run
+      adb shell am start -a android.intent.action.VIEW   -d "https://hylex.jepfa.de/_?g=fwefsdf\&m=a1-a7"
+
+      n=name, ascii 64bit compressed to 1/4, max 8 chars
+      g=game number, 8 chars
+      m=move notation
+      r=role (o, c, u-nknown)
+
+       */
+      Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
+    });
   }
 
   @override

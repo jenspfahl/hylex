@@ -190,14 +190,7 @@ class MinimaxStrategy extends Strategy {
       load.incProgress();
       return _getValue(matrix);
     }
-
-
-    if (initialDepth == 3 && depth == 1 && currentRole == Role.Chaos) {
-      // Leave out last Chaos round as it IS Chaos who moves
-      // Chaos(3)--Order(2)--Chaos(1) --> Chaos(3)--Order(2)--Order(1)
-
-      currentRole = Role.Order;
-    }
+    
 
     int value;
     Role opponentRole;

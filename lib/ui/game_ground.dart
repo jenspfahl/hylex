@@ -10,6 +10,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/model/achievements.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 
 import '../model/ai/strategy.dart';
 import '../model/chip.dart';
@@ -45,10 +46,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   GameChip? _emphasiseAllChipsOf;
 
-
   late BuildContext _builderContext;
   late StreamSubscription<FGBGType> fgbgSubscription;
 
+  final _chaosChipTooltipController = SuperTooltipController();
+  final _orderChipTooltipController = SuperTooltipController();
 
   @override
   void initState() {
@@ -414,31 +416,58 @@ class _HyleXGroundState extends State<HyleXGround> {
     final isSelected = game.play.currentRole == role;
     final color = isSelected ? Colors.white : null;
     final icon = player == Player.Ai ? MdiIcons.brain : player == Player.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
-    return Chip(
-        padding: EdgeInsets.zero,
-        shape: isLeftElseRight
-            ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
-            : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
-        label: isLeftElseRight
-            ? Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Icon(icon, color: color, size: 16),
-                const Text(" "),
-                Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-              ],
-            )
-            : Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                const Text(" "),
-                Icon(icon, color: color, size: 16),
-              ],
-            ),
-        backgroundColor: isSelected ? Colors.black : null
+    var controller = role == Role.Chaos ? _chaosChipTooltipController : _orderChipTooltipController;
+    var otherController = role == Role.Order ? _chaosChipTooltipController : _orderChipTooltipController;
+    final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
+    final tooltipPostfix = player == Player.User ?  "You" : player == Player.Ai ? "Computer" : "Remote opponent";
+    return SuperTooltip(
+      controller: controller,
+      showBarrier: false,
+      content: Text(
+        "$tooltipPrefix: $tooltipPostfix",
+        softWrap: true,
+        
+        style: TextStyle(
+          color: Colors.black,
+        ),
+      ),
+      child: GestureDetector(
+        onTap: () async {
+          await otherController.hideTooltip();
+          await controller.hideTooltip();
+          await controller.showTooltip();
+        
+          Future.delayed(Duration(seconds: 3), () {
+            controller.hideTooltip();
+          });
+        },
+        child: Chip(
+            padding: EdgeInsets.zero,
+            shape: isLeftElseRight
+                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
+                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
+            label: isLeftElseRight
+                ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: color, size: 16),
+                    const Text(" "),
+                    Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                  ],
+                )
+                : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                    const Text(" "),
+                    Icon(icon, color: color, size: 16),
+                  ],
+                ),
+            backgroundColor: isSelected ? Colors.black : null
+        ),
+      ),
     );
   }
 
