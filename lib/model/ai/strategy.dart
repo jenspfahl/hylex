@@ -12,27 +12,28 @@ import '../fortune.dart';
 import '../matrix.dart';
 import '../play.dart';
 import '../spot.dart';
+import 'ai.dart';
 
 final parallelCount = max(Platform.numberOfProcessors - 2, 2); // save two processors for UI
 const POSSIBLE_PALINDROME_REWARD = 2;
 
 abstract class Strategy {
 
-  Future<Move> nextMove(Play play, int depth, Function(Load)? loadChangeListener);
+  Future<Move> nextMove(Play play, AiPathConfig path, Function(Load)? loadChangeListener);
 }
 
 class MinimaxStrategy extends Strategy {
   MinimaxStrategy();
 
   @override
-  Future<Move> nextMove(Play play, int initialDepth, Function(Load)? loadChangeListener) async {
+  Future<Move> nextMove(Play play, AiPathConfig path, Function(Load)? loadChangeListener) async {
 
     final currentRole = play.currentRole;
     final currentChip = currentRole == Role.Order ? play.stock.getChipOfMostStock(): play.currentChip;
 
     final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
 
-    final loadForecast = _predictLoad(currentRole, play.matrix, initialDepth);
+    final loadForecast = _predictLoad(currentRole, play.matrix, path);
     final load = Load(loadForecast);
     if (loadChangeListener != null) {
       load.addListener(() {
@@ -108,7 +109,7 @@ class MinimaxStrategy extends Strategy {
     for (final move in moves) {
       final slot = round % parallelCount;
       //debugPrint("send $move to $slot");
-      sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, initialDepth]);
+      sendPorts[slot]?.send([currentChip, currentRole, play.matrix, move, path]);
       round ++;
     }
 
@@ -185,29 +186,32 @@ class MinimaxStrategy extends Strategy {
     return value;
   }
 
-  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, int initialDepth, int depth, Load load) async {
+  Future<int> minimax(GameChip? currentChip, Role currentRole, Matrix matrix, AiPathConfig path, int depth, Move? lastMove, Load load) async {
     if (_isTerminal(matrix, depth)) {
       load.incProgress();
       return _getValue(matrix);
     }
-    
 
     int value;
-    Role opponentRole;
     if (currentRole == Role.Chaos) { // min
       value = 100000000;
-      opponentRole = Role.Order;
     }
     else { // (currentRole == Role.Order) // max
       value = -100000000;
-      opponentRole = Role.Chaos;
     }
 
+    final specialTransitionRole = path.specialTransitions[depth];
+    final isLastOrderStep = lastMove != null && currentRole == specialTransitionRole;
+   // if (isLastOrderStep && lastMove.isPlaced()) {
+   //   debugPrint("isLastOrderStep1 $isLastOrderStep with lastMove=$lastMove d $depth $currentRole");
+   // }
+    //debugPrint("Minimax $initialDepth $depth $currentRole");
 
-    var moves = _getPossibleMoves(currentChip, matrix, currentRole); //try to limit
+    var moves = _getPossibleMoves(currentChip, matrix, currentRole,
+        isLastOrderStep: isLastOrderStep, lastMove: lastMove); //try to limit
     for (final move in moves) {
 
-      int newValue = await _tryNextMove(currentChip, opponentRole, matrix, move, initialDepth, depth, load);
+      int newValue = await _tryNextMove(currentChip, currentRole, matrix, move, path, depth, load);
       if (currentRole == Role.Chaos) { // min
         value = min(value, newValue);
       }
@@ -243,9 +247,9 @@ class MinimaxStrategy extends Strategy {
         Role currentRole = message[1];
         Matrix matrix = message[2];
         Move move = message[3];
-        int initialDepth = message[4];
+        AiPathConfig path = message[4];
 
-        final newValue = await _tryNextMove(currentChip, currentRole, matrix, move, initialDepth, initialDepth, load);
+        final newValue = await _tryNextMove(currentChip, currentRole, matrix, move, path, path.depth, load);
         resultPort.send([newValue, move]);
       }
     });
@@ -255,10 +259,10 @@ class MinimaxStrategy extends Strategy {
 
   }
 
-  Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, int initialDepth, int depth, Load load) async {
+  Future<int> _tryNextMove(GameChip? currentChip, Role currentRole, Matrix matrix, Move move, AiPathConfig path, int depth, Load load) async {
     final clonedMatrix = matrix.clone();
     _doMove(currentChip, clonedMatrix, move);
-    return await minimax(currentChip, currentRole, clonedMatrix, initialDepth, depth - 1, load);
+    return await minimax(currentChip, _oppositeRole(currentRole), clonedMatrix, path, depth - 1, move, load);
   }
 
   bool _isTerminal(Matrix matrix, int depth) {
@@ -269,16 +273,46 @@ class MinimaxStrategy extends Strategy {
     return matrix.getTotalPointsForOrder();
   }
 
-  List<Move> _getPossibleMoves(GameChip? currentChip, Matrix matrix, Role forRole) {
+  List<Move> _getPossibleMoves(GameChip? currentChip, Matrix matrix, Role forRole,
+    {bool isLastOrderStep = false, Move? lastMove}) {
     if (forRole == Role.Chaos) {
       // Chaos can only place new chips on free spots
       return matrix.streamFreeSpots().map(((spot) => Move.placed(currentChip!, spot.where))).toList();
     }
     else { // (forRole == Role.Order)
 
-      // Order can only move placed chips, try that
-      final moves = matrix.streamOccupiedSpots()
-          .expand((from) => _getPossibleMovesFor(matrix, from));
+      // Order can only move placed chips, try that,
+      // but consider if isLastOrderStep == true:
+      // 1. move last placed chip to everywhere as usual
+      // 2. move all the other chips only to x and y axis of last places chip
+      Iterable<Move> moves;
+      final lastWhere = lastMove?.to;
+     // if (isLastOrderStep) {
+     //   debugPrint("isLastOrderStep pre = $isLastOrderStep lastMove=$lastMove at $lastWhere");
+    //  }
+      if (isLastOrderStep && lastWhere != null) {
+       // debugPrint("isLastOrderStep with lastMove=$lastMove at $lastWhere");
+
+        moves = matrix.streamOccupiedSpots()
+            .expand((from) {
+              if (from.where == lastWhere) {
+               // debugPrint("found last placed $from on $lastWhere");
+
+                final m = _getPossibleMovesFor(matrix, from);
+               // debugPrint("found move size = ${m.length}");
+                return m;
+              }
+              else {
+                final m = _getPossibleMovesForLandingOnAxisOf(matrix, from, lastWhere);
+               // debugPrint("found shorter move size = ${m.length}");
+                return m;
+              }
+            });
+      }
+      else {
+        moves = matrix.streamOccupiedSpots()
+            .expand((from) => _getPossibleMovesFor(matrix, from));
+      }
 
 
       // Try to skip at random position
@@ -296,22 +330,28 @@ class MinimaxStrategy extends Strategy {
         .map((to) => Move.moved(from.content!, from.where, to.where));
   }
 
+  Iterable<Move> _getPossibleMovesForLandingOnAxisOf(Matrix matrix, Spot from, Coordinate lastWhere) {
+    return matrix.getPossibleTargetsFor(from.where)
+        .where((to) => to.where.x == lastWhere.x ||to.where.y == lastWhere.y)
+        .map((to) => Move.moved(from.content!, from.where, to.where));
+  }
+
   _doMove(GameChip? currentChip, Matrix matrix, Move move) {
     if (move.isMove()) {
       matrix.move(move.from!, move.to!);
     }
-    else if (!move.skipped) { // is placed
+    else if (move.isPlaced()) {
       matrix.put(move.from!, currentChip!);
     }
   }
 
-  int _predictLoad(Role role, Matrix matrix, int depth) {
+  int _predictLoad(Role role, Matrix matrix, AiPathConfig path) {
     int value = 0;
     var numberOfPlacedChips = matrix.numberOfPlacedChips();
     final totalCells = matrix.dimension.x * matrix.dimension.y;
     final possibleMaxMoves = (matrix.dimension.x + matrix.dimension.y) - 1; // only -1 to consider skip move
 
-    for (int i = 0; i < depth; i++) {
+    for (int i = 0; i < path.depth; i++) {
 
       if (role == Role.Chaos) {
         final freeCells = totalCells - numberOfPlacedChips;
@@ -324,22 +364,35 @@ class MinimaxStrategy extends Strategy {
 
         role = Role.Order;
       }
-      else {
+      else { // Order
+
         final fillRatio = (numberOfPlacedChips - 1) / (totalCells - 1); // ratio based on all cells except current, therefore - 1
         final freeRatio = pow((1 - fillRatio), 2); // trying to determine an avg of moveable free cells
         final avgPossibleMoves = max(1, possibleMaxMoves * freeRatio);
-        final avgPossibleMoveCount = numberOfPlacedChips * avgPossibleMoves;
-        final newValue = max(1, avgPossibleMoveCount.round());
 
-        value = max(1, value) * newValue;
-       // debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, avgPossibleMoves: $avgPossibleMoves, freeRatio: $freeRatio ==> $newValue");
+        if (path.specialTransitions[i] == Role.Order) {
+          final avgPossibleMoves = 2;
+          final avgPossibleMoveCount = numberOfPlacedChips * avgPossibleMoves;
+          final newValue = (max(1, avgPossibleMoveCount.round()))
+              + (possibleMaxMoves * (1 - fillRatio)).round(); // plus lastly placed chip
 
+          value = max(1, value) * newValue;
+        }
+        else {
+          final avgPossibleMoveCount = numberOfPlacedChips * avgPossibleMoves;
+          final newValue = max(1, avgPossibleMoveCount.round());
+
+          value = max(1, value) * newValue;
+          // debugPrint(" interim for $role: depth: $i, placedChips: $numberOfPlacedChips, avgPossibleMoves: $avgPossibleMoves, freeRatio: $freeRatio ==> $newValue");
+        }
         role = Role.Chaos;
       }
     }
     return value;
 
   }
+
+  Role _oppositeRole(Role role) => role == Role.Order ? Role.Chaos : Role.Order; //TODO duplicates!!
 }
 
 

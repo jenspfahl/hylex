@@ -848,7 +848,8 @@ class Game extends ChangeNotifier {
     showOpponentTrace = true;
     notifyListeners();
 
-    Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? 2500 :  0), () {
+    var autoplayDelayInSec = 250;
+    Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInSec :  0), () {
       recentOpponentRole = null;
 
       play.startThinking((Load load)

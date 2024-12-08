@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:ffi';
 import 'dart:ui';
 
 import 'package:hyle_x/model/ai/strategy.dart';
@@ -89,12 +90,12 @@ class DefaultChaosAi extends ChaosAi {
 
   @override
   Future<Move> think(Play play, Function(Load) aiProgressListener) async {
-    int depth = _getMaxDepthBasedOnWorkload(play);
+    AiPathConfig depth = _getMaxDepthBasedOnWorkload(play);
     if (play.matrix.numberOfPlacedChips() == 0) {
-      depth = 1;
+      depth = AiPathConfig(play.currentRole, 1, {});
     }
     else if (play.matrix.numberOfPlacedChips() == 1) {
-      depth = 2;
+      depth = AiPathConfig(play.currentRole, 2, {});
     }
     return strategy.nextMove(play, depth, aiProgressListener);
   }
@@ -117,22 +118,39 @@ class DefaultOrderAi extends OrderAi {
 
   @override
   Future<Move> think(Play play, Function(Load) aiProgressListener) async {
-    int depth = _getMaxDepthBasedOnWorkload(play);
+    AiPathConfig path = _getMaxDepthBasedOnWorkload(play);
     if (play.matrix.numberOfPlacedChips() == 1) {
-      depth = 2;
+      path = AiPathConfig(play.currentRole, 2, {});
     }
-    return strategy.nextMove(play, depth, aiProgressListener);
+    return strategy.nextMove(play, path, aiProgressListener);
   }
 }
 
-int _getMaxDepthBasedOnWorkload(Play play) {
-  int depth = 3;
+AiPathConfig _getMaxDepthBasedOnWorkload(Play play) {
   // 3 is the max to get reasonable predictions in time
-  // Order--Chaos--Order doesn't need a fourth Chaos as Chaos cannot remove gained points.
-  // Chaos-Order-Chaos is converted to Chaos-Order-Order as Chaos cannot remove gained points.
-  // So in general, a calculation path only makes sense if it ends with Order
+  // Order--Chaos--Order-Chaos doesn't need a fourth Chaos as Chaos cannot remove gained points,
+  // so we go with Order(3)--Chaos(2)--Order(1).
+  if (play.currentRole == Role.Order) {
+    return AiPathConfig(Role.Order, 3, {/*1: Role.Order*/});
+  }
+  else { // current role
+    if (play.dimension >= 9) {
+      // Chaos(3)--Order(2)--Chaos(1) if larger dimension
+      return AiPathConfig(Role.Chaos, 3, {2: Role.Order});
+    }
+    else {
+      // Chaos(4)--Order(3)--Chaos(2)--Order(1)
+      return AiPathConfig(Role.Chaos, 4, {3: Role.Order, 1: Role.Order});
+    }
+  }
+}
 
-  return depth;
+class AiPathConfig {
+  late Role startRole;
+  late int depth;
+  late Map<int, Role> specialTransitions;
+
+  AiPathConfig(this.startRole, this.depth, this.specialTransitions);
 }
 
 
