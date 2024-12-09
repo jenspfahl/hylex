@@ -4,6 +4,7 @@ import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/spot.dart';
 
 import 'chip.dart';
+import 'fortune.dart';
 
 
 
@@ -157,7 +158,7 @@ class Matrix {
   void move(Coordinate from, Coordinate to) {
     final chip = remove(from, null, false);
     if (chip != null) {
-      put(to, chip!, null, false);
+      put(to, chip, null, false);
       if (from.x == to.x) { // moved vertically
         _calcPointsOnXAxis(from.x);
         _calcPointsOnYAxis(from.y);
@@ -180,7 +181,7 @@ class Matrix {
     final list = _chipMap.entries
         .map((elem) => Spot(this, elem.key, elem.value, getPoint(elem.key)))
         .toList();
-    list.shuffle();
+    list.shuffle(rnd);
     return list;
   }
 
@@ -194,7 +195,7 @@ class Matrix {
         }
       }
     }
-    freeSpots.shuffle();
+    freeSpots.shuffle(rnd);
     return freeSpots;
   }
 
@@ -296,7 +297,25 @@ class Matrix {
   }
 
   int getTotalPointsForChaos() {
-    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * 10;
+    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * _getPointPerChip(dimension.x);
+  }
+
+  int _getPointPerChip(int dimension) {
+    if (dimension == 5) {
+      return 20;
+    }
+    else if (dimension == 7) {
+      return 10;
+    }
+    else if (dimension == 9) {
+      return 5;
+    }
+    if (dimension == 11) {
+      return 2;
+    }
+    else {
+      return 1;
+    }
   }
 
   bool noFreeSpace() => _chipMap.values.length >= dimension.x * dimension.y;

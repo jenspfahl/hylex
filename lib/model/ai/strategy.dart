@@ -15,7 +15,9 @@ import '../spot.dart';
 import 'ai.dart';
 
 final parallelCount = max(Platform.numberOfProcessors - 2, 2); // save two processors for UI
-const POSSIBLE_PALINDROME_REWARD = 2;
+const POSSIBLE_PALINDROME_REWARD_1 = 2.5;
+const POSSIBLE_PALINDROME_REWARD_2 = 1.75;
+const POSSIBLE_PALINDROME_REWARD_AT_EDGE = 0.75;
 
 abstract class Strategy {
 
@@ -31,7 +33,7 @@ class MinimaxStrategy extends Strategy {
     final currentRole = play.currentRole;
     final currentChip = currentRole == Role.Order ? play.stock.getChipOfMostStock(): play.currentChip;
 
-    final values = SplayTreeMap<int, Move>((a, b) => a.compareTo(b));
+    final values = SplayTreeMap<num, Move>((a, b) => a.compareTo(b));
 
     final loadForecast = _predictLoad(currentRole, play.matrix, path);
     final load = Load(loadForecast);
@@ -64,7 +66,7 @@ class MinimaxStrategy extends Strategy {
           load.incProgress();
         }
         else if (message is List) {
-          int value = message[0];
+          num value = message[0];
           Move move = message[1];
 
           // correct value for move to avoid common patterns
@@ -80,7 +82,7 @@ class MinimaxStrategy extends Strategy {
           collected++;
 
           if (collected >= moves.length) {
-            debugPrint("All values collected, trigger close isolates");
+            debugPrint("All values collected, triggering close isolates");
             for (int i = 0; i < parallelCount; i++) {
               sendPorts[i]?.send("DONE");
             }
@@ -122,66 +124,91 @@ class MinimaxStrategy extends Strategy {
     if (currentRole == Role.Chaos) {
       final value = values.firstKey();
       final move = values[value!]!;
-      debugPrint("AI: ${currentRole.name}  $values");
-      debugPrint("AI: least valuable move for ${currentRole.name} id $move with a value of $value");
+      //debugPrint("AI: ${currentRole.name}  $values");
+      debugPrint("AI: least valuable move for ${currentRole.name} is $move with a value of $value");
       return move;
     }
     else { // Order
       final value = values.lastKey();
       final move = values[value!]!;
-      debugPrint("AI: ${currentRole.name}  $values");
-      debugPrint("AI: most valuable move for ${currentRole.name} id $move with a value of $value");
+      //debugPrint("AI: ${currentRole.name}  $values");
+      debugPrint("AI: most valuable move for ${currentRole.name} is $move with a value of $value");
       return move;
     }
   }
 
-  int _simplePatternDetection(Play play, Move move, int value) {
+  num _simplePatternDetection(Play play, Move move, num value) {
     final moveTarget = play.matrix.getSpot(move.to!);
-    var targetChip = play.currentChip;
+    var currentChip = play.currentChip;
     if (move.isMove()) {
-      targetChip = play.matrix.getChip(move.from!);
+      currentChip = play.matrix.getChip(move.from!);
+    }
+    if (currentChip == null) {
+      return value;
     }
     //top
-    if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip two times on top of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isSecondNeighborTheSame(Direction.North, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip two times on top of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //bottom
-    if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip two times on bottom of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isSecondNeighborTheSame(Direction.South, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip two times on bottom of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //left
-    if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip two times on left of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isSecondNeighborTheSame(Direction.West, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip two times on left of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //right
-    if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip two times on right of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isSecondNeighborTheSame(Direction.East, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip two times on right of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_1;
     }
     
     // one more possible palindrome
     //top
-    if (moveTarget.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.getTopNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip four times on top of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isFourthNeighborTheSame(Direction.North, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip four times on top of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //bottom
-    if (moveTarget.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.getBottomNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip four times on bottom of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isFourthNeighborTheSame(Direction.South, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip four times on bottom of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //left
-    if (moveTarget.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.getLeftNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip four times on left of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isFourthNeighborTheSame(Direction.West, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip four times on left of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //right
-    if (moveTarget.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.getRightNeighbor()?.content == targetChip) {
-      debugPrint("found same $targetChip four times on right of $moveTarget");
-      value += POSSIBLE_PALINDROME_REWARD;
+    if (_isFourthNeighborTheSame(Direction.East, currentChip, move.from, moveTarget)) {
+      debugPrint("found same $currentChip four times on right of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_2;
+    }
+
+    // prefer to place at edges
+    //top
+    if (_isDirectAtEdge(Direction.North, move.from, moveTarget)) {
+      debugPrint("$currentChip at edge ${Direction.North} of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+    }
+    //bottom
+    if (_isDirectAtEdge(Direction.South, move.from, moveTarget)) {
+      debugPrint("$currentChip at edge ${Direction.South} of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+    }
+    //left
+    if (_isDirectAtEdge(Direction.West, move.from, moveTarget)) {
+      debugPrint("$currentChip at edge ${Direction.West} of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+    }
+    //right
+    if (_isDirectAtEdge(Direction.East, move.from, moveTarget)) {
+      debugPrint("$currentChip at edge ${Direction.East} of $moveTarget");
+      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
     }
     return value;
   }
@@ -202,10 +229,6 @@ class MinimaxStrategy extends Strategy {
 
     final specialTransitionRole = path.specialTransitions[depth];
     final isLastOrderStep = lastMove != null && currentRole == specialTransitionRole;
-   // if (isLastOrderStep && lastMove.isPlaced()) {
-   //   debugPrint("isLastOrderStep1 $isLastOrderStep with lastMove=$lastMove d $depth $currentRole");
-   // }
-    //debugPrint("Minimax $initialDepth $depth $currentRole");
 
     var moves = _getPossibleMoves(currentChip, matrix, currentRole,
         isLastOrderStep: isLastOrderStep, lastMove: lastMove); //try to limit
@@ -351,7 +374,7 @@ class MinimaxStrategy extends Strategy {
     final totalCells = matrix.dimension.x * matrix.dimension.y;
     final possibleMaxMoves = (matrix.dimension.x + matrix.dimension.y) - 1; // only -1 to consider skip move
 
-    for (int i = 0; i < path.depth; i++) {
+    for (int depth = path.depth; depth > 0; depth--) {
 
       if (role == Role.Chaos) {
         final freeCells = totalCells - numberOfPlacedChips;
@@ -370,7 +393,7 @@ class MinimaxStrategy extends Strategy {
         final freeRatio = pow((1 - fillRatio), 2); // trying to determine an avg of moveable free cells
         final avgPossibleMoves = max(1, possibleMaxMoves * freeRatio);
 
-        if (path.specialTransitions[i] == Role.Order) {
+        if (path.specialTransitions[depth] == Role.Order) {
           final avgPossibleMoves = 2;
           final avgPossibleMoveCount = numberOfPlacedChips * avgPossibleMoves;
           final newValue = (max(1, avgPossibleMoveCount.round()))
@@ -392,7 +415,22 @@ class MinimaxStrategy extends Strategy {
 
   }
 
-  Role _oppositeRole(Role role) => role == Role.Order ? Role.Chaos : Role.Order; //TODO duplicates!!
+  Role _oppositeRole(Role role) => role == Role.Order ? Role.Chaos : Role.Order;
+
+  bool _isDirectAtEdge(Direction direction, Coordinate? from, Spot moveTarget) {
+    var neighbor = moveTarget.getNeighbor(direction);
+    return neighbor?.where != from && neighbor == null;
+  }
+
+  bool _isSecondNeighborTheSame(Direction direction, GameChip chip, Coordinate? from, Spot moveTarget) {
+    var neighbor = moveTarget.getNeighbor(direction)?.getNeighbor(direction);
+    return neighbor?.where != from && neighbor?.content == chip;
+  }
+
+  bool _isFourthNeighborTheSame(Direction direction, GameChip chip, Coordinate? from, Spot moveTarget) {
+    var neighbor = moveTarget.getNeighbor(direction)?.getNeighbor(direction)?.getNeighbor(direction)?.getNeighbor(direction);
+    return neighbor?.where != from && neighbor?.content == chip;
+  }
 }
 
 

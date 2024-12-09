@@ -31,10 +31,10 @@ class GameChip {
       identical(this, other) ||
       other is GameChip &&
           runtimeType == other.runtimeType &&
-          name == other.name;
+          id == other.id;
 
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => id.hashCode;
 
   @override
   String toString() {

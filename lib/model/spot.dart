@@ -60,6 +60,14 @@ class Spot {
   }
 
   _streamNeighborsForDirection(Direction direction, Set<Spot> spots) {
+    final spot = getNeighbor(direction);
+    if (spot != null && spot.content == null && spot.isInMatrixDimensions()) {
+      spots.add(spot);
+      spot._streamNeighborsForDirection(direction, spots);
+    }
+  }
+
+  Spot? getNeighbor(Direction direction) {
     Spot? spot;
     switch (direction) {
       case Direction.East:
@@ -87,11 +95,7 @@ class Spot {
         spot = getBottomLeftNeighbor();
         break;
     }
-    if (spot != null && spot.content == null && spot.isInMatrixDimensions()) {
-      spots.add(spot);
-      spot._streamNeighborsForDirection(direction, spots);
-    }
-
+    return spot;
   }
   
   Spot? getLeftNeighbor() {
@@ -109,7 +113,7 @@ class Spot {
     }
     return Spot(_matrix, right, _matrix.getChip(right), _matrix.getPoint(right));
   }
-    
+  
   Spot? getTopNeighbor() {
     final top = where.top();
     if (!_matrix.isInDimensions(top)) {

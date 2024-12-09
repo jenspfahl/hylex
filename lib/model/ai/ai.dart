@@ -131,7 +131,12 @@ AiPathConfig _getMaxDepthBasedOnWorkload(Play play) {
   // Order--Chaos--Order-Chaos doesn't need a fourth Chaos as Chaos cannot remove gained points,
   // so we go with Order(3)--Chaos(2)--Order(1).
   if (play.currentRole == Role.Order) {
-    return AiPathConfig(Role.Order, 3, {/*1: Role.Order*/});
+    if (play.dimension >= 9) {
+      return AiPathConfig(Role.Order, 3, {1: Role.Order});
+    }
+    else {
+      return AiPathConfig(Role.Order, 3, {});
+    }
   }
   else { // current role
     if (play.dimension >= 9) {
