@@ -27,6 +27,20 @@ class Coordinate {
 
   Coordinate bottom() => Coordinate(x, y + 1);
 
+  Coordinate getNeighbor(Direction direction) {
+    switch (direction) {
+      case Direction.North: return top();
+      case Direction.South: return bottom();
+      case Direction.East: return right();
+      case Direction.West: return left();
+      case Direction.NorthEast: return top().right();
+      case Direction.NorthWest: return top().left();
+      case Direction.SouthEast: return bottom().right();
+      case Direction.SouthWest: return bottom().left();
+    }
+  }
+
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -48,6 +62,7 @@ class Coordinate {
     final y2 = y + 1;
     return '$x2$y2';
   }
+
 
 }
 
@@ -297,10 +312,10 @@ class Matrix {
   }
 
   int getTotalPointsForChaos() {
-    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * _getPointPerChip(dimension.x);
+    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * getPointsPerChip(dimension.x);
   }
 
-  int _getPointPerChip(int dimension) {
+  int getPointsPerChip(int dimension) {
     if (dimension == 5) {
       return 20;
     }

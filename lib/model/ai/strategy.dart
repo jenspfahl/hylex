@@ -131,6 +131,11 @@ class MinimaxStrategy extends Strategy {
     else { // Order
       final value = values.lastKey();
       final move = values[value!]!;
+
+      if (value == 0 && !move.skipped) {
+        debugPrint("AI: ${currentRole.name} no valuable move, skipped");
+        return Move.skipped();
+      }
       //debugPrint("AI: ${currentRole.name}  $values");
       debugPrint("AI: most valuable move for ${currentRole.name} is $move with a value of $value");
       return move;
@@ -138,7 +143,7 @@ class MinimaxStrategy extends Strategy {
   }
 
   num _simplePatternDetection(Play play, Move move, num value) {
-    final moveTarget = play.matrix.getSpot(move.to!);
+    final spotTo = play.matrix.getSpot(move.to!);
     var currentChip = play.currentChip;
     if (move.isMove()) {
       currentChip = play.matrix.getChip(move.from!);
@@ -146,68 +151,76 @@ class MinimaxStrategy extends Strategy {
     if (currentChip == null) {
       return value;
     }
+    
+    var gainedPatternPoints = _getValueByPatterns(currentChip, move.from, spotTo);
+    //if (gainedPatternPoints > 0) debugPrint("AI: to: $spotTo --> increased by $gainedPatternPoints");
+
+    value += gainedPatternPoints;
+    if (move.isMove()) {
+      // decrease from if move
+      final spotFrom = play.matrix.getSpot(move.from!);
+      var lostPatternPoints = _getValueByPatterns(currentChip, null, spotFrom);
+      //if (lostPatternPoints > 0) debugPrint("AI: from: $spotFrom --> decreased by $lostPatternPoints");
+
+      value -= lostPatternPoints;
+
+    }
+
+    return value;
+  }
+
+  num _getValueByPatterns(GameChip currentChip, Coordinate? from, Spot moveTarget) {
+    num value = 0;
     //top
-    if (_isSecondNeighborTheSame(Direction.North, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip two times on top of $moveTarget");
+    if (_isSecondNeighborTheSame(Direction.North, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //bottom
-    if (_isSecondNeighborTheSame(Direction.South, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip two times on bottom of $moveTarget");
+    if (_isSecondNeighborTheSame(Direction.South, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //left
-    if (_isSecondNeighborTheSame(Direction.West, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip two times on left of $moveTarget");
+    if (_isSecondNeighborTheSame(Direction.West, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //right
-    if (_isSecondNeighborTheSame(Direction.East, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip two times on right of $moveTarget");
+    if (_isSecondNeighborTheSame(Direction.East, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     
     // one more possible palindrome
     //top
-    if (_isFourthNeighborTheSame(Direction.North, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip four times on top of $moveTarget");
+    if (_isFourthNeighborTheSame(Direction.North, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //bottom
-    if (_isFourthNeighborTheSame(Direction.South, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip four times on bottom of $moveTarget");
+    if (_isFourthNeighborTheSame(Direction.South, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //left
-    if (_isFourthNeighborTheSame(Direction.West, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip four times on left of $moveTarget");
+    if (_isFourthNeighborTheSame(Direction.West, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //right
-    if (_isFourthNeighborTheSame(Direction.East, currentChip, move.from, moveTarget)) {
-      debugPrint("found same $currentChip four times on right of $moveTarget");
+    if (_isFourthNeighborTheSame(Direction.East, currentChip, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
-
+    
     // prefer to place at edges
     //top
-    if (_isDirectAtEdge(Direction.North, move.from, moveTarget)) {
-      debugPrint("$currentChip at edge ${Direction.North} of $moveTarget");
+    if (_isDirectAtEdge(Direction.North, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
     }
     //bottom
-    if (_isDirectAtEdge(Direction.South, move.from, moveTarget)) {
-      debugPrint("$currentChip at edge ${Direction.South} of $moveTarget");
+    if (_isDirectAtEdge(Direction.South, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
     }
     //left
-    if (_isDirectAtEdge(Direction.West, move.from, moveTarget)) {
-      debugPrint("$currentChip at edge ${Direction.West} of $moveTarget");
+    if (_isDirectAtEdge(Direction.West, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
     }
     //right
-    if (_isDirectAtEdge(Direction.East, move.from, moveTarget)) {
-      debugPrint("$currentChip at edge ${Direction.East} of $moveTarget");
+    if (_isDirectAtEdge(Direction.East, from, moveTarget)) {
       value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
     }
     return value;
@@ -418,8 +431,9 @@ class MinimaxStrategy extends Strategy {
   Role _oppositeRole(Role role) => role == Role.Order ? Role.Chaos : Role.Order;
 
   bool _isDirectAtEdge(Direction direction, Coordinate? from, Spot moveTarget) {
+    var fromNeighbor = from?.getNeighbor(direction);
     var neighbor = moveTarget.getNeighbor(direction);
-    return neighbor?.where != from && neighbor == null;
+    return fromNeighbor != null && neighbor == null;
   }
 
   bool _isSecondNeighborTheSame(Direction direction, GameChip chip, Coordinate? from, Spot moveTarget) {

@@ -280,8 +280,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildHint(BuildContext context) {
     if (game.play.isGameOver()) {
-      final winner = game.play.stats.getWinner();
-      return Text("Game over! ${winner.name} wins!");
+      return Text(_buildWinnerText());
     }
     else if (game.recentOpponentRole != null) {
       return _buildDoneText(game.recentOpponentRole!, game.play.opponentMove);
@@ -300,6 +299,17 @@ class _HyleXGroundState extends State<HyleXGround> {
     else {
       return const Text("Place a chip on a free space!");
     }
+  }
+
+  String _buildWinnerText() {
+    final winner = game.play.stats.getWinner();
+    final winnerPlayer = game.play.getWinnerPlayer();
+    var winnerPlayerName = winnerPlayer == Player.User
+        ? "You"
+        : winnerPlayer == Player.Ai
+          ? "Computer"
+          : "Remote opponent";
+    return "Game over! ${winner.name} (${winnerPlayerName}) wins!";
   }
 
   Row _buildAiProgressText() {
@@ -407,8 +417,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _showGameOver(BuildContext? context) {
     setState(() {
-      final winner = game.play.currentRole;
-      toastError(context ?? _builderContext, "GAME OVER, ${winner.name} WINS!");
+      toastError(context ?? _builderContext, _buildWinnerText());
     });
   }
 
@@ -420,11 +429,12 @@ class _HyleXGroundState extends State<HyleXGround> {
     var otherController = role == Role.Order ? _chaosChipTooltipController : _orderChipTooltipController;
     final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
     final tooltipPostfix = player == Player.User ?  "You" : player == Player.Ai ? "Computer" : "Remote opponent";
+    final secondLine = role == Role.Chaos ? "\nUnordered chip counts ${game.play.getPointsPerChip()}": "";
     return SuperTooltip(
       controller: controller,
       showBarrier: false,
       content: Text(
-        "$tooltipPrefix: $tooltipPostfix",
+        "$tooltipPrefix: $tooltipPostfix$secondLine",
         softWrap: true,
         
         style: TextStyle(

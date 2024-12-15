@@ -428,6 +428,14 @@ class Play {
 
   Player get orderPlayer => _orderPlayer;
 
+  Player getWinnerPlayer() {
+    final winner = _stats.getWinner();
+    if (winner == Role.Order) {
+      return _orderPlayer;
+    }
+    return _chaosPlayer;
+  }
+
   Map<String, dynamic> toJson() => {
     "dimension" : _dimension,
     "currentRound" : _currentRound,
@@ -523,6 +531,8 @@ class Play {
   Move? get staleMove => _staleMove;
   
   Move? get currentMove => _staleMove;
+
+  int getPointsPerChip() => _matrix.getPointsPerChip(_dimension);
 
   void nextRound(bool clearOpponentCursor) {
 
