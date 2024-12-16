@@ -10,6 +10,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/model/achievements.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
 import '../model/ai/strategy.dart';
@@ -120,7 +121,37 @@ class _HyleXGroundState extends State<HyleXGround> {
               appBar: AppBar(
                 title: const Text('HyleX'),
                 actions: [
-                  IconButton(onPressed: () {}, icon: const Icon(Icons.history)),
+                  IconButton(
+                      onPressed: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              final elements = game.play.journal
+                                  .indexed
+                                  .map((e) => _buildJournalEvent(e))
+                                  .toList()
+                                  .reversed
+                                  .toList();
+
+                              elements.add(const Text("------ Game started ------"));
+                              if (game.play.isGameOver()) {
+                                elements.insert(0, const Text("------ Game over ------"));
+                              }
+                              return Container(
+                                height: 250, // Set your desired height
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
+                                  child: SingleChildScrollView(
+                                    child: Center(
+                                      child: Column(children: elements),
+                                    ),
+                                  ),
+                                ),
+                              );
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.history)),
                   Visibility(
                     visible: _isUndoAllowed(),
                     child: IconButton(
@@ -270,6 +301,47 @@ class _HyleXGroundState extends State<HyleXGround> {
                 ),
               ));
         }
+    );
+  }
+
+  Widget _buildJournalEvent((int, Move) e) {
+    final move = e.$2;
+    final round = ((e.$1+1)/2).ceil();
+    var eventLineString = move.toReadableStringWithChipPlaceholder();
+    Widget row;
+    if (eventLineString.contains("{chip}")) {
+      final split = eventLineString.split("{chip}");
+      final first = split[0];
+      final second = split[1];
+
+      row = Row(
+        children: [
+          Text("Round $round: "),
+          Text(first),
+          Text(move.chip!.getChipName()),
+          const Text(" "),
+          CircleAvatar(
+              backgroundColor: _getChipBackgroundColor(move.chip!),
+              maxRadius: 6,
+          ),
+          Text(second),
+        ],
+      );
+    }
+    else {
+      row = Row(
+        children: [
+          Text("Round $round: "),
+          Text(eventLineString),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        if (move.getRole() == Role.Order) Text("------------------------------------"),
+        row,
+      ]
     );
   }
 
@@ -845,6 +917,16 @@ class Game extends ChangeNotifier {
 
     if (play.currentPlayer == Player.Ai) {
       _think();
+    }
+    if (play.currentPlayer == Player.RemoteUser) {
+      final uri = "https://hylex.jepfa.de/_?g=erdfgsdfg&m=ergsdgf";
+      /*
+      i=game identifier, 6 or 8 chars [a-zA-Z0-9]
+      n=name, ascii 64bit compressed to 1/4, max 8 chars
+      m=move notation
+      r=role (o, c, u-nknown)
+       */
+      Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
     }
 
   }

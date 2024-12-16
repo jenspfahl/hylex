@@ -41,4 +41,23 @@ class GameChip {
     return 'Chip-$name';
   }
 
+  String getChipName() {
+    switch(id) {
+      case 0: return "Red";
+      case 1: return "Yellow";
+      case 2: return "Green";
+      case 3: return "Cyan";
+      case 4: return "Blue";
+      case 5: return "Pink";
+      case 6: return "Grey";
+      case 7: return "Brown";
+      case 8: return "Honey";
+      case 9: return "Moss";
+      case 10: return "Indigo";
+      case 11: return "Violet";
+      case 12: return "Purple";
+      default: return "";
+    }
+  }
+
 }

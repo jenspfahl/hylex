@@ -71,7 +71,6 @@ class _StartPageState extends State<StartPage>
       r=role (o, c, u-nknown)
 
        */
-      Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
     });
   }
 

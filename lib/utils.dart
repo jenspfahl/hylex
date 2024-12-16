@@ -108,6 +108,12 @@ Color getColorFromIdx(int i) {
     b = 145;
   }
 
+  if (i == 1) { // make yellow a bit brighter
+    r = 250;
+    g = 180;
+    b = 0;
+  }
+
   if (i == 6) { // make gray a bit darker
     r = 110;
     g = 110;

@@ -106,6 +106,18 @@ class Move {
     return cursor;
   }
 
+  String toReadableStringWithChipPlaceholder() { //TODO duplicate
+    if (isPlaced()) {
+      return "Chaos placed {chip} at ${to?.toReadableCoordinates()}";
+    }
+    else if (isMove()) {
+      return "Order moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
+    }
+    else {
+      return "Order skipped this move";
+    }
+  }
+
 }
 
 class Stats {
@@ -365,6 +377,8 @@ class Play {
     _currentRound = 1;
     _currentRole = Role.Chaos;
 
+    _journal.clear();
+
     _stats = Stats();
     
     var chips = HashMap<GameChip, int>();
@@ -469,6 +483,7 @@ class Play {
   }
 
   Move? get lastMoveFromJournal => _journal.lastOrNull;
+  List<Move> get journal => _journal.toList(growable: false);
 
   bool get isJournalEmpty => _journal.isEmpty;
 
