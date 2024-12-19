@@ -10,6 +10,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/achievements.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../model/move.dart';
 import '../model/play.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';

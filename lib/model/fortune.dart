@@ -1,6 +1,7 @@
 import 'dart:math';
 
 final rnd = Random();
+const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 
 bool probabilityOf(double probability) => rnd.nextDouble() < probability;
 
@@ -14,7 +15,8 @@ int diceInt(int max) => rnd.nextInt(max);
 
 double diceDouble(double max) => rnd.nextDouble() * max;
 
-
+String generateRandomString(int length) => String.fromCharCodes(Iterable.generate(
+    length, (_) => _chars.codeUnitAt(rnd.nextInt(_chars.length))));
 
 extension DoubleFortuneExtensions on double {
 

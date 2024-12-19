@@ -16,6 +16,7 @@ import 'ai/ai.dart';
 import 'ai/strategy.dart';
 import 'fortune.dart';
 import 'matrix.dart';
+import 'move.dart';
 
 
 class User {

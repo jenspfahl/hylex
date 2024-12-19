@@ -1,10 +1,10 @@
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
@@ -15,9 +15,14 @@ import 'package:super_tooltip/super_tooltip.dart';
 
 import '../model/ai/strategy.dart';
 import '../model/chip.dart';
+import '../model/chip_extension.dart';
+import '../model/coordinate.dart';
+import '../model/cursor.dart';
 import '../model/matrix.dart';
+import '../model/move.dart';
 import '../model/play.dart';
 import '../model/spot.dart';
+import '../model/stock.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'dialogs.dart';
@@ -52,6 +57,8 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   final _chaosChipTooltipController = SuperTooltipController();
   final _orderChipTooltipController = SuperTooltipController();
+  //TODO encapsulate a controller service and add ttcontrollers for each chip in legend to shoe Chip.name and remaining pieces
+  final _tooltipControllers = HashSet<SuperTooltipController>();
 
   @override
   void initState() {
@@ -119,7 +126,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           _builderContext = context;
           return Scaffold(
               appBar: AppBar(
-                title: const Text('HyleX'),
+                title: Text('HyleX #${game.play.id}'),
                 actions: [
                   IconButton(
                       onPressed: () {
@@ -435,6 +442,9 @@ class _HyleXGroundState extends State<HyleXGround> {
             _showGameOver(context);
           }
         },
+        onLongPress: () {
+          game.shareGameMove();
+        },
         child: Text(game.play.currentRole == Role.Order && !game.play.cursor.hasEnd
             ? 'Skip move'
             : 'Submit move',
@@ -514,14 +524,8 @@ class _HyleXGroundState extends State<HyleXGround> {
         ),
       ),
       child: GestureDetector(
-        onTap: () async {
-          await otherController.hideTooltip();
-          await controller.hideTooltip();
-          await controller.showTooltip();
-        
-          Future.delayed(Duration(seconds: 3), () {
-            controller.hideTooltip();
-          });
+        onTap: () {
+          _handleTooltipTab(otherController, controller);
         },
         child: Chip(
             padding: EdgeInsets.zero,
@@ -551,6 +555,16 @@ class _HyleXGroundState extends State<HyleXGround> {
         ),
       ),
     );
+  }
+
+  _handleTooltipTab(SuperTooltipController otherController, SuperTooltipController controller) async {
+    await otherController.hideTooltip();
+    await controller.hideTooltip();
+    await controller.showTooltip();
+            
+    Future.delayed(Duration(seconds: 3), () {
+      controller.hideTooltip();
+    });
   }
 
   Widget _buildBoardGrid(BuildContext context, int index) {
@@ -919,16 +933,20 @@ class Game extends ChangeNotifier {
       _think();
     }
     if (play.currentPlayer == Player.RemoteUser) {
-      final uri = "https://hylex.jepfa.de/_?g=erdfgsdfg&m=ergsdgf";
-      /*
-      i=game identifier, 6 or 8 chars [a-zA-Z0-9]
-      n=name, ascii 64bit compressed to 1/4, max 8 chars
-      m=move notation
-      r=role (o, c, u-nknown)
-       */
-      Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
+      shareGameMove();
     }
 
+  }
+
+  void shareGameMove() {
+    final uri = "https://hylex.jepfa.de/_?g=${play.id}";
+    /*
+    g=game identifier, 6 or 8 chars [a-zA-Z0-9]
+    n=name, ascii 64bit compressed to 1/4, max 8 chars
+    m=move notation
+    r=role (o, c, u-nknown)
+     */
+    Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
   }
 
 

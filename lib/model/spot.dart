@@ -1,9 +1,8 @@
 import 'dart:collection';
 
 import 'chip.dart';
+import 'coordinate.dart';
 import 'matrix.dart';
-
-enum Direction { North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest }
 
 
 class Spot {

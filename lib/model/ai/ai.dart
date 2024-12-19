@@ -6,6 +6,7 @@ import 'package:hyle_x/model/ai/strategy.dart';
 
 import '../fortune.dart';
 import '../matrix.dart';
+import '../move.dart';
 import '../play.dart';
 import '../spot.dart';
 
