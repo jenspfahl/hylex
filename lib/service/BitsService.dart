@@ -12,6 +12,8 @@ import '../model/move.dart';
 const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
 const maxDimension = 13;
 const maxRound = maxDimension * 2;
+const playIdLength = 8;
+const maxNameLength = 32;
 
 enum Operation {
   sendInvite,  //000
@@ -21,139 +23,349 @@ enum Operation {
   unused1, //100
   unused2, //101
   unused3, //110
-  unused4, //111
+  unused4 //111
 } // 3 bits
 
 enum PlayMode { normal, classic } // 1 bit
 
-enum PlayOpener { invitingPlayer, invitedPlayer, invitedPlayerChooses } // 2 bites
+enum PlayOpener { 
+  invitingPlayer, 
+  invitedPlayer, 
+  invitedPlayerChooses,
+  unused1
+} // 2 bites
 
-enum PlaySize { d5, d7, d9, d11, d13 } // 3 bits
+enum PlaySize { 
+  d5, 
+  d7, 
+  d9, 
+  d11, 
+  d13 
+} // 3 bits
 
+class CommunicationContext {
+  String? previousSignature;
 
-
-void main() {
-
-  final playId = generateRandomString(8);
+  CommunicationContext();
   
-  
-   _testSendInvite(playId);
-
-  _testSendInviteResponse(playId);
-
+  updatePreviousSignature(String signature) => previousSignature = signature;
 
 }
 
-void _testSendInvite(String playId) {
-  final (invitationBlob, signature) = createInvitationBlob(
-    playId,
-    PlaySize.d7,
-    PlayMode.normal,
-    PlayOpener.invitingPlayer,
-    "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
-  );
-  print("invitationBlob = $invitationBlob");
-  print("signature = $signature");
+abstract class Message {
+  String playId;
 
-  final (operation, _playId, playSize, playMode, playOpener, invitingName) = readInvitationBlob(invitationBlob);
-  print("operation: $operation");
-  print("playId: $_playId");
-  print("playSize: $playSize");
-  print("playMode: $playMode");
-  print("playOpener: $playOpener");
-  print("invitingName: $invitingName");
+  Message(this.playId);
+
+  SerializedMessage serialize(SerializedMessage? receivedMessage) {
+
+    final buffer = BitBuffer();
+    final writer = buffer.writer();
+
+    writeEnum(writer, Operation.values, getOperation());
+
+    writeString(writer, playId, playIdLength);
+    serializeToBuffer(writer);
+
+    final signature = _createUrlSafeSignature(buffer, receivedMessage?.signature);
+    return SerializedMessage(
+        buffer.toBase64().toUrlSafe(),
+        signature
+    );
+  }
+
+  void serializeToBuffer(BitBufferWriter writer);
+
+  Operation getOperation();
+
+  String _createUrlSafeSignature(BitBuffer buffer, String? previousSignatureBase64) {
+    final signature = createSignature(buffer.getLongs(), previousSignatureBase64);
+    return Base64Encoder().convert(signature).toUrlSafe();
+  }
 }
 
-void _testSendInviteResponse(String playId) {
-  final (blob, signature) = createInvitationResponseBlob(
-    playId,
-    true,
-    PlayOpener.invitedPlayer,
-    "Remote opponents name"
-  );
-  print("blob = $blob");
-  print("sig = $signature");
+class SendInviteMessage extends Message {
+  PlaySize playSize;
+  PlayMode playMode;
+  PlayOpener playOpener;
+  String invitingPlayerName;
 
-  final (operation, _playId, playOpener, invitedName, round, initialMove) = readInvitationResponseBlob(blob);
-  print("operation: $operation");
-  print("playId: $_playId");
-  print("playOpener: $playOpener");
-  print("invitedName: $invitedName");
-  print("round: $round");
-  print("initialMove: $initialMove");
+  SendInviteMessage(
+      String playId,
+      this.playSize,
+      this.playMode,
+      this.playOpener,
+      this.invitingPlayerName,
+      ): super(playId);
 
+  factory SendInviteMessage.deserialize(
+      BitBufferReader reader,
+      String playId) {
+
+
+
+    return SendInviteMessage(
+      playId,
+      readEnum(reader, PlaySize.values),
+      readEnum(reader, PlayMode.values),
+      readEnum(reader, PlayOpener.values),
+      readString(reader),
+    );
+  }
+
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+    writeEnum(writer, PlayMode.values, playMode);
+    writeEnum(writer, PlaySize.values, playSize);
+    writeEnum(writer, PlayOpener.values, playOpener);
+    writeString(writer, invitingPlayerName, maxNameLength);
+  }
+
+  @override
+  Operation getOperation() => Operation.sendInvite;
 }
 
-(String, String) createInvitationBlob(String playId, PlaySize size, PlayMode mode,
-    PlayOpener opener, String invitingPlayerName) {
-  BitBuffer buffer = BitBuffer();
-  var writer = buffer.writer();
-  writeEnum(writer, Operation.values, Operation.sendInvite);
-  writeString(writer, playId, 8);
-  writeEnum(writer, PlayMode.values, mode);
-  writeEnum(writer, PlaySize.values, size);
-  writeEnum(writer, PlayOpener.values, opener);
-  writeString(writer, invitingPlayerName, 32); // max 32 chars!
+class AcceptInviteMessage extends Message {
+  PlayOpener playOpener;
+  String invitingPlayerName;
+  Move? initialMove;
 
-  final signature = createSignature(buffer.getLongs(), null);
-  return (
-    buffer.toBase64().toUrlSafe(),
-    Base64Encoder().convert(signature).toUrlSafe()
-  );
-}
+  AcceptInviteMessage(
+      String playId,
+      this.playOpener,
+      this.invitingPlayerName,
+      this.initialMove,
+      ): super(playId);
 
+  factory AcceptInviteMessage.deserialize(
+      BitBufferReader reader,
+      String playId) {
 
-(Operation, String, PlayMode, PlaySize, PlayOpener, String) readInvitationBlob(String blob) {
-  BitBuffer buffer = BitBuffer.fromBase64(blob);
-  var reader = buffer.reader();
-  return (
-    readEnum(reader, Operation.values),
-    readString(reader),
-    readEnum(reader, PlayMode.values),
-    readEnum(reader, PlaySize.values),
-    readEnum(reader, PlayOpener.values),
-    readString(reader),
-  );
-}
+    final playOpener = readEnum(reader, PlayOpener.values);
+    return AcceptInviteMessage(
+      playId,
+      playOpener,
+      readString(reader),
+      playOpener == PlayOpener.invitedPlayer ? readMove(reader) : null,
+    );
+  }
 
-(String, String) createInvitationResponseBlob(String playId, bool accepted,
-    PlayOpener? opener, String? invitingPlayerName) {
-  final buffer = BitBuffer();
-  final writer = buffer.writer();
-  writeEnum(writer, Operation.values, accepted ? Operation.acceptInvite : Operation.rejectInvite);
-  writeString(writer, playId, 8);
-  if (accepted) {
-    writeEnum(writer, PlayOpener.values, opener!);
-    writeString(writer, invitingPlayerName!, 32); // max 32 chars!
-    if (opener == PlayOpener.invitedPlayer) {
-      writeInt(writer, 1, maxRound);
-      writeMove(writer, Move.placed(GameChip(1), Coordinate(3, 5)));
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+
+    writeEnum(writer, PlayOpener.values, playOpener);
+    writeString(writer, invitingPlayerName, maxNameLength);
+    if (playOpener == PlayOpener.invitedPlayer) {
+      writeMove(writer, initialMove!);
     }
   }
 
-  final signature = createSignature(buffer.getLongs(), null);
-  return (
-    buffer.toBase64().toUrlSafe(),
-    Base64Encoder().convert(signature).toUrlSafe()
-  );}
-
-
-(Operation, String, PlayOpener?, String?, int? round, Move? openerMove) readInvitationResponseBlob(String blob) {
-  final buffer = BitBuffer.fromBase64(blob);
-  final reader = buffer.reader();
-  return (
-    readEnum(reader, Operation.values),
-    readString(reader),
-    readEnum(reader, PlayOpener.values),
-    readString(reader),
-    readInt(reader, maxRound),
-    readMove(reader),
-  );
+  @override
+  Operation getOperation() => Operation.acceptInvite;
 }
 
-List<int> createSignature(List<int> blob, List<int>? previousSignature) {
-  var signature = sha256.convert(blob + (previousSignature != null ? previousSignature : []));
+
+class RejectInviteMessage extends Message {
+
+  RejectInviteMessage(
+      String playId,
+      ): super(playId);
+
+  factory RejectInviteMessage.deserialize(
+      BitBufferReader reader,
+      String playId) {
+
+    return RejectInviteMessage(
+      playId,
+    );
+  }
+
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+  }
+
+  @override
+  Operation getOperation() => Operation.rejectInvite;
+}
+
+
+class MoveMessage extends Message {
+  int round;
+  Move move;
+
+  MoveMessage(
+      String playId,
+      this.round,
+      this.move,
+      ): super(playId);
+
+  factory MoveMessage.deserialize(
+      BitBufferReader reader,
+      String playId) {
+    
+    return MoveMessage(
+      playId,
+      readInt(reader, maxRound),
+      readMove(reader)!,
+    );
+  }
+
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+    writeInt(writer, round, maxRound);
+    writeMove(writer, move);
+  }
+
+  @override
+  Operation getOperation() => Operation.move;
+}
+
+class SerializedMessage {
+  String payload;
+  String signature;
+
+  SerializedMessage(this.payload, this.signature);
+
+
+  Message deserialize(CommunicationContext comContext) {
+
+    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+
+    validateSignature(buffer.getLongs(), comContext.previousSignature, signature);
+
+    final reader = buffer.reader();
+
+    final operation = readEnum(reader, Operation.values);
+    final playId = readString(reader);
+
+    switch (operation) {
+      case Operation.sendInvite : return SendInviteMessage.deserialize(reader, playId);
+      case Operation.acceptInvite : return AcceptInviteMessage.deserialize(reader, playId);
+      case Operation.rejectInvite : return RejectInviteMessage.deserialize(reader, playId);
+      case Operation.move : return MoveMessage.deserialize(reader, playId);
+      default: throw Exception("Unsupported operation: $operation");
+    }
+  }
+
+  String toUrl() {
+    return "https://hylex.jepfa.de/_\$p=$payload&s=$signature";
+  }
+  String toUrl2() {
+    return "https://hx.jepfa.de/$payload/$signature";
+  }
+
+}
+
+void main() {
+
+   final playId = generateRandomString(playIdLength);
+  
+   final invitingContext = CommunicationContext();
+   final invitedContext = CommunicationContext();
+
+
+   // send invite
+   final invitationMessage = SendInviteMessage(
+       playId,
+       PlaySize.d7,
+       PlayMode.normal,
+       PlayOpener.invitingPlayer,
+       "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
+   );
+
+   final serializedInvitationMessage = _send(invitationMessage.serialize(null), invitingContext);
+
+
+   // receive invite
+   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as SendInviteMessage;
+   print("playId: ${deserializedInviteMessage.playId}");
+   print("playSize: ${deserializedInviteMessage.playSize}");
+   print("playMode: ${deserializedInviteMessage.playMode}");
+   print("playOpener: ${deserializedInviteMessage.playOpener}");
+   print("invitingName: ${deserializedInviteMessage.invitingPlayerName}");
+
+
+   print("-------------");
+
+   // respond to invite
+   final acceptInviteMessage = AcceptInviteMessage(
+       deserializedInviteMessage.playId,
+       PlayOpener.invitedPlayer,
+       "Remote opponents name",
+       Move.placed(GameChip(1), Coordinate(3, 5)),
+   );
+
+   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serialize(serializedInvitationMessage), invitedContext);
+
+
+   // receive accept invite
+   final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitingContext) as AcceptInviteMessage;
+
+   print("playId: ${deserializedAcceptInviteMessage.playId}");
+   print("playOpener: ${deserializedAcceptInviteMessage.playOpener}");
+   print("invitedName: ${deserializedAcceptInviteMessage.invitingPlayerName}");
+   print("initialMove: ${deserializedAcceptInviteMessage.initialMove}");
+
+   print("-------------");
+
+   // first order move from inviting player
+   final firstInvitingPlayerMoveMessage = MoveMessage(
+       playId,
+       1,
+       Move.moved(GameChip(1), Coordinate(3, 5), Coordinate(0, 5)),
+   );
+
+   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serialize(serializedAcceptInviteMessage), invitingContext);
+
+   final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext) as MoveMessage;
+
+   print("playId: ${deserializedMoveMessage.playId}");
+   print("round: ${deserializedMoveMessage.round}");
+   print("move: ${deserializedMoveMessage.move}");
+
+
+   print("-------------");
+
+}
+
+
+
+SerializedMessage _send(SerializedMessage message, CommunicationContext comContext) {
+  comContext.previousSignature = message.signature;
+
+  print("|");
+  print("|");
+  print("payload = ${message.payload}");
+  print("signature = ${message.signature}");
+  print("url = ${message.toUrl()}");
+  print("uri = ${message.toUrl2()}");
+  print("|");
+  print("|");
+  print("|");
+  print("V");
+
+  return message;
+}
+
+
+
+
+List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
+  final previousSignature = previousSignatureBase64 != null
+      ? Base64Codec.urlSafe().decoder.convert(previousSignatureBase64)
+      : null;
+  final signature = sha256.convert(blob + (previousSignature != null ? previousSignature : []));
   return signature.bytes.take(6).toList();
+}
+
+
+void validateSignature(List<int> blob, String? previousSignature, String comparingSignature) {
+  final signature = Base64Encoder().convert(createSignature(blob, previousSignature)).toUrlSafe();
+  print("sig1 $signature");
+  print("sig2 $comparingSignature");
+  if (signature != comparingSignature) {
+    throw Exception("signature mismatch");
+  }
 }
 
 String _normalize(String string, int maxLength) {
@@ -269,6 +481,8 @@ String readString(BitBufferReader reader) {
 
 extension StringExtenion on String {
   String toUrlSafe() {
-    return this.replaceAll(RegExp("#"), "-").replaceAll(RegExp("/"), "_");
+    return this.replaceAll(RegExp("#"), "-")
+        .replaceAll(RegExp("/"), "_")
+        .replaceAll(RegExp("="), "");
   }
 }
