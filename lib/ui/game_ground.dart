@@ -68,11 +68,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
     if (widget.loadedPlay != null) {
-      game = Game(widget.loadedPlay!, widget.user);
+      game = SinglePlayerGame(widget.loadedPlay!, widget.user);
       debugPrint("Game restored from saved play state");
     }
     else {
-      game = Game(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer), widget.user);
+      game = SinglePlayerGame(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer), widget.user);
       debugPrint("New game created");
 
     }
@@ -404,7 +404,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           child: CircularProgressIndicator(
             strokeCap: StrokeCap.butt,
             strokeWidth: 2,
-            value: game.aiLoad?.ratio,
+            value: game.progressRatio,
             backgroundColor: Colors.grey.shade300,
           ),
         ),
@@ -886,29 +886,50 @@ class _HyleXGroundState extends State<HyleXGround> {
 }
 
 
-class Game extends ChangeNotifier {
+abstract class Game extends ChangeNotifier {
 
   User user;
   Play play;
+
   bool waitForOpponent = false;
   Role? recentOpponentRole;
   bool showOpponentTrace = false;
+
+  Game(this.play, this.user);
+
+  double? get progressRatio;
+
+  bool isBoardLocked() => waitForOpponent || play.isGameOver();
+
+  void restartGame();
+  void resumeGame();
+
+  void nextRound();
+
+  void shareGameMove();
+
+  void savePlay();
+  void leave();
+  Role finish();
+
+}
+
+class SinglePlayerGame extends Game {
+
   Load? aiLoad;
 
   SendPort? _aiControlPort;
 
-  Game(this.play, this.user);
+  SinglePlayerGame(Play play, User user): super(play, user);
 
   restartGame() {
-    kill();
+    _kill();
     play.reset();
     waitForOpponent = false;
     recentOpponentRole = null;
     savePlay();
     notifyListeners();
-    if (play.currentPlayer == Player.Ai) {
-      _think();
-    }
+    resumeGame();
   }
 
   resumeGame() {
@@ -933,6 +954,7 @@ class Game extends ChangeNotifier {
       _think();
     }
     if (play.currentPlayer == Player.RemoteUser) {
+      //TODO move this to MultiPlayerGame and abstract it away
       shareGameMove();
     }
 
@@ -941,16 +963,11 @@ class Game extends ChangeNotifier {
   void shareGameMove() {
     final uri = "https://hylex.jepfa.de/_?g=${play.id}";
     /*
-    g=game identifier, 6 or 8 chars [a-zA-Z0-9]
-    n=name, ascii 64bit compressed to 1/4, max 8 chars
-    m=move notation
-    r=role (o, c, u-nknown)
+    TODO use BitService
      */
     Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
   }
 
-
-  bool isBoardLocked() => waitForOpponent || play.isGameOver();
 
   void _think() {
     waitForOpponent = true;
@@ -994,7 +1011,7 @@ class Game extends ChangeNotifier {
   }
 
 
-  void kill() {
+  void _kill() {
     _aiControlPort?.send('KILL');
   }
 
@@ -1012,7 +1029,7 @@ class Game extends ChangeNotifier {
 
   void leave() {
     savePlay();
-    kill();
+    _kill();
   }
 
   Role finish() {
@@ -1049,5 +1066,8 @@ class Game extends ChangeNotifier {
     PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
     //TODO notify start widget
   }
+
+  @override
+  double? get progressRatio => aiLoad?.ratio;
 
 }

@@ -30,7 +30,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="hylex.jepfa.de" android:pathPrefix="/_" />
+                <data android:scheme="https" android:host="hx.jepfa.de" />
             </intent-filter>
 
         </activity>

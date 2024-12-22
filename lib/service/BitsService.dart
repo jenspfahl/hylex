@@ -20,10 +20,10 @@ enum Operation {
   acceptInvite, //001
   rejectInvite, //010
   move, //011,
-  unused1, //100
-  unused2, //101
-  unused3, //110
-  unused4 //111
+  resign, //100
+  unused101, //101
+  unused110, //110
+  unused111 //111
 } // 3 bits
 
 enum PlayMode { normal, classic } // 1 bit
@@ -263,6 +263,8 @@ void main() {
    final invitingContext = CommunicationContext();
    final invitedContext = CommunicationContext();
 
+   print("----- send invite --------");
+
 
    // send invite
    final invitationMessage = SendInviteMessage(
@@ -285,9 +287,9 @@ void main() {
    print("invitingName: ${deserializedInviteMessage.invitingPlayerName}");
 
 
-   print("-------------");
+   print("----- accept invite --------");
 
-   // respond to invite
+   // accept and respond to invite
    final acceptInviteMessage = AcceptInviteMessage(
        deserializedInviteMessage.playId,
        PlayOpener.invitedPlayer,
@@ -306,7 +308,22 @@ void main() {
    print("invitedName: ${deserializedAcceptInviteMessage.invitingPlayerName}");
    print("initialMove: ${deserializedAcceptInviteMessage.initialMove}");
 
-   print("-------------");
+ /*  print("------ reject invite -------");
+
+
+   // accept and respond to invite
+   final rejectInviteMessage = RejectInviteMessage(
+     deserializedInviteMessage.playId);
+
+   final serializedRejectInviteMessage = _send(rejectInviteMessage.serialize(serializedInvitationMessage), invitedContext);
+
+
+   // receive reject invite
+   final deserializedRejectInviteMessage = serializedRejectInviteMessage.deserialize(invitingContext) as RejectInviteMessage;
+
+   print("playId: ${deserializedRejectInviteMessage.playId}");
+*/
+   print("----- first move --------");
 
    // first order move from inviting player
    final firstInvitingPlayerMoveMessage = MoveMessage(

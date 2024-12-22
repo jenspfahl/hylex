@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../model/move.dart';
 import '../model/play.dart';
+import '../service/BitsService.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'dialogs.dart';
@@ -61,17 +62,9 @@ class _StartPageState extends State<StartPage>
     }));
 
     final sub = AppLinks().uriLinkStream.listen((uri) {
+      //TODO
       buildAlertDialog(NotifyType.warning, "$uri  + ${uri.queryParameters}");
-      /*
-      to trigger run
-      adb shell am start -a android.intent.action.VIEW   -d "https://hylex.jepfa.de/_?g=fwefsdf\&m=a1-a7"
 
-      n=name, ascii 64bit compressed to 1/4, max 8 chars
-      g=game number, 8 chars
-      m=move notation
-      r=role (o, c, u-nknown)
-
-       */
     });
   }
 
@@ -126,13 +119,25 @@ class _StartPageState extends State<StartPage>
 
                           final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
                           confirmOrDo(json != null, 'Starting a new game will delete an ongoing game.', () {
-                            _selectPlayerGroundSize(context);
+                            _selectPlayerGroundSize(context, (dimension) =>
+                                _selectSinglePlayerMode(context, (chaosPlayer, orderPlayer) =>
+                                    _startGame(context, chaosPlayer, orderPlayer, dimension)));
                           });
                         }
                     }
                 )
                     : _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Send Invite", 3, icon: Icons.near_me)
+                    ? _buildCell("Send Invite", 3, icon: Icons.near_me,
+                        clickHandler: () async {
+                          if (context.mounted) {
+
+                            _selectPlayerGroundSize(context, (dimension) =>
+                                _selectMultiPlayerMode(context, (playerMode) =>
+                                    _selectMultiPlayerOpener(context, (playerOpener) => 
+                                      _startGame(context, Player.User, Player.RemoteUser, dimension))));
+                          }
+                        }
+                       )
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.SinglePlay
@@ -224,13 +229,18 @@ class _StartPageState extends State<StartPage>
     );
   }
 
-  void _selectPlayerGroundSize(BuildContext context) {
+  void _selectPlayerGroundSize(BuildContext context, Function(int) handleChosenDimension) {
+    _showDimensionChooser(context, (dimension) => handleChosenDimension(dimension));
+  }
+
+  void _showDimensionChooser(BuildContext context,
+      Function(int) handleChosenDimension) {
     buildChoiceDialog(330, 220, 'Which ground size?',
-      "5 x 5", () {_selectPlayerModeAndStartGame(context, 5);},
-      "7 x 7", () {_selectPlayerModeAndStartGame(context, 7);},
-      "9 x 9", () {_selectPlayerModeAndStartGame(context, 9);},
-      "11 x 11", () {_selectPlayerModeAndStartGame(context, 11);},
-      "13 x 13", () {_selectPlayerModeAndStartGame(context, 13);},
+      "5 x 5", () => handleChosenDimension(5),
+      "7 x 7", () => handleChosenDimension(7),
+      "9 x 9", () => handleChosenDimension(9),
+      "11 x 11", () => handleChosenDimension(11),
+      "13 x 13", () => handleChosenDimension(13),
     );
   }
 
@@ -252,13 +262,30 @@ class _StartPageState extends State<StartPage>
               );
   }
 
-  void _selectPlayerModeAndStartGame(BuildContext context, int dimension) {
+  void _selectSinglePlayerMode(BuildContext context, Function(Player, Player) handleChosenPlayers) {
     SmartDialog.dismiss();
     buildChoiceDialog(280, 220, 'Which role you will take?',
-      "ORDER", () {_startGame(context, Player.Ai, Player.User, dimension);},
-      "CHAOS", () {_startGame(context, Player.User, Player.Ai, dimension);},
-      "BOTH", () {_startGame(context, Player.User, Player.User, dimension);},
-      "NONE", () {_startGame(context, Player.Ai, Player.Ai, dimension);},
+      "ORDER", () => handleChosenPlayers(Player.Ai, Player.User),
+      "CHAOS", () => handleChosenPlayers(Player.User, Player.Ai),
+      "BOTH", () => handleChosenPlayers(Player.User, Player.User),
+      "NONE", () => handleChosenPlayers(Player.Ai, Player.Ai),
+    );
+  }
+  
+  void _selectMultiPlayerOpener(BuildContext context, Function(PlayOpener) handlePlayOpener) {
+    SmartDialog.dismiss();
+    buildChoiceDialog(280, 220, 'Which role you will take?',
+      "ORDER", () => handlePlayOpener(PlayOpener.invitedPlayer),
+      "CHAOS", () => handlePlayOpener(PlayOpener.invitingPlayer),
+      "INVITED DECIDES", () => handlePlayOpener(PlayOpener.invitedPlayerChooses),
+    );
+  }
+  
+  void _selectMultiPlayerMode(BuildContext context, Function(PlayMode) handlePlayerMode) {
+    SmartDialog.dismiss();
+    buildChoiceDialog(280, 220, 'What kind of game fo you want to play? ',
+      "NORMAL", () => handlePlayerMode(PlayMode.normal),
+      "CLASSIC", () => handlePlayerMode(PlayMode.classic),
     );
   }
 
