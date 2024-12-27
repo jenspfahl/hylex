@@ -248,9 +248,6 @@ class SerializedMessage {
   }
 
   String toUrl() {
-    return "https://hylex.jepfa.de/_\$p=$payload&s=$signature";
-  }
-  String toUrl2() {
     return "https://hx.jepfa.de/$payload/$signature";
   }
 
@@ -280,7 +277,7 @@ void main() {
 
    // receive invite
    final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as SendInviteMessage;
-   print("playId: ${deserializedInviteMessage.playId}");
+   print("playId: ${toReadableId(deserializedInviteMessage.playId)}");
    print("playSize: ${deserializedInviteMessage.playSize}");
    print("playMode: ${deserializedInviteMessage.playMode}");
    print("playOpener: ${deserializedInviteMessage.playOpener}");
@@ -355,7 +352,6 @@ SerializedMessage _send(SerializedMessage message, CommunicationContext comConte
   print("payload = ${message.payload}");
   print("signature = ${message.signature}");
   print("url = ${message.toUrl()}");
-  print("uri = ${message.toUrl2()}");
   print("|");
   print("|");
   print("|");

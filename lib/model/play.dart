@@ -388,4 +388,9 @@ class Play {
   }
 
 
+  String getReadablePlayId() {
+    return toReadableId(id);
+  }
+
+
 }

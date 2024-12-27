@@ -25,6 +25,7 @@ import '../model/spot.dart';
 import '../model/stock.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';
+import 'Tooltips.dart';
 import 'dialogs.dart';
 
 enum Player {User, Ai, RemoteUser}
@@ -55,10 +56,10 @@ class _HyleXGroundState extends State<HyleXGround> {
   late BuildContext _builderContext;
   late StreamSubscription<FGBGType> fgbgSubscription;
 
-  final _chaosChipTooltipController = SuperTooltipController();
-  final _orderChipTooltipController = SuperTooltipController();
-  //TODO encapsulate a controller service and add ttcontrollers for each chip in legend to shoe Chip.name and remaining pieces
-  final _tooltipControllers = HashSet<SuperTooltipController>();
+  final _chaosChipTooltip = "chaosChipTooltip";
+  final _orderChipTooltip = "orderChipTooltip";
+  final _stockChipToolTipKey = "stockChipToolTip";
+
 
   @override
   void initState() {
@@ -126,7 +127,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           _builderContext = context;
           return Scaffold(
               appBar: AppBar(
-                title: Text('HyleX #${game.play.id}'),
+                title: Text('HyleX ${game.play.getReadablePlayId()}'),
                 actions: [
                   IconButton(
                       onPressed: () {
@@ -507,64 +508,51 @@ class _HyleXGroundState extends State<HyleXGround> {
     final isSelected = game.play.currentRole == role;
     final color = isSelected ? Colors.white : null;
     final icon = player == Player.Ai ? MdiIcons.brain : player == Player.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
-    var controller = role == Role.Chaos ? _chaosChipTooltipController : _orderChipTooltipController;
-    var otherController = role == Role.Order ? _chaosChipTooltipController : _orderChipTooltipController;
+    var tooltipKey = role == Role.Chaos
+        ? _chaosChipTooltip
+        : _orderChipTooltip;
     final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
     final tooltipPostfix = player == Player.User ?  "You" : player == Player.Ai ? "Computer" : "Remote opponent";
     final secondLine = role == Role.Chaos ? "\nUnordered chip counts ${game.play.getPointsPerChip()}": "";
     return SuperTooltip(
-      controller: controller,
+      controller: Tooltips().controlTooltip(tooltipKey),
+      onShow: () => Tooltips().hideTooltipLater(tooltipKey),
       showBarrier: false,
       content: Text(
         "$tooltipPrefix: $tooltipPostfix$secondLine",
         softWrap: true,
-        
+
         style: TextStyle(
           color: Colors.black,
         ),
       ),
-      child: GestureDetector(
-        onTap: () {
-          _handleTooltipTab(otherController, controller);
-        },
-        child: Chip(
-            padding: EdgeInsets.zero,
-            shape: isLeftElseRight
-                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
-                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
-            label: isLeftElseRight
-                ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Icon(icon, color: color, size: 16),
-                    const Text(" "),
-                    Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                  ],
-                )
-                : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                    const Text(" "),
-                    Icon(icon, color: color, size: 16),
-                  ],
-                ),
-            backgroundColor: isSelected ? Colors.black : null
-        ),
+      child: Chip(
+          padding: EdgeInsets.zero,
+          shape: isLeftElseRight
+              ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
+              : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
+          label: isLeftElseRight
+              ? Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Icon(icon, color: color, size: 16),
+                  const Text(" "),
+                  Text("${role.name} - ${game.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                ],
+              )
+              : Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(" ${game.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                  const Text(" "),
+                  Icon(icon, color: color, size: 16),
+                ],
+              ),
+          backgroundColor: isSelected ? Colors.black : null
       ),
     );
-  }
-
-  _handleTooltipTab(SuperTooltipController otherController, SuperTooltipController controller) async {
-    await otherController.hideTooltip();
-    await controller.hideTooltip();
-    await controller.showTooltip();
-            
-    Future.delayed(Duration(seconds: 3), () {
-      controller.hideTooltip();
-    });
   }
 
   Widget _buildBoardGrid(BuildContext context, int index) {
@@ -660,10 +648,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     return Container(
       color: possibleTarget ? shadedColor : null,
       child: GestureDetector(
-        onLongPressStart: (details) => {
+        onLongPressStart: (details) {
           setState(() {
             _emphasiseAllChipsOf = chip;
-          })
+          });
         },
         onLongPressEnd: (details) => {
           setState(() {
@@ -805,8 +793,19 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     final entry = stockEntries.toList()[index];
     final text = game.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
-
-    return _buildChipStockItem(entry, text);
+    final tooltipKey = "$_stockChipToolTipKey-$index";
+    return SuperTooltip(
+        controller: Tooltips().controlTooltip(tooltipKey),
+        onShow: () => Tooltips().hideTooltipLater(tooltipKey),
+        showBarrier: false,
+        content: Text(
+          "Chip ${entry.chip.getChipName()}",
+          softWrap: true,
+          style: TextStyle(
+            color: Colors.black,
+          ),
+        ),
+        child: _buildChipStockItem(entry, text));
   }
 
   Widget _buildChipStockIndicator(BuildContext context, int index) {
@@ -961,7 +960,8 @@ class SinglePlayerGame extends Game {
   }
 
   void shareGameMove() {
-    final uri = "https://hylex.jepfa.de/_?g=${play.id}";
+    //BitsService().;
+    final uri = "https://hx.jepfa.de/${play.id}";
     /*
     TODO use BitService
      */
