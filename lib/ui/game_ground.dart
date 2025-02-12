@@ -518,6 +518,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       controller: Tooltips().controlTooltip(tooltipKey),
       onShow: () => Tooltips().hideTooltipLater(tooltipKey),
       showBarrier: false,
+      hideTooltipOnTap: true,
       content: Text(
         "$tooltipPrefix: $tooltipPostfix$secondLine",
         softWrap: true,
@@ -613,7 +614,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
     // show trace of opponent move
-    if (game.showOpponentTrace && game.play.opponentMove.hasEnd && where != null) {
+    if (game.showOpponentTrace && game.play.opponentMove.hasStart && where != null) {
       startSpot ??= game.play.matrix.getSpot(game.play.opponentMove.end!);
       possibleTarget |= game.play.opponentMove.end! == where;
       if (game.play.opponentMove.hasStart) {
@@ -798,6 +799,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         controller: Tooltips().controlTooltip(tooltipKey),
         onShow: () => Tooltips().hideTooltipLater(tooltipKey),
         showBarrier: false,
+        hideTooltipOnTap: true,
         content: Text(
           "Chip ${entry.chip.getChipName()}",
           softWrap: true,

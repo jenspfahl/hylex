@@ -26,7 +26,12 @@ enum Operation {
   unused111 //111
 } // 3 bits
 
-enum PlayMode { normal, classic } // 1 bit
+enum PlayMode {
+  normal,
+  classic,
+  unused10,
+  unused11,
+} // 2 bit
 
 enum PlayOpener { 
   invitingPlayer, 
