@@ -2,13 +2,10 @@ import 'dart:collection';
 import 'dart:ffi';
 import 'dart:ui';
 
-import 'package:hyle_x/model/ai/strategy.dart';
+import 'package:hyle_x/engine/ai/strategy.dart';
 
-import '../fortune.dart';
-import '../matrix.dart';
-import '../move.dart';
-import '../play.dart';
-import '../spot.dart';
+import '../../model/move.dart';
+import '../../model/play.dart';
 
 
 class AiConfig {

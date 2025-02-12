@@ -66,7 +66,7 @@ class Matrix {
   }
 
 
-  Set<Spot> getPossibleTargetsFor(Coordinate where) {
+  Set<Spot> detectTraceForOrderMove(Coordinate where) {
     final targets = HashSet<Spot>();
 
     targets.addAll(

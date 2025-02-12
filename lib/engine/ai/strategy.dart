@@ -8,12 +8,12 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/chip.dart';
 
-import '../coordinate.dart';
-import '../fortune.dart';
-import '../matrix.dart';
-import '../move.dart';
-import '../play.dart';
-import '../spot.dart';
+import '../../model/coordinate.dart';
+import '../../model/fortune.dart';
+import '../../model/matrix.dart';
+import '../../model/move.dart';
+import '../../model/play.dart';
+import '../../model/spot.dart';
 import 'ai.dart';
 
 final parallelCount = max(Platform.numberOfProcessors - 2, 2); // save two processors for UI
@@ -364,12 +364,12 @@ class MinimaxStrategy extends Strategy {
 
 
   Iterable<Move> _getPossibleMovesFor(Matrix matrix, Spot from) {
-    return matrix.getPossibleTargetsFor(from.where)
+    return matrix.detectTraceForOrderMove(from.where)
         .map((to) => Move.moved(from.content!, from.where, to.where));
   }
 
   Iterable<Move> _getPossibleMovesForLandingOnAxisOf(Matrix matrix, Spot from, Coordinate lastWhere) {
-    return matrix.getPossibleTargetsFor(from.where)
+    return matrix.detectTraceForOrderMove(from.where)
         .where((to) => to.where.x == lastWhere.x ||to.where.y == lastWhere.y)
         .map((to) => Move.moved(from.content!, from.where, to.where));
   }

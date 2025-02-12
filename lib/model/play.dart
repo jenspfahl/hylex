@@ -8,9 +8,9 @@ import 'package:hyle_x/model/stats.dart';
 import 'package:hyle_x/model/stock.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import '../engine/ai/ai.dart';
+import '../engine/ai/strategy.dart';
 import '../ui/game_ground.dart';
-import 'ai/ai.dart';
-import 'ai/strategy.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
 import 'fortune.dart';
@@ -23,19 +23,20 @@ import 'move.dart';
 class Play {
 
   late String id;
+  
   late int _currentRound;
   late Role _currentRole;
+  GameChip? _currentChip;
 
   late Stats _stats;
   late Stock _stock;
-  late Cursor _cursor;
-  late Cursor _opponentMove;
+  late Cursor _selectionCursor;
+  late Cursor _opponentCursor;
   late final int _dimension;
   late Matrix _matrix;
-  GameChip? _currentChip;
   late AiConfig _aiConfig;
-  late final Player _chaosPlayer;
-  late final Player _orderPlayer;
+  late final PlayerType _chaosPlayer;
+  late final PlayerType _orderPlayer;
   ChaosAi? chaosAi;
   OrderAi? orderAi;
 
@@ -72,8 +73,8 @@ class Play {
     nextChip();
 
     _matrix = Matrix(Coordinate(dimension, dimension));
-    _cursor = Cursor();
-    _opponentMove = Cursor();
+    _selectionCursor = Cursor();
+    _opponentCursor = Cursor();
     
     _aiConfig = AiConfig();
     _initAis(useDefaultParams: true);
@@ -92,12 +93,12 @@ class Play {
     _matrix = Matrix.fromJson(map['matrix']);
     _stats = Stats.fromJson(map['stats']);
     _stock = Stock.fromJson(map['stock']);
-    _cursor = Cursor.fromJson(map['cursor']);
+    _selectionCursor = Cursor.fromJson(map['selectionCursor']);
 
-    _opponentMove = Cursor.fromJson(map['opponentMove']);
+    _opponentCursor = Cursor.fromJson(map['opponentCursor']);
 
-    _chaosPlayer = Player.values.firstWhere((p) => p.name == map['chaosPlayer']);
-    _orderPlayer = Player.values.firstWhere((p) => p.name == map['orderPlayer']);
+    _chaosPlayer = PlayerType.values.firstWhere((p) => p.name == map['chaosPlayer']);
+    _orderPlayer = PlayerType.values.firstWhere((p) => p.name == map['orderPlayer']);
 
     startDate = DateTime.parse(map['startDate']);
     final endDateKey = map['endDate'];
@@ -119,11 +120,11 @@ class Play {
     _initAis(useDefaultParams: true);
   }
 
-  Player get chaosPlayer => _chaosPlayer;
+  PlayerType get chaosPlayer => _chaosPlayer;
 
-  Player get orderPlayer => _orderPlayer;
+  PlayerType get orderPlayer => _orderPlayer;
 
-  Player getWinnerPlayer() {
+  PlayerType getWinnerPlayer() {
     final winner = _stats.getWinner();
     if (winner == Role.Order) {
       return _orderPlayer;
@@ -140,8 +141,8 @@ class Play {
     "matrix" : _matrix.toJson(),
     "stats" : _stats.toJson(),
     "stock" : _stock.toJson(),
-    "cursor" : _cursor.toJson(),
-    "opponentMove" : _opponentMove.toJson(),
+    "selectionCursor" : _selectionCursor.toJson(),
+    "opponentCursor" : _opponentCursor.toJson(),
     "chaosPlayer" : _chaosPlayer.name,
     "orderPlayer" : _orderPlayer.name,
     "startDate" : startDate.toIso8601String(),
@@ -241,9 +242,9 @@ class Play {
       incRound();
     }
 
-    _cursor.clear();
+    _selectionCursor.clear();
     if (clearOpponentCursor) {
-      _opponentMove.clear();
+      _opponentCursor.clear();
     }
   }
 
@@ -260,27 +261,27 @@ class Play {
         // transition from Chaos back to Order
         decRound();
       }
-      _cursor.clear();
-      _opponentMove.clear();
+      _selectionCursor.clear();
+      _opponentCursor.clear();
 
       return lastMove;
     }
     return null;
   }
 
-  Player get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
+  PlayerType get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
 
-  bool get isMultiplayerPlay => _chaosPlayer == Player.RemoteUser || _orderPlayer == Player.RemoteUser;
+  bool get isMultiplayerPlay => _chaosPlayer == PlayerType.RemoteUser || _orderPlayer == PlayerType.RemoteUser;
 
-  bool get isBothSidesSinglePlay => _chaosPlayer == Player.User && _orderPlayer == Player.User;
+  bool get isBothSidesSinglePlay => _chaosPlayer == PlayerType.User && _orderPlayer == PlayerType.User;
 
-  bool get isFullAutomaticPlay => _chaosPlayer == Player.Ai && _orderPlayer == Player.Ai;
+  bool get isFullAutomaticPlay => _chaosPlayer == PlayerType.Ai && _orderPlayer == PlayerType.Ai;
 
   Role finishGame() {
 
     _currentRole = _stats.getWinner();
     _currentChip = null;
-    _cursor.clear();
+    _selectionCursor.clear();
 
     return _currentRole;
   }
@@ -296,8 +297,8 @@ class Play {
   Stock get stock => _stock;
   int get dimension => _dimension;
   Matrix get matrix => _matrix;
-  Cursor get cursor => _cursor;
-  Cursor get opponentMove => _opponentMove;
+  Cursor get selectionCursor => _selectionCursor;
+  Cursor get opponentCursor => _opponentCursor;
   AiConfig get aiConfig => _aiConfig;
 
   GameChip? get currentChip => _currentChip;

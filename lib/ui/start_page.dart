@@ -134,7 +134,7 @@ class _StartPageState extends State<StartPage>
                             _selectPlayerGroundSize(context, (dimension) =>
                                 _selectMultiPlayerMode(context, (playerMode) =>
                                     _selectMultiPlayerOpener(context, (playerOpener) => 
-                                      _startGame(context, Player.User, Player.RemoteUser, dimension))));
+                                      _startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension))));
                           }
                         }
                        )
@@ -262,13 +262,13 @@ class _StartPageState extends State<StartPage>
               );
   }
 
-  void _selectSinglePlayerMode(BuildContext context, Function(Player, Player) handleChosenPlayers) {
+  void _selectSinglePlayerMode(BuildContext context, Function(PlayerType, PlayerType) handleChosenPlayers) {
     SmartDialog.dismiss();
     buildChoiceDialog(280, 220, 'Which role you will take?',
-      "ORDER", () => handleChosenPlayers(Player.Ai, Player.User),
-      "CHAOS", () => handleChosenPlayers(Player.User, Player.Ai),
-      "BOTH", () => handleChosenPlayers(Player.User, Player.User),
-      "NONE", () => handleChosenPlayers(Player.Ai, Player.Ai),
+      "ORDER", () => handleChosenPlayers(PlayerType.Ai, PlayerType.User),
+      "CHAOS", () => handleChosenPlayers(PlayerType.User, PlayerType.Ai),
+      "BOTH", () => handleChosenPlayers(PlayerType.User, PlayerType.User),
+      "NONE", () => handleChosenPlayers(PlayerType.Ai, PlayerType.Ai),
     );
   }
   
@@ -289,7 +289,7 @@ class _StartPageState extends State<StartPage>
     );
   }
 
-  Future<void> _startGame(BuildContext context, Player chaosPlayer, Player orderPlayer, int dimension) async {
+  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer, PlayerType orderPlayer, int dimension) async {
     SmartDialog.dismiss();
 
     SmartDialog.showLoading(msg: "Loading game ...");

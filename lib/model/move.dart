@@ -4,8 +4,14 @@ import 'chip.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
 
+//TODO Move this enum in a separate file
 enum Role {Chaos, Order}
 
+/**
+ * A Move is a game move, which can either be a placed chip (initiated by Chaos) or
+ * a move of an already placed chip from a source cell to a free destination cell (initiated by Order).
+ * If a chip was not moved (Order skipped to move), the source and the destination are null.
+ */
 class Move {
   GameChip? chip;
   Coordinate? from;
@@ -41,18 +47,61 @@ class Move {
     'skipped' : skipped
   };
 
+
+  /**
+   * A Chaos move
+   */
   Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
+
+  /**
+   * An possible Order move
+   */
   Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
+
+  /**
+   * An possible Order skip-move
+   */
   Move.skipped(): this(skipped: true);
 
   bool isMove() => !skipped && from != to && from != null && to != null;
 
-  Role getRole() {
+  bool isPlaced() => !isMove() && !skipped;
+
+  /**
+   * Derives the initiating role from the move according to the game rules.
+   */
+  Role toRole() {
     if (isPlaced()) {
       return Role.Chaos;
     }
     else {
       return Role.Order;
+    }
+  }
+
+  /**
+   * Derives a Cursor to highlight this move (e.g. the previous opponent move).
+   */
+  Cursor toCursor() {
+    final cursor = Cursor();
+    if (from != null) {
+      cursor.updateStart(from!);
+    }
+    if (to != null) {
+      cursor.updateEnd(to!);
+    }
+    return cursor;
+  }
+
+  String toReadableStringWithChipPlaceholder() { //TODO duplicate
+    if (isPlaced()) {
+      return "Chaos placed {chip} at ${to?.toReadableCoordinates()}";
+    }
+    else if (isMove()) {
+      return "Order moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
+    }
+    else {
+      return "Order skipped this move";
     }
   }
 
@@ -77,31 +126,6 @@ class Move {
     }
     else {
       return "${chip?.name}@$from";
-    }
-  }
-
-  bool isPlaced() => !isMove() && !skipped;
-
-  Cursor toCursor() {
-    final cursor = Cursor();
-    if (from != null) {
-      cursor.updateStart(from!);
-    }
-    if (to != null) {
-      cursor.updateEnd(to!);
-    }
-    return cursor;
-  }
-
-  String toReadableStringWithChipPlaceholder() { //TODO duplicate
-    if (isPlaced()) {
-      return "Chaos placed {chip} at ${to?.toReadableCoordinates()}";
-    }
-    else if (isMove()) {
-      return "Order moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
-    }
-    else {
-      return "Order skipped this move";
     }
   }
 

@@ -5,13 +5,15 @@ import 'matrix.dart';
 import 'move.dart';
 
 
-
+/**
+ * A cursor is a visual element to highlight a selected cell (the start) or a move (start and end).
+ * It can additionally highlight a trace, e.g. to point out possible moves (trace).
+ */
 class Cursor {
   Coordinate? _start;
   Coordinate? _end;
-  final _possibleTargets = HashSet<Coordinate>();
 
-  bool temporary = false;
+  final _trace = HashSet<Coordinate>();
 
   Cursor();
 
@@ -27,25 +29,23 @@ class Cursor {
       _end = Coordinate.fromKey(endKey);
     }
 
-    final List<dynamic> targetSet = map['possibleTargets']!;
-    _possibleTargets.addAll(targetSet.map((value) {
+    final List<dynamic> targetSet = map['trace']!;
+    _trace.addAll(targetSet.map((value) {
       return Coordinate.fromKey(value);
     }));
 
-    temporary = map['temporary'] as bool;
   }
 
   Map<String, dynamic> toJson() => {
     if (start != null) 'start' : _start!.toKey(),
     if (end != null) 'end' : end!.toKey(),
-    'possibleTargets' : _possibleTargets.map((value) => value.toKey()).toList(),
-    "temporary": temporary
+    'trace' : _trace.map((value) => value.toKey()).toList(),
   };
 
 
   Coordinate? get end => _end;
   Coordinate? get start => _start;
-  HashSet<Coordinate> get possibleTargets => _possibleTargets;
+  HashSet<Coordinate> get trace => _trace;
 
   bool get hasEnd => end != null;
   bool get hasStart => start != null;
@@ -58,30 +58,26 @@ class Cursor {
     _start = where;
   }
 
-  clear({bool keepStart = false}) {
-    if (!keepStart) {
-      _start = null;
-      clearPossibleTargets();
-    }
+  clear() {
+    _start = null;
     _end = null;
-    temporary = false;
+    clearTrace();
   }
 
 
   @override
   String toString() {
-    return 'Cursor{_startWhere: $_start, _where: $_end, _possibleTargets: $_possibleTargets}';
+    return 'Cursor{start: $_start, end: $_end, trace: $_trace}';
   }
 
-  void clearPossibleTargets() {
-    _possibleTargets.clear();
+  void clearTrace() {
+    _trace.clear();
   }
 
+  void detectTraceForOrderMove(Coordinate where, Matrix matrix) {
+    clearTrace();
 
-  void detectPossibleTargetsFor(Coordinate where, Matrix matrix) {
-    clearPossibleTargets();
-
-    _possibleTargets.addAll(matrix.getPossibleTargetsFor(where).map((spot) => spot.where));
+    _trace.addAll(matrix.detectTraceForOrderMove(where).map((spot) => spot.where));
   }
 
   bool isHorizontalMove() => _start != null && _end != null && _start!.y == _end!.y;
@@ -100,6 +96,5 @@ class Cursor {
   }
 
   bool contains(Coordinate where) => _start == where || _end == where;
-
 
 }
