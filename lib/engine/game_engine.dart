@@ -24,64 +24,54 @@ abstract class GameEngine extends ChangeNotifier {
 
   GameEngine(this.play, this.user);
 
-  void resumeGame();
-  void doRound();
-  /**
-   * What to do with the stored play once the game is over.
-   */
-  void handleGameOverSavePlay();
-  void cleanUp();
-
-
   PrefDef get savePlayKey;
   double? get progressRatio;
 
-  restartGame() {
-    //TODO remote games cannot be restarted, implement a veto
-    cleanUp();
+  void startGame() {
+    _doPlayerMove();
+  }
+  
+  void stopGame() {
+    _cleanUp();
     play.reset();
     waitForOpponent = false;
     recentOpponentRole = null;
     savePlay();
     notifyListeners();
-    resumeGame();
   }
 
-  nextRound() {
+  void nextPlayer() {
 
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
-      finish();
+      _finish();
       return;
     }
 
-    play.nextRound(!showOpponentTrace);
+    play.nextPlayer(!showOpponentTrace);
     savePlay();
     notifyListeners();
 
-    doRound();
+    _doPlayerMove();
   }
-  void leave() {
+  
+  void pauseGame() {
     savePlay();
-    cleanUp();
+    _cleanUp();
   }
 
   bool isBoardLocked() => waitForOpponent || play.isGameOver();
 
   void savePlay() {
-    if (play.isGameOver()) {
-      handleGameOverSavePlay();
-    }
-    else {
-      final jsonToSave = jsonEncode(play);
-      //debugPrint(getPrettyJSONString(game.play));
-      debugPrint("Save current play");
-      PreferenceService().setString(savePlayKey, jsonToSave);
-    }
+    final jsonToSave = jsonEncode(play);
+    //debugPrint(getPrettyJSONString(game.play));
+    debugPrint("Save current play");
+    PreferenceService().setString(savePlayKey, jsonToSave);
+    
   }
 
 
-  Role finish() {
+  Role _finish() {
     final winner = play.finishGame();
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
       //TODO add match-achievements
@@ -105,6 +95,8 @@ abstract class GameEngine extends ChangeNotifier {
       }
       _saveUser();
     }
+    
+    _handleGameOver();
 
     return winner;
   }
@@ -116,6 +108,41 @@ abstract class GameEngine extends ChangeNotifier {
     PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
   }
 
+
+  void _doPlayerMove();
+
+  /**
+   * Called when the opponent move is ready to be applied to the current game and play state.
+   */
+  opponentMoveReceived(Move move) {
+    debugPrint("opponent move received");
+    waitForOpponent = false;
+    recentOpponentRole = play.currentRole;
+
+    play.applyStaleMove(move);
+    play.opponentCursor.adaptFromMove(move);
+    play.commitMove();
+
+    if (play.isGameOver()) {
+      _finish();
+      notifyListeners();
+    }
+    else {
+      notifyListeners();
+      nextPlayer();
+    }
+  }
+  
+  
+  /**
+   * What to do with the stored play once the game is over.
+   */
+  void _handleGameOver();
+  
+  void _cleanUp();
+
+
+
 }
 
 class SinglePlayerGameEngine extends GameEngine {
@@ -125,25 +152,19 @@ class SinglePlayerGameEngine extends GameEngine {
 
   SinglePlayerGameEngine(Play play, User user): super(play, user);
   
-  resumeGame() {
+  void _doPlayerMove() {
     if (play.currentPlayer == PlayerType.Ai) {
       _think();
     }
+    // else the user has to do the move
   }
-
-  void doRound() {
-    if (play.currentPlayer == PlayerType.Ai) {
-      _think();
-    }
-  }
-
   
-  cleanUp() {
+  _cleanUp() {
     _kill();
   }
 
   @override
-  void handleGameOverSavePlay() {
+  void _handleGameOver() {
     PreferenceService().remove(PreferenceService.DATA_CURRENT_PLAY);
   }
 
@@ -169,29 +190,10 @@ class SinglePlayerGameEngine extends GameEngine {
         aiLoad = load;
         notifyListeners();
       },
-          _aiNextMoveHandler,
+          opponentMoveReceived,
               (SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort);
     });
 
-  }
-  
-  _aiNextMoveHandler(Move move) {
-    debugPrint("AI ready");
-    waitForOpponent = false;
-    recentOpponentRole = play.currentRole;
-
-    play.applyStaleMove(move);
-    play.opponentCursor.adaptFromMove(move);
-    play.commitMove();
-
-    if (play.isGameOver()) {
-      finish();
-      notifyListeners();
-    }
-    else {
-      notifyListeners();
-      nextRound();
-    }
   }
   
   void _kill() {
@@ -205,15 +207,9 @@ class MultiPlayerGameEngine extends GameEngine {
 
 
   MultiPlayerGameEngine(Play play, User user): super(play, user);
+  
 
-
-  resumeGame() {
-    if (play.currentPlayer == PlayerType.RemoteUser) {
-    // TODO indicate waiting
-    }
-  }
-
-  void doRound() {
+  void _doPlayerMove() {
 
     if (play.currentPlayer == PlayerType.RemoteUser) {
       shareGameMove();
@@ -231,12 +227,12 @@ class MultiPlayerGameEngine extends GameEngine {
 
 
   @override
-  void handleGameOverSavePlay() {
+  void _handleGameOver() {
     // TODO keep instead of remove PreferenceService().remove(savePlayKey);
   }
 
   @override
-  void cleanUp() {
+  void _cleanUp() {
   }
 
   @override
@@ -244,6 +240,7 @@ class MultiPlayerGameEngine extends GameEngine {
 
   @override
   double? get progressRatio => null;
+
 
 
 }

@@ -232,7 +232,7 @@ class Play {
 
   int getPointsPerChip() => _matrix.getPointsPerChip(_dimension);
 
-  void nextRound(bool clearOpponentCursor) {
+  void nextPlayer(bool clearOpponentCursor) {
 
     switchRole();
     if (currentRole == Role.Chaos) {

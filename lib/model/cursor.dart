@@ -6,7 +6,7 @@ import 'move.dart';
 
 
 /**
- * A cursor is a visual element to highlight a selected cell (the start) or a move (start and end).
+ * A cursor is a visual element to highlight a selected cell (the end) or a move (start and end).
  * It can additionally highlight a trace, e.g. to point out possible moves (trace).
  */
 class Cursor {

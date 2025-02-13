@@ -84,12 +84,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     gameEngine.addListener(_gameListener);
 
-    if (widget.loadedPlay != null) {
-      gameEngine.resumeGame();
-    }
-    else {
-      gameEngine.restartGame();
-    }
+    gameEngine.startGame();
   }
 
   _gameListener() {
@@ -112,7 +107,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   void dispose() {
-    gameEngine.leave();
+    gameEngine.pauseGame();
     gameEngine.removeListener(_gameListener);
     fgbgSubscription.cancel();
 
@@ -196,7 +191,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 }
                                 else {
                                   // beginning of game
-                                  gameEngine.restartGame();
+                                  gameEngine.startGame();
                                 }
                               });
                           }
@@ -210,7 +205,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                     onPressed: () => {
 
                       ask('Restart game?', () {
-                            gameEngine.restartGame();
+                            gameEngine.stopGame();
+                            gameEngine.startGame();
                       })
                     },
                   ),
@@ -219,7 +215,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                     onPressed: () => {
 
                       ask('Leave current game?', () {
-                            gameEngine.leave();
+                            gameEngine.pauseGame();
                             Navigator.pop(super.context); // go to start page
                           })
                     },
@@ -313,6 +309,18 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildJournalEvent((int, Move) e) {
     final move = e.$2;
     final round = ((e.$1+1)/2).ceil();
+    Widget row = _buildMoveLine(move, prefix: "Round $round: ");
+
+    return Column(
+      children: [
+        if (move.toRole() == Role.Order) Text("------------------------------------"),
+        row,
+      ]
+    );
+  }
+
+
+  Widget _buildMoveLine(Move move, {String? prefix, MainAxisAlignment? mainAxisAlignment}) {
     var eventLineString = move.toReadableStringWithChipPlaceholder();
     Widget row;
     if (eventLineString.contains("{chip}")) {
@@ -321,8 +329,10 @@ class _HyleXGroundState extends State<HyleXGround> {
       final second = split[1];
 
       row = Row(
+        mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
         children: [
-          Text("Round $round: "),
+          if (prefix != null)
+            Text(prefix),
           Text(first),
           Text(move.chip!.getChipName()),
           const Text(" "),
@@ -337,18 +347,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     else {
       row = Row(
         children: [
-          Text("Round $round: "),
+          if (prefix != null)
+            Text(prefix),
           Text(eventLineString),
         ],
       );
     }
 
-    return Column(
-      children: [
-        if (move.toRole() == Role.Order) Text("------------------------------------"),
-        row,
-      ]
-    );
+    return row;
   }
 
 
@@ -413,7 +419,10 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildSubmitButton(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
       return FilledButton(
-        onPressed: () => gameEngine.restartGame(),
+        onPressed: () {
+          gameEngine.stopGame();
+          gameEngine.startGame();
+        },
         child: const Text("Restart"),
       );
     }
@@ -436,7 +445,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             gameEngine.play.applyStaleMove(Move.skipped());
           }
           gameEngine.play.commitMove();
-          gameEngine.nextRound();
+          gameEngine.nextPlayer();
           if (gameEngine.play.isGameOver()) {
             _showGameOver(context);
           }
@@ -455,8 +464,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     return Container();
   }
 
-  Text _buildDoneText(Role role, Cursor cursor) {
-    final text = _createDoneString(role, cursor);
+  Widget _buildDoneText(Role role, Cursor cursor) {
+    final lastMoveHint = _buildLastMoveHint(role, cursor);
     var appendix = "";
     if (role == Role.Order) {
       appendix = "Now it's on Chaos to place a chip!";
@@ -464,28 +473,25 @@ class _HyleXGroundState extends State<HyleXGround> {
     else {
       appendix = "Now it's on Order to move a chip or skip!";
     }
-
-    if (!gameEngine.play.isFullAutomaticPlay) {
-      return Text(
-          textAlign: TextAlign.center, "$text\n$appendix");
-    }
-    else {
-      return Text(
-          textAlign: TextAlign.center, text);
-    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        lastMoveHint,
+        if (!gameEngine.play.isFullAutomaticPlay)
+          Text(appendix)
+      ],
+    );
+    
   }
 
-  String _createDoneString(Role role, Cursor cursor) {
-    if (role == Role.Order) {
-      if (cursor.hasStart && cursor.hasEnd) {
-        return "${role.name} has moved from ${cursor.start?.toReadableCoordinates()} to ${cursor.end?.toReadableCoordinates()}.";
-      }
-      else {
-        return "${role.name} has skipped its move.";
-      }
+  Widget _buildLastMoveHint(Role role, Cursor cursor) {
+    final lastMove = gameEngine.play.lastMoveFromJournal;
+    if (lastMove != null) {
+      return _buildMoveLine(lastMove, mainAxisAlignment: MainAxisAlignment.center);
     }
     else {
-      return "${role.name} has placed at ${cursor.end?.toReadableCoordinates()}.";
+      return Text("");
     }
   }
 
@@ -613,8 +619,9 @@ class _HyleXGroundState extends State<HyleXGround> {
       }
     }
 
-    // show trace of opponent move
-    if (gameEngine.showOpponentTrace && gameEngine.play.opponentCursor.hasStart && where != null) {
+
+      // show trace of opponent move
+    if (startSpot == null && gameEngine.showOpponentTrace && gameEngine.play.opponentCursor.hasEnd && where != null) {
       startSpot ??= gameEngine.play.matrix.getSpot(gameEngine.play.opponentCursor.end!);
       possibleTarget |= gameEngine.play.opponentCursor.end! == where;
       if (gameEngine.play.opponentCursor.hasStart) {

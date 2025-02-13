@@ -93,7 +93,7 @@ class Move {
     return cursor;
   }
 
-  String toReadableStringWithChipPlaceholder() { //TODO duplicate
+  String toReadableStringWithChipPlaceholder() {
     if (isPlaced()) {
       return "Chaos placed {chip} at ${to?.toReadableCoordinates()}";
     }
