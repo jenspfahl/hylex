@@ -258,6 +258,27 @@ class SerializedMessage {
 
 }
 
+class BitsService {
+
+  static final BitsService _service = BitsService._internal();
+
+  factory BitsService() {
+    return _service;
+  }
+
+  BitsService._internal() {}
+
+  SerializedMessage sendMove(String playId, int round, Move move) {
+    final firstInvitingPlayerMoveMessage = MoveMessage(
+      playId,
+      round,
+      move,
+    );
+
+    return firstInvitingPlayerMoveMessage.serialize(null); //TODO last message here
+  }
+}
+
 void main() {
 
    final playId = generateRandomString(playIdLength);

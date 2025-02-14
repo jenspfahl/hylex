@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -43,6 +44,8 @@ class _StartPageState extends State<StartPage>
 
   late User _user;
 
+  late StreamSubscription<Uri> _uriLinkStreamSub;
+
   @override
   void initState() {
     super.initState();
@@ -61,10 +64,9 @@ class _StartPageState extends State<StartPage>
       _user = user;
     }));
 
-    final sub = AppLinks().uriLinkStream.listen((uri) {
-      //TODO
-      buildAlertDialog(NotifyType.warning, "$uri  + ${uri.queryParameters}");
-
+    _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
+      //TODO load correct play and forward to game ground
+      //buildAlertDialog(NotifyType.warning, "$uri  + ${uri.queryParameters}");
     });
   }
 
@@ -121,7 +123,7 @@ class _StartPageState extends State<StartPage>
                           confirmOrDo(json != null, 'Starting a new game will delete an ongoing game.', () {
                             _selectPlayerGroundSize(context, (dimension) =>
                                 _selectSinglePlayerMode(context, (chaosPlayer, orderPlayer) =>
-                                    _startGame(context, chaosPlayer, orderPlayer, dimension)));
+                                    _startGame(context, chaosPlayer, orderPlayer, dimension, false)));
                           });
                         }
                     }
@@ -134,7 +136,7 @@ class _StartPageState extends State<StartPage>
                             _selectPlayerGroundSize(context, (dimension) =>
                                 _selectMultiPlayerMode(context, (playerMode) =>
                                     _selectMultiPlayerOpener(context, (playerOpener) => 
-                                      _startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension))));
+                                      _startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension, true))));
                           }
                         }
                        )
@@ -148,7 +150,7 @@ class _StartPageState extends State<StartPage>
                     if (play != null) {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                            return HyleXGround.load(_user, play);
+                            return HyleXGround.load(_user, play, false);
                           }));
                     }
                     else {
@@ -229,6 +231,12 @@ class _StartPageState extends State<StartPage>
     );
   }
 
+  @override
+  void dispose() {
+    _uriLinkStreamSub.cancel();
+    super.dispose();
+  }
+
   void _selectPlayerGroundSize(BuildContext context, Function(int) handleChosenDimension) {
     _showDimensionChooser(context, (dimension) => handleChosenDimension(dimension));
   }
@@ -289,14 +297,14 @@ class _StartPageState extends State<StartPage>
     );
   }
 
-  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer, PlayerType orderPlayer, int dimension) async {
+  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer, PlayerType orderPlayer, int dimension, bool isMultiPlayer) async {
     SmartDialog.dismiss();
 
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-      return HyleXGround(_user, chaosPlayer, orderPlayer, dimension);
+      return HyleXGround(_user, chaosPlayer, orderPlayer, dimension, isMultiPlayer);
     }));
   }
 

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:app_links/app_links.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -33,11 +34,12 @@ class HyleXGround extends StatefulWidget {
   PlayerType orderPlayer;
   int dimension;
   Play? loadedPlay;
+  bool isMultiPlayer;
 
 
-  HyleXGround(this.user, this.chaosPlayer, this.orderPlayer, this.dimension, {super.key});
+  HyleXGround(this.user, this.chaosPlayer, this.orderPlayer, this.dimension, this.isMultiPlayer, {super.key});
 
-  HyleXGround.load(this.user, Play play, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
+  HyleXGround.load(this.user, Play play, this.isMultiPlayer, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -53,6 +55,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   
   late BuildContext _builderContext;
   late StreamSubscription<FGBGType> fgbgSubscription;
+  late StreamSubscription<Uri> _uriLinkStreamSub;
 
   final _chaosChipTooltip = "chaosChipTooltip";
   final _orderChipTooltip = "orderChipTooltip";
@@ -66,14 +69,29 @@ class _HyleXGroundState extends State<HyleXGround> {
     SmartDialog.dismiss(); // dismiss loading dialog
 
 
-    if (widget.loadedPlay != null) {
-      gameEngine = SinglePlayerGameEngine(widget.loadedPlay!, widget.user);
-      debugPrint("Game restored from saved play state");
+    if (widget.isMultiPlayer) {
+      if (widget.loadedPlay != null) {
+        gameEngine = MultiPlayerGameEngine(widget.loadedPlay!, widget.user);
+        debugPrint("Game restored from saved play state");
+      }
+      else {
+        gameEngine = MultiPlayerGameEngine(
+            Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer),
+            widget.user);
+        debugPrint("New game created");
+      }
     }
     else {
-      gameEngine = SinglePlayerGameEngine(Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer), widget.user);
-      debugPrint("New game created");
-
+      if (widget.loadedPlay != null) {
+        gameEngine = SinglePlayerGameEngine(widget.loadedPlay!, widget.user);
+        debugPrint("Game restored from saved play state");
+      }
+      else {
+        gameEngine = SinglePlayerGameEngine(
+            Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer),
+            widget.user);
+        debugPrint("New game created");
+      }
     }
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
@@ -85,6 +103,11 @@ class _HyleXGroundState extends State<HyleXGround> {
     gameEngine.addListener(_gameListener);
 
     gameEngine.startGame();
+
+    _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
+      gameEngine.opponentMoveReceived(Move.skipped());
+
+    });
   }
 
   _gameListener() {
@@ -107,6 +130,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   void dispose() {
+    _uriLinkStreamSub.cancel();
     gameEngine.pauseGame();
     gameEngine.removeListener(_gameListener);
     fgbgSubscription.cancel();
@@ -346,6 +370,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else {
       row = Row(
+        mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
         children: [
           if (prefix != null)
             Text(prefix),
@@ -366,22 +391,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (gameEngine.play.isGameOver()) {
       return Text(_buildWinnerText());
     }
-    else if (gameEngine.recentOpponentRole != null) {
-      return _buildDoneText(gameEngine.recentOpponentRole!, gameEngine.play.opponentCursor);
-    }
     else if (gameEngine.play.currentPlayer == PlayerType.Ai) {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return const Text("Waiting for remote opponent to move...");
-    }
-    else if (gameEngine.play.isBothSidesSinglePlay && !gameEngine.play.isJournalEmpty) {
-      final lastMove = gameEngine.play.lastMoveFromJournal!;
-      final previousRole = lastMove.isPlaced() ? Role.Chaos : Role.Order;
-      return _buildDoneText(previousRole, lastMove.toCursor());
+      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move..."); //TODO add link to share again
     }
     else {
-      return const Text("Place a chip on a free space!");
+      return _buildDoneText();
     }
   }
 
@@ -464,20 +481,28 @@ class _HyleXGroundState extends State<HyleXGround> {
     return Container();
   }
 
-  Widget _buildDoneText(Role role, Cursor cursor) {
-    final lastMoveHint = _buildLastMoveHint(role, cursor);
+  Widget _buildDoneText() {
+    Widget? lastMoveHint = null;
+
+    final lastMove = gameEngine.play.lastMoveFromJournal;
+    if (lastMove != null) {
+      lastMoveHint = _buildMoveLine(lastMove, mainAxisAlignment: MainAxisAlignment.center);
+    }
+
     var appendix = "";
-    if (role == Role.Order) {
-      appendix = "Now it's on Chaos to place a chip!";
+
+    if (gameEngine.play.currentRole == Role.Order) {
+      appendix = "Now it's on Order to move a chip or skip!";
     }
     else {
-      appendix = "Now it's on Order to move a chip or skip!";
+      appendix = "Now it's on Chaos to place a chip!";
     }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        lastMoveHint,
+        if (lastMoveHint != null)
+          lastMoveHint,
         if (!gameEngine.play.isFullAutomaticPlay)
           Text(appendix)
       ],
@@ -485,15 +510,6 @@ class _HyleXGroundState extends State<HyleXGround> {
     
   }
 
-  Widget _buildLastMoveHint(Role role, Cursor cursor) {
-    final lastMove = gameEngine.play.lastMoveFromJournal;
-    if (lastMove != null) {
-      return _buildMoveLine(lastMove, mainAxisAlignment: MainAxisAlignment.center);
-    }
-    else {
-      return Text("");
-    }
-  }
 
   Text _buildAiProcessingText() {
     if (gameEngine.play.currentRole == Role.Order) {
@@ -621,7 +637,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
       // show trace of opponent move
-    if (startSpot == null && gameEngine.showOpponentTrace && gameEngine.play.opponentCursor.hasEnd && where != null) {
+    if (startSpot == null && gameEngine.play.opponentCursor.hasEnd && where != null) {
       startSpot ??= gameEngine.play.matrix.getSpot(gameEngine.play.opponentCursor.end!);
       possibleTarget |= gameEngine.play.opponentCursor.end! == where;
       if (gameEngine.play.opponentCursor.hasStart) {

@@ -232,7 +232,7 @@ class Play {
 
   int getPointsPerChip() => _matrix.getPointsPerChip(_dimension);
 
-  void nextPlayer(bool clearOpponentCursor) {
+  void nextPlayer() {
 
     switchRole();
     if (currentRole == Role.Chaos) {
@@ -243,9 +243,6 @@ class Play {
     }
 
     _selectionCursor.clear();
-    if (clearOpponentCursor) {
-      _opponentCursor.clear();
-    }
   }
 
   Move? previousRound() {

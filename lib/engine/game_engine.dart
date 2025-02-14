@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/play.dart';
+import 'package:hyle_x/service/BitsService.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../service/PreferenceService.dart';
@@ -19,8 +20,6 @@ abstract class GameEngine extends ChangeNotifier {
   Play play;
 
   bool waitForOpponent = false;
-  Role? recentOpponentRole;
-  bool showOpponentTrace = false;
 
   GameEngine(this.play, this.user);
 
@@ -35,7 +34,6 @@ abstract class GameEngine extends ChangeNotifier {
     _cleanUp();
     play.reset();
     waitForOpponent = false;
-    recentOpponentRole = null;
     savePlay();
     notifyListeners();
   }
@@ -48,7 +46,7 @@ abstract class GameEngine extends ChangeNotifier {
       return;
     }
 
-    play.nextPlayer(!showOpponentTrace);
+    play.nextPlayer();
     savePlay();
     notifyListeners();
 
@@ -117,7 +115,6 @@ abstract class GameEngine extends ChangeNotifier {
   opponentMoveReceived(Move move) {
     debugPrint("opponent move received");
     waitForOpponent = false;
-    recentOpponentRole = play.currentRole;
 
     play.applyStaleMove(move);
     play.opponentCursor.adaptFromMove(move);
@@ -178,12 +175,10 @@ class SinglePlayerGameEngine extends GameEngine {
   void _think() {
     waitForOpponent = true;
     aiLoad = null;
-    showOpponentTrace = true;
     notifyListeners();
 
     var autoplayDelayInSec = 250;
     Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInSec :  0), () {
-      recentOpponentRole = null;
 
       play.startThinking((Load load)
       {
@@ -213,16 +208,17 @@ class MultiPlayerGameEngine extends GameEngine {
 
     if (play.currentPlayer == PlayerType.RemoteUser) {
       shareGameMove();
+      waitForOpponent = true;
     }
   }
 
   void shareGameMove() {
-    //BitsService().;
-    final uri = "https://hx.jepfa.de/${play.id}";
-    /*
-    TODO use BitService
-     */
-    Share.share('Open this with HyleX: $uri', subject: 'HyleX interaction');
+    final lastMove = play.lastMoveFromJournal;
+    if (lastMove != null) {
+      final message = BitsService().sendMove(play.id, play.currentRound, lastMove);
+
+      Share.share('Open this link with HyleX: ${message.toUrl()}', subject: 'HyleX interaction');
+    }
   }
 
 
