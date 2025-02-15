@@ -48,6 +48,27 @@ enum PlaySize {
   d13 
 } // 3 bits
 
+PlaySize dimensionToPlaySize(int dimension) {
+  switch (dimension) {
+    case 5: return PlaySize.d5;
+    case 7: return PlaySize.d7;
+    case 9: return PlaySize.d9;
+    case 11: return PlaySize.d11;
+    case 13: return PlaySize.d13;
+    default: throw Exception("Unsupported dimension: $dimension");
+  }
+}
+
+int playSizeToDimension(PlaySize playSize) {
+  switch (playSize) {
+    case PlaySize.d5: return 5;
+    case PlaySize.d7: return 7;
+    case PlaySize.d9: return 9;
+    case PlaySize.d11: return 11;
+    case PlaySize.d13: return 13;
+  }
+}
+
 class CommunicationContext {
   String? previousSignature;
 
@@ -90,6 +111,7 @@ abstract class Message {
 }
 
 class SendInviteMessage extends Message {
+
   PlaySize playSize;
   PlayMode playMode;
   PlayOpener playOpener;
@@ -106,8 +128,6 @@ class SendInviteMessage extends Message {
   factory SendInviteMessage.deserialize(
       BitBufferReader reader,
       String playId) {
-
-
 
     return SendInviteMessage(
       playId,
@@ -268,17 +288,11 @@ class BitsService {
 
   BitsService._internal() {}
 
-  SerializedMessage sendMove(String playId, int round, Move move, CommunicationContext commContext) {
-    final firstInvitingPlayerMoveMessage = MoveMessage(
-      playId,
-      round,
-      move,
-    );
-
-    return firstInvitingPlayerMoveMessage.serialize(commContext.previousSignature);
+  SerializedMessage sendMessage(Message message, CommunicationContext commContext) {
+    return message.serialize(commContext.previousSignature);
   }
 
-  Message receiveMove(SerializedMessage serializedMoveMessage, CommunicationContext commContext) {
+  Message receiveMessage(SerializedMessage serializedMoveMessage, CommunicationContext commContext) {
     return serializedMoveMessage.deserialize(commContext);
   }
 }

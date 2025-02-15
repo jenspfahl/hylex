@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/model/achievements.dart';
+import 'package:hyle_x/service/BitsService.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -35,11 +36,15 @@ class HyleXGround extends StatefulWidget {
   int dimension;
   Play? loadedPlay;
   bool isMultiPlayer;
+  PlayRequest? _playRequest;
 
 
   HyleXGround(this.user, this.chaosPlayer, this.orderPlayer, this.dimension, this.isMultiPlayer, {super.key});
 
   HyleXGround.load(this.user, Play play, this.isMultiPlayer, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
+
+  HyleXGround.fromAcceptedRequest(this.user, this.chaosPlayer, this.orderPlayer, PlayRequest playRequest, {super.key})
+      : dimension = playSizeToDimension(playRequest.playSize), _playRequest = playRequest, isMultiPlayer = true;
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -70,16 +75,19 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
     if (widget.isMultiPlayer) {
-      if (widget.loadedPlay != null) {
-        gameEngine = MultiPlayerGameEngine(widget.loadedPlay!, widget.user);
+      Play play;
+      final playRequest = widget._playRequest;
+      if (playRequest != null) {
+        play = Play.fromRequest(widget.dimension, widget.chaosPlayer, widget.orderPlayer, playRequest);
         debugPrint("Game restored from saved play state");
       }
       else {
-        gameEngine = MultiPlayerGameEngine(
-            Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer),
-            widget.user);
+        play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
         debugPrint("New game created");
       }
+      gameEngine = MultiPlayerGameEngine(
+          play,
+          widget.user);
     }
     else {
       if (widget.loadedPlay != null) {

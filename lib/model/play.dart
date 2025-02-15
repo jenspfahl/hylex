@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/stats.dart';
 import 'package:hyle_x/model/stock.dart';
+import 'package:hyle_x/service/BitsService.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 import '../engine/ai/ai.dart';
@@ -48,6 +49,28 @@ enum PlayState {
   Closed, // final state
 }
 
+
+/**
+ * This is a pre-object of Play is there is an ongoing invitation process.
+ */
+@JsonSerializable()
+class PlayRequest {
+
+  late String playId;
+
+  CommunicationContext commContext = CommunicationContext();
+
+  PlaySize playSize;
+  PlayMode playMode;
+  PlayOpener playOpener;
+  String name;
+  PlayState state;
+
+  PlayRequest(this.playSize, this.playMode, this.playOpener, this.name, this.state) {
+    playId = generateRandomString(8);
+  }
+}
+
 @JsonSerializable()
 class Play {
 
@@ -55,6 +78,7 @@ class Play {
 
   bool multiPlay = false;
   PlayState state = PlayState.Initialised;
+  CommunicationContext _commContext = CommunicationContext();
   
   late int _currentRound;
   late Role _currentRole;
@@ -83,6 +107,15 @@ class Play {
     id = generateRandomString(8);
     _init();
   }
+
+  Play.fromRequest(this._dimension, this._chaosPlayer, this._orderPlayer, PlayRequest playRequest) {
+    id = playRequest.playId;
+    name = playRequest.name;
+    state = playRequest.state;
+    commContext.previousSignature = playRequest.commContext.previousSignature;
+    multiPlay = true;
+  }
+
 
   // initialises the play to get started
   void _init() {
@@ -117,6 +150,10 @@ class Play {
     id = map['id'];
     multiPlay = map['multiPlay'];
     state = PlayState.values.firstWhere((p) => p.name == map['state']);
+
+    final previousSignature = map['previousSignature'];
+    _commContext.previousSignature = previousSignature;
+
     _dimension = map['dimension'];
     _currentRound = map['currentRound'];
     _currentRole = Role.values.firstWhere((p) => p.name == map['currentRole']);
@@ -170,6 +207,7 @@ class Play {
     "id" : id,
     "state" : state.name,
     "multiPlay" : multiPlay,
+    "previousSignature" : _commContext.previousSignature,
     "dimension" : _dimension,
     "currentRound" : _currentRound,
     "currentRole" : _currentRole.name,
@@ -335,6 +373,8 @@ class Play {
   AiConfig get aiConfig => _aiConfig;
 
   GameChip? get currentChip => _currentChip;
+  CommunicationContext get commContext => _commContext;
+
   GameChip? nextChip() {
     _currentChip = _stock.drawNext();
     return currentChip;
@@ -425,6 +465,7 @@ class Play {
   String getReadablePlayId() {
     return toReadableId(id);
   }
+
 
 
 }

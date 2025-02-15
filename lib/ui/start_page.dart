@@ -60,9 +60,10 @@ class _StartPageState extends State<StartPage>
     _controller.repeat(reverse: true);
 
 
-    _loadOrInitUser().then((user) => setState(() {
-      _user = user;
-    }));
+    _loadOrInitUser().then((user) =>
+        setState(() {
+          _user = user;
+        }));
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
       //TODO load correct play and forward to game ground
@@ -87,7 +88,10 @@ class _StartPageState extends State<StartPage>
 
   Widget _buildStartPage(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surface,
+      color: Theme
+          .of(context)
+          .colorScheme
+          .surface,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 48, 24, 12),
         child: Column(
@@ -107,101 +111,121 @@ class _StartPageState extends State<StartPage>
                 _buildCell("Single Play", 0,
                     isMain: true,
                     icon: Icons.person,
-                    clickHandler: () => setState(
-                                () => _menuMode = _menuMode == MenuMode.SinglePlay
-                                    ? MenuMode.None
-                                    : MenuMode.SinglePlay)
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.SinglePlay
+                                ? MenuMode.None
+                                : MenuMode.SinglePlay)
                 ),
 
                 _menuMode == MenuMode.SinglePlay
                     ? _buildCell("New Game", 0,
                     icon: CupertinoIcons.game_controller,
                     clickHandler: () async {
-                        if (context.mounted) {
-
-                          final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
-                          confirmOrDo(json != null, 'Starting a new game will delete an ongoing game.', () {
-                            _selectPlayerGroundSize(context, (dimension) =>
-                                _selectSinglePlayerMode(context, (chaosPlayer, orderPlayer) =>
-                                    _startGame(context, chaosPlayer, orderPlayer, dimension, false)));
-                          });
-                        }
+                      if (context.mounted) {
+                        final json = await PreferenceService().getString(
+                            PreferenceService.DATA_CURRENT_PLAY);
+                        confirmOrDo(json != null,
+                            'Starting a new game will delete an ongoing game.', () {
+                              _selectPlayerGroundSize(context, (dimension) =>
+                                  _selectSinglePlayerMode(
+                                      context, (chaosPlayer, orderPlayer) =>
+                                      _startGame(
+                                          context, chaosPlayer, orderPlayer,
+                                          dimension, false)));
+                            });
+                      }
                     }
                 )
                     : _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Send Invite", 3, icon: Icons.near_me,
-                        clickHandler: () async {
-                          if (context.mounted) {
-
-                            _selectPlayerGroundSize(context, (dimension) =>
-                                _selectMultiPlayerMode(context, (playerMode) =>
-                                    _selectMultiPlayerOpener(context, (playerOpener) => 
-                                      _startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension, true))));
-                          }
-                        }
-                       )
+                    clickHandler: () async {
+                      if (context.mounted) {
+                        _selectPlayerGroundSize(context, (dimension) =>
+                            _selectMultiPlayerMode(context, (playerMode) =>
+                                _selectMultiPlayerOpener(
+                                    context, (playerOpener) =>
+                                    _inputUserName(context, (username) =>
+                                        _inviteOpponent(
+                                            context, dimension, playerMode,
+                                            playerOpener, username)))));
+                        //_startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension, true))));
+                      }
+                    }
+                )
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.SinglePlay
                     ? _buildCell("Resume", 0,
-                  icon: Icons.not_started_outlined,
-                  clickHandler: () async {
-                    final play = await _loadPlay();
-                    if (play != null) {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return HyleXGround.load(_user, play, false);
-                          }));
+                    icon: Icons.not_started_outlined,
+                    clickHandler: () async {
+                      final play = await _loadPlay();
+                      if (play != null) {
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                              return HyleXGround.load(_user, play, false);
+                            }));
+                      }
+                      else {
+                        buildAlertDialog(NotifyType.error,
+                            'No ongoing single play to resume.');
+                      }
                     }
-                    else {
-                      buildAlertDialog(NotifyType.error, 'No ongoing single play to resume.');
-                    }
-                  }
                 )
                     : _buildEmptyCell(),
 
                 _buildCell("Multiplayer", 2,
                     isMain: true,
                     icon: Icons.group,
-                    clickHandler: () => setState(
-                          () => _menuMode = _menuMode == MenuMode.Multiplayer
-                          ? MenuMode.None
-                          : MenuMode.Multiplayer)
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.Multiplayer
+                                ? MenuMode.None
+                                : MenuMode.Multiplayer)
                 ),
 
-                _menuMode == MenuMode.Multiplayer || _menuMode == MenuMode.MultiplayerNew
+                _menuMode == MenuMode.Multiplayer ||
+                    _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("New Match", 3,
                     icon: Icons.sports_score,
-                    clickHandler: () => setState(
-                            () => _menuMode = _menuMode == MenuMode.MultiplayerNew
-                            ? MenuMode.Multiplayer
-                            : MenuMode.MultiplayerNew))
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.MultiplayerNew
+                                ? MenuMode.Multiplayer
+                                : MenuMode.MultiplayerNew))
                     : _buildEmptyCell(),
 
-                _menuMode == MenuMode.Multiplayer || _menuMode == MenuMode.MultiplayerNew
+                _menuMode == MenuMode.Multiplayer ||
+                    _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Continue Match", 4,
                   icon: Icons.sports_tennis,
                 )
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.More
-                    ? _buildCell("How to Play", 1, icon: CupertinoIcons.question_circle_fill)
+                    ? _buildCell(
+                    "How to Play", 1, icon: CupertinoIcons.question_circle_fill)
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2)
                     : _menuMode == MenuMode.More
-                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard, clickHandler: () => _buildAchievementDialog())
+                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard,
+                    clickHandler: () => _buildAchievementDialog())
                     : _buildEmptyCell(),
 
                 _buildCell("More", 1,
-                  isMain: true,
-                    clickHandler: () => setState(
-                            () => _menuMode = _menuMode == MenuMode.More
-                            ? MenuMode.None
-                            : MenuMode.More)
+                    isMain: true,
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.More
+                                ? MenuMode.None
+                                : MenuMode.More)
                 ),
-
 
 
               ],
@@ -217,14 +241,14 @@ class _StartPageState extends State<StartPage>
 
                   IconButton(onPressed: () {
                     ask('Quit the app?', () {
-                          SystemNavigator.pop();
+                      SystemNavigator.pop();
                     });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
 
                   IconButton(onPressed: () {
 
                   }, icon: const Icon(Icons.info_outline)),
-            ]),
+                ]),
           ],
         ),
       ),
@@ -237,13 +261,18 @@ class _StartPageState extends State<StartPage>
     super.dispose();
   }
 
-  void _selectPlayerGroundSize(BuildContext context, Function(int) handleChosenDimension) {
-    _showDimensionChooser(context, (dimension) => handleChosenDimension(dimension));
+  void _selectPlayerGroundSize(BuildContext context,
+      Function(int) handleChosenDimension) {
+    _showDimensionChooser(
+        context, (dimension) => handleChosenDimension(dimension));
   }
 
   void _showDimensionChooser(BuildContext context,
       Function(int) handleChosenDimension) {
-    buildChoiceDialog(330, 220, 'Which ground size?',
+    buildChoiceDialog(
+      330,
+      220,
+      'Which ground size?',
       "5 x 5", () => handleChosenDimension(5),
       "7 x 7", () => handleChosenDimension(7),
       "9 x 9", () => handleChosenDimension(9),
@@ -255,59 +284,94 @@ class _StartPageState extends State<StartPage>
   Widget _buildCell(String label, int colorIdx,
       {Function()? clickHandler, IconData? icon, bool isMain = false}) {
     return GestureDetector(
-                onTap: clickHandler ?? () {
-                  buildAlertDialog(NotifyType.error, 'Not yet implemented!');
-                },
-                child: _buildChip(label, 80, isMain ? 15: 13, 5, colorIdx, icon),
-              );
+      onTap: clickHandler ?? () {
+        buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+      },
+      child: _buildChip(label, 80, isMain ? 15 : 13, 5, colorIdx, icon),
+    );
   }
 
   Container _buildEmptyCell() {
     return Container(
-                decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(), left: BorderSide())
-                ),
-              );
+      decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(), left: BorderSide())
+      ),
+    );
   }
 
-  void _selectSinglePlayerMode(BuildContext context, Function(PlayerType, PlayerType) handleChosenPlayers) {
+  void _selectSinglePlayerMode(BuildContext context,
+      Function(PlayerType, PlayerType) handleChosenPlayers) {
     SmartDialog.dismiss();
-    buildChoiceDialog(280, 220, 'Which role you will take?',
+    buildChoiceDialog(
+      280,
+      220,
+      'Which role you will take?',
       "ORDER", () => handleChosenPlayers(PlayerType.Ai, PlayerType.User),
       "CHAOS", () => handleChosenPlayers(PlayerType.User, PlayerType.Ai),
       "BOTH", () => handleChosenPlayers(PlayerType.User, PlayerType.User),
       "NONE", () => handleChosenPlayers(PlayerType.Ai, PlayerType.Ai),
     );
   }
-  
-  void _selectMultiPlayerOpener(BuildContext context, Function(PlayOpener) handlePlayOpener) {
+
+  void _selectMultiPlayerOpener(BuildContext context,
+      Function(PlayOpener) handlePlayOpener) {
     SmartDialog.dismiss();
-    buildChoiceDialog(280, 220, 'Which role you will take?',
+    buildChoiceDialog(
+      280,
+      220,
+      'Which role you will take?',
       "ORDER", () => handlePlayOpener(PlayOpener.invitedPlayer),
       "CHAOS", () => handlePlayOpener(PlayOpener.invitingPlayer),
-      "INVITED DECIDES", () => handlePlayOpener(PlayOpener.invitedPlayerChooses),
+      "INVITED DECIDES", () =>
+        handlePlayOpener(PlayOpener.invitedPlayerChooses),
     );
   }
-  
-  void _selectMultiPlayerMode(BuildContext context, Function(PlayMode) handlePlayerMode) {
+
+  void _selectMultiPlayerMode(BuildContext context,
+      Function(PlayMode) handlePlayerMode) {
     SmartDialog.dismiss();
-    buildChoiceDialog(280, 220, 'What kind of game fo you want to play? ',
+    buildChoiceDialog(
+      280,
+      220,
+      'What kind of game fo you want to play? ',
       "NORMAL", () => handlePlayerMode(PlayMode.normal),
       "CLASSIC", () => handlePlayerMode(PlayMode.classic),
     );
   }
 
-  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer, PlayerType orderPlayer, int dimension, bool isMultiPlayer) async {
+  void _inputUserName(BuildContext context, Function(String) handleUsername) {
+    SmartDialog.dismiss();
+    buildInputDialog(200, 280, 'What\'s your name?',
+            (name) => handleUsername(name),
+            () => {}
+    );
+  }
+
+  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer,
+      PlayerType orderPlayer, int dimension, bool isMultiPlayer) async {
     SmartDialog.dismiss();
 
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-      return HyleXGround(_user, chaosPlayer, orderPlayer, dimension, isMultiPlayer);
-    }));
+          return HyleXGround(
+              _user, chaosPlayer, orderPlayer, dimension, isMultiPlayer);
+        }));
   }
 
+  _inviteOpponent(BuildContext context, int dimension,
+      PlayMode playMode, PlayOpener playOpener, String username) {
+    SmartDialog.dismiss();
+
+    final playSize = dimensionToPlaySize(dimension);
+    final playRequest = PlayRequest(playSize, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
+    //TODO store playRequest to be shown with other multiPlayer plays in a new "Match"-screen
+    final inviteMessage = SendInviteMessage(playRequest.playId, playSize, playMode, playOpener, username);
+    final message = BitsService().sendMessage(inviteMessage, playRequest.commContext);
+    Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation');
+
+  }
 
   Widget _buildChip(String label, double radius, double textSize,
       double padding, int colorIdx, [IconData? icon]) {
@@ -600,4 +664,5 @@ class _StartPageState extends State<StartPage>
       ),
     );
   }
+
 }

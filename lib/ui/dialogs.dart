@@ -127,3 +127,52 @@ void buildChoiceDialog(
   });
 }
 
+void buildInputDialog(
+    double height,
+    double width,
+    String text,
+    Function(String) okHandler,
+    Function() cancelHandler,
+    ) {
+  final controller = TextEditingController();
+  SmartDialog.show(builder: (_) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(18.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              text,
+              style: const TextStyle(color: Colors.white),
+            ),
+            TextField(
+              controller: controller,
+              style: TextStyle(color: Colors.lightGreenAccent),
+              cursorColor: Colors.lightGreen,
+            ),
+            OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.lightGreenAccent),
+                onPressed: () => okHandler(controller.text),
+                child: Text("OK")),
+            OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.lightGreenAccent),
+                onPressed: cancelHandler,
+                child: Text("CANCEL")),
+
+          ],
+        ),
+      ),
+    );
+  });
+}
+
