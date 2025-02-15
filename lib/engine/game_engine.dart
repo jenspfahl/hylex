@@ -27,6 +27,7 @@ abstract class GameEngine extends ChangeNotifier {
   double? get progressRatio;
 
   void startGame() {
+    _init();
     _doPlayerMove();
   }
   
@@ -39,7 +40,7 @@ abstract class GameEngine extends ChangeNotifier {
   }
 
   void nextPlayer() {
-
+    play.state = PlayState.Ongoing;
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
       _finish();
@@ -69,29 +70,47 @@ abstract class GameEngine extends ChangeNotifier {
   }
 
 
+  void _init();
+
   Role _finish() {
     final winner = play.finishGame();
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
       //TODO add match-achievements
       if (winner == Role.Order) {
         if (play.orderPlayer == PlayerType.User) {
+          play.state = PlayState.Won;
           user.achievements.incWonGame(Role.Order, play.dimension);
           user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
         }
         else if (play.chaosPlayer == PlayerType.User) {
+          play.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Chaos, play.dimension);
         }
       }
       else if (winner == Role.Chaos) {
         if (play.chaosPlayer == PlayerType.User) {
+          play.state = PlayState.Won;
           user.achievements.incWonGame(Role.Chaos, play.dimension);
           user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
         }
         else if (play.orderPlayer == PlayerType.User) {
+          play.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }
       _saveUser();
+    }
+    else if (play.multiPlay) {
+      if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.User)
+      || (winner == Role.Order && play.orderPlayer == PlayerType.User)) {
+        play.state = PlayState.Won;
+      }
+      else {
+        play.state = PlayState.Lost;
+      }
+    }
+    else {
+      play.state = PlayState.Closed;
     }
     
     _handleGameOver();
@@ -148,7 +167,13 @@ class SinglePlayerGameEngine extends GameEngine {
   SendPort? _aiControlPort;
 
   SinglePlayerGameEngine(Play play, User user): super(play, user);
-  
+
+  @override
+  void _init() {
+    play.multiPlay = false;
+    play.state = PlayState.Initialised;
+  }
+
   void _doPlayerMove() {
     if (play.currentPlayer == PlayerType.Ai) {
       _think();
@@ -194,7 +219,7 @@ class SinglePlayerGameEngine extends GameEngine {
   void _kill() {
     _aiControlPort?.send('KILL');
   }
-  
+
 }
 
 
@@ -202,7 +227,12 @@ class MultiPlayerGameEngine extends GameEngine {
 
 
   MultiPlayerGameEngine(Play play, User user): super(play, user);
-  
+
+  @override
+  void _init() {
+    play.multiPlay = true;
+    play.state = PlayState.Initialised;
+  }
 
   void _doPlayerMove() {
 
@@ -216,8 +246,8 @@ class MultiPlayerGameEngine extends GameEngine {
     final lastMove = play.lastMoveFromJournal;
     if (lastMove != null) {
       final message = BitsService().sendMove(play.id, play.currentRound, lastMove);
-
-      Share.share('Open this link with HyleX: ${message.toUrl()}', subject: 'HyleX interaction');
+      Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] Open this link with HyleX to receive opponent\'s move: ${message.toUrl()}', subject: 'HyleX interaction');
+      play.state = PlayState.RemoteOpponentInvited;
     }
   }
 
@@ -237,6 +267,11 @@ class MultiPlayerGameEngine extends GameEngine {
   @override
   double? get progressRatio => null;
 
-
+  @override
+  opponentMoveReceived(Move move) {
+    if (play.currentPlayer == PlayerType.RemoteUser) {
+      super.opponentMoveReceived(move);
+    }
+  }
 
 }

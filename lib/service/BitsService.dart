@@ -62,7 +62,7 @@ abstract class Message {
 
   Message(this.playId);
 
-  SerializedMessage serialize(SerializedMessage? receivedMessage) {
+  SerializedMessage serialize(String? receivedSignature) {
 
     final buffer = BitBuffer();
     final writer = buffer.writer();
@@ -72,7 +72,7 @@ abstract class Message {
     writeString(writer, playId, playIdLength);
     serializeToBuffer(writer);
 
-    final signature = _createUrlSafeSignature(buffer, receivedMessage?.signature);
+    final signature = _createUrlSafeSignature(buffer, receivedSignature);
     return SerializedMessage(
         buffer.toBase64().toUrlSafe(),
         signature
@@ -268,14 +268,18 @@ class BitsService {
 
   BitsService._internal() {}
 
-  SerializedMessage sendMove(String playId, int round, Move move) {
+  SerializedMessage sendMove(String playId, int round, Move move, CommunicationContext commContext) {
     final firstInvitingPlayerMoveMessage = MoveMessage(
       playId,
       round,
       move,
     );
 
-    return firstInvitingPlayerMoveMessage.serialize(null); //TODO last message here
+    return firstInvitingPlayerMoveMessage.serialize(commContext.previousSignature);
+  }
+
+  Message receiveMove(SerializedMessage serializedMoveMessage, CommunicationContext commContext) {
+    return serializedMoveMessage.deserialize(commContext);
   }
 }
 
@@ -320,7 +324,7 @@ void main() {
        Move.placed(GameChip(1), Coordinate(3, 5)),
    );
 
-   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serialize(serializedInvitationMessage), invitedContext);
+   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serialize(serializedInvitationMessage.signature), invitedContext);
 
 
    // receive accept invite
@@ -355,7 +359,7 @@ void main() {
        Move.moved(GameChip(1), Coordinate(3, 5), Coordinate(0, 5)),
    );
 
-   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serialize(serializedAcceptInviteMessage), invitingContext);
+   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serialize(serializedAcceptInviteMessage.signature), invitingContext);
 
    final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext) as MoveMessage;
 

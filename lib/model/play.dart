@@ -18,11 +18,43 @@ import 'matrix.dart';
 import 'move.dart';
 
 
+enum PlayState {
+
+  // Initial state
+  Initialised,
+
+  // only if multiPlay == true and current == inviting player, if an invitation has been sent out
+  RemoteOpponentInvited,
+
+  // only if multiPlay == true, when an invitation has been accepted by invited player
+  InvitationAccepted,
+
+  // only if multiPlay == true, when an invitation has been rejected by invited player
+  InvitationRejected, // final state
+
+  // Play is going on
+  Ongoing,
+
+  // current player lost. If both players on a single play are human, this is not used
+  Lost, // final state
+
+  // current player won. If both players on a single play are human, this is not used
+  Won, // final state
+
+  // current player resigned (and the remote opponent won therefore). If both players on a single play are human, this is not used
+  Resigned, // final state
+
+  // used if both players on a single play are human or any other final state like no invitation response etc..
+  Closed, // final state
+}
 
 @JsonSerializable()
 class Play {
 
   late String id;
+
+  bool multiPlay = false;
+  PlayState state = PlayState.Initialised;
   
   late int _currentRound;
   late Role _currentRole;
@@ -83,6 +115,8 @@ class Play {
   Play.fromJson(Map<String, dynamic> map) {
 
     id = map['id'];
+    multiPlay = map['multiPlay'];
+    state = PlayState.values.firstWhere((p) => p.name == map['state']);
     _dimension = map['dimension'];
     _currentRound = map['currentRound'];
     _currentRole = Role.values.firstWhere((p) => p.name == map['currentRole']);
@@ -134,6 +168,8 @@ class Play {
 
   Map<String, dynamic> toJson() => {
     "id" : id,
+    "state" : state.name,
+    "multiPlay" : multiPlay,
     "dimension" : _dimension,
     "currentRound" : _currentRound,
     "currentRole" : _currentRole.name,

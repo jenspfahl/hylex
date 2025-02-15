@@ -467,15 +467,20 @@ class _HyleXGroundState extends State<HyleXGround> {
             _showGameOver(context);
           }
         },
-        onLongPress: () {
-          if (gameEngine is MultiPlayerGameEngine) {
-            (gameEngine as MultiPlayerGameEngine).shareGameMove();
-          }
-        },
         child: Text(gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
             ? 'Skip move'
             : 'Submit move',
         style: TextStyle(fontWeight: isDirty ? FontWeight.bold : null)),
+      );
+    }
+    else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
+      return OutlinedButton(
+        onPressed: () {
+          if (gameEngine is MultiPlayerGameEngine) {
+            (gameEngine as MultiPlayerGameEngine).shareGameMove();
+          }
+        },
+        child: const Text("Share again"),
       );
     }
     return Container();
