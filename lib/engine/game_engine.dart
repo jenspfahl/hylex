@@ -252,7 +252,7 @@ class MultiPlayerGameEngine extends GameEngine {
   }
 
   @override
-  PrefDef get savePlayKey => PrefDef('data/play/${play.id}', null);
+  PrefDef get savePlayKey => PrefDef('${PreferenceService.DATA_PLAY_PREFIX}${play.id}', null);
 
   @override
   double? get progressRatio => null;

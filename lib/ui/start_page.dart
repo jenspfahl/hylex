@@ -397,13 +397,16 @@ class _StartPageState extends State<StartPage>
     StorageService().saveUser(_user);
 
     final playRequest = MultiPlayHeader(dimension, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
-    StorageService().savePlayHeader(playRequest.playId, playRequest);
-    //TODO store playRequest to be shown with other multiPlayer plays in a new "Match"-screen
 
     final inviteMessage = SendInviteMessage(playRequest.playId, dimensionToPlaySize(dimension), playMode, playOpener, username);
     final message = BitsService().sendMessage(inviteMessage, playRequest.commContext);
 
-    Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation');
+    Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation')
+    .then((result) {
+      if (result.status != ShareResultStatus.dismissed) {
+        StorageService().savePlayHeader(playRequest.playId, playRequest);
+      }
+    });
 
   }
 

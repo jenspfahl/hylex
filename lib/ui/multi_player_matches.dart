@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/achievements.dart';
+import 'package:hyle_x/service/StorageService.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../model/move.dart';
@@ -48,7 +49,18 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
-      home: Builder(builder: (context) {
+      home: FutureBuilder<List<MultiPlayHeader>>(
+          future: StorageService().loadAllPlayHeaders(),
+          builder: (BuildContext context, AsyncSnapshot<List<MultiPlayHeader>> snapshot) {
+            Widget widget;
+            if (snapshot.hasData) {
+              widget = Column(
+                children: snapshot.data!.map(_buildPlayLine).toList(),
+              );
+            }
+            else {
+              widget = Text("No multi player games");
+            }
         return Container(
               color: Theme
                   .of(context)
@@ -56,26 +68,20 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   .surface,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 48, 24, 12),
-                child: Column(
-
-                  children: [
-                    _buildPlayLine("Game 1"),
-                    _buildPlayLine("Game 3"),
-                  ],
-                ),
+                child: widget,
               ),
             );
       }),
     );
   }
 
-  Widget _buildPlayLine(String playId) {
+  Widget _buildPlayLine(MultiPlayHeader playHeader) {
     return Padding(
       padding: EdgeInsets.all(16),
       child: Card(
         child:  Row(
           children: [
-            Text(playId),
+            Text(playHeader.playId + " " + playHeader.name.toString() + playHeader.dimension.toString()),
             IconButton(onPressed: (){}, icon: Icon(Icons.delete))
           ],
         ),),

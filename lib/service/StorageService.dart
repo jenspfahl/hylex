@@ -43,7 +43,7 @@ class StorageService {
     final jsonToSave = jsonEncode(header);
     debugPrint(_getPrettyJSONString(header));
 
-    final key = PrefDef(playId, null);
+    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null);
     debugPrint("Save ${key.key} play header");
     PreferenceService().setString(key, jsonToSave);
   }
@@ -70,7 +70,7 @@ class StorageService {
   }
 
   Future<MultiPlayHeader?> loadPlayHeader(String playId) async {
-    final key = PrefDef(playId, null);
+    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null);
 
     final json = await PreferenceService().getString(key);
     if (json == null) return null;
@@ -79,6 +79,26 @@ class StorageService {
     final header = MultiPlayHeader.fromJson(map);
     debugPrint("Loaded header state: $header");
     return header;
+  }
+  Future<List<MultiPlayHeader>> loadAllPlayHeaders() async {
+
+    final keys = await PreferenceService().getKeys(PreferenceService.DATA_PLAY_HEADER_PREFIX);
+
+    final futures = keys
+        .map((key) => PrefDef(key, null))
+        .map((prefDef) => PreferenceService().getString(prefDef));
+
+    final values = await Future.wait(futures);
+
+    return values
+        .where((value) => value != null)
+        .map((json) {
+          final map = jsonDecode(json!);
+          return MultiPlayHeader.fromJson(map);
+        })
+        .toList();
+
+
   }
 
 
