@@ -8,6 +8,7 @@ import 'package:hyle_x/service/BitsService.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../service/PreferenceService.dart';
+import '../service/StorageService.dart';
 import '../ui/game_ground.dart';
 import '../utils.dart';
 import '../model/achievements.dart';
@@ -33,7 +34,7 @@ abstract class GameEngine extends ChangeNotifier {
     _cleanUp();
     play.reset();
     play.waitForOpponent = false;
-    savePlay();
+    savePlayState();
     notifyListeners();
   }
 
@@ -46,25 +47,21 @@ abstract class GameEngine extends ChangeNotifier {
     }
 
     play.nextPlayer();
-    savePlay();
+    savePlayState();
     notifyListeners();
 
     _doPlayerMove();
   }
   
   void pauseGame() {
-    savePlay();
+    savePlayState();
     _cleanUp();
   }
 
   bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
 
-  void savePlay() {
-    final jsonToSave = jsonEncode(play);
-    //debugPrint(getPrettyJSONString(game.play));
-    debugPrint("Save current play");
-    PreferenceService().setString(savePlayKey, jsonToSave);
-    
+  void savePlayState() {
+    StorageService().savePlay(savePlayKey, play);
   }
 
 
@@ -96,7 +93,7 @@ abstract class GameEngine extends ChangeNotifier {
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }
-      saveUser(user);
+      StorageService().saveUser(user);
     }
     else if (play.multiPlay) {
       if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.User)

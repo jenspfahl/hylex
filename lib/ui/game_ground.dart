@@ -72,7 +72,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
       if (event == FGBGType.background) {
-        gameEngine.savePlay();
+        gameEngine.savePlayState();
       }
     });
 
@@ -167,7 +167,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                           if (gameEngine.play.hasStaleMove) {
                             gameEngine.play.undoStaleMove();
                             gameEngine.play.selectionCursor.clear();
-                            gameEngine.savePlay();
+                            gameEngine.savePlayState();
                           }
                           else {
 
@@ -187,7 +187,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                     gameEngine.play.opponentCursor.adaptFromMove(moveBefore);
                                   }
 
-                                  gameEngine.savePlay();
+                                  gameEngine.savePlayState();
                                 }
                                 else {
                                   // beginning of game

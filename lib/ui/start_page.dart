@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/achievements.dart';
+import 'package:hyle_x/service/StorageService.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../model/move.dart';
@@ -60,7 +61,7 @@ class _StartPageState extends State<StartPage>
     _controller.repeat(reverse: true);
 
 
-    _loadUser().then((user) =>
+    StorageService().loadUser().then((user) =>
         setState(() {
           if (user != null) {
             _user = user;
@@ -166,7 +167,7 @@ class _StartPageState extends State<StartPage>
                     ? _buildCell("Resume", 0,
                     icon: Icons.not_started_outlined,
                     clickHandler: () async {
-                      final play = await _loadPlay();
+                      final play = await StorageService().loadPlay(PreferenceService.DATA_CURRENT_PLAY);
                       if (play != null) {
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -393,9 +394,10 @@ class _StartPageState extends State<StartPage>
     SmartDialog.dismiss();
 
     _user.name = username;
-    saveUser(_user);
+    StorageService().saveUser(_user);
 
     final playRequest = MultiPlayHeader(dimension, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
+    StorageService().savePlayHeader(playRequest.playId, playRequest);
     //TODO store playRequest to be shown with other multiPlayer plays in a new "Match"-screen
 
     final inviteMessage = SendInviteMessage(playRequest.playId, dimensionToPlaySize(dimension), playMode, playOpener, username);
@@ -463,26 +465,6 @@ class _StartPageState extends State<StartPage>
     ]);
   }
 
-  Future<User?> _loadUser() async {
-    final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_USER);
-    if (json == null) return null;
-
-    final map = jsonDecode(json);
-    final user = User.fromJson(map);
-    debugPrint("Loaded user: $user");
-    return user;
-  }
-
-  Future<Play?> _loadPlay() async {
-    final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
-    if (json == null) return null;
-
-    final map = jsonDecode(json);
-    final play = Play.fromJson(map);
-    debugPrint("Loaded play state: $play");
-    return play;
-  }
-
   _buildAchievementDialog() {
     SmartDialog.show(builder: (_) {
       List<Widget> children = [
@@ -525,7 +507,7 @@ class _StartPageState extends State<StartPage>
                 onPressed: () {
                   ask("Reset all stats to zero:", () {
                     _user.achievements.clearAll();
-                    saveUser(_user);
+                    StorageService().saveUser(_user);
                     SmartDialog.dismiss();
                     _buildAchievementDialog();
                   });

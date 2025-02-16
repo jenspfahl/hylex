@@ -54,7 +54,7 @@ enum PlayState {
 
 
 /**
- * This is a pre-object of Play is there is an ongoing invitation process.
+ * This is a brief Play for multi player plays.
  */
 @JsonSerializable()
 class MultiPlayHeader {
@@ -64,16 +64,44 @@ class MultiPlayHeader {
   PlayState state = PlayState.Initialised;
   CommunicationContext commContext = CommunicationContext();
 
-  int dimension;
+  late int dimension;
   int currentRound = 0;
   String? name;
 
-  PlayMode playMode;
-  PlayOpener playOpener;
+  late PlayMode playMode;
+  late PlayOpener playOpener;
 
   MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.name, this.state) {
     playId = generateRandomString(8);
   }
+
+  MultiPlayHeader.fromJson(Map<String, dynamic> map) {
+
+    playId = map['playId'];
+    state = PlayState.values.firstWhere((p) => p.name == map['state']);
+
+    final previousSignature = map['previousSignature'];
+    commContext.previousSignature = previousSignature;
+
+    dimension = map['dimension'];
+    currentRound = map['currentRound'];
+    name = map['name'];
+
+    playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
+    playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
+
+  }
+
+  Map<String, dynamic> toJson() => {
+    "playId" : playId,
+    "state" : state.name,
+    "previousSignature" : commContext.previousSignature,
+    "dimension" : dimension,
+    "currentRound" : currentRound,
+    "name" : name,
+    "playMode" : playMode.name,
+    "playOpener" : playOpener.name,
+  };
 }
 
 @JsonSerializable()
@@ -152,6 +180,13 @@ class Play {
 
     _chaosPlayer = PlayerType.values.firstWhere((p) => p.name == map['chaosPlayer']);
     _orderPlayer = PlayerType.values.firstWhere((p) => p.name == map['orderPlayer']);
+
+    _playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
+    if (multiPlay) {
+      _playOpener =
+          PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
+    }
+
 
     startDate = DateTime.parse(map['startDate']);
     final endDateKey = map['endDate'];
@@ -244,6 +279,8 @@ class Play {
     if (name != null) "name" : name,
     if (_staleMove != null) "staleMove" : _staleMove!.toJson(),
     'journal' : _journal.map((j) => j.toJson()).toList(),
+    "playMode" : _playMode.name,
+    "playOpener" : _playOpener?.name,
   };
 
 
