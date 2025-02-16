@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/model/achievements.dart';
-import 'package:hyle_x/service/BitsService.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -16,13 +15,10 @@ import '../engine/game_engine.dart';
 import '../model/chip.dart';
 import '../model/chip_extension.dart';
 import '../model/coordinate.dart';
-import '../model/cursor.dart';
-import '../model/matrix.dart';
 import '../model/move.dart';
 import '../model/play.dart';
 import '../model/spot.dart';
 import '../model/stock.dart';
-import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'Tooltips.dart';
 import 'dialogs.dart';
@@ -31,20 +27,9 @@ enum PlayerType {User, Ai, RemoteUser}
 
 class HyleXGround extends StatefulWidget {
   User user;
-  PlayerType chaosPlayer;
-  PlayerType orderPlayer;
-  int dimension;
-  Play? loadedPlay;
-  bool isMultiPlayer;
-  PlayRequest? _playRequest;
+  Play play;
 
-
-  HyleXGround(this.user, this.chaosPlayer, this.orderPlayer, this.dimension, this.isMultiPlayer, {super.key});
-
-  HyleXGround.load(this.user, Play play, this.isMultiPlayer, {super.key}) : chaosPlayer = play.chaosPlayer, orderPlayer = play.orderPlayer, dimension = play.dimension, loadedPlay = play;
-
-  HyleXGround.fromAcceptedRequest(this.user, this.chaosPlayer, this.orderPlayer, PlayRequest playRequest, {super.key})
-      : dimension = playSizeToDimension(playRequest.playSize), _playRequest = playRequest, isMultiPlayer = true;
+  HyleXGround(this.user, this.play, {super.key});
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -74,32 +59,15 @@ class _HyleXGroundState extends State<HyleXGround> {
     SmartDialog.dismiss(); // dismiss loading dialog
 
 
-    if (widget.isMultiPlayer) {
-      Play play;
-      final playRequest = widget._playRequest;
-      if (playRequest != null) {
-        play = Play.fromRequest(widget.dimension, widget.chaosPlayer, widget.orderPlayer, playRequest);
-        debugPrint("Game restored from saved play state");
-      }
-      else {
-        play = Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer);
-        debugPrint("New game created");
-      }
+    if (widget.play.multiPlay) {
       gameEngine = MultiPlayerGameEngine(
-          play,
+          widget.play,
           widget.user);
     }
     else {
-      if (widget.loadedPlay != null) {
-        gameEngine = SinglePlayerGameEngine(widget.loadedPlay!, widget.user);
-        debugPrint("Game restored from saved play state");
-      }
-      else {
-        gameEngine = SinglePlayerGameEngine(
-            Play(widget.dimension, widget.chaosPlayer, widget.orderPlayer),
-            widget.user);
-        debugPrint("New game created");
-      }
+      gameEngine = SinglePlayerGameEngine(
+          widget.play,
+          widget.user);
     }
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {

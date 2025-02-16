@@ -33,8 +33,11 @@ enum PlayState {
   // only if multiPlay == true, when an invitation has been rejected by invited player
   InvitationRejected, // final state
 
-  // Play is going on
-  Ongoing,
+  // Current player can move
+  ReadyToMove,
+
+  // Current play is waiting for remote opponent to move (either RemoteUser or Ai)
+  WaitForOpponent,
 
   // current player lost. If both players on a single play are human, this is not used
   Lost, // final state
@@ -54,19 +57,21 @@ enum PlayState {
  * This is a pre-object of Play is there is an ongoing invitation process.
  */
 @JsonSerializable()
-class PlayRequest {
+class MultiPlayHeader {
 
   late String playId;
 
+  PlayState state = PlayState.Initialised;
   CommunicationContext commContext = CommunicationContext();
 
-  PlaySize playSize;
+  int dimension;
+  int currentRound = 0;
+  String? name;
+
   PlayMode playMode;
   PlayOpener playOpener;
-  String name;
-  PlayState state;
 
-  PlayRequest(this.playSize, this.playMode, this.playOpener, this.name, this.state) {
+  MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.name, this.state) {
     playId = generateRandomString(8);
   }
 }
@@ -79,6 +84,9 @@ class Play {
   bool multiPlay = false;
   PlayState state = PlayState.Initialised;
   CommunicationContext _commContext = CommunicationContext();
+
+  PlayMode _playMode = PlayMode.normal;
+  PlayOpener? _playOpener = null;
   
   late int _currentRound;
   late Role _currentRole;
@@ -103,46 +111,20 @@ class Play {
 
   Move? _staleMove;
 
-  Play(this._dimension, this._chaosPlayer, this._orderPlayer) {
+  Play.singlePlay(this._dimension, this._chaosPlayer, this._orderPlayer) {
     id = generateRandomString(8);
     _init();
   }
 
-  Play.fromRequest(this._dimension, this._chaosPlayer, this._orderPlayer, PlayRequest playRequest) {
+  Play.multiPlay(this._chaosPlayer, this._orderPlayer, MultiPlayHeader playRequest) {
     id = playRequest.playId;
     name = playRequest.name;
     state = playRequest.state;
+    _dimension = playRequest.dimension;
+    _playMode = playRequest.playMode;
+    _playOpener = playRequest.playOpener;
     commContext.previousSignature = playRequest.commContext.previousSignature;
     multiPlay = true;
-  }
-
-
-  // initialises the play to get started
-  void _init() {
-
-    _currentRound = 1;
-    _currentRole = Role.Chaos;
-
-    _journal.clear();
-
-    _stats = Stats();
-    
-    var chips = HashMap<GameChip, int>();
-    for (int i = 0; i < dimension; i++) {
-      final chip = GameChip(i);
-      chips[chip] = dimension; // the stock per chip is the dimension value
-    }
-    
-    
-    _stock = Stock(chips);
-    nextChip();
-
-    _matrix = Matrix(Coordinate(dimension, dimension));
-    _selectionCursor = Cursor();
-    _opponentCursor = Cursor();
-    
-    _aiConfig = AiConfig();
-    _initAis(useDefaultParams: true);
   }
 
   Play.fromJson(Map<String, dynamic> map) {
@@ -191,6 +173,15 @@ class Play {
     _initAis(useDefaultParams: true);
   }
 
+  MultiPlayHeader? toMultiPlayHeader() {
+    if (multiPlay && _playOpener != null) {
+      return MultiPlayHeader(_dimension, _playMode, _playOpener!, name, state);
+    }
+    else {
+      return null;
+    }
+  }
+
   PlayerType get chaosPlayer => _chaosPlayer;
 
   PlayerType get orderPlayer => _orderPlayer;
@@ -201,6 +192,35 @@ class Play {
       return _orderPlayer;
     }
     return _chaosPlayer;
+  }
+
+
+  // initialises the play to get started
+  void _init() {
+
+    _currentRound = 1;
+    _currentRole = Role.Chaos;
+
+    _journal.clear();
+
+    _stats = Stats();
+
+    var chips = HashMap<GameChip, int>();
+    for (int i = 0; i < dimension; i++) {
+      final chip = GameChip(i);
+      chips[chip] = dimension; // the stock per chip is the dimension value
+    }
+
+
+    _stock = Stock(chips);
+    nextChip();
+
+    _matrix = Matrix(Coordinate(dimension, dimension));
+    _selectionCursor = Cursor();
+    _opponentCursor = Cursor();
+
+    _aiConfig = AiConfig();
+    _initAis(useDefaultParams: true);
   }
 
   Map<String, dynamic> toJson() => {
@@ -390,6 +410,14 @@ class Play {
     _currentRound--;
   }
 
+  bool get waitForOpponent => state == PlayState.WaitForOpponent;
+
+  set waitForOpponent(bool wait) {
+    if (wait) {
+      state = PlayState.WaitForOpponent;
+    } else
+      state = PlayState.ReadyToMove;
+  }
 
   bool isGameOver() {
     return !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace());

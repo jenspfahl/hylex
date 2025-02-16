@@ -131,10 +131,11 @@ void buildInputDialog(
     double height,
     double width,
     String text,
+    String? prefilledText,
     Function(String) okHandler,
     Function() cancelHandler,
     ) {
-  final controller = TextEditingController();
+  final controller = TextEditingController(text: prefilledText);
   SmartDialog.show(builder: (_) {
     return Container(
       height: height,

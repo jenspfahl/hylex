@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +17,7 @@ import '../service/PreferenceService.dart';
 import '../utils.dart';
 import 'dialogs.dart';
 import 'game_ground.dart';
+import 'multi_player_matches.dart';
 
 enum MenuMode {
   None,
@@ -42,7 +42,7 @@ class _StartPageState extends State<StartPage>
 
   MenuMode _menuMode = MenuMode.None;
 
-  late User _user;
+  User _user = User();
 
   late StreamSubscription<Uri> _uriLinkStreamSub;
 
@@ -60,9 +60,11 @@ class _StartPageState extends State<StartPage>
     _controller.repeat(reverse: true);
 
 
-    _loadOrInitUser().then((user) =>
+    _loadUser().then((user) =>
         setState(() {
-          _user = user;
+          if (user != null) {
+            _user = user;
+          }
         }));
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
@@ -102,6 +104,10 @@ class _StartPageState extends State<StartPage>
                 child: _buildGameLogo()
             ),
 
+            if (_user.name != null && _user.name!.isNotEmpty)
+              Text(
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
+                  "Hello ${_user.name!}!"),
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -131,9 +137,9 @@ class _StartPageState extends State<StartPage>
                               _selectPlayerGroundSize(context, (dimension) =>
                                   _selectSinglePlayerMode(
                                       context, (chaosPlayer, orderPlayer) =>
-                                      _startGame(
+                                      _startSinglePlayerGame(
                                           context, chaosPlayer, orderPlayer,
-                                          dimension, false)));
+                                          dimension)));
                             });
                       }
                     }
@@ -164,7 +170,7 @@ class _StartPageState extends State<StartPage>
                       if (play != null) {
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
-                              return HyleXGround.load(_user, play, false);
+                              return HyleXGround(_user, play);
                             }));
                       }
                       else {
@@ -202,6 +208,12 @@ class _StartPageState extends State<StartPage>
                     _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Continue Match", 4,
                   icon: Icons.sports_tennis,
+                  clickHandler: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return MultiPlayerMatches(_user);
+                        }));
+                  }
                 )
                     : _buildEmptyCell(),
 
@@ -342,13 +354,14 @@ class _StartPageState extends State<StartPage>
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
     SmartDialog.dismiss();
     buildInputDialog(200, 280, 'What\'s your name?',
+            _user.name,
             (name) => handleUsername(name),
-            () => {}
+            () => SmartDialog.dismiss(),
     );
   }
 
-  Future<void> _startGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, int dimension, bool isMultiPlayer) async {
+  Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
+      PlayerType orderPlayer, int dimension) async {
     SmartDialog.dismiss();
 
     SmartDialog.showLoading(msg: "Loading game ...");
@@ -356,7 +369,22 @@ class _StartPageState extends State<StartPage>
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
-              _user, chaosPlayer, orderPlayer, dimension, isMultiPlayer);
+              _user,
+              Play.singlePlay(dimension, chaosPlayer, orderPlayer));
+        }));
+  }
+
+  Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
+      PlayerType orderPlayer, int dimension, MultiPlayHeader multiPlayHeader) async {
+    SmartDialog.dismiss();
+
+    SmartDialog.showLoading(msg: "Loading game ...");
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return HyleXGround(
+              _user,
+              Play.multiPlay(chaosPlayer, orderPlayer, multiPlayHeader));
         }));
   }
 
@@ -364,11 +392,15 @@ class _StartPageState extends State<StartPage>
       PlayMode playMode, PlayOpener playOpener, String username) {
     SmartDialog.dismiss();
 
-    final playSize = dimensionToPlaySize(dimension);
-    final playRequest = PlayRequest(playSize, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
+    _user.name = username;
+    saveUser(_user);
+
+    final playRequest = MultiPlayHeader(dimension, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
     //TODO store playRequest to be shown with other multiPlayer plays in a new "Match"-screen
-    final inviteMessage = SendInviteMessage(playRequest.playId, playSize, playMode, playOpener, username);
+
+    final inviteMessage = SendInviteMessage(playRequest.playId, dimensionToPlaySize(dimension), playMode, playOpener, username);
     final message = BitsService().sendMessage(inviteMessage, playRequest.commContext);
+
     Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation');
 
   }
@@ -431,9 +463,9 @@ class _StartPageState extends State<StartPage>
     ]);
   }
 
-  Future<User> _loadOrInitUser() async {
+  Future<User?> _loadUser() async {
     final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_USER);
-    if (json == null) return User();
+    if (json == null) return null;
 
     final map = jsonDecode(json);
     final user = User.fromJson(map);
@@ -493,7 +525,7 @@ class _StartPageState extends State<StartPage>
                 onPressed: () {
                   ask("Reset all stats to zero:", () {
                     _user.achievements.clearAll();
-                    //TODO _saveUser();
+                    saveUser(_user);
                     SmartDialog.dismiss();
                     _buildAchievementDialog();
                   });

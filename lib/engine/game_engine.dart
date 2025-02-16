@@ -19,8 +19,6 @@ abstract class GameEngine extends ChangeNotifier {
   User user;
   Play play;
 
-  bool waitForOpponent = false;
-
   GameEngine(this.play, this.user);
 
   PrefDef get savePlayKey;
@@ -34,13 +32,13 @@ abstract class GameEngine extends ChangeNotifier {
   void stopGame() {
     _cleanUp();
     play.reset();
-    waitForOpponent = false;
+    play.waitForOpponent = false;
     savePlay();
     notifyListeners();
   }
 
   void nextPlayer() {
-    play.state = PlayState.Ongoing;
+    play.state = PlayState.ReadyToMove;
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
       _finish();
@@ -59,7 +57,7 @@ abstract class GameEngine extends ChangeNotifier {
     _cleanUp();
   }
 
-  bool isBoardLocked() => waitForOpponent || play.isGameOver();
+  bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
 
   void savePlay() {
     final jsonToSave = jsonEncode(play);
@@ -98,7 +96,7 @@ abstract class GameEngine extends ChangeNotifier {
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }
-      _saveUser();
+      saveUser(user);
     }
     else if (play.multiPlay) {
       if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.User)
@@ -118,14 +116,6 @@ abstract class GameEngine extends ChangeNotifier {
     return winner;
   }
 
-  void _saveUser() {
-    final jsonToSave = jsonEncode(user);
-    debugPrint(getPrettyJSONString(user));
-    debugPrint("Save current user");
-    PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
-  }
-
-
   void _doPlayerMove();
 
   /**
@@ -133,7 +123,7 @@ abstract class GameEngine extends ChangeNotifier {
    */
   opponentMoveReceived(Move move) {
     debugPrint("opponent move received");
-    waitForOpponent = false;
+    play.waitForOpponent = false;
 
     play.applyStaleMove(move);
     play.opponentCursor.adaptFromMove(move);
@@ -198,7 +188,7 @@ class SinglePlayerGameEngine extends GameEngine {
 
 
   void _think() {
-    waitForOpponent = true;
+    play.waitForOpponent = true;
     aiLoad = null;
     notifyListeners();
 
@@ -238,7 +228,7 @@ class MultiPlayerGameEngine extends GameEngine {
 
     if (play.currentPlayer == PlayerType.RemoteUser) {
       shareGameMove();
-      waitForOpponent = true;
+      play.waitForOpponent = true;
     }
   }
 
