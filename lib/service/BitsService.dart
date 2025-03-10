@@ -250,13 +250,41 @@ class SerializedMessage {
   String signature;
 
   SerializedMessage(this.payload, this.signature);
+  SerializedMessage.fromUrl(Uri uri): this(uri.pathSegments[0], uri.pathSegments[1]);
 
+  String extractPlayId() {
+
+    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+    final reader = buffer.reader();
+
+    readEnum(reader, Operation.values);
+    return readString(reader);
+  }
+  
+  Operation extractOperation() {
+
+    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+    final reader = buffer.reader();
+
+    return readEnum(reader, Operation.values);
+  }
 
   Message deserialize(CommunicationContext comContext) {
+    return _deserializeAndValidate(comContext);
+  }
+
+  Message deserializeWithoutValidation() {
+    return _deserializeAndValidate(null);
+  }
+  
+  Message _deserializeAndValidate(CommunicationContext? comContext) {
 
     final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
-    validateSignature(buffer.getLongs(), comContext.previousSignature, signature);
+    if (comContext != null) {
+      validateSignature(
+          buffer.getLongs(), comContext.previousSignature, signature);
+    }
 
     final reader = buffer.reader();
 
@@ -292,8 +320,8 @@ class BitsService {
     return message.serialize(commContext.previousSignature);
   }
 
-  Message receiveMessage(SerializedMessage serializedMoveMessage, CommunicationContext commContext) {
-    return serializedMoveMessage.deserialize(commContext);
+  Message receiveMessage(SerializedMessage serializedMessage, CommunicationContext commContext) {
+    return serializedMessage.deserialize(commContext);
   }
 }
 

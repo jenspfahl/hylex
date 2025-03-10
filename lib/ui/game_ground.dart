@@ -81,7 +81,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     gameEngine.startGame();
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
-      gameEngine.opponentMoveReceived(Move.skipped());
+      //gameEngine.opponentMoveReceived(Move.skipped());
 
     });
   }

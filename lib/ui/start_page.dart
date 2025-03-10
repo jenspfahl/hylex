@@ -70,7 +70,43 @@ class _StartPageState extends State<StartPage>
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
       //TODO load correct play and forward to game ground
-      //buildAlertDialog(NotifyType.warning, "$uri  + ${uri.queryParameters}");
+
+      if (uri.pathSegments.length == 2) {
+        final serializedMessage = SerializedMessage.fromUrl(uri);
+        final playId = serializedMessage.extractPlayId();
+        StorageService().loadPlayHeader(playId).then((header) {
+          SmartDialog.dismiss();
+          if (header != null) {
+            buildChoiceDialog(
+                150,
+                180,
+                "Play $playId opponent response: " + header.toString(),
+                "YES", () {
+              SmartDialog.dismiss();
+            },
+                "NO", () {
+              SmartDialog.dismiss();
+            });
+          }
+          else if (serializedMessage.extractOperation() == Operation.sendInvite) {
+            final sendInviteMessage = serializedMessage.deserializeWithoutValidation() as SendInviteMessage;
+            buildChoiceDialog(
+                200,
+                280,
+                "${sendInviteMessage.invitingPlayerName} invited you to a game with size ${sendInviteMessage.playSize}. Accept?",
+                "YES", () {
+              SmartDialog.dismiss();
+            },
+                "NO", () {
+              SmartDialog.dismiss();
+            });
+          }
+        });
+      }
+      else {
+        debugPrint("invalid uri: $uri");
+        buildAlertDialog(NotifyType.alert, "I cannot open this url :/");
+      }
     });
   }
 

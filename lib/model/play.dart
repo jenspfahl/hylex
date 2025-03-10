@@ -102,6 +102,11 @@ class MultiPlayHeader {
     "playMode" : playMode.name,
     "playOpener" : playOpener.name,
   };
+
+  @override
+  String toString() {
+    return 'MultiPlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $name, playMode: $playMode, playOpener: $playOpener}';
+  }
 }
 
 @JsonSerializable()
