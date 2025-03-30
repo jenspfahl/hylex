@@ -516,7 +516,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         : _orderChipTooltip;
     final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
     final tooltipPostfix = player == PlayerType.User ?  "You" : player == PlayerType.Ai ? "Computer" : "Remote opponent";
-    final secondLine = role == Role.Chaos ? "\nUnordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
+    final secondLine = role == Role.Chaos ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
     return SuperTooltip(
       controller: Tooltips().controlTooltip(tooltipKey),
       onShow: () => Tooltips().hideTooltipLater(tooltipKey),

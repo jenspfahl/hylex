@@ -153,8 +153,9 @@ class MinimaxStrategy extends Strategy {
     if (currentChip == null) {
       return value;
     }
-    
-    var gainedPatternPoints = _getValueByPatterns(currentChip, move.from, spotTo);
+
+    final moveFrom = move.from != null ? play.matrix.getSpot(move.from!) : null;
+    var gainedPatternPoints = _getValueByPatterns(currentChip, moveFrom, spotTo);
     //if (gainedPatternPoints > 0) debugPrint("AI: to: $spotTo --> increased by $gainedPatternPoints");
 
     value += gainedPatternPoints;
@@ -171,59 +172,61 @@ class MinimaxStrategy extends Strategy {
     return value;
   }
 
-  num _getValueByPatterns(GameChip currentChip, Coordinate? from, Spot moveTarget) {
+  num _getValueByPatterns(GameChip currentChip, Spot? moveFrom, Spot moveTo) { //TODO why from nullable???
     num value = 0;
     //top
-    if (_isSecondNeighborTheSame(Direction.North, currentChip, from, moveTarget)) {
+    if (_isSecondNeighborTheSame(Direction.North, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //bottom
-    if (_isSecondNeighborTheSame(Direction.South, currentChip, from, moveTarget)) {
+    if (_isSecondNeighborTheSame(Direction.South, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //left
-    if (_isSecondNeighborTheSame(Direction.West, currentChip, from, moveTarget)) {
+    if (_isSecondNeighborTheSame(Direction.West, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     //right
-    if (_isSecondNeighborTheSame(Direction.East, currentChip, from, moveTarget)) {
+    if (_isSecondNeighborTheSame(Direction.East, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_1;
     }
     
     // one more possible palindrome
     //top
-    if (_isFourthNeighborTheSame(Direction.North, currentChip, from, moveTarget)) {
+    if (_isFourthNeighborTheSame(Direction.North, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //bottom
-    if (_isFourthNeighborTheSame(Direction.South, currentChip, from, moveTarget)) {
+    if (_isFourthNeighborTheSame(Direction.South, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //left
-    if (_isFourthNeighborTheSame(Direction.West, currentChip, from, moveTarget)) {
+    if (_isFourthNeighborTheSame(Direction.West, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     //right
-    if (_isFourthNeighborTheSame(Direction.East, currentChip, from, moveTarget)) {
+    if (_isFourthNeighborTheSame(Direction.East, currentChip, moveFrom, moveTo)) {
       value += POSSIBLE_PALINDROME_REWARD_2;
     }
     
     // prefer to place at edges
-    //top
-    if (_isDirectAtEdge(Direction.North, from, moveTarget)) {
-      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
-    }
-    //bottom
-    if (_isDirectAtEdge(Direction.South, from, moveTarget)) {
-      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
-    }
-    //left
-    if (_isDirectAtEdge(Direction.West, from, moveTarget)) {
-      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
-    }
-    //right
-    if (_isDirectAtEdge(Direction.East, from, moveTarget)) {
-      value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+    if (moveFrom != null && !_isInCorner(moveFrom)) {
+      //top
+      if (_isDirectAtEdge(Direction.North, moveTo)) {
+        value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+      }
+      //bottom
+      if (_isDirectAtEdge(Direction.South, moveTo)) {
+        value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+      }
+      //left
+      if (_isDirectAtEdge(Direction.West, moveTo)) {
+        value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+      }
+      //right
+      if (_isDirectAtEdge(Direction.East, moveTo)) {
+        value += POSSIBLE_PALINDROME_REWARD_AT_EDGE;
+      }
     }
     return value;
   }
@@ -432,20 +435,32 @@ class MinimaxStrategy extends Strategy {
 
   Role _oppositeRole(Role role) => role == Role.Order ? Role.Chaos : Role.Order;
 
-  bool _isDirectAtEdge(Direction direction, Coordinate? from, Spot moveTarget) {
-    var fromNeighbor = from?.getNeighbor(direction);
+  bool _isInCorner(Spot from) {
+    var northNeighbor = from.getNeighbor(Direction.North);
+    var southNeighbor = from.getNeighbor(Direction.South);
+    var eastNeighbor = from.getNeighbor(Direction.East);
+    var westNeighbor = from.getNeighbor(Direction.West);
+
+    return (northNeighbor == null && eastNeighbor == null)
+        || (northNeighbor == null && westNeighbor == null)
+        || (southNeighbor == null && eastNeighbor == null)
+        || (southNeighbor == null && westNeighbor == null);
+
+  }
+
+  bool _isDirectAtEdge(Direction direction, Spot moveTarget) {
     var neighbor = moveTarget.getNeighbor(direction);
-    return fromNeighbor != null && neighbor == null;
+    return neighbor == null;
   }
 
-  bool _isSecondNeighborTheSame(Direction direction, GameChip chip, Coordinate? from, Spot moveTarget) {
+  bool _isSecondNeighborTheSame(Direction direction, GameChip chip, Spot? from, Spot moveTarget) {
     var neighbor = moveTarget.getNeighbor(direction)?.getNeighbor(direction);
-    return neighbor?.where != from && neighbor?.content == chip;
+    return neighbor?.where != from?.where && neighbor?.content == chip;
   }
 
-  bool _isFourthNeighborTheSame(Direction direction, GameChip chip, Coordinate? from, Spot moveTarget) {
+  bool _isFourthNeighborTheSame(Direction direction, GameChip chip, Spot? from, Spot moveTarget) {
     var neighbor = moveTarget.getNeighbor(direction)?.getNeighbor(direction)?.getNeighbor(direction)?.getNeighbor(direction);
-    return neighbor?.where != from && neighbor?.content == chip;
+    return neighbor?.where != from?.where && neighbor?.content == chip;
   }
 }
 
