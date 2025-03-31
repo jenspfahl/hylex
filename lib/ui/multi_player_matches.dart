@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../model/move.dart';
 import '../model/play.dart';
+import '../model/user.dart';
 import '../service/BitsService.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';

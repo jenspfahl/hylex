@@ -13,6 +13,7 @@ const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- '
 const maxDimension = 13;
 const maxRound = maxDimension * 2;
 const playIdLength = 8;
+const userIdLength = 16;
 const maxNameLength = 32;
 
 enum Operation {
@@ -115,15 +116,15 @@ class SendInviteMessage extends Message {
   PlaySize playSize;
   PlayMode playMode;
   PlayOpener playOpener;
+  String userId;
   String invitingPlayerName;
-  // String playerId; //TODO we need a globally unique player id to identify players
-
 
   SendInviteMessage(
       String playId,
       this.playSize,
       this.playMode,
       this.playOpener,
+      this.userId,
       this.invitingPlayerName,
       ): super(playId);
 
@@ -137,6 +138,7 @@ class SendInviteMessage extends Message {
       readEnum(reader, PlayMode.values),
       readEnum(reader, PlayOpener.values),
       readString(reader),
+      readString(reader),
     );
   }
 
@@ -145,6 +147,7 @@ class SendInviteMessage extends Message {
     writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlaySize.values, playSize);
     writeEnum(writer, PlayOpener.values, playOpener);
+    writeString(writer, userId, userIdLength);
     writeString(writer, invitingPlayerName, maxNameLength);
   }
 
@@ -154,13 +157,14 @@ class SendInviteMessage extends Message {
 
 class AcceptInviteMessage extends Message {
   PlayOpener playOpener;
+  String userId;
   String invitingPlayerName;
- // String playerId; //TODO we need a globally unique player id to identify players
   Move? initialMove;
 
   AcceptInviteMessage(
       String playId,
       this.playOpener,
+      this.userId,
       this.invitingPlayerName,
       this.initialMove,
       ): super(playId);
@@ -174,6 +178,7 @@ class AcceptInviteMessage extends Message {
       playId,
       playOpener,
       readString(reader),
+      readString(reader),
       playOpener == PlayOpener.invitedPlayer ? readMove(reader) : null,
     );
   }
@@ -182,6 +187,7 @@ class AcceptInviteMessage extends Message {
   void serializeToBuffer(BitBufferWriter writer) {
 
     writeEnum(writer, PlayOpener.values, playOpener);
+    writeString(writer, userId, userIdLength);
     writeString(writer, invitingPlayerName, maxNameLength);
     if (playOpener == PlayOpener.invitedPlayer) {
       writeMove(writer, initialMove!);
@@ -195,8 +201,11 @@ class AcceptInviteMessage extends Message {
 
 class RejectInviteMessage extends Message {
 
+  String userId;
+
   RejectInviteMessage(
       String playId,
+      this.userId,
       ): super(playId);
 
   factory RejectInviteMessage.deserialize(
@@ -205,11 +214,13 @@ class RejectInviteMessage extends Message {
 
     return RejectInviteMessage(
       playId,
+      readString(reader),
     );
   }
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
+    writeString(writer, userId, userIdLength);
   }
 
   @override
@@ -330,8 +341,10 @@ class BitsService {
 
 void main() {
 
+   final invitingUserId = generateRandomString(userIdLength);
+   final invitedUserId = generateRandomString(userIdLength);
    final playId = generateRandomString(playIdLength);
-  
+
    final invitingContext = CommunicationContext();
    final invitedContext = CommunicationContext();
 
@@ -344,6 +357,7 @@ void main() {
        PlaySize.d7,
        PlayMode.normal,
        PlayOpener.invitingPlayer,
+       invitingUserId,
        "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
    );
 
@@ -352,10 +366,11 @@ void main() {
 
    // receive invite
    final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as SendInviteMessage;
-   print("playId: ${toReadableId(deserializedInviteMessage.playId)}");
+   print("playId: ${deserializedInviteMessage.playId}");
    print("playSize: ${deserializedInviteMessage.playSize}");
    print("playMode: ${deserializedInviteMessage.playMode}");
    print("playOpener: ${deserializedInviteMessage.playOpener}");
+   print("userId: ${deserializedInviteMessage.userId}");
    print("invitingName: ${deserializedInviteMessage.invitingPlayerName}");
 
 
@@ -365,6 +380,7 @@ void main() {
    final acceptInviteMessage = AcceptInviteMessage(
        deserializedInviteMessage.playId,
        PlayOpener.invitedPlayer,
+       invitedUserId,
        "Remote opponents name",
        Move.placed(GameChip(1), Coordinate(3, 5)),
    );
@@ -377,6 +393,7 @@ void main() {
 
    print("playId: ${deserializedAcceptInviteMessage.playId}");
    print("playOpener: ${deserializedAcceptInviteMessage.playOpener}");
+   print("userId: ${deserializedAcceptInviteMessage.userId}");
    print("invitedName: ${deserializedAcceptInviteMessage.invitingPlayerName}");
    print("initialMove: ${deserializedAcceptInviteMessage.initialMove}");
 

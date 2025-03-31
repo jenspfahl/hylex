@@ -6,6 +6,7 @@ import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/BitsService.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../model/user.dart';
 import '../service/PreferenceService.dart';
 import '../service/StorageService.dart';
 import '../ui/game_ground.dart';

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../model/achievements.dart';
 import '../model/play.dart';
+import '../model/user.dart';
 import 'PreferenceService.dart';
 
 

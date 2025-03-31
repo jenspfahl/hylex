@@ -72,7 +72,7 @@ class MultiPlayHeader {
   late PlayOpener playOpener;
 
   MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.name, this.state) {
-    playId = generateRandomString(8);
+    playId = generateRandomString(playIdLength);
   }
 
   MultiPlayHeader.fromJson(Map<String, dynamic> map) {
@@ -145,7 +145,7 @@ class Play {
   Move? _staleMove;
 
   Play.singlePlay(this._dimension, this._chaosPlayer, this._orderPlayer) {
-    id = generateRandomString(8);
+    id = generateRandomString(playIdLength);
     _init();
   }
 

@@ -19,6 +19,7 @@ import '../model/move.dart';
 import '../model/play.dart';
 import '../model/spot.dart';
 import '../model/stock.dart';
+import '../model/user.dart';
 import '../utils.dart';
 import 'Tooltips.dart';
 import 'dialogs.dart';
@@ -602,7 +603,17 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     final spot = gameEngine.play.matrix.getSpot(where);
     final chip = spot.content;
-    final pointText = spot.point > 0 ? spot.point.toString() : "";
+    var pointText = spot.points > 0 ? spot.points.toString() : "";
+
+    if (_emphasiseAllChipsOfRole == Role.Chaos) {
+      if (chip != null && spot.points == 0) {
+        pointText = gameEngine.play.getPointsPerChip().toString();
+      }
+      else {
+        pointText = "";
+      }
+    }
+
 
     if (gameEngine.play.selectionCursor.end == where) {
       return DottedBorder(
@@ -706,7 +717,8 @@ class _HyleXGroundState extends State<HyleXGround> {
         ? chip.color.withOpacity(0.2)
         : chip.color;
   }
-
+  
+ 
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
     if (gameEngine.isBoardLocked()) {

@@ -1,27 +1,9 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'fortune.dart';
 import 'move.dart';
 
-
-class User {
-  late Achievements achievements;
-  String? name;
-
-  User() {
-    achievements = Achievements();
-  }
-
-  User.fromJson(Map<String, dynamic> map) {
-    name = map['name'];
-    achievements = Achievements.fromJson(map['achievements']!);
-  }
-
-  Map<String, dynamic> toJson() => {
-    if (name != null) "name" : name,
-    "achievements" : achievements.toJson(),
-  };
-}
 
 class Achievements {
   final Map<int, int> _wonOrderGames = HashMap(); // dimension, count

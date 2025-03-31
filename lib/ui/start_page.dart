@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../model/move.dart';
 import '../model/play.dart';
+import '../model/user.dart';
 import '../service/BitsService.dart';
 import '../service/PreferenceService.dart';
 import '../utils.dart';
@@ -434,7 +435,13 @@ class _StartPageState extends State<StartPage>
 
     final playRequest = MultiPlayHeader(dimension, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
 
-    final inviteMessage = SendInviteMessage(playRequest.playId, dimensionToPlaySize(dimension), playMode, playOpener, username);
+    final inviteMessage = SendInviteMessage(
+        playRequest.playId,
+        dimensionToPlaySize(dimension),
+        playMode,
+        playOpener,
+        _user.id,
+        username);
     final message = BitsService().sendMessage(inviteMessage, playRequest.commContext);
 
     Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation')

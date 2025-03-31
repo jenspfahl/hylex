@@ -15,7 +15,7 @@ class Spot {
 
   GameChip? get content => _content;
 
-  int get point => _point;
+  int get points => _point;
 
   Coordinate get where => _coordinate;
 
