@@ -116,6 +116,8 @@ class SendInviteMessage extends Message {
   PlayMode playMode;
   PlayOpener playOpener;
   String invitingPlayerName;
+  // String playerId; //TODO we need a globally unique player id to identify players
+
 
   SendInviteMessage(
       String playId,
@@ -153,6 +155,7 @@ class SendInviteMessage extends Message {
 class AcceptInviteMessage extends Message {
   PlayOpener playOpener;
   String invitingPlayerName;
+ // String playerId; //TODO we need a globally unique player id to identify players
   Move? initialMove;
 
   AcceptInviteMessage(

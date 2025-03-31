@@ -102,7 +102,7 @@ class Spot {
     if (!_matrix.isInDimensions(left)) {
       return null;
     }
-    return Spot(_matrix, left, _matrix.getChip(left), _matrix.getPoint(left));
+    return Spot(_matrix, left, _matrix.getChip(left), _matrix.getPoints(left));
   }
     
   Spot? getRightNeighbor() {
@@ -110,7 +110,7 @@ class Spot {
     if (!_matrix.isInDimensions(right)) {
       return null;
     }
-    return Spot(_matrix, right, _matrix.getChip(right), _matrix.getPoint(right));
+    return Spot(_matrix, right, _matrix.getChip(right), _matrix.getPoints(right));
   }
   
   Spot? getTopNeighbor() {
@@ -118,7 +118,7 @@ class Spot {
     if (!_matrix.isInDimensions(top)) {
       return null;
     }
-    return Spot(_matrix, top, _matrix.getChip(top), _matrix.getPoint(top));
+    return Spot(_matrix, top, _matrix.getChip(top), _matrix.getPoints(top));
   }
     
   Spot? getBottomNeighbor() {
@@ -126,7 +126,7 @@ class Spot {
     if (!_matrix.isInDimensions(bottom)) {
       return null;
     }
-    return Spot(_matrix, bottom, _matrix.getChip(bottom), _matrix.getPoint(bottom));
+    return Spot(_matrix, bottom, _matrix.getChip(bottom), _matrix.getPoints(bottom));
   }
 
   Spot? getTopLeftNeighbor() {
@@ -134,7 +134,7 @@ class Spot {
     if (!_matrix.isInDimensions(topLeft)) {
       return null;
     }
-    return Spot(_matrix, topLeft, _matrix.getChip(topLeft), _matrix.getPoint(topLeft));
+    return Spot(_matrix, topLeft, _matrix.getChip(topLeft), _matrix.getPoints(topLeft));
   }
   
   Spot? getTopRightNeighbor() {
@@ -142,7 +142,7 @@ class Spot {
     if (!_matrix.isInDimensions(topRight)) {
       return null;
     }
-    return Spot(_matrix, topRight, _matrix.getChip(topRight), _matrix.getPoint(topRight));
+    return Spot(_matrix, topRight, _matrix.getChip(topRight), _matrix.getPoints(topRight));
   }
   
   Spot? getBottomLeftNeighbor() {
@@ -150,7 +150,7 @@ class Spot {
     if (!_matrix.isInDimensions(bottomLeft)) {
       return null;
     }
-    return Spot(_matrix, bottomLeft, _matrix.getChip(bottomLeft), _matrix.getPoint(bottomLeft));
+    return Spot(_matrix, bottomLeft, _matrix.getChip(bottomLeft), _matrix.getPoints(bottomLeft));
   }
   
   Spot? getBottomRightNeighbor() {
@@ -158,7 +158,7 @@ class Spot {
     if (!_matrix.isInDimensions(bottomRight)) {
       return null;
     }
-    return Spot(_matrix, bottomRight, _matrix.getChip(bottomRight), _matrix.getPoint(bottomRight));
+    return Spot(_matrix, bottomRight, _matrix.getChip(bottomRight), _matrix.getPoints(bottomRight));
   }
 
   bool isInMatrixDimensions() => _matrix.isInDimensions(where);

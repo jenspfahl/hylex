@@ -1,5 +1,4 @@
 
-import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:flutter/cupertino.dart';
@@ -10,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 import '../service/PreferenceService.dart';
 import '../service/StorageService.dart';
 import '../ui/game_ground.dart';
-import '../utils.dart';
 import '../model/achievements.dart';
 import '../model/move.dart';
 import 'ai/strategy.dart';
@@ -182,7 +180,6 @@ class SinglePlayerGameEngine extends GameEngine {
 
   @override
   double? get progressRatio => aiLoad?.ratio;
-
 
   void _think() {
     play.waitForOpponent = true;

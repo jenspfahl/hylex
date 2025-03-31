@@ -52,11 +52,11 @@ class Matrix {
 
   GameChip? getChip(Coordinate where) => _chipMap[where];
 
-  int getPoint(Coordinate where) => (_pointMapX[where] ?? 0) + (_pointMapY[where] ?? 0);
+  int getPoints(Coordinate where) => (_pointMapX[where] ?? 0) + (_pointMapY[where] ?? 0);
 
   Spot getSpot(Coordinate where) {
     final piece = getChip(where);
-    final point = getPoint(where);
+    final point = getPoints(where);
     return Spot(this, where, piece, point);
   }
 
@@ -136,7 +136,7 @@ class Matrix {
 
   List<Spot> streamOccupiedSpots() {
     final list = _chipMap.entries
-        .map((elem) => Spot(this, elem.key, elem.value, getPoint(elem.key)))
+        .map((elem) => Spot(this, elem.key, elem.value, getPoints(elem.key)))
         .toList();
     list.shuffle(rnd);
     return list;
@@ -254,7 +254,7 @@ class Matrix {
   }
 
   int getTotalPointsForChaos() {
-    return _chipMap.keys.map((where) => getPoint(where)).where((v) => v == 0).length * getPointsPerChip(dimension.x);
+    return _chipMap.keys.map((where) => getPoints(where)).where((v) => v == 0).length * getPointsPerChip(dimension.x);
   }
 
   int getPointsPerChip(int dimension) {

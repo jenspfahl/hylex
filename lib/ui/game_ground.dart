@@ -41,6 +41,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   late GameEngine gameEngine;
 
   GameChip? _emphasiseAllChipsOf;
+  Role? _emphasiseAllChipsOfRole;
   bool _lastUndoMoveHighlighted = false;
   
   late BuildContext _builderContext;
@@ -81,8 +82,13 @@ class _HyleXGroundState extends State<HyleXGround> {
     gameEngine.startGame();
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
-      //gameEngine.opponentMoveReceived(Move.skipped());
-
+      if (gameEngine.play.isMultiplayerPlay) {
+        //TODO check whether in the same game
+        //gameEngine.opponentMoveReceived(Move.skipped());
+      }
+      else {
+        //TODO ask and switch to that game
+      }
     });
   }
 
@@ -337,7 +343,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           Text(move.chip!.getChipName()),
           const Text(" "),
           CircleAvatar(
-              backgroundColor: _getChipBackgroundColor(move.chip!),
+              backgroundColor: _getChipBackgroundColor(move.chip!, null),
               maxRadius: 6,
           ),
           Text(second),
@@ -530,31 +536,43 @@ class _HyleXGroundState extends State<HyleXGround> {
           color: Colors.black,
         ),
       ),
-      child: Chip(
-          padding: EdgeInsets.zero,
-          shape: isLeftElseRight
-              ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
-              : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
-          label: isLeftElseRight
-              ? Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Icon(icon, color: color, size: 16),
-                  const Text(" "),
-                  Text("${role.name} - ${gameEngine.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                ],
-              )
-              : Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(" ${gameEngine.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                  const Text(" "),
-                  Icon(icon, color: color, size: 16),
-                ],
-              ),
-          backgroundColor: isSelected ? Colors.black : null
+      child: GestureDetector(
+        onLongPressStart: (details) {
+          setState(() {
+            _emphasiseAllChipsOfRole = role;
+          });
+        },
+        onLongPressEnd: (details) => {
+          setState(() {
+            _emphasiseAllChipsOfRole = null;
+          })
+        },
+        child: Chip(
+            padding: EdgeInsets.zero,
+            shape: isLeftElseRight
+                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
+                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
+            label: isLeftElseRight
+                ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: color, size: 16),
+                    const Text(" "),
+                    Text("${role.name} - ${gameEngine.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                  ],
+                )
+                : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(" ${gameEngine.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                    const Text(" "),
+                    Icon(icon, color: color, size: 16),
+                  ],
+                ),
+            backgroundColor: isSelected ? Colors.black : null
+        ),
       ),
     );
   }
@@ -664,7 +682,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           })
         },
         child: CircleAvatar(
-          backgroundColor: _getChipBackgroundColor(chip),
+          backgroundColor: _getChipBackgroundColor(chip, where),
           maxRadius: 60,
           child: Text(text,
               style: TextStyle(
@@ -677,8 +695,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
-  Color _getChipBackgroundColor(GameChip chip) {
-    return _emphasiseAllChipsOf != null && _emphasiseAllChipsOf != chip
+  Color _getChipBackgroundColor(GameChip chip, Coordinate? considerPointsAt) {
+    Role? roleAtPos = null;
+    if (_emphasiseAllChipsOfRole != null && considerPointsAt != null) {
+      final points = gameEngine.play.matrix.getPoints(considerPointsAt);
+      roleAtPos = points == 0 ? Role.Chaos : Role.Order;
+    }
+    return ((_emphasiseAllChipsOf != null && _emphasiseAllChipsOf != chip) 
+        || (roleAtPos != null && _emphasiseAllChipsOfRole != roleAtPos))
         ? chip.color.withOpacity(0.2)
         : chip.color;
   }
@@ -834,7 +858,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         padding: EdgeInsets.all(gameEngine.play.dimension > 5 ? gameEngine.play.dimension > 7 ? 0 : 2 : 4),
         child: Container(
             decoration: BoxDecoration(
-              color: _getChipBackgroundColor(entry.chip),
+              color: _getChipBackgroundColor(entry.chip, null),
               border: Border.all(width: 1),
               borderRadius: const BorderRadius.all(
                 Radius.circular(10.0),
