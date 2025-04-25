@@ -28,4 +28,7 @@ class User {
     if (name != null) "name" : name,
     "achievements" : achievements.toJson(),
   };
-}
+
+  String getReadableId() {
+    return toReadableId(id);
+  }}

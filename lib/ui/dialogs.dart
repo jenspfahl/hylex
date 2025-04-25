@@ -4,12 +4,12 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 import 'game_ground.dart';
 
-void buildAlertDialog(NotifyType type, String text, {int seconds = 3}) {
+void buildAlertDialog(String text, {NotifyType? type, int seconds = 3}) {
   SmartDialog.showNotify(
     msg: text,
     clickMaskDismiss: true,
     displayTime: Duration(seconds: seconds),
-    notifyType: NotifyType.error,
+    notifyType: type ?? NotifyType.error,
   );
 }
 
@@ -36,47 +36,52 @@ void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
 }
 
 void confirm(String text, Function() okHandler) {
-  buildChoiceDialog(180 + text.length.toDouble(), 180, text,
-      "OK", () {
-        SmartDialog.dismiss();
-        okHandler();
-      },
-      "CANCEL", () {
-        SmartDialog.dismiss();
-      });
+  buildChoiceDialog(text,
+      firstString: "OK", 
+      firstHandler: okHandler,
+      secondString: "CANCEL",
+      secondHandler: () {});
 }
 
-void ask(String text, Function() okHandler) {
-  buildChoiceDialog(180 + text.length.toDouble(), 180, text,
-      "YES", () {
-        SmartDialog.dismiss();
-        okHandler();
-      },
-      "NO", () {
-        SmartDialog.dismiss();
-      });
+void ask(String text, Function() yesHandler) {
+  buildChoiceDialog(text,
+      firstString: "YES",
+      firstHandler: yesHandler,
+      secondString: "NO",
+      secondHandler: () {});
 }
 
 void buildChoiceDialog(
-    double height,
-    double width,
     String text,
-    String okString,
-    Function() okHandler,
-    String cancelString,
-    Function() cancelHandler,
-    [
+    {
+      double? height,
+      double? width,
+      required String firstString,
+      required Function() firstHandler,
+      required String secondString,
+      required Function() secondHandler,
       String? thirdString,
       Function()? thirdHandler,
       String? fourthString,
       Function()? fourthHandler,
       String? fifthString,
       Function()? fifthHandler,
-    ]) {
+  }) {
   SmartDialog.show(builder: (_) {
+    var calcHeight = 180 + text.length.toDouble();
+    if (thirdString != null && thirdHandler != null) {
+      calcHeight += 50;
+    }
+    if (fourthString != null && fourthHandler != null) {
+      calcHeight += 50;
+    }
+    if (fifthString != null && fifthHandler != null) {
+      calcHeight += 50;
+    }
+
     return Container(
-      height: height,
-      width: width,
+      height: height ?? calcHeight,
+      width: width ?? 220,
       decoration: BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.circular(10),
@@ -94,30 +99,45 @@ void buildChoiceDialog(
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
-                onPressed: okHandler,
-                child: Text(okString)),
+                onPressed: () {
+                  SmartDialog.dismiss();
+                  firstHandler();
+                },
+                child: Text(firstString ?? "OK")),
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
-                onPressed: cancelHandler,
-                child: Text(cancelString)),
+                onPressed: () {
+                  SmartDialog.dismiss();
+                  secondHandler();
+                },
+                child: Text(secondString)),
             if (thirdString != null && thirdHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.lightGreenAccent),
-                  onPressed: thirdHandler,
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                    thirdHandler();
+                  },
                   child: Text(thirdString)),
             if (fourthString != null && fourthHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.lightGreenAccent),
-                  onPressed: fourthHandler,
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                    fourthHandler();
+                  }, 
                   child: Text(fourthString)),
             if (fifthString != null && fifthHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.lightGreenAccent),
-                  onPressed: fifthHandler,
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                    fifthHandler();
+                  },
                   child: Text(fifthString)),
 
           ],
@@ -128,18 +148,20 @@ void buildChoiceDialog(
 }
 
 void buildInputDialog(
-    double height,
-    double width,
     String text,
-    String? prefilledText,
-    Function(String) okHandler,
-    Function() cancelHandler,
+    {
+      double? height,
+      double? width,
+      String? prefilledText,
+      required Function(String) okHandler,
+      Function()? cancelHandler,
+    }
     ) {
   final controller = TextEditingController(text: prefilledText);
   SmartDialog.show(builder: (_) {
     return Container(
-      height: height,
-      width: width,
+      height: height ?? 200 + text.length.toDouble(),
+      width: width ?? 300,
       decoration: BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.circular(10),
@@ -162,13 +184,22 @@ void buildInputDialog(
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
-                onPressed: () => okHandler(controller.text),
+                onPressed: () {
+                  SmartDialog.dismiss();
+                  okHandler(controller.text);
+                },
                 child: Text("OK")),
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
-                onPressed: cancelHandler,
-                child: Text("CANCEL")),
+                onPressed: () {
+                  SmartDialog.dismiss();
+                  if (cancelHandler != null) {
+                      cancelHandler();
+                    }
+                },
+                child: Text("CANCEL")
+            ),
 
           ],
         ),

@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -76,37 +77,26 @@ class _StartPageState extends State<StartPage>
         final serializedMessage = SerializedMessage.fromUrl(uri);
         final playId = serializedMessage.extractPlayId();
         StorageService().loadPlayHeader(playId).then((header) {
-          SmartDialog.dismiss();
           if (header != null) {
-            buildChoiceDialog(
-                150,
-                180,
-                "Play $playId opponent response: " + header.toString(),
-                "YES", () {
-              SmartDialog.dismiss();
-            },
-                "NO", () {
-              SmartDialog.dismiss();
-            });
+            ask("Play $playId opponent response? " + header.toString(),
+                () {
+                  // TODO
+                }
+            );
           }
           else if (serializedMessage.extractOperation() == Operation.sendInvite) {
             final sendInviteMessage = serializedMessage.deserializeWithoutValidation() as SendInviteMessage;
-            buildChoiceDialog(
-                200,
-                280,
+            ask(
                 "${sendInviteMessage.invitingPlayerName} invited you to a game with size ${sendInviteMessage.playSize}. Accept?",
-                "YES", () {
-              SmartDialog.dismiss();
-            },
-                "NO", () {
-              SmartDialog.dismiss();
-            });
+                () {
+                  //TODO
+                });
           }
         });
       }
       else {
         debugPrint("invalid uri: $uri");
-        buildAlertDialog(NotifyType.alert, "I cannot open this url :/");
+        buildAlertDialog("I cannot open this url :/");
       }
     });
   }
@@ -145,7 +135,11 @@ class _StartPageState extends State<StartPage>
             if (_user.name != null && _user.name!.isNotEmpty)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                  "Hello ${_user.name!}!"),
+                  "Hello ${_user.name!}!")
+            else if (kDebugMode)
+              Text(
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
+                "Hello ${_user.getReadableId()}!"),
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -212,8 +206,7 @@ class _StartPageState extends State<StartPage>
                             }));
                       }
                       else {
-                        buildAlertDialog(NotifyType.error,
-                            'No ongoing single play to resume.');
+                        buildAlertDialog('No ongoing single play to resume.');
                       }
                     }
                 )
@@ -320,14 +313,12 @@ class _StartPageState extends State<StartPage>
   void _showDimensionChooser(BuildContext context,
       Function(int) handleChosenDimension) {
     buildChoiceDialog(
-      330,
-      220,
       'Which ground size?',
-      "5 x 5", () => handleChosenDimension(5),
-      "7 x 7", () => handleChosenDimension(7),
-      "9 x 9", () => handleChosenDimension(9),
-      "11 x 11", () => handleChosenDimension(11),
-      "13 x 13", () => handleChosenDimension(13),
+      firstString: "5 x 5", firstHandler: () => handleChosenDimension(5),
+      secondString: "7 x 7", secondHandler: () => handleChosenDimension(7),
+      thirdString: "9 x 9", thirdHandler: () => handleChosenDimension(9),
+      fourthString: "11 x 11", fourthHandler: () => handleChosenDimension(11),
+      fifthString: "13 x 13", fifthHandler: () => handleChosenDimension(13),
     );
   }
 
@@ -335,7 +326,7 @@ class _StartPageState extends State<StartPage>
       {Function()? clickHandler, IconData? icon, bool isMain = false}) {
     return GestureDetector(
       onTap: clickHandler ?? () {
-        buildAlertDialog(NotifyType.error, 'Not yet implemented!');
+        buildAlertDialog('Not yet implemented!', type: NotifyType.error);
       },
       child: _buildChip(label, 80, isMain ? 15 : 13, 5, colorIdx, icon),
     );
@@ -351,57 +342,43 @@ class _StartPageState extends State<StartPage>
 
   void _selectSinglePlayerMode(BuildContext context,
       Function(PlayerType, PlayerType) handleChosenPlayers) {
-    SmartDialog.dismiss();
     buildChoiceDialog(
-      280,
-      220,
       'Which role you will take?',
-      "ORDER", () => handleChosenPlayers(PlayerType.Ai, PlayerType.User),
-      "CHAOS", () => handleChosenPlayers(PlayerType.User, PlayerType.Ai),
-      "BOTH", () => handleChosenPlayers(PlayerType.User, PlayerType.User),
-      "NONE", () => handleChosenPlayers(PlayerType.Ai, PlayerType.Ai),
+      firstString: "ORDER", firstHandler: () => handleChosenPlayers(PlayerType.Ai, PlayerType.User),
+      secondString: "CHAOS", secondHandler: () => handleChosenPlayers(PlayerType.User, PlayerType.Ai),
+      thirdString: "BOTH", thirdHandler: () => handleChosenPlayers(PlayerType.User, PlayerType.User),
+      fourthString: "NONE", fourthHandler: () => handleChosenPlayers(PlayerType.Ai, PlayerType.Ai),
     );
   }
 
   void _selectMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
-    SmartDialog.dismiss();
     buildChoiceDialog(
-      280,
-      220,
       'Which role you will take?',
-      "ORDER", () => handlePlayOpener(PlayOpener.invitedPlayer),
-      "CHAOS", () => handlePlayOpener(PlayOpener.invitingPlayer),
-      "INVITED DECIDES", () =>
-        handlePlayOpener(PlayOpener.invitedPlayerChooses),
+      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.invitedPlayer),
+      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.invitingPlayer),
+      thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.invitedPlayerChooses),
     );
   }
 
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
-    SmartDialog.dismiss();
     buildChoiceDialog(
-      280,
-      220,
       'What kind of game fo you want to play? ',
-      "NORMAL", () => handlePlayerMode(PlayMode.normal),
-      "CLASSIC", () => handlePlayerMode(PlayMode.classic),
+      firstString: "NORMAL", firstHandler: () => handlePlayerMode(PlayMode.normal),
+      secondString: "CLASSIC", secondHandler: () => handlePlayerMode(PlayMode.classic),
     );
   }
 
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
-    SmartDialog.dismiss();
-    buildInputDialog(200, 280, 'What\'s your name?',
-            _user.name,
-            (name) => handleUsername(name),
-            () => SmartDialog.dismiss(),
+    buildInputDialog('What\'s your name?',
+            prefilledText: _user.name,
+            okHandler: (name) => handleUsername(name),
     );
   }
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, int dimension) async {
-    SmartDialog.dismiss();
-
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
@@ -414,8 +391,6 @@ class _StartPageState extends State<StartPage>
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, int dimension, MultiPlayHeader multiPlayHeader) async {
-    SmartDialog.dismiss();
-
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
@@ -428,7 +403,6 @@ class _StartPageState extends State<StartPage>
 
   _inviteOpponent(BuildContext context, int dimension,
       PlayMode playMode, PlayOpener playOpener, String username) {
-    SmartDialog.dismiss();
 
     _user.name = username;
     StorageService().saveUser(_user);
@@ -554,7 +528,6 @@ class _StartPageState extends State<StartPage>
                   ask("Reset all stats to zero:", () {
                     _user.achievements.clearAll();
                     StorageService().saveUser(_user);
-                    SmartDialog.dismiss();
                     _buildAchievementDialog();
                   });
 
