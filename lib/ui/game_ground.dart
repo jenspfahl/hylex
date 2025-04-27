@@ -834,6 +834,8 @@ class _HyleXGroundState extends State<HyleXGround> {
       return const Text("?");
     }
     final entry = stockEntries.toList()[index];
+    final isCurrent = gameEngine.play.currentChip == entry.chip;
+    final chipText = isCurrent ? "Drawn chip" : "Chip";
     final text = gameEngine.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
     final tooltipKey = "$_stockChipToolTipKey-$index";
     return SuperTooltip(
@@ -842,7 +844,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         showBarrier: false,
         hideTooltipOnTap: true,
         content: Text(
-          "Chip ${entry.chip.getChipName()}",
+          "$chipText ${entry.chip.getChipName()}\n${entry.amount} left",
           softWrap: true,
           style: TextStyle(
             color: Colors.black,
