@@ -835,7 +835,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     final entry = stockEntries.toList()[index];
     final isCurrent = gameEngine.play.currentChip == entry.chip;
-    final chipText = isCurrent ? "Drawn chip" : "Chip";
+    final chipText = isCurrent
+        ? (gameEngine.play.currentRole == Role.Chaos ? "Drawn chip" : "Recently placed chip")
+        : "Chip";
     final text = gameEngine.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
     final tooltipKey = "$_stockChipToolTipKey-$index";
     return SuperTooltip(

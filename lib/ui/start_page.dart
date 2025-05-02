@@ -73,30 +73,86 @@ class _StartPageState extends State<StartPage>
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
       //TODO load correct play and forward to game ground
 
-      if (uri.pathSegments.length == 2) {
-        final serializedMessage = SerializedMessage.fromUrl(uri);
+      final serializedMessage = SerializedMessage.fromUrl(uri);
+
+      if (serializedMessage != null) {
         final playId = serializedMessage.extractPlayId();
         StorageService().loadPlayHeader(playId).then((header) {
-          if (header != null) {
-            ask("Play $playId opponent response? " + header.toString(),
-                () {
-                  // TODO
+            switch (serializedMessage.extractOperation()) {
+
+              case Operation.sendInvite: {
+                if (header != null) {
+                  buildAlertDialog("You already reacted to this invite."); //TODO go to match overview
                 }
-            );
-          }
-          else if (serializedMessage.extractOperation() == Operation.sendInvite) {
-            final sendInviteMessage = serializedMessage.deserializeWithoutValidation() as SendInviteMessage;
-            ask(
-                "${sendInviteMessage.invitingPlayerName} invited you to a game with size ${sendInviteMessage.playSize}. Accept?",
-                () {
-                  //TODO
-                });
-          }
+                else {
+                  final receivedInviteMessage = serializedMessage
+                      .deserializeWithoutValidation() as InviteMessage;
+                  var dimension = playSizeToDimension(receivedInviteMessage.playSize);
+
+                  buildChoiceDialog(
+                      "${receivedInviteMessage
+                          .invitingPlayerName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension math.",
+                    width: 300,
+                    firstString: "Accept",
+                    firstHandler: () {
+                        //TODO store new play
+                      final header = MultiPlayHeader(dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, PlayState.InvitationAccepted);
+
+                      //TODO reply with accept
+                      
+                      if (receivedInviteMessage.playOpener == PlayOpener.invitedPlayerChooses) {
+                        _selectInvitedMultiPlayerOpener(context, (playOpener) {
+                          //TODO
+                        });
+                      }
+                      else if (receivedInviteMessage.playOpener == PlayOpener.invitedPlayer) {
+                        _startMultiPlayerGame(
+                            context, PlayerType.RemoteUser, PlayerType.User,
+                            header);
+                      }
+                      else if (receivedInviteMessage.playOpener == PlayOpener.invitingPlayer) {
+                        //TODO reply back
+                      }
+                    },
+                    secondString: "Reject",
+                    secondHandler: () {
+                        // TODO send rejectMessage
+                    },
+                    thirdString: "Reply later",
+                    thirdHandler: () {
+                        //TODO save the request
+                    },
+                    fourthString: "Cancel",
+                    fourthHandler: () {},
+                  );
+                }
+
+                break;
+              }
+              case Operation.acceptInvite: {
+                break;
+              }
+              case Operation.rejectInvite: {
+                break;
+              }
+              case Operation.move: {
+                break;
+              }
+              case Operation.resign: {
+                break;
+              }
+              case Operation.unused101:
+                throw UnimplementedError();
+              case Operation.unused110:
+                throw UnimplementedError();
+              case Operation.unused111:
+                throw UnimplementedError();
+            }
         });
       }
       else {
         debugPrint("invalid uri: $uri");
-        buildAlertDialog("I cannot open this url :/");
+        buildAlertDialog("I cannot interpret this uri : $uri");
       }
     });
   }
@@ -182,7 +238,7 @@ class _StartPageState extends State<StartPage>
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (dimension) =>
                             _selectMultiPlayerMode(context, (playerMode) =>
-                                _selectMultiPlayerOpener(
+                                _selectInvitingMultiPlayerOpener(
                                     context, (playerOpener) =>
                                     _inputUserName(context, (username) =>
                                         _inviteOpponent(
@@ -351,13 +407,22 @@ class _StartPageState extends State<StartPage>
     );
   }
 
-  void _selectMultiPlayerOpener(BuildContext context,
+  void _selectInvitingMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
       'Which role you will take?',
       firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.invitedPlayer),
       secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.invitingPlayer),
       thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.invitedPlayerChooses),
+    );
+  }
+
+  void _selectInvitedMultiPlayerOpener(BuildContext context,
+      Function(PlayOpener) handlePlayOpener) {
+    buildChoiceDialog(
+      'Which role you will take?',
+      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.invitedPlayer),
+      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.invitingPlayer),
     );
   }
 
@@ -390,7 +455,7 @@ class _StartPageState extends State<StartPage>
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, int dimension, MultiPlayHeader multiPlayHeader) async {
+      PlayerType orderPlayer, MultiPlayHeader multiPlayHeader) async {
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
@@ -407,9 +472,9 @@ class _StartPageState extends State<StartPage>
     _user.name = username;
     StorageService().saveUser(_user);
 
-    final playRequest = MultiPlayHeader(dimension, playMode, playOpener, username, PlayState.RemoteOpponentInvited);
+    final playRequest = MultiPlayHeader(dimension, playMode, playOpener, null, PlayState.RemoteOpponentInvited);
 
-    final inviteMessage = SendInviteMessage(
+    final inviteMessage = InviteMessage(
         playRequest.playId,
         dimensionToPlaySize(dimension),
         playMode,

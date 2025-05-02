@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:isolate';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hyle_x/model/chip.dart';
@@ -26,6 +27,9 @@ enum PlayState {
 
   // only if multiPlay == true and current == inviting player, if an invitation has been sent out
   RemoteOpponentInvited,
+
+  // only if multiPlay == true, when an invitation has been received but not replied
+  InvitationPending,
 
   // only if multiPlay == true, when an invitation has been accepted by invited player
   InvitationAccepted,
@@ -66,12 +70,13 @@ class MultiPlayHeader {
 
   late int dimension;
   int currentRound = 0;
-  String? name;
+  Role? role;
+  String? opponentName;
 
   late PlayMode playMode;
   late PlayOpener playOpener;
 
-  MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.name, this.state) {
+  MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.opponentName, this.state) {
     playId = generateRandomString(playIdLength);
   }
 
@@ -85,7 +90,8 @@ class MultiPlayHeader {
 
     dimension = map['dimension'];
     currentRound = map['currentRound'];
-    name = map['name'];
+    role = Role.values.firstWhereOrNull((p) => p.name == map['currentRole']);
+    opponentName = map['name'];
 
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
     playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
@@ -98,14 +104,36 @@ class MultiPlayHeader {
     "previousSignature" : commContext.previousSignature,
     "dimension" : dimension,
     "currentRound" : currentRound,
-    "name" : name,
+    "currentRole" : role?.name,
+    "name" : opponentName,
     "playMode" : playMode.name,
     "playOpener" : playOpener.name,
   };
 
+  String getReadablePlayId() {
+    return toReadableId(playId);
+  }
+
   @override
   String toString() {
-    return 'MultiPlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $name, playMode: $playMode, playOpener: $playOpener}';
+    return 'MultiPlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
+  }
+
+  String getReadableState() {
+    switch (state) {
+      case PlayState.Initialised: return "New match";
+      case PlayState.RemoteOpponentInvited: return "Invitation sent out";
+      case PlayState.InvitationPending: return "Open invitation needs response";
+      case PlayState.InvitationAccepted: return "Invitation accepted";
+      case PlayState.InvitationRejected: return "Invitation rejected";
+      case PlayState.ReadyToMove: return "Your turn!";
+      case PlayState.WaitForOpponent: return "Awaiting opponent's move";
+      case PlayState.Lost: return "Match lost";
+      case PlayState.Won: return "Match won";
+      case PlayState.Resigned: return "You resigned :(";
+      case PlayState.Closed: return "Match finished";
+
+    }
   }
 }
 
@@ -139,7 +167,7 @@ class Play {
 
   DateTime startDate = DateTime.timestamp();
   DateTime? endDate;
-  String? name;
+  String? opponentName;
   final List<Move> _journal = [];
 
   Move? _staleMove;
@@ -151,7 +179,7 @@ class Play {
 
   Play.multiPlay(this._chaosPlayer, this._orderPlayer, MultiPlayHeader playRequest) {
     id = playRequest.playId;
-    name = playRequest.name;
+    opponentName = playRequest.opponentName;
     state = playRequest.state;
     _dimension = playRequest.dimension;
     _playMode = playRequest.playMode;
@@ -182,6 +210,7 @@ class Play {
     _selectionCursor = Cursor.fromJson(map['selectionCursor']);
 
     _opponentCursor = Cursor.fromJson(map['opponentCursor']);
+    opponentName = map['opponentName'];
 
     _chaosPlayer = PlayerType.values.firstWhere((p) => p.name == map['chaosPlayer']);
     _orderPlayer = PlayerType.values.firstWhere((p) => p.name == map['orderPlayer']);
@@ -215,7 +244,7 @@ class Play {
 
   MultiPlayHeader? toMultiPlayHeader() {
     if (multiPlay && _playOpener != null) {
-      return MultiPlayHeader(_dimension, _playMode, _playOpener!, name, state);
+      return MultiPlayHeader(_dimension, _playMode, _playOpener!, opponentName, state);
     }
     else {
       return null;
@@ -281,7 +310,7 @@ class Play {
     "orderPlayer" : _orderPlayer.name,
     "startDate" : startDate.toIso8601String(),
     if (endDate != null) "endDate" : endDate!.toIso8601String(),
-    if (name != null) "name" : name,
+    if (opponentName != null) "opponentName" : opponentName,
     if (_staleMove != null) "staleMove" : _staleMove!.toJson(),
     'journal' : _journal.map((j) => j.toJson()).toList(),
     "playMode" : _playMode.name,

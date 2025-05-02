@@ -62,29 +62,62 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             else {
               widget = Text("No multi player games");
             }
-        return Container(
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .surface,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 48, 24, 12),
-                child: widget,
-              ),
-            );
+        return Scaffold(
+            appBar: AppBar(title: Text('Continue a match')),
+            body: SingleChildScrollView(
+              child: Container(
+                    color: Theme
+                        .of(context)
+                        .colorScheme
+                        .surface,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: widget,
+                    ),
+                  ),
+          )
+        );
       }),
     );
   }
 
   Widget _buildPlayLine(MultiPlayHeader playHeader) {
     return Padding(
-      padding: EdgeInsets.all(16),
-      child: Card(
-        child:  Row(
-          children: [
-            Text(playHeader.playId + " " + playHeader.name.toString() + playHeader.dimension.toString()),
-            IconButton(onPressed: (){}, icon: Icon(Icons.delete))
-          ],
+      padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+      child: Container(
+        decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(), left: BorderSide())
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    backgroundColor: getColorFromIdx(playHeader.state.index),
+                    maxRadius: 6,
+                  ),
+                  Text("  ${playHeader.getReadablePlayId()} against ${playHeader.opponentName}"),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("${playHeader.dimension} x ${playHeader.dimension}, ${playHeader.playMode.name}, ${playHeader.role?.name}, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}"),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("${playHeader.getReadableState()}"),
+                  IconButton(onPressed: (){}, icon: Icon(Icons.not_started_outlined)),
+                  IconButton(onPressed: (){}, icon: Icon(Icons.delete)),
+                ],
+              ),
+            ],
+          ),
         ),),
     );
   }

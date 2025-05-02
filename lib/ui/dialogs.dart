@@ -43,12 +43,14 @@ void confirm(String text, Function() okHandler) {
       secondHandler: () {});
 }
 
-void ask(String text, Function() yesHandler) {
+void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler}) {
   buildChoiceDialog(text,
       firstString: "YES",
       firstHandler: yesHandler,
-      secondString: "NO",
-      secondHandler: () {});
+      secondString: noString ?? "NO",
+      secondHandler: () {
+        if (noHandler != null) noHandler();
+      });
 }
 
 void buildChoiceDialog(

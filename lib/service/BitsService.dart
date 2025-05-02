@@ -111,28 +111,28 @@ abstract class Message {
   }
 }
 
-class SendInviteMessage extends Message {
+class InviteMessage extends Message {
 
   PlaySize playSize;
   PlayMode playMode;
   PlayOpener playOpener;
-  String userId;
+  String invitingUserId;
   String invitingPlayerName;
 
-  SendInviteMessage(
+  InviteMessage(
       String playId,
       this.playSize,
       this.playMode,
       this.playOpener,
-      this.userId,
+      this.invitingUserId,
       this.invitingPlayerName,
       ): super(playId);
 
-  factory SendInviteMessage.deserialize(
+  factory InviteMessage.deserialize(
       BitBufferReader reader,
       String playId) {
 
-    return SendInviteMessage(
+    return InviteMessage(
       playId,
       readEnum(reader, PlaySize.values),
       readEnum(reader, PlayMode.values),
@@ -147,7 +147,7 @@ class SendInviteMessage extends Message {
     writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlaySize.values, playSize);
     writeEnum(writer, PlayOpener.values, playOpener);
-    writeString(writer, userId, userIdLength);
+    writeString(writer, invitingUserId, userIdLength);
     writeString(writer, invitingPlayerName, maxNameLength);
   }
 
@@ -156,16 +156,16 @@ class SendInviteMessage extends Message {
 }
 
 class AcceptInviteMessage extends Message {
-  PlayOpener playOpener;
-  String userId;
-  String invitingPlayerName;
+  PlayOpener playOpenerDecision;
+  String invitedUserId;
+  String invitedPlayerName;
   Move? initialMove;
 
   AcceptInviteMessage(
       String playId,
-      this.playOpener,
-      this.userId,
-      this.invitingPlayerName,
+      this.playOpenerDecision,
+      this.invitedUserId,
+      this.invitedPlayerName,
       this.initialMove,
       ): super(playId);
 
@@ -186,10 +186,10 @@ class AcceptInviteMessage extends Message {
   @override
   void serializeToBuffer(BitBufferWriter writer) {
 
-    writeEnum(writer, PlayOpener.values, playOpener);
-    writeString(writer, userId, userIdLength);
-    writeString(writer, invitingPlayerName, maxNameLength);
-    if (playOpener == PlayOpener.invitedPlayer) {
+    writeEnum(writer, PlayOpener.values, playOpenerDecision);
+    writeString(writer, invitedUserId, userIdLength);
+    writeString(writer, invitedPlayerName, maxNameLength);
+    if (playOpenerDecision == PlayOpener.invitedPlayer) {
       writeMove(writer, initialMove!);
     }
   }
@@ -264,7 +264,15 @@ class SerializedMessage {
   String signature;
 
   SerializedMessage(this.payload, this.signature);
-  SerializedMessage.fromUrl(Uri uri): this(uri.pathSegments[0], uri.pathSegments[1]);
+
+  static SerializedMessage? fromUrl(Uri uri) {
+    if (uri.pathSegments.length == 2) {
+      return SerializedMessage(uri.pathSegments[0], uri.pathSegments[1]);
+    }
+    else {
+      return null;
+    }
+  }
 
   String extractPlayId() {
 
@@ -306,7 +314,7 @@ class SerializedMessage {
     final playId = readString(reader);
 
     switch (operation) {
-      case Operation.sendInvite : return SendInviteMessage.deserialize(reader, playId);
+      case Operation.sendInvite : return InviteMessage.deserialize(reader, playId);
       case Operation.acceptInvite : return AcceptInviteMessage.deserialize(reader, playId);
       case Operation.rejectInvite : return RejectInviteMessage.deserialize(reader, playId);
       case Operation.move : return MoveMessage.deserialize(reader, playId);
@@ -352,7 +360,7 @@ void main() {
 
 
    // send invite
-   final invitationMessage = SendInviteMessage(
+   final invitationMessage = InviteMessage(
        playId,
        PlaySize.d7,
        PlayMode.normal,
@@ -365,12 +373,12 @@ void main() {
 
 
    // receive invite
-   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as SendInviteMessage;
+   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as InviteMessage;
    print("playId: ${deserializedInviteMessage.playId}");
    print("playSize: ${deserializedInviteMessage.playSize}");
    print("playMode: ${deserializedInviteMessage.playMode}");
    print("playOpener: ${deserializedInviteMessage.playOpener}");
-   print("userId: ${deserializedInviteMessage.userId}");
+   print("userId: ${deserializedInviteMessage.invitingUserId}");
    print("invitingName: ${deserializedInviteMessage.invitingPlayerName}");
 
 
@@ -392,9 +400,9 @@ void main() {
    final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitingContext) as AcceptInviteMessage;
 
    print("playId: ${deserializedAcceptInviteMessage.playId}");
-   print("playOpener: ${deserializedAcceptInviteMessage.playOpener}");
-   print("userId: ${deserializedAcceptInviteMessage.userId}");
-   print("invitedName: ${deserializedAcceptInviteMessage.invitingPlayerName}");
+   print("playOpener: ${deserializedAcceptInviteMessage.playOpenerDecision}");
+   print("userId: ${deserializedAcceptInviteMessage.invitedUserId}");
+   print("invitedName: ${deserializedAcceptInviteMessage.invitedPlayerName}");
    print("initialMove: ${deserializedAcceptInviteMessage.initialMove}");
 
  /*  print("------ reject invite -------");
