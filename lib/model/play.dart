@@ -174,7 +174,7 @@ class Play {
 
   Play.singlePlay(this._dimension, this._chaosPlayer, this._orderPlayer) {
     id = generateRandomString(playIdLength);
-    _init();
+    _init(true);
   }
 
   Play.multiPlay(this._chaosPlayer, this._orderPlayer, MultiPlayHeader playRequest) {
@@ -186,6 +186,8 @@ class Play {
     _playOpener = playRequest.playOpener;
     commContext.previousSignature = playRequest.commContext.previousSignature;
     multiPlay = true;
+    _init(false);
+
   }
 
   Play.fromJson(Map<String, dynamic> map) {
@@ -265,7 +267,7 @@ class Play {
 
 
   // initialises the play to get started
-  void _init() {
+  void _init(bool initAi) {
 
     _currentRound = 1;
     _currentRole = Role.Chaos;
@@ -288,8 +290,10 @@ class Play {
     _selectionCursor = Cursor();
     _opponentCursor = Cursor();
 
-    _aiConfig = AiConfig();
-    _initAis(useDefaultParams: true);
+    if (initAi) {
+      _aiConfig = AiConfig();
+      _initAis(useDefaultParams: true);
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -557,7 +561,7 @@ class Play {
   }
 
   void reset() {
-    _init();
+    _init(false);
   }
 
 

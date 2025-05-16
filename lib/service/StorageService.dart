@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
-import '../model/achievements.dart';
 import '../model/play.dart';
 import '../model/user.dart';
 import 'PreferenceService.dart';
@@ -49,6 +48,13 @@ class StorageService {
     PreferenceService().setString(key, jsonToSave);
   }
 
+  void deletePlayHeaderAndPlay(String playId) {
+    PreferenceService().remove(
+        PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null));
+    PreferenceService().remove(
+        PrefDef(PreferenceService.DATA_PLAY_PREFIX + playId, null));
+  }
+
 
   Future<User?> loadUser() async {
     final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_USER);
@@ -82,7 +88,12 @@ class StorageService {
     return header;
   }
 
-  Future<List<MultiPlayHeader>> loadAllPlayHeaders() async {
+  Future<Play?> loadPlayFromHeader(MultiPlayHeader header) async {
+    final key = PrefDef(PreferenceService.DATA_PLAY_PREFIX + header.playId, null);
+    return await loadPlay(key);
+  }
+
+    Future<List<MultiPlayHeader>> loadAllPlayHeaders() async {
 
     final keys = await PreferenceService().getKeys(PreferenceService.DATA_PLAY_HEADER_PREFIX);
 

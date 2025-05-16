@@ -54,13 +54,14 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           future: StorageService().loadAllPlayHeaders(),
           builder: (BuildContext context, AsyncSnapshot<List<MultiPlayHeader>> snapshot) {
             Widget widget;
-            if (snapshot.hasData) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               widget = Column(
                 children: snapshot.data!.map(_buildPlayLine).toList(),
               );
             }
             else {
-              widget = Text("No multi player games");
+              widget =
+                  Center(child: Text("No matches stored!"));
             }
         return Scaffold(
             appBar: AppBar(title: Text('Continue a match')),
@@ -112,14 +113,34 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("${playHeader.getReadableState()}"),
-                  IconButton(onPressed: (){}, icon: Icon(Icons.not_started_outlined)),
-                  IconButton(onPressed: (){}, icon: Icon(Icons.delete)),
+                  IconButton(onPressed: (){
+                    _startMultiPlayerGame(
+                        context, PlayerType.RemoteUser, PlayerType.User, //TODO who starts
+                        playHeader);
+                    }, icon: Icon(Icons.not_started_outlined)),
+                  IconButton(onPressed: (){
+                    ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}?", () {
+                      StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                    });
+                  }, icon: Icon(Icons.delete)),
                 ],
               ),
             ],
           ),
         ),),
     );
+  }
+
+  Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
+      PlayerType orderPlayer, MultiPlayHeader multiPlayHeader) async {
+    SmartDialog.showLoading(msg: "Loading game ...");
+    final play = await StorageService().loadPlayFromHeader(multiPlayHeader);
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return HyleXGround(
+              widget.user,
+              play ?? Play.multiPlay(chaosPlayer, orderPlayer, multiPlayHeader));
+        }));
   }
 
 }
