@@ -11,9 +11,11 @@ class PrefDef {
 class PreferenceService {
 
   static final DATA_CURRENT_USER = PrefDef('data/user/current', null);
+
   static final DATA_PLAY_PREFIX = 'data/play/';
   static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader/';
   static final DATA_CURRENT_PLAY = PrefDef('${DATA_PLAY_PREFIX}current', null);
+  static final DATA_CURRENT_PLAY_HEADER = PrefDef('${DATA_CURRENT_PLAY}/header', null);
 
   static final PreferenceService _service = PreferenceService._internal();
 

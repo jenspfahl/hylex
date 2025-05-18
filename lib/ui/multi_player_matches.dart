@@ -50,9 +50,9 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
-      home: FutureBuilder<List<MultiPlayHeader>>(
+      home: FutureBuilder<List<PlayHeader>>(
           future: StorageService().loadAllPlayHeaders(),
-          builder: (BuildContext context, AsyncSnapshot<List<MultiPlayHeader>> snapshot) {
+          builder: (BuildContext context, AsyncSnapshot<List<PlayHeader>> snapshot) {
             Widget widget;
             if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               widget = Column(
@@ -82,7 +82,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     );
   }
 
-  Widget _buildPlayLine(MultiPlayHeader playHeader) {
+  Widget _buildPlayLine(PlayHeader playHeader) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
       child: Container(
@@ -106,7 +106,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${playHeader.dimension} x ${playHeader.dimension}, ${playHeader.playMode.name}, ${playHeader.role?.name}, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}"),
+                  Text("${playHeader.dimension} x ${playHeader.dimension}, ${playHeader.playMode.name}, TODO your role, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}"),
                 ],
               ),
               Row(
@@ -115,8 +115,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   Text("${playHeader.getReadableState()}"),
                   IconButton(onPressed: (){
                     _startMultiPlayerGame(
-                        context, PlayerType.RemoteUser, PlayerType.User, //TODO who starts
-                        playHeader);
+                        context, playHeader);
                     }, icon: Icon(Icons.not_started_outlined)),
                   IconButton(onPressed: (){
                     ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}?", () {
@@ -131,15 +130,14 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     );
   }
 
-  Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, MultiPlayHeader multiPlayHeader) async {
+  Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {
     SmartDialog.showLoading(msg: "Loading game ...");
-    final play = await StorageService().loadPlayFromHeader(multiPlayHeader);
+    final play = await StorageService().loadPlayFromHeader(header);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
               widget.user,
-              play ?? Play.multiPlay(chaosPlayer, orderPlayer, multiPlayHeader));
+              play ?? Play.newMultiPlay(header));
         }));
   }
 

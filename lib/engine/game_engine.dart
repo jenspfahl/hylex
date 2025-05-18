@@ -21,7 +21,6 @@ abstract class GameEngine extends ChangeNotifier {
 
   GameEngine(this.play, this.user);
 
-  PrefDef get savePlayKey;
   double? get progressRatio;
 
   void startGame() {
@@ -38,7 +37,7 @@ abstract class GameEngine extends ChangeNotifier {
   }
 
   void nextPlayer() {
-    play.state = PlayState.ReadyToMove;
+    play.header.state = PlayState.ReadyToMove;
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
       _finish();
@@ -60,7 +59,7 @@ abstract class GameEngine extends ChangeNotifier {
   bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
 
   void savePlayState() {
-    StorageService().savePlay(savePlayKey, play);
+    StorageService().savePlay(play);
   }
 
 
@@ -72,23 +71,23 @@ abstract class GameEngine extends ChangeNotifier {
       //TODO add match-achievements
       if (winner == Role.Order) {
         if (play.orderPlayer == PlayerType.User) {
-          play.state = PlayState.Won;
+          play.header.state = PlayState.Won;
           user.achievements.incWonGame(Role.Order, play.dimension);
           user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
         }
         else if (play.chaosPlayer == PlayerType.User) {
-          play.state = PlayState.Lost;
+          play.header.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Chaos, play.dimension);
         }
       }
       else if (winner == Role.Chaos) {
         if (play.chaosPlayer == PlayerType.User) {
-          play.state = PlayState.Won;
+          play.header.state = PlayState.Won;
           user.achievements.incWonGame(Role.Chaos, play.dimension);
           user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
         }
         else if (play.orderPlayer == PlayerType.User) {
-          play.state = PlayState.Lost;
+          play.header.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
       }
@@ -97,14 +96,14 @@ abstract class GameEngine extends ChangeNotifier {
     else if (play.multiPlay) {
       if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.User)
       || (winner == Role.Order && play.orderPlayer == PlayerType.User)) {
-        play.state = PlayState.Won;
+        play.header.state = PlayState.Won;
       }
       else {
-        play.state = PlayState.Lost;
+        play.header.state = PlayState.Lost;
       }
     }
     else {
-      play.state = PlayState.Closed;
+      play.header.state = PlayState.Closed;
     }
     
     _handleGameOver();
@@ -157,7 +156,7 @@ class SinglePlayerGameEngine extends GameEngine {
   @override
   void _init() {
     play.multiPlay = false;
-    play.state = PlayState.Initialised;
+    play.header.state = PlayState.Initialised;
   }
 
   void _doPlayerMove() {
@@ -174,10 +173,8 @@ class SinglePlayerGameEngine extends GameEngine {
   @override
   void _handleGameOver() {
     PreferenceService().remove(PreferenceService.DATA_CURRENT_PLAY);
+    PreferenceService().remove(PreferenceService.DATA_CURRENT_PLAY_HEADER);
   }
-
-  @override
-  PrefDef get savePlayKey => PreferenceService.DATA_CURRENT_PLAY;
 
   @override
   double? get progressRatio => aiLoad?.ratio;
@@ -216,7 +213,7 @@ class MultiPlayerGameEngine extends GameEngine {
   @override
   void _init() {
     play.multiPlay = true;
-    play.state = PlayState.Initialised;
+    play.header.state = PlayState.Initialised;
   }
 
   void _doPlayerMove() {
@@ -231,11 +228,11 @@ class MultiPlayerGameEngine extends GameEngine {
     final lastMove = play.lastMoveFromJournal;
     if (lastMove != null) {
 
-      final moveMessage = MoveMessage(play.id, play.currentRound, lastMove);
+      final moveMessage = MoveMessage(play.header.playId, play.currentRound, lastMove);
       final message = BitsService().sendMessage(moveMessage, play.commContext);
       //Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] Open this link with HyleX to receive opponent\'s move: ${message.toUrl()}', subject: 'HyleX interaction');
       Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] : ${message.toUrl()}', subject: 'HyleX interaction');
-      play.state = PlayState.RemoteOpponentInvited;
+      play.header.state = PlayState.RemoteOpponentInvited;
     }
   }
 
@@ -248,9 +245,6 @@ class MultiPlayerGameEngine extends GameEngine {
   @override
   void _cleanUp() {
   }
-
-  @override
-  PrefDef get savePlayKey => PrefDef('${PreferenceService.DATA_PLAY_PREFIX}${play.id}', null);
 
   @override
   double? get progressRatio => null;

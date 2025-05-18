@@ -96,7 +96,7 @@ class _StartPageState extends State<StartPage>
                     firstString: "Accept",
                     firstHandler: () {
                         //TODO store new play
-                      final header = MultiPlayHeader(dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, PlayState.InvitationAccepted);
+                      final header = PlayHeader.multiPlay(Initiator.Other, dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, null, PlayState.InvitationAccepted);
 
                       //TODO reply with accept
                       
@@ -254,7 +254,7 @@ class _StartPageState extends State<StartPage>
                     ? _buildCell("Resume", 0,
                     icon: Icons.not_started_outlined,
                     clickHandler: () async {
-                      final play = await StorageService().loadPlay(PreferenceService.DATA_CURRENT_PLAY);
+                      final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -448,21 +448,22 @@ class _StartPageState extends State<StartPage>
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
+          final header = PlayHeader.singlePlay(dimension);
           return HyleXGround(
               _user,
-              Play.singlePlay(dimension, chaosPlayer, orderPlayer));
+              Play.newSinglePlay(header, chaosPlayer, orderPlayer));
         }));
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, MultiPlayHeader multiPlayHeader) async {
+      PlayerType orderPlayer, PlayHeader header) async {
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
               _user,
-              Play.multiPlay(chaosPlayer, orderPlayer, multiPlayHeader));
+              Play.newMultiPlay(header));
         }));
   }
 
@@ -472,21 +473,21 @@ class _StartPageState extends State<StartPage>
     _user.name = username;
     StorageService().saveUser(_user);
 
-    final playRequest = MultiPlayHeader(dimension, playMode, playOpener, null, PlayState.RemoteOpponentInvited);
+    final header = PlayHeader.multiPlay(Initiator.This, dimension, playMode, playOpener, null, null, PlayState.RemoteOpponentInvited);
 
     final inviteMessage = InviteMessage(
-        playRequest.playId,
+        header.playId,
         dimensionToPlaySize(dimension),
         playMode,
         playOpener,
         _user.id,
         username);
-    final message = BitsService().sendMessage(inviteMessage, playRequest.commContext);
+    final message = BitsService().sendMessage(inviteMessage, header.commContext);
 
     Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation')
     .then((result) {
       if (result.status != ShareResultStatus.dismissed) {
-        StorageService().savePlayHeader(playRequest.playId, playRequest);
+        StorageService().savePlayHeader(header);
       }
     });
 

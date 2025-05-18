@@ -4,7 +4,6 @@ import 'chip.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
 
-//TODO Move this enum in a separate file
 enum Role {Chaos, Order}
 
 /**

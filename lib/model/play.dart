@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:collection/collection.dart';
@@ -56,58 +57,85 @@ enum PlayState {
   Closed, // final state
 }
 
+// Who sent the initial invite?
+enum Initiator {
+  This,
+  Other
+}
 
 /**
- * This is a brief Play for multi player plays.
+ * This contains header information of each play.
  */
 @JsonSerializable()
-class MultiPlayHeader {
+class PlayHeader {
 
   late String playId;
-
-  PlayState state = PlayState.Initialised;
-  CommunicationContext commContext = CommunicationContext();
-
+  
   late int dimension;
+  PlayMode playMode = PlayMode.normal;
+  PlayState state = PlayState.Initialised;
   int currentRound = 0;
-  Role? role;
+
+  // multi player attributes
+  Initiator? initiator;
+  PlayOpener? playOpener;
+  CommunicationContext commContext = CommunicationContext();
+  String? opponentId;
   String? opponentName;
+  
 
-  late PlayMode playMode;
-  late PlayOpener playOpener;
-
-  MultiPlayHeader(this.dimension, this.playMode, this.playOpener, this.opponentName, this.state) {
+  PlayHeader.singlePlay(
+      this.dimension) {
+    playId = generateRandomString(playIdLength);
+  }
+  
+  PlayHeader.multiPlay(
+      this.initiator, 
+      this.dimension, 
+      this.playMode, 
+      this.playOpener, 
+      this.opponentId, 
+      this.opponentName, 
+      this.state) {
     playId = generateRandomString(playIdLength);
   }
 
-  MultiPlayHeader.fromJson(Map<String, dynamic> map) {
+  PlayHeader.fromJson(Map<String, dynamic> map) {
 
     playId = map['playId'];
+
+    dimension = map['dimension'];
+    playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
     state = PlayState.values.firstWhere((p) => p.name == map['state']);
+    currentRound = map['currentRound'];
+    
+    if (map['initiator'] != null) {
+      initiator = Initiator.values.firstWhere((p) => p.name == map['initiator']);
+    }
+    if (map['playOpener'] != null) {
+      playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
+    }
 
     final previousSignature = map['previousSignature'];
     commContext.previousSignature = previousSignature;
-
-    dimension = map['dimension'];
-    currentRound = map['currentRound'];
-    role = Role.values.firstWhereOrNull((p) => p.name == map['currentRole']);
-    opponentName = map['name'];
-
-    playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
-    playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
-
+    
+    opponentId = map['opponentId'];
+    opponentName = map['opponentName'];
+    
   }
 
   Map<String, dynamic> toJson() => {
     "playId" : playId,
-    "state" : state.name,
-    "previousSignature" : commContext.previousSignature,
     "dimension" : dimension,
-    "currentRound" : currentRound,
-    "currentRole" : role?.name,
-    "name" : opponentName,
     "playMode" : playMode.name,
-    "playOpener" : playOpener.name,
+    "state" : state.name,
+    "currentRound" : currentRound,
+
+    if (initiator != null) "initiator": initiator?.name,
+    if (playOpener != null) "playOpener" : playOpener?.name,
+    "previousSignature" : commContext.previousSignature,
+    if (opponentId != null) "opponentId" : opponentId,
+    if (opponentName != null) "opponentName" : opponentName,
   };
 
   String getReadablePlayId() {
@@ -116,7 +144,7 @@ class MultiPlayHeader {
 
   @override
   String toString() {
-    return 'MultiPlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
+    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
   }
 
   String getReadableState() {
@@ -140,67 +168,50 @@ class MultiPlayHeader {
 @JsonSerializable()
 class Play {
 
-  late String id;
-
+  late PlayHeader header;
   bool multiPlay = false;
-  PlayState state = PlayState.Initialised;
-  CommunicationContext _commContext = CommunicationContext();
 
-  PlayMode _playMode = PlayMode.normal;
-  PlayOpener? _playOpener = null;
-  
-  late int _currentRound;
-  late Role _currentRole;
+  // play state
+  Role _currentRole = Role.Chaos;
   GameChip? _currentChip;
 
-  late Stats _stats;
-  late Stock _stock;
-  late Cursor _selectionCursor;
-  late Cursor _opponentCursor;
-  late final int _dimension;
-  late Matrix _matrix;
-  late AiConfig _aiConfig;
+  Stats _stats = Stats();
+  Cursor _selectionCursor = Cursor();
+  Cursor _opponentCursor = Cursor();
+
+  late final Matrix _matrix;
+  late final Stock _stock;
   late final PlayerType _chaosPlayer;
   late final PlayerType _orderPlayer;
+
+  AiConfig _aiConfig = AiConfig();
   ChaosAi? chaosAi;
   OrderAi? orderAi;
 
   DateTime startDate = DateTime.timestamp();
   DateTime? endDate;
-  String? opponentName;
-  final List<Move> _journal = [];
+ 
 
+  final List<Move> _journal = [];
   Move? _staleMove;
 
-  Play.singlePlay(this._dimension, this._chaosPlayer, this._orderPlayer) {
-    id = generateRandomString(playIdLength);
+  Play.newSinglePlay(this.header, this._chaosPlayer, this._orderPlayer) {
     _init(true);
   }
 
-  Play.multiPlay(this._chaosPlayer, this._orderPlayer, MultiPlayHeader playRequest) {
-    id = playRequest.playId;
-    opponentName = playRequest.opponentName;
-    state = playRequest.state;
-    _dimension = playRequest.dimension;
-    _playMode = playRequest.playMode;
-    _playOpener = playRequest.playOpener;
-    commContext.previousSignature = playRequest.commContext.previousSignature;
+  Play.newMultiPlay(this.header) {
+    _chaosPlayer = header.initiator == Initiator.This && header.playOpener == PlayOpener.invitingPlayer ? PlayerType.User : PlayerType.RemoteUser; //TOOO
+    _orderPlayer = _chaosPlayer == PlayerType.User ? PlayerType.RemoteUser : PlayerType.User;
     multiPlay = true;
+    
     _init(false);
-
   }
 
+  // PlayHeader needs to be injected
   Play.fromJson(Map<String, dynamic> map) {
 
-    id = map['id'];
     multiPlay = map['multiPlay'];
-    state = PlayState.values.firstWhere((p) => p.name == map['state']);
-
-    final previousSignature = map['previousSignature'];
-    _commContext.previousSignature = previousSignature;
-
-    _dimension = map['dimension'];
-    _currentRound = map['currentRound'];
+    
     _currentRole = Role.values.firstWhere((p) => p.name == map['currentRole']);
     final startKey = map['currentChip'];
     if (startKey != null) {
@@ -209,20 +220,12 @@ class Play {
     _matrix = Matrix.fromJson(map['matrix']);
     _stats = Stats.fromJson(map['stats']);
     _stock = Stock.fromJson(map['stock']);
-    _selectionCursor = Cursor.fromJson(map['selectionCursor']);
 
+    _selectionCursor = Cursor.fromJson(map['selectionCursor']);
     _opponentCursor = Cursor.fromJson(map['opponentCursor']);
-    opponentName = map['opponentName'];
 
     _chaosPlayer = PlayerType.values.firstWhere((p) => p.name == map['chaosPlayer']);
     _orderPlayer = PlayerType.values.firstWhere((p) => p.name == map['orderPlayer']);
-
-    _playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
-    if (multiPlay) {
-      _playOpener =
-          PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
-    }
-
 
     startDate = DateTime.parse(map['startDate']);
     final endDateKey = map['endDate'];
@@ -244,17 +247,7 @@ class Play {
     _initAis(useDefaultParams: true);
   }
 
-  MultiPlayHeader? toMultiPlayHeader() {
-    if (multiPlay && _playOpener != null) {
-      return MultiPlayHeader(_dimension, _playMode, _playOpener!, opponentName, state);
-    }
-    else {
-      return null;
-    }
-  }
-
   PlayerType get chaosPlayer => _chaosPlayer;
-
   PlayerType get orderPlayer => _orderPlayer;
 
   PlayerType getWinnerPlayer() {
@@ -266,43 +259,29 @@ class Play {
   }
 
 
-  // initialises the play to get started
+  // initialises the play state to get started
   void _init(bool initAi) {
-
-    _currentRound = 1;
-    _currentRole = Role.Chaos;
 
     _journal.clear();
 
-    _stats = Stats();
+    _matrix = Matrix(Coordinate(dimension, dimension));
 
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
       final chip = GameChip(i);
       chips[chip] = dimension; // the stock per chip is the dimension value
     }
-
-
     _stock = Stock(chips);
     nextChip();
 
-    _matrix = Matrix(Coordinate(dimension, dimension));
-    _selectionCursor = Cursor();
-    _opponentCursor = Cursor();
 
     if (initAi) {
-      _aiConfig = AiConfig();
       _initAis(useDefaultParams: true);
     }
   }
 
   Map<String, dynamic> toJson() => {
-    "id" : id,
-    "state" : state.name,
     "multiPlay" : multiPlay,
-    "previousSignature" : _commContext.previousSignature,
-    "dimension" : _dimension,
-    "currentRound" : _currentRound,
     "currentRole" : _currentRole.name,
     if (_currentChip != null) "currentChip" : _currentChip!.toKey(),
     "matrix" : _matrix.toJson(),
@@ -314,13 +293,9 @@ class Play {
     "orderPlayer" : _orderPlayer.name,
     "startDate" : startDate.toIso8601String(),
     if (endDate != null) "endDate" : endDate!.toIso8601String(),
-    if (opponentName != null) "opponentName" : opponentName,
     if (_staleMove != null) "staleMove" : _staleMove!.toJson(),
     'journal' : _journal.map((j) => j.toJson()).toList(),
-    "playMode" : _playMode.name,
-    "playOpener" : _playOpener?.name,
   };
-
 
 
   double get progress => currentRound / maxRounds;
@@ -399,7 +374,7 @@ class Play {
   
   Move? get currentMove => _staleMove;
 
-  int getPointsPerChip() => _matrix.getPointsPerChip(_dimension);
+  int getPointsPerChip() => _matrix.getPointsPerChip(header.dimension);
 
   void nextPlayer() {
 
@@ -458,17 +433,18 @@ class Play {
 
   }
 
-  int get currentRound => _currentRound;
+  int get currentRound => header.currentRound;
   Stats get stats => _stats;
   Stock get stock => _stock;
-  int get dimension => _dimension;
+  int get dimension => header.dimension;
   Matrix get matrix => _matrix;
   Cursor get selectionCursor => _selectionCursor;
   Cursor get opponentCursor => _opponentCursor;
   AiConfig get aiConfig => _aiConfig;
 
   GameChip? get currentChip => _currentChip;
-  CommunicationContext get commContext => _commContext;
+
+  CommunicationContext get commContext => header.commContext;
 
   GameChip? nextChip() {
     _currentChip = _stock.drawNext();
@@ -478,20 +454,21 @@ class Play {
 
 
   incRound() {
-    _currentRound++;
+    header.currentRound++;
   }
 
   decRound() {
-    _currentRound--;
+    header.currentRound--;
   }
 
-  bool get waitForOpponent => state == PlayState.WaitForOpponent;
+  bool get waitForOpponent => header.state == PlayState.WaitForOpponent;
+
 
   set waitForOpponent(bool wait) {
     if (wait) {
-      state = PlayState.WaitForOpponent;
+      header.state = PlayState.WaitForOpponent;
     } else
-      state = PlayState.ReadyToMove;
+      header.state = PlayState.ReadyToMove;
   }
 
   bool isGameOver() {
@@ -566,7 +543,7 @@ class Play {
 
 
   String getReadablePlayId() {
-    return toReadableId(id);
+    return toReadableId(header.playId);
   }
 
 

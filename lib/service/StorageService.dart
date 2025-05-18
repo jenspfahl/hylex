@@ -27,23 +27,23 @@ class StorageService {
   }
 
 
-  void savePlay(PrefDef key, Play play) {
+  void savePlay(Play play) {
     final jsonToSave = jsonEncode(play);
     debugPrint(_getPrettyJSONString(play));
+    final key = play.isMultiplayerPlay
+        ? PrefDef('${PreferenceService.DATA_PLAY_PREFIX}${play.header.playId}', null)
+        : PreferenceService.DATA_CURRENT_PLAY;
     debugPrint("Save ${key.key} play");
     PreferenceService().setString(key, jsonToSave);
 
-    final playHeader = play.toMultiPlayHeader();
-    if (playHeader != null) {
-      savePlayHeader(play.id, playHeader);
-    }
+    savePlayHeader(play.header);
   }
 
-  void savePlayHeader(String playId, MultiPlayHeader header) {
+  void savePlayHeader(PlayHeader header) {
     final jsonToSave = jsonEncode(header);
     debugPrint(_getPrettyJSONString(header));
 
-    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null);
+    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + header.playId, null);
     debugPrint("Save ${key.key} play header");
     PreferenceService().setString(key, jsonToSave);
   }
@@ -66,7 +66,7 @@ class StorageService {
     return user;
   }
 
-  Future<Play?> loadPlay(PrefDef key) async {
+  Future<Play?> _loadPlay(PrefDef key) async {
     final json = await PreferenceService().getString(key);
     if (json == null) return null;
 
@@ -76,24 +76,42 @@ class StorageService {
     return play;
   }
 
-  Future<MultiPlayHeader?> loadPlayHeader(String playId) async {
-    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null);
-
-    final json = await PreferenceService().getString(key);
+  Future<Play?> loadCurrentSinglePlay() async {
+    final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_PLAY);
     if (json == null) return null;
 
     final map = jsonDecode(json);
-    final header = MultiPlayHeader.fromJson(map);
+    final play = Play.fromJson(map);
+    debugPrint("Loaded play state: $play");
+    final header = await _loadPlayHeader(PreferenceService.DATA_CURRENT_PLAY_HEADER);
+    if (header == null) return null;
+    play.header = header;
+    return play;
+  }
+
+  Future<PlayHeader?> _loadPlayHeader(PrefDef prefDef) async {
+    final json = await PreferenceService().getString(prefDef);
+    if (json == null) return null;
+
+    final map = jsonDecode(json);
+    final header = PlayHeader.fromJson(map);
     debugPrint("Loaded header state: $header");
     return header;
   }
 
-  Future<Play?> loadPlayFromHeader(MultiPlayHeader header) async {
-    final key = PrefDef(PreferenceService.DATA_PLAY_PREFIX + header.playId, null);
-    return await loadPlay(key);
+  Future<PlayHeader?> loadPlayHeader(String playId) async {
+    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + playId, null);
+    return _loadPlayHeader(key);
   }
 
-    Future<List<MultiPlayHeader>> loadAllPlayHeaders() async {
+  Future<Play?> loadPlayFromHeader(PlayHeader header) async {
+    final key = PrefDef(PreferenceService.DATA_PLAY_PREFIX + header.playId, null);
+    final play = await _loadPlay(key);
+    play?.header = header;
+    return play;
+  }
+
+  Future<List<PlayHeader>> loadAllPlayHeaders() async {
 
     final keys = await PreferenceService().getKeys(PreferenceService.DATA_PLAY_HEADER_PREFIX);
 
@@ -107,7 +125,7 @@ class StorageService {
         .where((value) => value != null)
         .map((json) {
           final map = jsonDecode(json!);
-          return MultiPlayHeader.fromJson(map);
+          return PlayHeader.fromJson(map);
         })
         .toList();
 
