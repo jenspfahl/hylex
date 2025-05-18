@@ -487,7 +487,7 @@ class _StartPageState extends State<StartPage>
     Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation')
     .then((result) {
       if (result.status != ShareResultStatus.dismissed) {
-        StorageService().savePlayHeader(header);
+        StorageService().saveMultiPlayHeader(header);
       }
     });
 

@@ -36,16 +36,24 @@ class StorageService {
     debugPrint("Save ${key.key} play");
     PreferenceService().setString(key, jsonToSave);
 
-    savePlayHeader(play.header);
+    final headerKey = play.isMultiplayerPlay
+        ? PrefDef('${PreferenceService.DATA_PLAY_HEADER_PREFIX}${play.header.playId}', null)
+        : PreferenceService.DATA_CURRENT_PLAY_HEADER;
+
+    _savePlayHeader(headerKey, play.header);
   }
 
-  void savePlayHeader(PlayHeader header) {
+  void _savePlayHeader(PrefDef key, PlayHeader header) {
     final jsonToSave = jsonEncode(header);
     debugPrint(_getPrettyJSONString(header));
 
-    final key = PrefDef(PreferenceService.DATA_PLAY_HEADER_PREFIX + header.playId, null);
     debugPrint("Save ${key.key} play header");
     PreferenceService().setString(key, jsonToSave);
+  }
+
+  void saveMultiPlayHeader(PlayHeader header) {
+    final key = PrefDef('${PreferenceService.DATA_PLAY_HEADER_PREFIX}${header.playId}', null);
+    _savePlayHeader(key, header);
   }
 
   void deletePlayHeaderAndPlay(String playId) {
