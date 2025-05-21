@@ -3,19 +3,14 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-class PrefDef {
-  String key;
-  dynamic defaultValue;
-  PrefDef(this.key, this.defaultValue);
-}
 class PreferenceService {
 
-  static final DATA_CURRENT_USER = PrefDef('data/user/current', null);
+  static final DATA_CURRENT_USER = 'data/user/current';
 
-  static final DATA_PLAY_PREFIX = 'data/play/';
-  static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader/';
-  static final DATA_CURRENT_PLAY = PrefDef('${DATA_PLAY_PREFIX}current', null);
-  static final DATA_CURRENT_PLAY_HEADER = PrefDef('${DATA_CURRENT_PLAY}/header', null);
+  static final DATA_PLAY_PREFIX = 'data/play';
+  static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader';
+  static final DATA_CURRENT_PLAY = '${DATA_PLAY_PREFIX}/current';
+  static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
 
   static final PreferenceService _service = PreferenceService._internal();
 
@@ -25,22 +20,22 @@ class PreferenceService {
 
   PreferenceService._internal() {}
 
-  Future<String?> getString(PrefDef def) async {
+  Future<String?> getString(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.getString(def.key)??def.defaultValue;
+    return prefs.getString(key);
   }
 
-  Future<int?> getInt(PrefDef def) async {
+  Future<int?> getInt(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.getInt(def.key)??def.defaultValue;
+    return prefs.getInt(key);
   }
 
-  Future<bool?> getBool(PrefDef def) async {
+  Future<bool?> getBool(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.getBool(def.key)??def.defaultValue;
+    return prefs.getBool(key);
   }
 
   Future<List<String>> getKeys(String prefix) async {
@@ -49,27 +44,27 @@ class PreferenceService {
     return prefs.getKeys().where((key) => key.startsWith(prefix)).toList();
   }
 
-  Future<bool> setString(PrefDef def, String value) async {
+  Future<bool> setString(String key, String value) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.setString(def.key, value);
+    return prefs.setString(key, value);
   }
 
-  Future<bool> setInt(PrefDef def, int value) async {
+  Future<bool> setInt(String key, int value) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.setInt(def.key, value);
+    return prefs.setInt(key, value);
   }
 
-  Future<bool> setBool(PrefDef def, bool value) async {
+  Future<bool> setBool(String key, bool value) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.setBool(def.key, value);
+    return prefs.setBool(key, value);
   }
 
-  Future<bool> remove(PrefDef def) async {
+  Future<bool> remove(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    return prefs.remove(def.key);
+    return prefs.remove(key);
   }
 
 }

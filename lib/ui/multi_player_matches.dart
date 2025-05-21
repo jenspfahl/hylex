@@ -119,7 +119,9 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     }, icon: Icon(Icons.not_started_outlined)),
                   IconButton(onPressed: (){
                     ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}?", () {
-                      StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                      setState(() {
+                        StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                      });
                     });
                   }, icon: Icon(Icons.delete)),
                 ],
