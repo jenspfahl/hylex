@@ -3,7 +3,7 @@ import 'dart:math';
 
 import '../service/BitsService.dart';
 import 'achievements.dart';
-import 'fortune.dart';
+import '../utils/fortune.dart';
 import 'move.dart';
 
 

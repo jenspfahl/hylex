@@ -4,8 +4,9 @@ import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
 
 import '../model/chip.dart';
+import '../model/common.dart';
 import '../model/coordinate.dart';
-import '../model/fortune.dart';
+import '../utils/fortune.dart';
 import '../model/move.dart';
 
 
@@ -16,59 +17,6 @@ const playIdLength = 8;
 const userIdLength = 16;
 const maxNameLength = 32;
 
-enum Operation {
-  sendInvite,  //000
-  acceptInvite, //001
-  rejectInvite, //010
-  move, //011,
-  resign, //100
-  unused101, //101
-  unused110, //110
-  unused111 //111
-} // 3 bits
-
-enum PlayMode {
-  normal,
-  classic,
-  unused10,
-  unused11,
-} // 2 bit
-
-enum PlayOpener { 
-  invitingPlayer, 
-  invitedPlayer, 
-  invitedPlayerChooses,
-  unused1
-} // 2 bites
-
-enum PlaySize { 
-  d5, 
-  d7, 
-  d9, 
-  d11, 
-  d13 
-} // 3 bits
-
-PlaySize dimensionToPlaySize(int dimension) {
-  switch (dimension) {
-    case 5: return PlaySize.d5;
-    case 7: return PlaySize.d7;
-    case 9: return PlaySize.d9;
-    case 11: return PlaySize.d11;
-    case 13: return PlaySize.d13;
-    default: throw Exception("Unsupported dimension: $dimension");
-  }
-}
-
-int playSizeToDimension(PlaySize playSize) {
-  switch (playSize) {
-    case PlaySize.d5: return 5;
-    case PlaySize.d7: return 7;
-    case PlaySize.d9: return 9;
-    case PlaySize.d11: return 11;
-    case PlaySize.d13: return 13;
-  }
-}
 
 class CommunicationContext {
   String? previousSignature;
@@ -152,7 +100,7 @@ class InviteMessage extends Message {
   }
 
   @override
-  Operation getOperation() => Operation.sendInvite;
+  Operation getOperation() => Operation.SendInvite;
 }
 
 class AcceptInviteMessage extends Message {
@@ -179,7 +127,7 @@ class AcceptInviteMessage extends Message {
       playOpener,
       readString(reader),
       readString(reader),
-      playOpener == PlayOpener.invitedPlayer ? readMove(reader) : null,
+      playOpener == PlayOpener.InvitedPlayer ? readMove(reader) : null,
     );
   }
 
@@ -189,13 +137,13 @@ class AcceptInviteMessage extends Message {
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
     writeString(writer, invitedUserId, userIdLength);
     writeString(writer, invitedPlayerName, maxNameLength);
-    if (playOpenerDecision == PlayOpener.invitedPlayer) {
+    if (playOpenerDecision == PlayOpener.InvitedPlayer) {
       writeMove(writer, initialMove!);
     }
   }
 
   @override
-  Operation getOperation() => Operation.acceptInvite;
+  Operation getOperation() => Operation.AcceptInvite;
 }
 
 
@@ -224,7 +172,7 @@ class RejectInviteMessage extends Message {
   }
 
   @override
-  Operation getOperation() => Operation.rejectInvite;
+  Operation getOperation() => Operation.RejectInvite;
 }
 
 
@@ -256,7 +204,7 @@ class MoveMessage extends Message {
   }
 
   @override
-  Operation getOperation() => Operation.move;
+  Operation getOperation() => Operation.Move;
 }
 
 class SerializedMessage {
@@ -314,10 +262,10 @@ class SerializedMessage {
     final playId = readString(reader);
 
     switch (operation) {
-      case Operation.sendInvite : return InviteMessage.deserialize(reader, playId);
-      case Operation.acceptInvite : return AcceptInviteMessage.deserialize(reader, playId);
-      case Operation.rejectInvite : return RejectInviteMessage.deserialize(reader, playId);
-      case Operation.move : return MoveMessage.deserialize(reader, playId);
+      case Operation.SendInvite : return InviteMessage.deserialize(reader, playId);
+      case Operation.AcceptInvite : return AcceptInviteMessage.deserialize(reader, playId);
+      case Operation.RejectInvite : return RejectInviteMessage.deserialize(reader, playId);
+      case Operation.Move : return MoveMessage.deserialize(reader, playId);
       default: throw Exception("Unsupported operation: $operation");
     }
   }
@@ -362,9 +310,9 @@ void main() {
    // send invite
    final invitationMessage = InviteMessage(
        playId,
-       PlaySize.d7,
-       PlayMode.normal,
-       PlayOpener.invitingPlayer,
+       PlaySize.Size7x7,
+       PlayMode.HyleX,
+       PlayOpener.InvitingPlayer,
        invitingUserId,
        "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
    );
@@ -387,7 +335,7 @@ void main() {
    // accept and respond to invite
    final acceptInviteMessage = AcceptInviteMessage(
        deserializedInviteMessage.playId,
-       PlayOpener.invitedPlayer,
+       PlayOpener.InvitedPlayer,
        invitedUserId,
        "Remote opponents name",
        Move.placed(GameChip(1), Coordinate(3, 5)),

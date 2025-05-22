@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:ui';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,17 +6,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:hyle_x/model/achievements.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../model/move.dart';
-import '../model/play.dart';
-import '../model/user.dart';
-import '../service/BitsService.dart';
-import '../service/PreferenceService.dart';
-import '../utils.dart';
-import 'dialogs.dart';
+import '../../model/common.dart';
+import '../../model/move.dart';
+import '../../model/play.dart';
+import '../../model/user.dart';
+import '../../service/BitsService.dart';
+import '../../service/PreferenceService.dart';
+import '../dialogs.dart';
+import '../ui_utils.dart';
 import 'game_ground.dart';
 import 'multi_player_matches.dart';
 
@@ -80,14 +78,14 @@ class _StartPageState extends State<StartPage>
         StorageService().loadPlayHeader(playId).then((header) {
             switch (serializedMessage.extractOperation()) {
 
-              case Operation.sendInvite: {
+              case Operation.SendInvite: {
                 if (header != null) {
                   buildAlertDialog("You already reacted to this invite."); //TODO go to match overview
                 }
                 else {
                   final receivedInviteMessage = serializedMessage
                       .deserializeWithoutValidation() as InviteMessage;
-                  var dimension = playSizeToDimension(receivedInviteMessage.playSize);
+                  var dimension = receivedInviteMessage.playSize.toDimension();
 
                   buildChoiceDialog(
                       "${receivedInviteMessage
@@ -96,21 +94,21 @@ class _StartPageState extends State<StartPage>
                     firstString: "Accept",
                     firstHandler: () {
                         //TODO store new play
-                      final header = PlayHeader.multiPlay(Initiator.Other, dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, null, PlayState.InvitationAccepted);
+                      final header = PlayHeader.multiPlay(Initiator.RemoteUser, dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, null, PlayState.InvitationAccepted);
 
                       //TODO reply with accept
                       
-                      if (receivedInviteMessage.playOpener == PlayOpener.invitedPlayerChooses) {
+                      if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
                         _selectInvitedMultiPlayerOpener(context, (playOpener) {
                           //TODO
                         });
                       }
-                      else if (receivedInviteMessage.playOpener == PlayOpener.invitedPlayer) {
+                      else if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayer) {
                         _startMultiPlayerGame(
-                            context, PlayerType.RemoteUser, PlayerType.User,
+                            context, PlayerType.RemoteUser, PlayerType.LocalUser,
                             header);
                       }
-                      else if (receivedInviteMessage.playOpener == PlayOpener.invitingPlayer) {
+                      else if (receivedInviteMessage.playOpener == PlayOpener.InvitingPlayer) {
                         //TODO reply back
                       }
                     },
@@ -129,16 +127,16 @@ class _StartPageState extends State<StartPage>
 
                 break;
               }
-              case Operation.acceptInvite: {
+              case Operation.AcceptInvite: {
                 break;
               }
-              case Operation.rejectInvite: {
+              case Operation.RejectInvite: {
                 break;
               }
-              case Operation.move: {
+              case Operation.Move: {
                 break;
               }
-              case Operation.resign: {
+              case Operation.Resign: {
                 break;
               }
               case Operation.unused101:
@@ -400,10 +398,10 @@ class _StartPageState extends State<StartPage>
       Function(PlayerType, PlayerType) handleChosenPlayers) {
     buildChoiceDialog(
       'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handleChosenPlayers(PlayerType.Ai, PlayerType.User),
-      secondString: "CHAOS", secondHandler: () => handleChosenPlayers(PlayerType.User, PlayerType.Ai),
-      thirdString: "BOTH", thirdHandler: () => handleChosenPlayers(PlayerType.User, PlayerType.User),
-      fourthString: "NONE", fourthHandler: () => handleChosenPlayers(PlayerType.Ai, PlayerType.Ai),
+      firstString: "ORDER", firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
+      secondString: "CHAOS", secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
+      thirdString: "BOTH", thirdHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalUser),
+      fourthString: "NONE", fourthHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalAi),
     );
   }
 
@@ -411,9 +409,9 @@ class _StartPageState extends State<StartPage>
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
       'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.invitedPlayer),
-      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.invitingPlayer),
-      thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.invitedPlayerChooses),
+      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
+      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
+      thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InvitedPlayerChooses),
     );
   }
 
@@ -421,8 +419,8 @@ class _StartPageState extends State<StartPage>
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
       'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.invitedPlayer),
-      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.invitingPlayer),
+      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
+      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
     );
   }
 
@@ -430,8 +428,8 @@ class _StartPageState extends State<StartPage>
       Function(PlayMode) handlePlayerMode) {
     buildChoiceDialog(
       'What kind of game fo you want to play? ',
-      firstString: "NORMAL", firstHandler: () => handlePlayerMode(PlayMode.normal),
-      secondString: "CLASSIC", secondHandler: () => handlePlayerMode(PlayMode.classic),
+      firstString: "HYLEX-STYLE", firstHandler: () => handlePlayerMode(PlayMode.HyleX),
+      secondString: "CLASSIC-STYLE", secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
   }
 
@@ -473,11 +471,11 @@ class _StartPageState extends State<StartPage>
     _user.name = username;
     StorageService().saveUser(_user);
 
-    final header = PlayHeader.multiPlay(Initiator.This, dimension, playMode, playOpener, null, null, PlayState.RemoteOpponentInvited);
+    final header = PlayHeader.multiPlay(Initiator.LocalUser, dimension, playMode, playOpener, null, null, PlayState.RemoteOpponentInvited);
 
     final inviteMessage = InviteMessage(
         header.playId,
-        dimensionToPlaySize(dimension),
+        PlaySize.fromDimension(dimension),
         playMode,
         playOpener,
         _user.id,

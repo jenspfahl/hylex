@@ -7,24 +7,22 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:hyle_x/model/achievements.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
-import '../engine/game_engine.dart';
-import '../model/chip.dart';
-import '../model/chip_extension.dart';
-import '../model/coordinate.dart';
-import '../model/move.dart';
-import '../model/play.dart';
-import '../model/spot.dart';
-import '../model/stock.dart';
-import '../model/user.dart';
-import '../utils.dart';
-import 'Tooltips.dart';
-import 'dialogs.dart';
-
-enum PlayerType {User, Ai, RemoteUser}
+import '../../engine/game_engine.dart';
+import '../../model/chip.dart';
+import '../../model/common.dart';
+import '../chip_extension.dart';
+import '../../model/coordinate.dart';
+import '../../model/move.dart';
+import '../../model/play.dart';
+import '../../model/spot.dart';
+import '../../model/stock.dart';
+import '../../model/user.dart';
+import '../ui_utils.dart';
+import '../Tooltips.dart';
+import '../dialogs.dart';
 
 class HyleXGround extends StatefulWidget {
   User user;
@@ -181,7 +179,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             final recentRole = gameEngine.play.opponentRole.name;
                             ask('Undo $recentRole\'s last move?', () {
                                 var lastMove = gameEngine.play.previousRound();
-                                if (gameEngine.play.currentPlayer == PlayerType.Ai) {
+                                if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
                                   // undo AI move also
                                   lastMove = gameEngine.play.previousRound();
                                 }
@@ -374,7 +372,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (gameEngine.play.isGameOver()) {
       return Text(_buildWinnerText());
     }
-    else if (gameEngine.play.currentPlayer == PlayerType.Ai) {
+    else if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
@@ -388,9 +386,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   String _buildWinnerText() {
     final winner = gameEngine.play.stats.getWinner();
     final winnerPlayer = gameEngine.play.getWinnerPlayer();
-    var winnerPlayerName = winnerPlayer == PlayerType.User
+    var winnerPlayerName = winnerPlayer == PlayerType.LocalUser
         ? "You"
-        : winnerPlayer == PlayerType.Ai
+        : winnerPlayer == PlayerType.LocalAi
           ? "Computer"
           : "Remote opponent";
     return "Game over! ${winner.name} (${winnerPlayerName}) wins!";
@@ -426,7 +424,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         child: const Text("Restart"),
       );
     }
-    else if (gameEngine.play.currentPlayer == PlayerType.User) {
+    else if (gameEngine.play.currentPlayer == PlayerType.LocalUser) {
       final isDirty = gameEngine.play.hasStaleMove;
       return FilledButton(
         onPressed: () {
@@ -517,12 +515,12 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildRoleIndicator(Role role, PlayerType player, bool isLeftElseRight) {
     final isSelected = gameEngine.play.currentRole == role;
     final color = isSelected ? Colors.white : null;
-    final icon = player == PlayerType.Ai ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
+    final icon = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
     var tooltipKey = role == Role.Chaos
         ? _chaosChipTooltip
         : _orderChipTooltip;
     final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
-    final tooltipPostfix = player == PlayerType.User ?  "You" : player == PlayerType.Ai ? "Computer" : "Remote opponent";
+    final tooltipPostfix = player == PlayerType.LocalUser ?  "You" : player == PlayerType.LocalAi ? "Computer" : "Remote opponent";
     final secondLine = role == Role.Chaos ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
     return SuperTooltip(
       controller: Tooltips().controlTooltip(tooltipKey),

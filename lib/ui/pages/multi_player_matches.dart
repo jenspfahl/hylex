@@ -1,23 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:ui';
 
-import 'package:app_links/app_links.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:hyle_x/model/achievements.dart';
 import 'package:hyle_x/service/StorageService.dart';
-import 'package:share_plus/share_plus.dart';
 
-import '../model/move.dart';
-import '../model/play.dart';
-import '../model/user.dart';
-import '../service/BitsService.dart';
-import '../service/PreferenceService.dart';
-import '../utils.dart';
-import 'dialogs.dart';
+import '../../model/play.dart';
+import '../../model/user.dart';
+import '../dialogs.dart';
+import '../ui_utils.dart';
 import 'game_ground.dart';
 
 

@@ -6,12 +6,11 @@ import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/BitsService.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../model/common.dart';
+import '../model/move.dart';
 import '../model/user.dart';
 import '../service/PreferenceService.dart';
 import '../service/StorageService.dart';
-import '../ui/game_ground.dart';
-import '../model/achievements.dart';
-import '../model/move.dart';
 import 'ai/strategy.dart';
 
 abstract class GameEngine extends ChangeNotifier {
@@ -70,23 +69,23 @@ abstract class GameEngine extends ChangeNotifier {
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
       //TODO add match-achievements
       if (winner == Role.Order) {
-        if (play.orderPlayer == PlayerType.User) {
+        if (play.orderPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Won;
           user.achievements.incWonGame(Role.Order, play.dimension);
           user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
         }
-        else if (play.chaosPlayer == PlayerType.User) {
+        else if (play.chaosPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Chaos, play.dimension);
         }
       }
       else if (winner == Role.Chaos) {
-        if (play.chaosPlayer == PlayerType.User) {
+        if (play.chaosPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Won;
           user.achievements.incWonGame(Role.Chaos, play.dimension);
           user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
         }
-        else if (play.orderPlayer == PlayerType.User) {
+        else if (play.orderPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Lost;
           user.achievements.incLostGame(Role.Order, play.dimension);
         }
@@ -94,8 +93,8 @@ abstract class GameEngine extends ChangeNotifier {
       StorageService().saveUser(user);
     }
     else if (play.multiPlay) {
-      if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.User)
-      || (winner == Role.Order && play.orderPlayer == PlayerType.User)) {
+      if ((winner == Role.Chaos && play.chaosPlayer == PlayerType.LocalUser)
+      || (winner == Role.Order && play.orderPlayer == PlayerType.LocalUser)) {
         play.header.state = PlayState.Won;
       }
       else {
@@ -143,7 +142,6 @@ abstract class GameEngine extends ChangeNotifier {
   void _cleanUp();
 
 
-
 }
 
 class SinglePlayerGameEngine extends GameEngine {
@@ -160,7 +158,7 @@ class SinglePlayerGameEngine extends GameEngine {
   }
 
   void _doPlayerMove() {
-    if (play.currentPlayer == PlayerType.Ai) {
+    if (play.currentPlayer == PlayerType.LocalAi) {
       _think();
     }
     // else the user has to do the move

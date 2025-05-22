@@ -5,7 +5,7 @@ import 'package:hyle_x/model/stock.dart';
 
 import 'chip.dart';
 import 'coordinate.dart';
-import 'fortune.dart';
+import '../utils/fortune.dart';
 
 
 class Matrix {

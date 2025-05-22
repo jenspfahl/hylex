@@ -1,10 +1,12 @@
 
 
+import 'package:hyle_x/model/play.dart';
+
 import 'chip.dart';
+import 'common.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
 
-enum Role {Chaos, Order}
 
 /**
  * A Move is a game move, which can either be a placed chip (initiated by Chaos) or

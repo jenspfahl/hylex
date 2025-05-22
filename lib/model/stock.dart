@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:hyle_x/model/chip.dart';
-import 'fortune.dart';
+import '../utils/fortune.dart';
 
 
 

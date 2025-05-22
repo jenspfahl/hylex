@@ -8,8 +8,9 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/chip.dart';
 
+import '../../model/common.dart';
 import '../../model/coordinate.dart';
-import '../../model/fortune.dart';
+import '../../utils/fortune.dart';
 import '../../model/matrix.dart';
 import '../../model/move.dart';
 import '../../model/play.dart';

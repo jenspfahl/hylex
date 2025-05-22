@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:collection/collection.dart';
@@ -13,13 +12,12 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../engine/ai/ai.dart';
 import '../engine/ai/strategy.dart';
-import '../ui/game_ground.dart';
+import 'common.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
-import 'fortune.dart';
+import '../utils/fortune.dart';
 import 'matrix.dart';
 import 'move.dart';
-
 
 enum PlayState {
 
@@ -57,12 +55,6 @@ enum PlayState {
   Closed, // final state
 }
 
-// Who sent the initial invite?
-enum Initiator {
-  This,
-  Other
-}
-
 /**
  * This contains header information of each play.
  */
@@ -72,7 +64,7 @@ class PlayHeader {
   late String playId;
   
   late int dimension;
-  PlayMode playMode = PlayMode.normal;
+  PlayMode playMode = PlayMode.HyleX;
   PlayState state = PlayState.Initialised;
   int currentRound = 0;
 
@@ -184,9 +176,8 @@ class Play {
   late final PlayerType _chaosPlayer;
   late final PlayerType _orderPlayer;
 
-  AiConfig _aiConfig = AiConfig();
-  ChaosAi? chaosAi;
-  OrderAi? orderAi;
+  Ai? chaosAi;
+  Ai? orderAi;
 
   DateTime startDate = DateTime.timestamp();
   DateTime? endDate;
@@ -196,15 +187,15 @@ class Play {
   Move? _staleMove;
 
   Play.newSinglePlay(this.header, this._chaosPlayer, this._orderPlayer) {
-    _init(true);
+    _init(initAi: true);
   }
 
   Play.newMultiPlay(this.header) {
-    _chaosPlayer = header.initiator == Initiator.This && header.playOpener == PlayOpener.invitingPlayer ? PlayerType.User : PlayerType.RemoteUser; //TOOO
-    _orderPlayer = _chaosPlayer == PlayerType.User ? PlayerType.RemoteUser : PlayerType.User;
+    _chaosPlayer = header.initiator == Initiator.LocalUser && header.playOpener == PlayOpener.InvitingPlayer ? PlayerType.LocalUser : PlayerType.RemoteUser; //TOOO
+    _orderPlayer = _chaosPlayer == PlayerType.LocalUser ? PlayerType.RemoteUser : PlayerType.LocalUser;
     multiPlay = true;
     
-    _init(false);
+    _init(initAi: false);
   }
 
   // PlayHeader needs to be injected
@@ -243,8 +234,7 @@ class Play {
       return Move.fromJson(value);
     }));
 
-    _aiConfig = AiConfig();
-    _initAis(useDefaultParams: true);
+    _initAis();
   }
 
   PlayerType get chaosPlayer => _chaosPlayer;
@@ -260,7 +250,7 @@ class Play {
 
 
   // initialises the play state to get started
-  void _init(bool initAi) {
+  void _init({required bool initAi}) {
 
     _journal.clear();
 
@@ -276,7 +266,7 @@ class Play {
 
 
     if (initAi) {
-      _initAis(useDefaultParams: true);
+      _initAis();
     }
   }
 
@@ -414,9 +404,9 @@ class Play {
 
   bool get isMultiplayerPlay => _chaosPlayer == PlayerType.RemoteUser || _orderPlayer == PlayerType.RemoteUser;
 
-  bool get isBothSidesSinglePlay => _chaosPlayer == PlayerType.User && _orderPlayer == PlayerType.User;
+  bool get isBothSidesSinglePlay => _chaosPlayer == PlayerType.LocalUser && _orderPlayer == PlayerType.LocalUser;
 
-  bool get isFullAutomaticPlay => _chaosPlayer == PlayerType.Ai && _orderPlayer == PlayerType.Ai;
+  bool get isFullAutomaticPlay => _chaosPlayer == PlayerType.LocalAi && _orderPlayer == PlayerType.LocalAi;
 
   Role finishGame() {
 
@@ -427,9 +417,9 @@ class Play {
     return _currentRole;
   }
 
-  void _initAis({required bool useDefaultParams}) {
-    chaosAi = DefaultChaosAi(_aiConfig, this);
-    orderAi = DefaultOrderAi(_aiConfig, this);
+  void _initAis() {
+    chaosAi = DefaultChaosAi();
+    orderAi = DefaultOrderAi();
 
   }
 
@@ -440,7 +430,6 @@ class Play {
   Matrix get matrix => _matrix;
   Cursor get selectionCursor => _selectionCursor;
   Cursor get opponentCursor => _opponentCursor;
-  AiConfig get aiConfig => _aiConfig;
 
   GameChip? get currentChip => _currentChip;
 
@@ -538,7 +527,7 @@ class Play {
   }
 
   void reset() {
-    _init(false);
+    _init(initAi: false);
   }
 
 
