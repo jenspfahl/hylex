@@ -37,7 +37,6 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       navigatorObservers: [FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
       home: FutureBuilder<List<PlayHeader>>(

@@ -161,12 +161,9 @@ class _StartPageState extends State<StartPage>
       navigatorObservers: [FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
-      home: Builder(builder: (context) {
-        return _buildStartPage(context);
-      }),
+      home:  _buildStartPage(context)
     );
   }
 
@@ -254,6 +251,9 @@ class _StartPageState extends State<StartPage>
                     clickHandler: () async {
                       final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
+                        SmartDialog.showLoading(msg: "Loading game ...");
+                        await Future.delayed(const Duration(seconds: 1));
+
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
                               return HyleXGround(_user, play);

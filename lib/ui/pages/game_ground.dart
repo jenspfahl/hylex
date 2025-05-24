@@ -101,8 +101,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'HyleX',
+      navigatorObservers: [FlutterSmartDialog.observer],
+      builder: FlutterSmartDialog.init(),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: _buildGameBody(),
