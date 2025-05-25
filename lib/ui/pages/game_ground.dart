@@ -42,6 +42,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   GameChip? _emphasiseAllChipsOf;
   Role? _emphasiseAllChipsOfRole;
   bool _lastUndoMoveHighlighted = false;
+  bool _gameOverShown = false;
   
   late StreamSubscription<FGBGType> fgbgSubscription;
   late StreamSubscription<Uri> _uriLinkStreamSub;
@@ -68,6 +69,12 @@ class _HyleXGroundState extends State<HyleXGround> {
           widget.play,
           widget.user);
     }
+    gameEngine.addListener(() {
+      if (!_gameOverShown && gameEngine.play.isGameOver()) {
+        _showGameOver(context);
+        _gameOverShown = true;
+      }
+    });
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
       if (event == FGBGType.background) {
@@ -123,7 +130,9 @@ class _HyleXGroundState extends State<HyleXGround> {
       child: Scaffold(
                 appBar: AppBar(
                   automaticallyImplyLeading: false,
-                  title: Text('HyleX ${gameEngine.play.getReadablePlayId()}'),
+                  title: Text(
+                    'HyleX ${gameEngine.play.isMultiplayerPlay ? gameEngine.play.getReadablePlayId() : "Single Play"}',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   actions: [
                     Visibility(
                       visible: _isUndoAllowed(),
@@ -209,6 +218,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       
                         ask('Restart game?', () {
                               gameEngine.stopGame();
+                              _gameOverShown = false;
                               gameEngine.startGame();
                         })
                       },
@@ -363,7 +373,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
 
-  bool _isUndoAllowed() => !gameEngine.isBoardLocked() && !gameEngine.play.isGameOver() && !gameEngine.play.isFullAutomaticPlay && !gameEngine.play.isMultiplayerPlay && !gameEngine.play.isJournalEmpty;
+  bool _isUndoAllowed() => !gameEngine.isBoardLocked()
+      && !gameEngine.play.isGameOver()
+      && !gameEngine.play.isFullAutomaticPlay
+      && !gameEngine.play.isMultiplayerPlay
+      && !gameEngine.play.isJournalEmpty;
 
 
   Widget _buildHint(BuildContext context) {
@@ -442,9 +456,6 @@ class _HyleXGroundState extends State<HyleXGround> {
           }
           gameEngine.play.commitMove();
           gameEngine.nextPlayer();
-          if (gameEngine.play.isGameOver()) { //TODO only shoed if localUser is Chaos!!
-            _showGameOver(context);
-          }
         },
         child: Text(gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
             ? 'Skip move'

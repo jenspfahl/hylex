@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/StorageService.dart';
 
 import '../../model/play.dart';
@@ -81,13 +82,15 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     backgroundColor: getColorFromIdx(playHeader.state.index),
                     maxRadius: 6,
                   ),
-                  Text("  ${playHeader.getReadablePlayId()} against ${playHeader.opponentName}"),
+                  Text(
+                      " " + _getHeaderTitleLine(playHeader),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${playHeader.dimension} x ${playHeader.dimension}, ${playHeader.playMode.name}, TODO your role, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}"),
+                  Text(_getHeaderBodyLine(playHeader)),
                 ],
               ),
               Row(
@@ -111,6 +114,28 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           ),
         ),),
     );
+  }
+
+
+  String _getHeaderTitleLine(PlayHeader playHeader) {
+    if (playHeader.opponentName != null) {
+      return "${playHeader.getReadablePlayId()} against ${playHeader.opponentName}";
+    }
+    else {
+      return playHeader.getReadablePlayId();
+    }
+  }
+
+  String _getHeaderBodyLine(PlayHeader playHeader) {
+    Role? role;
+    if (playHeader.initiator != null) {
+      role = playHeader.playOpener?.getRoleFrom(playHeader.initiator!);
+    }
+    var roleString = "";
+    if (role != null) {
+      roleString = "as ${role.name}";
+    }
+    return "${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}";
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {

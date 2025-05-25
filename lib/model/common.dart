@@ -62,6 +62,25 @@ enum PlayOpener {
   InvitedPlayerChooses,  //10
   unused11  //11
   // stuck to 2 bits, don't add more
+  ;
+
+  Role? getRoleFrom(Initiator initiator) {
+    if (initiator == Initiator.LocalUser && this == PlayOpener.InvitingPlayer) {
+      return Role.Chaos;
+    }
+    else if (initiator == Initiator.LocalUser && this == PlayOpener.InvitedPlayer) {
+      return Role.Order;
+    }
+    else if (initiator == Initiator.RemoteUser && this == PlayOpener.InvitingPlayer) {
+      return Role.Order;
+    }
+    else if (initiator == Initiator.RemoteUser && this == PlayOpener.InvitedPlayer) {
+      return Role.Chaos;
+    }
+    else {
+      return null;
+    }
+  }
 } 
 
 enum PlaySize {

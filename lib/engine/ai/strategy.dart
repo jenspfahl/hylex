@@ -78,7 +78,7 @@ class MinimaxStrategy extends Strategy {
           }
 
           values.putIfAbsent(value, () {
-            debugPrint("move received with value $value: $move");
+            // debugPrint("move received with value $value: $move");
             return move;
           });
 

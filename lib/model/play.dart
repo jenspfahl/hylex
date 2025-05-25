@@ -253,6 +253,10 @@ class Play {
   void _init({required bool initAi}) {
 
     _journal.clear();
+    _opponentCursor.clear();
+    _selectionCursor.clear();
+    _currentRole = Role.Chaos;
+    header.currentRound = 0;//TODO init() on header
 
     _matrix = Matrix(Coordinate(dimension, dimension));
 
