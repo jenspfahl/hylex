@@ -43,7 +43,6 @@ class _HyleXGroundState extends State<HyleXGround> {
   Role? _emphasiseAllChipsOfRole;
   bool _lastUndoMoveHighlighted = false;
   
-  late BuildContext _builderContext;
   late StreamSubscription<FGBGType> fgbgSubscription;
   late StreamSubscription<Uri> _uriLinkStreamSub;
 
@@ -99,15 +98,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'HyleX',
-      navigatorObservers: [FlutterSmartDialog.observer],
-      builder: FlutterSmartDialog.init(),
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home: _buildGameBody(),
-    );
+    return _buildGameBody();
   }
 
   @override
@@ -121,195 +112,201 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildGameBody() {
-    return Builder(
-        builder: (context) {
-          _builderContext = context;
-          return Scaffold(
-              appBar: AppBar(
-                title: Text('HyleX ${gameEngine.play.getReadablePlayId()}'),
-                actions: [
-                  IconButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                            context: context,
-                            builder: (BuildContext context) {
-                              final elements = gameEngine.play.journal
-                                  .indexed
-                                  .map((e) => _buildJournalEvent(e))
-                                  .toList()
-                                  .reversed
-                                  .toList();
-
-                              elements.add(const Text("------ Game started ------"));
-                              if (gameEngine.play.isGameOver()) {
-                                elements.insert(0, const Text("------ Game over ------"));
-                              }
-                              return Container(
-                                height: 250, // Set your desired height
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
-                                  child: SingleChildScrollView(
-                                    child: Center(
-                                      child: Column(children: elements),
+    return WillPopScope(
+      onWillPop: () async {
+        ask('Leave current game?', () {
+          gameEngine.pauseGame();
+          Navigator.pop(super.context); // go to start page
+        });
+        return false;
+      },
+      child: Scaffold(
+                appBar: AppBar(
+                  automaticallyImplyLeading: false,
+                  title: Text('HyleX ${gameEngine.play.getReadablePlayId()}'),
+                  actions: [
+                    Visibility(
+                      visible: _isUndoAllowed(),
+                      child: IconButton(
+                        icon: const Icon(Icons.undo_outlined),
+                        onPressed: () {
+                          if (!_isUndoAllowed()) {
+                            toastError(context, "Undo not possible here");
+                            return;
+                          }
+      
+                          setState(() {
+                            if (gameEngine.play.hasStaleMove) {
+                              gameEngine.play.undoStaleMove();
+                              gameEngine.play.selectionCursor.clear();
+                              gameEngine.savePlayState();
+                            }
+                            else {
+      
+                              final recentRole = gameEngine.play.opponentRole.name;
+                              ask('Undo $recentRole\'s last move?', () {
+                                  var lastMove = gameEngine.play.previousRound();
+                                  if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
+                                    // undo AI move also
+                                    lastMove = gameEngine.play.previousRound();
+                                  }
+      
+                                  if (lastMove != null) {
+                                    gameEngine.play.selectionCursor.adaptFromMove(lastMove);
+                                    _lastUndoMoveHighlighted = true;
+                                    final moveBefore = gameEngine.play.lastMoveFromJournal;
+                                    if (moveBefore != null) {
+                                      gameEngine.play.opponentCursor.adaptFromMove(moveBefore);
+                                    }
+      
+                                    gameEngine.savePlayState();
+                                  }
+                                  else {
+                                    // beginning of game
+                                    gameEngine.startGame();
+                                  }
+                                });
+                            }
+                          });
+      
+                        },
+                      ),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                              context: context,
+                              builder: (BuildContext context) {
+                                final elements = gameEngine.play.journal
+                                    .indexed
+                                    .map((e) => _buildJournalEvent(e))
+                                    .toList()
+                                    .reversed
+                                    .toList();
+      
+                                elements.add(const Text("------ Game started ------"));
+                                if (gameEngine.play.isGameOver()) {
+                                  elements.insert(0, const Text("------ Game over ------"));
+                                }
+                                return Container(
+                                  height: 250, // Set your desired height
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
+                                    child: SingleChildScrollView(
+                                      child: Center(
+                                        child: Column(children: elements),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                          },
-                        );
-                      },
-                      icon: const Icon(Icons.history)),
-                  Visibility(
-                    visible: _isUndoAllowed(),
-                    child: IconButton(
-                      icon: const Icon(Icons.undo_outlined),
-                      onPressed: () {
-                        if (!_isUndoAllowed()) {
-                          toastError(context, "Undo not possible here");
-                          return;
-                        }
-
-                        setState(() {
-                          if (gameEngine.play.hasStaleMove) {
-                            gameEngine.play.undoStaleMove();
-                            gameEngine.play.selectionCursor.clear();
-                            gameEngine.savePlayState();
-                          }
-                          else {
-
-                            final recentRole = gameEngine.play.opponentRole.name;
-                            ask('Undo $recentRole\'s last move?', () {
-                                var lastMove = gameEngine.play.previousRound();
-                                if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
-                                  // undo AI move also
-                                  lastMove = gameEngine.play.previousRound();
-                                }
-
-                                if (lastMove != null) {
-                                  gameEngine.play.selectionCursor.adaptFromMove(lastMove);
-                                  _lastUndoMoveHighlighted = true;
-                                  final moveBefore = gameEngine.play.lastMoveFromJournal;
-                                  if (moveBefore != null) {
-                                    gameEngine.play.opponentCursor.adaptFromMove(moveBefore);
-                                  }
-
-                                  gameEngine.savePlayState();
-                                }
-                                else {
-                                  // beginning of game
-                                  gameEngine.startGame();
-                                }
-                              });
-                          }
-                        });
-
+                                );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.history)),
+                    IconButton(
+                      icon: const Icon(Icons.restart_alt_outlined),
+                      onPressed: () => {
+      
+                        ask('Restart game?', () {
+                              gameEngine.stopGame();
+                              gameEngine.startGame();
+                        })
                       },
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.restart_alt_outlined),
-                    onPressed: () => {
-
-                      ask('Restart game?', () {
-                            gameEngine.stopGame();
-                            gameEngine.startGame();
-                      })
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.exit_to_app),
-                    onPressed: () => {
-
-                      ask('Leave current game?', () {
-                            gameEngine.pauseGame();
-                            Navigator.pop(super.context); // go to start page
-                          })
-                    },
-                  )
-                ],
-              ),
-              body: SingleChildScrollView(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
-                                Text("Round ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
-                                _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
-                              ],
+                    IconButton(
+                      icon: const Icon(Icons.exit_to_app),
+                      onPressed: () => {
+      
+                        ask('Leave current game?', () {
+                              gameEngine.pauseGame();
+                              Navigator.pop(super.context); // go to start page
+                            })
+                      },
+                    )
+                  ],
+                ),
+                body: SingleChildScrollView(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
+                                  Text("Round ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
+                                  _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
+                                ],
+                              ),
                             ),
-                          ),
-                          LinearProgressIndicator(value: gameEngine.play.progress,),
-                          Column(
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                                child: Center(
+                            LinearProgressIndicator(value: gameEngine.play.progress,),
+                            Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                                  child: Center(
+                                    child: GridView.builder(
+                                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
+                                        ),
+                                        itemBuilder: _buildChipStock,
+                                        itemCount: gameEngine.play.stock.getTotalChipTypes(),
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics()),
+                                  ),
+                                ),
+                                Container(
+                                  margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                                  height: 20,
                                   child: GridView.builder(
                                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
                                       ),
-                                      itemBuilder: _buildChipStock,
+                                      itemBuilder: _buildChipStockIndicator,
                                       itemCount: gameEngine.play.stock.getTotalChipTypes(),
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics()),
                                 ),
-                              ),
-                              Container(
-                                margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-                                height: 20,
+                              ],
+                            ),
+                            AspectRatio(
+                              aspectRatio: 1,
+                              child: Container(
+                                margin: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.black, width: 2.0)),
                                 child: GridView.builder(
                                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
+                                      crossAxisCount: gameEngine.play.dimension,
                                     ),
-                                    itemBuilder: _buildChipStockIndicator,
-                                    itemCount: gameEngine.play.stock.getTotalChipTypes(),
-                                    shrinkWrap: true,
+                                    itemBuilder: _buildBoardGrid,
+                                    itemCount: gameEngine.play.dimension * gameEngine.play.dimension,
                                     physics: const NeverScrollableScrollPhysics()),
                               ),
-                            ],
-                          ),
-                          AspectRatio(
-                            aspectRatio: 1,
-                            child: Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black, width: 2.0)),
-                              child: GridView.builder(
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: gameEngine.play.dimension,
-                                  ),
-                                  itemBuilder: _buildBoardGrid,
-                                  itemCount: gameEngine.play.dimension * gameEngine.play.dimension,
-                                  physics: const NeverScrollableScrollPhysics()),
                             ),
-                          ),
-
-                          Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: _buildHint(context),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 0, top: 0, right: 0, bottom: 10),
-                            child: _buildSubmitButton(context),
-                          ),
-                        ]),
+      
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: _buildHint(context),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 0, top: 0, right: 0, bottom: 10),
+                              child: _buildSubmitButton(context),
+                            ),
+                          ]),
+                    ),
                   ),
-                ),
-              ));
-        }
+                )),
     );
+
   }
 
   Widget _buildJournalEvent((int, Move) e) {
@@ -445,7 +442,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           }
           gameEngine.play.commitMove();
           gameEngine.nextPlayer();
-          if (gameEngine.play.isGameOver()) {
+          if (gameEngine.play.isGameOver()) { //TODO only shoed if localUser is Chaos!!
             _showGameOver(context);
           }
         },
@@ -507,9 +504,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
   }
 
-  void _showGameOver(BuildContext? context) {
+  void _showGameOver(BuildContext context) {
     setState(() {
-      toastError(context ?? _builderContext, _buildWinnerText());
+      toastError(context, _buildWinnerText());
     });
   }
 

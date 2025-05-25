@@ -22,7 +22,7 @@ class StorageService {
   void saveUser(User user) {
     final jsonToSave = jsonEncode(user);
     debugPrint("Save current user:");
-    debugPrint(_getPrettyJSONString(user));
+    //debugPrint(_getPrettyJSONString(user));
     PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
   }
 
@@ -38,7 +38,7 @@ class StorageService {
   
   void savePlay(Play play) {
     final jsonToSave = jsonEncode(play);
-    debugPrint(_getPrettyJSONString(play));
+    //debugPrint(_getPrettyJSONString(play));
     final key = play.isMultiplayerPlay
         ? _getPlayKey(play.header.playId)
         : PreferenceService.DATA_CURRENT_PLAY;
@@ -108,7 +108,7 @@ class StorageService {
 
   void _savePlayHeader(String key, PlayHeader header) {
     final jsonToSave = jsonEncode(header);
-    debugPrint(_getPrettyJSONString(header));
+    //debugPrint(_getPrettyJSONString(header));
 
     debugPrint("Save ${key} play header");
     PreferenceService().setString(key, jsonToSave);

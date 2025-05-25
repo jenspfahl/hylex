@@ -125,7 +125,7 @@ class PlayHeader {
 
     if (initiator != null) "initiator": initiator?.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
-    "previousSignature" : commContext.previousSignature,
+    if (commContext.previousSignature != null) "previousSignature" : commContext.previousSignature,
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
   };
@@ -171,8 +171,8 @@ class Play {
   Cursor _selectionCursor = Cursor();
   Cursor _opponentCursor = Cursor();
 
-  late final Matrix _matrix;
-  late final Stock _stock;
+  late Matrix _matrix;
+  late Stock _stock;
   late final PlayerType _chaosPlayer;
   late final PlayerType _orderPlayer;
 

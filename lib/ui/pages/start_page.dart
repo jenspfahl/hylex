@@ -157,14 +157,7 @@ class _StartPageState extends State<StartPage>
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorObservers: [FlutterSmartDialog.observer],
-      builder: FlutterSmartDialog.init(),
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home:  _buildStartPage(context)
-    );
+    return _buildStartPage(context);
   }
 
   Widget _buildStartPage(BuildContext context) {

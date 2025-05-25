@@ -32,43 +32,35 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Load a match",
-      navigatorObservers: [FlutterSmartDialog.observer],
-      builder: FlutterSmartDialog.init(),
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home: FutureBuilder<List<PlayHeader>>(
-          future: StorageService().loadAllPlayHeaders(),
-          builder: (BuildContext context, AsyncSnapshot<List<PlayHeader>> snapshot) {
-            Widget widget;
-            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              widget = Column(
-                children: snapshot.data!.map(_buildPlayLine).toList(),
-              );
-            }
-            else {
-              widget =
-                  Center(child: Text("No matches stored!"));
-            }
-        return Scaffold(
-            appBar: AppBar(title: Text('Continue a match')),
-            body: SingleChildScrollView(
-              child: Container(
+    return Scaffold(
+        appBar: AppBar(title: Text('Continue a match')),
+        body: FutureBuilder<List<PlayHeader>>(
+            future: StorageService().loadAllPlayHeaders(),
+            builder: (BuildContext context,
+                AsyncSnapshot<List<PlayHeader>> snapshot) {
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                return SingleChildScrollView(
+                  child: Container(
                     color: Theme
                         .of(context)
                         .colorScheme
                         .surface,
                     child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: widget,
+                      child: Column(
+                        children: snapshot.data!.map(_buildPlayLine).toList(),
+                      ),
                     ),
                   ),
-          )
-        );
-      }),
+                );
+
+              }
+              else {
+                return Center(child: Text("No matches stored!"));
+              }
+            })
     );
+
   }
 
   Widget _buildPlayLine(PlayHeader playHeader) {
