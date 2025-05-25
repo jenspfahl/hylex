@@ -12,6 +12,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../engine/ai/ai.dart';
 import '../engine/ai/strategy.dart';
+import '../ui/ui_utils.dart';
 import 'common.dart';
 import 'coordinate.dart';
 import 'cursor.dart';
@@ -50,6 +51,9 @@ enum PlayState {
 
   // current player resigned (and the remote opponent won therefore). If both players on a single play are human, this is not used
   Resigned, // final state
+
+  // opponent player resigned (and the current opponent won therefore). If both players on a single play are human, this is not used
+  OpponentResigned, // final state
 
   // used if both players on a single play are human or any other final state like no invitation response etc..
   Closed, // final state
@@ -141,7 +145,7 @@ class PlayHeader {
 
   String getReadableState() {
     switch (state) {
-      case PlayState.Initialised: return "New match";
+      case PlayState.Initialised: return "New match, send invitation needed";
       case PlayState.RemoteOpponentInvited: return "Invitation sent out";
       case PlayState.InvitationPending: return "Open invitation needs response";
       case PlayState.InvitationAccepted: return "Invitation accepted";
@@ -151,8 +155,25 @@ class PlayHeader {
       case PlayState.Lost: return "Match lost";
       case PlayState.Won: return "Match won";
       case PlayState.Resigned: return "You resigned :(";
+      case PlayState.OpponentResigned: return "Opponent resigned, you win";
       case PlayState.Closed: return "Match finished";
+    }
+  }
 
+  Color getStateColor() {
+    switch (state) {
+      case PlayState.Initialised: return getColorFromIdx(6);
+      case PlayState.RemoteOpponentInvited: return getColorFromIdx(7);
+      case PlayState.InvitationPending: return getColorFromIdx(7);
+      case PlayState.InvitationAccepted: return getColorFromIdx(4);
+      case PlayState.InvitationRejected: return getColorFromIdx(8);
+      case PlayState.ReadyToMove: return getColorFromIdx(9);
+      case PlayState.WaitForOpponent: return getColorFromIdx(1);
+      case PlayState.Lost: return Colors.redAccent;
+      case PlayState.Won: return Colors.lightGreenAccent;
+      case PlayState.Resigned: return Colors.redAccent;
+      case PlayState.OpponentResigned: return Colors.lightGreenAccent;
+      case PlayState.Closed: return Colors.black54;
     }
   }
 }

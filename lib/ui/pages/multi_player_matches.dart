@@ -79,7 +79,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    backgroundColor: getColorFromIdx(playHeader.state.index),
+                    backgroundColor: playHeader.getStateColor(),
                     maxRadius: 6,
                   ),
                   Text(
@@ -88,28 +88,41 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 ],
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text(_getHeaderBodyLine(playHeader)),
+                  Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
                 ],
               ),
-              Row(
+              Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${playHeader.getReadableState()}"),
-                  IconButton(onPressed: (){
-                    _startMultiPlayerGame(
-                        context, playHeader);
-                    }, icon: Icon(Icons.not_started_outlined)),
-                  IconButton(onPressed: (){
-                    ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}?", () {
-                      setState(() {
-                        StorageService().deletePlayHeaderAndPlay(playHeader.playId);
-                      });
-                    });
-                  }, icon: Icon(Icons.delete)),
-                ],
-              ),
+                  Text("${playHeader.getReadableState()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Divider(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    child: OverflowBar(
+                      alignment: MainAxisAlignment.end,
+                      overflowAlignment: OverflowBarAlignment.end,
+                      children: [
+                          IconButton(onPressed: (){
+                            }, icon: Icon(Icons.send)),
+                          Visibility(
+                            visible: playHeader.state == PlayState.WaitForOpponent || playHeader.state == PlayState.ReadyToMove,
+                            child: IconButton(onPressed: (){
+                              _startMultiPlayerGame(
+                                  context, playHeader);
+                            }, icon: Icon(Icons.not_started_outlined)),
+                          ),
+                          IconButton(onPressed: (){
+                            ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}? You wont be able to continue this match afterwards.", () {
+                              setState(() {
+                                StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                              });
+                            });
+                          }, icon: Icon(Icons.delete)),
+                        ]),
+                  )
+                ])
             ],
           ),
         ),),
