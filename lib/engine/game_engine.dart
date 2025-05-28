@@ -227,9 +227,9 @@ class MultiPlayerGameEngine extends GameEngine {
     if (lastMove != null) {
 
       final moveMessage = MoveMessage(play.header.playId, play.currentRound, lastMove);
-      final message = BitsService().sendMessage(moveMessage, play.commContext);
+      final serializedMessage = moveMessage.serializeWithContext(play.commContext);
       //Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] Open this link with HyleX to receive opponent\'s move: ${message.toUrl()}', subject: 'HyleX interaction');
-      Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] : ${message.toUrl()}', subject: 'HyleX interaction');
+      Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] : ${serializedMessage.toUrl()}', subject: 'HyleX interaction');
       play.header.state = PlayState.RemoteOpponentInvited;
     }
   }

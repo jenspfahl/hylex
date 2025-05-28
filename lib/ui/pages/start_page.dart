@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/utils/fortune.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../model/common.dart';
@@ -69,84 +70,9 @@ class _StartPageState extends State<StartPage>
         }));
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
-      //TODO load correct play and forward to game ground
-
       final serializedMessage = SerializedMessage.fromUrl(uri);
-
       if (serializedMessage != null) {
-        final playId = serializedMessage.extractPlayId();
-        StorageService().loadPlayHeader(playId).then((header) {
-            switch (serializedMessage.extractOperation()) {
-
-              case Operation.SendInvite: {
-                if (header != null) {
-                  buildAlertDialog("You already reacted to this invite."); //TODO go to match overview
-                }
-                else {
-                  final receivedInviteMessage = serializedMessage
-                      .deserializeWithoutValidation() as InviteMessage;
-                  var dimension = receivedInviteMessage.playSize.toDimension();
-
-                  buildChoiceDialog(
-                      "${receivedInviteMessage
-                          .invitingPlayerName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension math.",
-                    width: 300,
-                    firstString: "Accept",
-                    firstHandler: () {
-                        //TODO store new play
-                      final header = PlayHeader.multiPlay(Initiator.RemoteUser, dimension, receivedInviteMessage.playMode, receivedInviteMessage.playOpener, receivedInviteMessage.invitingPlayerName, null, PlayState.InvitationAccepted);
-
-                      //TODO reply with accept
-                      
-                      if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
-                        _selectInvitedMultiPlayerOpener(context, (playOpener) {
-                          //TODO
-                        });
-                      }
-                      else if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayer) {
-                        _startMultiPlayerGame(
-                            context, PlayerType.RemoteUser, PlayerType.LocalUser,
-                            header);
-                      }
-                      else if (receivedInviteMessage.playOpener == PlayOpener.InvitingPlayer) {
-                        //TODO reply back
-                      }
-                    },
-                    secondString: "Reject",
-                    secondHandler: () {
-                        // TODO send rejectMessage
-                    },
-                    thirdString: "Reply later",
-                    thirdHandler: () {
-                        //TODO save the request
-                    },
-                    fourthString: "Cancel",
-                    fourthHandler: () {},
-                  );
-                }
-
-                break;
-              }
-              case Operation.AcceptInvite: {
-                break;
-              }
-              case Operation.RejectInvite: {
-                break;
-              }
-              case Operation.Move: {
-                break;
-              }
-              case Operation.Resign: {
-                break;
-              }
-              case Operation.unused101:
-                throw UnimplementedError();
-              case Operation.unused110:
-                throw UnimplementedError();
-              case Operation.unused111:
-                throw UnimplementedError();
-            }
-        });
+        _handleMessage(serializedMessage);
       }
       else {
         debugPrint("invalid uri: $uri");
@@ -154,6 +80,167 @@ class _StartPageState extends State<StartPage>
       }
     });
   }
+
+  Future<void> _handleMessage(SerializedMessage serializedMessage) async {
+    final playId = serializedMessage.extractPlayId();
+    final extractOperation = serializedMessage.extractOperation();
+    final header = await StorageService().loadPlayHeader(playId);
+
+    if (extractOperation == Operation.SendInvite) {
+      if (header != null) {
+        buildAlertDialog("You already reacted to this invite. See ${header.getReadablePlayId()}");
+        //TODO add button to jump to this match entry
+      }
+      else {
+        final message = serializedMessage.deserializeWithoutValidation() as InviteMessage;
+        _handleReceiveInvite(message);
+      }
+    }
+    else if (header == null) {
+      buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is not present! Did you delete it?");
+    }
+    else if (extractOperation == Operation.AcceptInvite) {
+      final message = serializedMessage.deserialize(header.commContext) as AcceptInviteMessage;
+      _handleAcceptInvite(header, message);
+    }
+    else if (extractOperation == Operation.RejectInvite) {
+      final message = serializedMessage.deserialize(header.commContext) as RejectInviteMessage;
+      _handleRejectInvite(header, message);
+    }
+    else if (extractOperation == Operation.Move) {
+      final message = serializedMessage.deserialize(header.commContext) as MoveMessage;
+      _handleMove(header, message);
+    }
+    else if (extractOperation == Operation.Resign) {
+      final message = serializedMessage.deserialize(header.commContext) as ResignMessage;
+      _handleResign(header, message);
+    }
+    else {
+      buildAlertDialog("Unknown operation for $extractOperation for ${header.getReadablePlayId()}");
+    }
+
+  }
+
+  void _handleReceiveInvite(InviteMessage receivedInviteMessage) {
+
+    var dimension = receivedInviteMessage.playSize.toDimension();
+
+    buildChoiceDialog(
+        "${receivedInviteMessage
+            .invitingUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension math.",
+      width: 300,
+      firstString: "Accept",
+      firstHandler: () {
+        // first ask for your name
+        if (_user.name == null || _user.name?.isEmpty == true) {
+          _inputUserName(context, (username) =>
+              _handleAcceptInviteWithPlayerOwner(receivedInviteMessage));
+        }
+        else {
+          _handleAcceptInviteWithPlayerOwner(receivedInviteMessage);
+        }
+
+
+      },
+      secondString: "Reject",
+      secondHandler: () {
+        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationRejected);
+        final rejectMessage = RejectInviteMessage(
+            header.playId,
+            _user.id);
+        final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
+
+        _sendMessage('I want to kindly reject your match request: ${serializedMessage.toUrl()}', serializedMessage,
+                () => StorageService().savePlayHeader(header));
+
+      },
+      thirdString: "Reply later",
+      thirdHandler: () {
+        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.Initialised);
+        StorageService().savePlayHeader(header);
+
+      },
+      fourthString: "Cancel",
+      fourthHandler: () {},
+    );
+
+  }
+
+  void _handleAcceptInviteWithPlayerOwner(InviteMessage receivedInviteMessage) {
+    final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationAccepted);
+    StorageService().savePlayHeader(header);
+    if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
+      _selectInvitedMultiPlayerOpener(context, (playOpener) {
+        header.playOpener = playOpener;
+        StorageService().savePlayHeader(header);
+    
+        if (playOpener == PlayOpener.InvitedPlayer) {
+          _startMultiPlayerGame(
+              context, PlayerType.RemoteUser, PlayerType.LocalUser,
+              header);
+        }
+        else {
+          // reply back, they have to start
+          final acceptMessage = AcceptInviteMessage(
+              header.playId,
+              playOpener,
+              _user.id,
+              _user.name!,
+              null
+          );
+          final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
+    
+          _sendMessage("I am accepting your match request and choose to be ${playOpener.getRoleFrom(Initiator.RemoteUser)!.name}:", serializedMessage,
+                  () => StorageService().savePlayHeader(header));
+        }
+      });
+    }
+    else if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayer) {
+      _startMultiPlayerGame(
+          context, PlayerType.RemoteUser, PlayerType.LocalUser,
+          header);
+    }
+    else if (receivedInviteMessage.playOpener == PlayOpener.InvitingPlayer) {
+      // reply back, they have to start 
+      final acceptMessage = AcceptInviteMessage(
+          header.playId,
+          receivedInviteMessage.playOpener,
+          _user.id,
+          _user.name!,
+        null
+      );
+      final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
+    
+      _sendMessage("I am accepting your match request:", serializedMessage,
+              () => StorageService().savePlayHeader(header));
+    }
+  }
+
+  void _sendMessage(String text, SerializedMessage message, Function() sentHandler) {
+    Share.share('$text \n ${message.toUrl()}', subject: 'HyleX interaction')
+        .then((result) {
+      if (result.status != ShareResultStatus.dismissed) {
+        sentHandler();
+      }
+    });
+  }
+
+  void _handleAcceptInvite(PlayHeader header, AcceptInviteMessage message) {
+    
+  }
+
+  void _handleRejectInvite(PlayHeader header, RejectInviteMessage message) {
+    
+  }
+
+  void _handleMove(PlayHeader header, MoveMessage message) {
+    
+  }
+
+  void _handleResign(PlayHeader header, ResignMessage message) {
+    
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -224,15 +311,22 @@ class _StartPageState extends State<StartPage>
                     ? _buildCell("Send Invite", 3, icon: Icons.near_me,
                     clickHandler: () async {
                       if (context.mounted) {
-                        _selectPlayerGroundSize(context, (dimension) =>
+                        _selectPlayerGroundSize(context, (playSize) =>
                             _selectMultiPlayerMode(context, (playerMode) =>
                                 _selectInvitingMultiPlayerOpener(
-                                    context, (playerOpener) =>
-                                    _inputUserName(context, (username) =>
+                                    context, (playerOpener) {
+                                      if (_user.name == null || _user.name?.isEmpty == true) {
+                                        _inputUserName(context, (username) =>
+                                            _inviteOpponent(
+                                                context, playSize, playerMode,
+                                                playerOpener));
+                                      }
+                                      else {
                                         _inviteOpponent(
-                                            context, dimension, playerMode,
-                                            playerOpener, username)))));
-                        //_startGame(context, PlayerType.User, PlayerType.RemoteUser, dimension, true))));
+                                            context, playSize, playerMode,
+                                            playerOpener);
+                                      }
+                                    })));
                       }
                     }
                 )
@@ -352,20 +446,20 @@ class _StartPageState extends State<StartPage>
   }
 
   void _selectPlayerGroundSize(BuildContext context,
-      Function(int) handleChosenDimension) {
+      Function(PlaySize) handleChosenDimension) {
     _showDimensionChooser(
         context, (dimension) => handleChosenDimension(dimension));
   }
 
   void _showDimensionChooser(BuildContext context,
-      Function(int) handleChosenDimension) {
+      Function(PlaySize) handleChosenDimension) {
     buildChoiceDialog(
       'Which ground size?',
-      firstString: "5 x 5", firstHandler: () => handleChosenDimension(5),
-      secondString: "7 x 7", secondHandler: () => handleChosenDimension(7),
-      thirdString: "9 x 9", thirdHandler: () => handleChosenDimension(9),
-      fourthString: "11 x 11", fourthHandler: () => handleChosenDimension(11),
-      fifthString: "13 x 13", fifthHandler: () => handleChosenDimension(13),
+      firstString: "5 x 5", firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
+      secondString: "7 x 7", secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
+      thirdString: "9 x 9", thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
+      fourthString: "11 x 11", fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
+      fifthString: "13 x 13", fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
     );
   }
 
@@ -429,17 +523,22 @@ class _StartPageState extends State<StartPage>
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
     buildInputDialog('What\'s your name?',
             prefilledText: _user.name,
-            okHandler: (name) => handleUsername(name),
+            okHandler: (name) {
+              _user.name = name;
+              StorageService().saveUser(_user);
+
+              return handleUsername(name);
+            },
     );
   }
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, int dimension) async {
+      PlayerType orderPlayer, PlaySize playSize) async {
     SmartDialog.showLoading(msg: "Loading game ...");
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
-          final header = PlayHeader.singlePlay(dimension);
+          final header = PlayHeader.singlePlay(playSize);
           return HyleXGround(
               _user,
               Play.newSinglePlay(header, chaosPlayer, orderPlayer));
@@ -458,30 +557,22 @@ class _StartPageState extends State<StartPage>
         }));
   }
 
-  _inviteOpponent(BuildContext context, int dimension,
-      PlayMode playMode, PlayOpener playOpener, String username) {
+  _inviteOpponent(BuildContext context, PlaySize playSize,
+      PlayMode playMode, PlayOpener playOpener) {
 
-    _user.name = username;
-    StorageService().saveUser(_user);
-
-    final header = PlayHeader.multiPlay(Initiator.LocalUser, dimension, playMode, playOpener, null, null, PlayState.RemoteOpponentInvited);
+    final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener, PlayState.RemoteOpponentInvited);
 
     final inviteMessage = InviteMessage(
         header.playId,
-        PlaySize.fromDimension(dimension),
+        playSize,
         playMode,
         playOpener,
         _user.id,
-        username);
-    final message = BitsService().sendMessage(inviteMessage, header.commContext);
+        _user.name!);
+    final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
-    Share.share('$username want''s to invite you to a game: ${message.toUrl()}', subject: 'HyleX invitation')
-    .then((result) {
-      if (result.status != ShareResultStatus.dismissed) {
-        StorageService().savePlayHeader(header);
-      }
-    });
-
+    _sendMessage('${_user.name!} want''s to invite you to a game', serializedMessage,
+            () => StorageService().savePlayHeader(header));
   }
 
   Widget _buildChip(String label, double radius, double textSize,
@@ -759,5 +850,6 @@ class _StartPageState extends State<StartPage>
       ),
     );
   }
+
 
 }

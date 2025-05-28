@@ -67,7 +67,7 @@ class PlayHeader {
 
   late String playId;
   
-  late int dimension;
+  late PlaySize playSize;
   PlayMode playMode = PlayMode.HyleX;
   PlayState state = PlayState.Initialised;
   int currentRound = 0;
@@ -81,26 +81,36 @@ class PlayHeader {
   
 
   PlayHeader.singlePlay(
-      this.dimension) {
+      this.playSize) {
     playId = generateRandomString(playIdLength);
   }
   
-  PlayHeader.multiPlay(
-      this.initiator, 
-      this.dimension, 
+  PlayHeader.multiPlayInvitor(
+      this.playSize, 
       this.playMode, 
       this.playOpener, 
-      this.opponentId, 
-      this.opponentName, 
       this.state) {
     playId = generateRandomString(playIdLength);
+    initiator = Initiator.LocalUser;
+  }  
+  
+  PlayHeader.multiPlayInvited(
+      InviteMessage inviteMessage,
+      this.state) {
+    playId = generateRandomString(playIdLength);
+    initiator = Initiator.RemoteUser;
+    playSize = inviteMessage.playSize;
+    playMode = inviteMessage.playMode;
+    playOpener = inviteMessage.playOpener;
+    opponentId = inviteMessage.invitingUserId;
+    opponentName = inviteMessage.invitingUserName;
   }
 
   PlayHeader.fromJson(Map<String, dynamic> map) {
 
     playId = map['playId'];
 
-    dimension = map['dimension'];
+    playSize = PlaySize.values.firstWhere((p) => p.name == map['playSize']);
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
     state = PlayState.values.firstWhere((p) => p.name == map['state']);
     currentRound = map['currentRound'];
@@ -122,7 +132,7 @@ class PlayHeader {
 
   Map<String, dynamic> toJson() => {
     "playId" : playId,
-    "dimension" : dimension,
+    "playSize" : playSize.name,
     "playMode" : playMode.name,
     "state" : state.name,
     "currentRound" : currentRound,
@@ -134,13 +144,15 @@ class PlayHeader {
     if (opponentName != null) "opponentName" : opponentName,
   };
 
+  int get dimension => playSize.toDimension();
+
   String getReadablePlayId() {
     return toReadableId(playId);
   }
 
   @override
   String toString() {
-    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, dimension: $dimension, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
+    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
   }
 
   String getReadableState() {

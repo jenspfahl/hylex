@@ -32,7 +32,11 @@ abstract class Message {
 
   Message(this.playId);
 
-  SerializedMessage serialize(String? receivedSignature) {
+  SerializedMessage serializeWithContext(CommunicationContext comContext) {
+    return serializeWithSignature(comContext.previousSignature);
+  }
+
+  SerializedMessage serializeWithSignature(String? receivedSignature) {
 
     final buffer = BitBuffer();
     final writer = buffer.writer();
@@ -65,7 +69,7 @@ class InviteMessage extends Message {
   PlayMode playMode;
   PlayOpener playOpener;
   String invitingUserId;
-  String invitingPlayerName;
+  String invitingUserName;
 
   InviteMessage(
       String playId,
@@ -73,7 +77,7 @@ class InviteMessage extends Message {
       this.playMode,
       this.playOpener,
       this.invitingUserId,
-      this.invitingPlayerName,
+      this.invitingUserName,
       ): super(playId);
 
   factory InviteMessage.deserialize(
@@ -96,7 +100,7 @@ class InviteMessage extends Message {
     writeEnum(writer, PlaySize.values, playSize);
     writeEnum(writer, PlayOpener.values, playOpener);
     writeString(writer, invitingUserId, userIdLength);
-    writeString(writer, invitingPlayerName, maxNameLength);
+    writeString(writer, invitingUserName, maxNameLength);
   }
 
   @override
@@ -207,6 +211,33 @@ class MoveMessage extends Message {
   Operation getOperation() => Operation.Move;
 }
 
+class ResignMessage extends Message {
+  int round;
+
+  ResignMessage(
+      String playId,
+      this.round,
+      ): super(playId);
+
+  factory ResignMessage.deserialize(
+      BitBufferReader reader,
+      String playId) {
+
+    return ResignMessage(
+      playId,
+      readInt(reader, maxRound),
+    );
+  }
+
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+    writeInt(writer, round, maxRound);
+  }
+
+  @override
+  Operation getOperation() => Operation.Resign;
+}
+
 class SerializedMessage {
   String payload;
   String signature;
@@ -286,13 +317,10 @@ class BitsService {
 
   BitsService._internal() {}
 
-  SerializedMessage sendMessage(Message message, CommunicationContext commContext) {
-    return message.serialize(commContext.previousSignature);
+  SerializedMessage serializeMessage(Message message, CommunicationContext commContext) {
+    return message.serializeWithSignature(commContext.previousSignature);
   }
 
-  Message receiveMessage(SerializedMessage serializedMessage, CommunicationContext commContext) {
-    return serializedMessage.deserialize(commContext);
-  }
 }
 
 void main() {
@@ -317,7 +345,7 @@ void main() {
        "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
    );
 
-   final serializedInvitationMessage = _send(invitationMessage.serialize(null), invitingContext);
+   final serializedInvitationMessage = _send(invitationMessage.serializeWithSignature(null), invitingContext);
 
 
    // receive invite
@@ -327,7 +355,7 @@ void main() {
    print("playMode: ${deserializedInviteMessage.playMode}");
    print("playOpener: ${deserializedInviteMessage.playOpener}");
    print("userId: ${deserializedInviteMessage.invitingUserId}");
-   print("invitingName: ${deserializedInviteMessage.invitingPlayerName}");
+   print("invitingName: ${deserializedInviteMessage.invitingUserName}");
 
 
    print("----- accept invite --------");
@@ -341,7 +369,7 @@ void main() {
        Move.placed(GameChip(1), Coordinate(3, 5)),
    );
 
-   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serialize(serializedInvitationMessage.signature), invitedContext);
+   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithSignature(serializedInvitationMessage.signature), invitedContext);
 
 
    // receive accept invite
@@ -377,7 +405,7 @@ void main() {
        Move.moved(GameChip(1), Coordinate(3, 5), Coordinate(0, 5)),
    );
 
-   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serialize(serializedAcceptInviteMessage.signature), invitingContext);
+   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithSignature(serializedAcceptInviteMessage.signature), invitingContext);
 
    final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext) as MoveMessage;
 
