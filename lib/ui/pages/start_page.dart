@@ -11,10 +11,10 @@ import 'package:hyle_x/utils/fortune.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../model/common.dart';
+import '../../model/messaging.dart';
 import '../../model/move.dart';
 import '../../model/play.dart';
 import '../../model/user.dart';
-import '../../service/BitsService.dart';
 import '../../service/PreferenceService.dart';
 import '../dialogs.dart';
 import '../ui_utils.dart';
@@ -127,7 +127,7 @@ class _StartPageState extends State<StartPage>
 
     buildChoiceDialog(
         "${receivedInviteMessage
-            .invitingUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension math.",
+            .invitingUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension match.",
       width: 300,
       firstString: "Accept",
       firstHandler: () {
@@ -156,7 +156,7 @@ class _StartPageState extends State<StartPage>
       },
       thirdString: "Reply later",
       thirdHandler: () {
-        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.Initialised);
+        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationPending);
         StorageService().savePlayHeader(header);
 
       },
@@ -219,9 +219,7 @@ class _StartPageState extends State<StartPage>
   void _sendMessage(String text, SerializedMessage message, Function() sentHandler) {
     Share.share('$text \n ${message.toUrl()}', subject: 'HyleX interaction')
         .then((result) {
-      if (result.status != ShareResultStatus.dismissed) {
         sentHandler();
-      }
     });
   }
 

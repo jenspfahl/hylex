@@ -89,7 +89,9 @@ class StorageService {
     return values
         .where((value) => value != null)
         .map((json) {
+          debugPrint("XXX"+ json.toString());
       final map = jsonDecode(json!);
+      _getPrettyJSONString(map);
       return PlayHeader.fromJson(map);
     })
         .toList();

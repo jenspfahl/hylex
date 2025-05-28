@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
 
-import '../model/chip.dart';
-import '../model/common.dart';
-import '../model/coordinate.dart';
+import 'chip.dart';
+import 'common.dart';
+import 'coordinate.dart';
 import '../utils/fortune.dart';
-import '../model/move.dart';
+import 'move.dart';
 
 
 const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
@@ -96,8 +96,8 @@ class InviteMessage extends Message {
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-    writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlaySize.values, playSize);
+    writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlayOpener.values, playOpener);
     writeString(writer, invitingUserId, userIdLength);
     writeString(writer, invitingUserName, maxNameLength);
@@ -307,23 +307,8 @@ class SerializedMessage {
 
 }
 
-class BitsService {
 
-  static final BitsService _service = BitsService._internal();
-
-  factory BitsService() {
-    return _service;
-  }
-
-  BitsService._internal() {}
-
-  SerializedMessage serializeMessage(Message message, CommunicationContext commContext) {
-    return message.serializeWithSignature(commContext.previousSignature);
-  }
-
-}
-
-void main() {
+void testMessaging() {
 
    final invitingUserId = generateRandomString(userIdLength);
    final invitedUserId = generateRandomString(userIdLength);
