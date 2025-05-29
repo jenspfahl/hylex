@@ -8,7 +8,9 @@ enum PlayerType {
 
 enum Role {
   Chaos, 
-  Order
+  Order;
+
+  Role get opponentRole => this == Role.Chaos ? Role.Order : Role.Chaos;
 }
 
 // Who sent the initial invite?

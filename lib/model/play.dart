@@ -329,7 +329,7 @@ class Play {
 
   Role get currentRole => _currentRole;
 
-  Role get opponentRole => currentRole == Role.Chaos ? Role.Order : Role.Chaos;
+  Role get opponentRole => currentRole.opponentRole;
 
   switchRole() {
     _currentRole = opponentRole;

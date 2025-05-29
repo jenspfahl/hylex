@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/common.dart';
+import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 
 import '../../model/play.dart';
@@ -105,6 +106,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       overflowAlignment: OverflowBarAlignment.end,
                       children: [
                           IconButton(onPressed: (){
+                            MessageService().sendCurrentPlayState(playHeader, widget.user, null);
                             }, icon: Icon(Icons.send)),
                           Visibility(
                             visible: playHeader.state == PlayState.WaitForOpponent || playHeader.state == PlayState.ReadyToMove,

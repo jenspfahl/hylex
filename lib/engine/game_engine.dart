@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/play.dart';
+import 'package:hyle_x/service/MessageService.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../model/common.dart';
@@ -225,12 +226,14 @@ class MultiPlayerGameEngine extends GameEngine {
   void shareGameMove() {
     final lastMove = play.lastMoveFromJournal;
     if (lastMove != null) {
-
-      final moveMessage = MoveMessage(play.header.playId, play.currentRound, lastMove);
-      final serializedMessage = moveMessage.serializeWithContext(play.commContext);
-      //Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] Open this link with HyleX to receive opponent\'s move: ${message.toUrl()}', subject: 'HyleX interaction');
-      Share.share('[Match ${play.getReadablePlayId()}, Round ${play.currentRound}] : ${serializedMessage.toUrl()}', subject: 'HyleX interaction');
-      play.header.state = PlayState.RemoteOpponentInvited;
+      if (play.header.state == PlayState.InvitationPending && play.header.initiator == Initiator.RemoteUser) {
+        MessageService().sendInvitationAccepted(play.header, user, lastMove,
+                () => StorageService().savePlayHeader(play.header));
+      }
+      else {
+        MessageService().sendMove(play.header, user, lastMove,
+                () => StorageService().savePlayHeader(play.header));
+      }
     }
   }
 

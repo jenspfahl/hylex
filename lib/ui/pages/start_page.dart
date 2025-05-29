@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:share_plus/share_plus.dart';
@@ -101,11 +102,11 @@ class _StartPageState extends State<StartPage>
     }
     else if (extractOperation == Operation.AcceptInvite) {
       final message = serializedMessage.deserialize(header.commContext) as AcceptInviteMessage;
-      _handleAcceptInvite(header, message);
+      _handleInviteAccepted(header, message);
     }
     else if (extractOperation == Operation.RejectInvite) {
       final message = serializedMessage.deserialize(header.commContext) as RejectInviteMessage;
-      _handleRejectInvite(header, message);
+      _handleInviteRejected(header, message);
     }
     else if (extractOperation == Operation.Move) {
       final message = serializedMessage.deserialize(header.commContext) as MoveMessage;
@@ -145,14 +146,7 @@ class _StartPageState extends State<StartPage>
       secondString: "Reject",
       secondHandler: () {
         final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationRejected);
-        final rejectMessage = RejectInviteMessage(
-            header.playId,
-            _user.id);
-        final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
-
-        _sendMessage('I want to kindly reject your match request: ${serializedMessage.toUrl()}', serializedMessage,
-                () => StorageService().savePlayHeader(header));
-
+        MessageService().sendInvitationRejected(header, _user, () => StorageService().savePlayHeader(header));
       },
       thirdString: "Reply later",
       thirdHandler: () {
@@ -181,16 +175,7 @@ class _StartPageState extends State<StartPage>
         }
         else {
           // reply back, they have to start
-          final acceptMessage = AcceptInviteMessage(
-              header.playId,
-              playOpener,
-              _user.id,
-              _user.name!,
-              null
-          );
-          final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
-    
-          _sendMessage("I am accepting your match request and choose to be ${playOpener.getRoleFrom(Initiator.RemoteUser)!.name}:", serializedMessage,
+          MessageService().sendInvitationAccepted(header, _user, null,
                   () => StorageService().savePlayHeader(header));
         }
       });
@@ -201,33 +186,17 @@ class _StartPageState extends State<StartPage>
           header);
     }
     else if (receivedInviteMessage.playOpener == PlayOpener.InvitingPlayer) {
-      // reply back, they have to start 
-      final acceptMessage = AcceptInviteMessage(
-          header.playId,
-          receivedInviteMessage.playOpener,
-          _user.id,
-          _user.name!,
-        null
-      );
-      final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
-    
-      _sendMessage("I am accepting your match request:", serializedMessage,
+      MessageService().sendInvitationAccepted(header, _user, null,
               () => StorageService().savePlayHeader(header));
     }
   }
 
-  void _sendMessage(String text, SerializedMessage message, Function() sentHandler) {
-    Share.share('$text \n ${message.toUrl()}', subject: 'HyleX interaction')
-        .then((result) {
-        sentHandler();
-    });
-  }
 
-  void _handleAcceptInvite(PlayHeader header, AcceptInviteMessage message) {
+  void _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) {
     
   }
 
-  void _handleRejectInvite(PlayHeader header, RejectInviteMessage message) {
+  void _handleInviteRejected(PlayHeader header, RejectInviteMessage message) {
     
   }
 
@@ -503,9 +472,9 @@ class _StartPageState extends State<StartPage>
   void _selectInvitedMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
-      'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
-      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
+      'Who shall start? The one who starts is Chaos.',
+      firstString: "ME", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
+      secondString: "THE OTHER", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
     );
   }
 
@@ -560,16 +529,7 @@ class _StartPageState extends State<StartPage>
 
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener, PlayState.RemoteOpponentInvited);
 
-    final inviteMessage = InviteMessage(
-        header.playId,
-        playSize,
-        playMode,
-        playOpener,
-        _user.id,
-        _user.name!);
-    final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
-
-    _sendMessage('${_user.name!} want''s to invite you to a game', serializedMessage,
+    MessageService().sendRemoteOpponentInvited(header, _user,
             () => StorageService().savePlayHeader(header));
   }
 
