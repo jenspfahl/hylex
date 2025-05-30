@@ -19,6 +19,34 @@ import 'matrix.dart';
 import 'messaging.dart';
 import 'move.dart';
 
+/**
+ * Single:
+ *     Initialised --> [ ReadyToMove | WaitForOpponent ] --> [ Won | Lost | Closed]
+ *
+ * Invitor:
+ *     RemoteOpponentInvited --> InvitationRejected
+ *     RemoteOpponentInvited --> ReadyToMove --> [ WaitForOpponent | ReadyToMove ] --> [ Won | Lost | Resigned | OpponentResigned ]
+ *
+ * Invitee:
+ *     InvitationPending --> InvitationRejected
+ *     InvitationPending --> InvitationAccepted --> [ ReadyToMove | WaitForOpponent ] --> [ Won | Lost | Resigned | OpponentResigned ]
+ *
+ * Multiplayer flows:
+ *   Rejection:
+ *    Invitor:  RemoteOpponentInvited
+ *      Invitee:  InvitationPending
+ *      Invitee:  InvitationRejected(final)
+ *        Invitor:  InvitationRejected(final)
+ *  Acceptance:
+ *    Invitor:  RemoteOpponentInvited
+ *      Invitee:  InvitationPending
+ *      Invitee:  InvitationAcceptance
+ *        Invitor:  ReadyToMove
+ *        Invitor:  WaitForOpponent
+ *          Invitee: ReadyToMove
+ *          Invitee: WaitForOpponent
+ *           ...
+ */
 enum PlayState {
   
   // Initial state
@@ -63,10 +91,10 @@ enum PlayState {
 
   String toMessage() {
     switch (this) {
-      case PlayState.Initialised: return "New match, send invitation needed";
+      case PlayState.Initialised: return "New game";
       case PlayState.RemoteOpponentInvited: return "Invitation sent out";
       case PlayState.InvitationPending: return "Open invitation needs response";
-      case PlayState.InvitationAccepted: return "Invitation accepted";
+      case PlayState.InvitationAccepted: return "Invitation accepted, wait for invitor''s first more";
       case PlayState.InvitationRejected: return "Invitation rejected";
       case PlayState.ReadyToMove: return "Your turn!";
       case PlayState.WaitForOpponent: return "Awaiting opponent's move";

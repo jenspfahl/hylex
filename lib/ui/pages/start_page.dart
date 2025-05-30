@@ -87,6 +87,7 @@ class _StartPageState extends State<StartPage>
     final extractOperation = serializedMessage.extractOperation();
     final header = await StorageService().loadPlayHeader(playId);
 
+    debugPrint("received: [$playId] ${extractOperation.name}");
     if (extractOperation == Operation.SendInvite) {
       if (header != null) {
         buildAlertDialog("You already reacted to this invite. See ${header.getReadablePlayId()}");
@@ -546,7 +547,7 @@ class _StartPageState extends State<StartPage>
 
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener, PlayState.RemoteOpponentInvited);
 
-    MessageService().sendRemoteOpponentInvited(header, _user,
+    MessageService().sendRemoteOpponentInvitation(header, _user,
             () => StorageService().savePlayHeader(header));
   }
 

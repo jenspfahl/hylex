@@ -34,7 +34,7 @@ class MessageService {
     }
     switch (playHeader.state) {
       case PlayState.RemoteOpponentInvited: {
-        sendRemoteOpponentInvited(playHeader, user, sentHandler);
+        sendRemoteOpponentInvitation(playHeader, user, sentHandler);
         break;
       }
       case PlayState.InvitationAccepted: {
@@ -58,10 +58,10 @@ class MessageService {
         });
         break;
       }
-      case PlayState.Initialised: {
-        // TODO
-      }
       case PlayState.InvitationPending:
+      case PlayState.Initialised: {
+        debugPrint("nothing to send for ${playHeader.state}");
+      }
         // TODO: Handle this case.
         throw UnimplementedError();
       case PlayState.ReadyToMove:
@@ -86,7 +86,7 @@ class MessageService {
   }
 
 
-  void sendRemoteOpponentInvited(PlayHeader header, User user, Function()? sentHandler) {
+  void sendRemoteOpponentInvitation(PlayHeader header, User user, Function()? sentHandler) {
     final inviteMessage = InviteMessage(
         header.playId,
         header.playSize,

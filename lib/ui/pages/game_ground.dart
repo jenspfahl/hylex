@@ -7,6 +7,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:hyle_x/service/MessageService.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -212,16 +213,34 @@ class _HyleXGroundState extends State<HyleXGround> {
                           );
                         },
                         icon: const Icon(Icons.history)),
-                    IconButton(
-                      icon: const Icon(Icons.restart_alt_outlined),
-                      onPressed: () => {
-      
-                        ask('Restart game?', () {
-                              gameEngine.stopGame();
-                              _gameOverShown = false;
-                              gameEngine.startGame();
-                        })
-                      },
+                    Visibility(
+                      visible: !gameEngine.play.isMultiplayerPlay,
+                      child: IconButton(
+                        icon: const Icon(Icons.restart_alt_outlined),
+                        onPressed: () => {
+
+                          ask('Restart game?', () {
+                                gameEngine.stopGame();
+                                _gameOverShown = false;
+                                gameEngine.startGame();
+                          })
+                        },
+                      ),
+                    ),
+                    Visibility(
+                      visible: gameEngine.play.isMultiplayerPlay,
+                      child: IconButton(
+                        icon: const Icon(Icons.sentiment_dissatisfied_outlined),
+                        onPressed: () => {
+
+                          ask('Resign?', () {
+                            //TOOO send resign
+                            //MessageService()
+                            //gameEngine.stopGame();
+
+                          })
+                        },
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.exit_to_app),
