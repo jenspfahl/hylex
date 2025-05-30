@@ -100,6 +100,9 @@ class _StartPageState extends State<StartPage>
     else if (header == null) {
       buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is not present! Did you delete it?");
     }
+    else if (header.state.isFinal) {
+      buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is already finished (${header.state.toMessage()}).");
+    }
     else if (extractOperation == Operation.AcceptInvite) {
       final message = serializedMessage.deserialize(header.commContext) as AcceptInviteMessage;
       _handleInviteAccepted(header, message);
@@ -133,24 +136,24 @@ class _StartPageState extends State<StartPage>
       firstString: "Accept",
       firstHandler: () {
         // first ask for your name
-        if (_user.name == null || _user.name?.isEmpty == true) {
+        if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInviteWithPlayerOwner(receivedInviteMessage));
+              _handleAcceptInvite(receivedInviteMessage));
         }
         else {
-          _handleAcceptInviteWithPlayerOwner(receivedInviteMessage);
+          _handleAcceptInvite(receivedInviteMessage);
         }
 
 
       },
       secondString: "Reject",
       secondHandler: () {
-        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationRejected);
+        final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationRejected);
         MessageService().sendInvitationRejected(header, _user, () => StorageService().savePlayHeader(header));
       },
       thirdString: "Reply later",
       thirdHandler: () {
-        final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationPending);
+        final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationPending);
         StorageService().savePlayHeader(header);
 
       },
@@ -160,15 +163,15 @@ class _StartPageState extends State<StartPage>
 
   }
 
-  void _handleAcceptInviteWithPlayerOwner(InviteMessage receivedInviteMessage) {
-    final header = PlayHeader.multiPlayInvited(receivedInviteMessage, PlayState.InvitationAccepted);
+  void _handleAcceptInvite(InviteMessage receivedInviteMessage) {
+    final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationAccepted);
     StorageService().savePlayHeader(header);
     if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
       _selectInvitedMultiPlayerOpener(context, (playOpener) {
         header.playOpener = playOpener;
         StorageService().savePlayHeader(header);
     
-        if (playOpener == PlayOpener.InvitedPlayer) {
+        if (playOpener == PlayOpener.Invitee) {
           _startMultiPlayerGame(
               context, PlayerType.RemoteUser, PlayerType.LocalUser,
               header);
@@ -180,12 +183,12 @@ class _StartPageState extends State<StartPage>
         }
       });
     }
-    else if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayer) {
+    else if (receivedInviteMessage.playOpener == PlayOpener.Invitee) {
       _startMultiPlayerGame(
           context, PlayerType.RemoteUser, PlayerType.LocalUser,
           header);
     }
-    else if (receivedInviteMessage.playOpener == PlayOpener.InvitingPlayer) {
+    else if (receivedInviteMessage.playOpener == PlayOpener.Invitor) {
       MessageService().sendInvitationAccepted(header, _user, null,
               () => StorageService().savePlayHeader(header));
     }
@@ -193,15 +196,29 @@ class _StartPageState extends State<StartPage>
 
 
   void _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) {
-    
+    if (header.state == PlayState.InvitationRejected) {
+      buildAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
+    }
+    else {
+      header.state = PlayState.InvitationAccepted;
+      StorageService().savePlayHeader(header);
+      buildAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+    }
   }
 
   void _handleInviteRejected(PlayHeader header, RejectInviteMessage message) {
-    
+    if (header.state == PlayState.InvitationRejected) {
+      buildAlertDialog("Match ${header.getReadablePlayId()} already rejected.");
+    }
+    else {
+      header.state = PlayState.InvitationRejected;
+      StorageService().savePlayHeader(header);
+      buildAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
+    }
   }
 
   void _handleMove(PlayHeader header, MoveMessage message) {
-    
+    //TODO forward to game engine
   }
 
   void _handleResign(PlayHeader header, ResignMessage message) {
@@ -230,10 +247,10 @@ class _StartPageState extends State<StartPage>
                 child: _buildGameLogo()
             ),
 
-            if (_user.name != null && _user.name!.isNotEmpty)
+            if (_user.name.isNotEmpty)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                  "Hello ${_user.name!}!")
+                  "Hello ${_user.name}!")
             else if (kDebugMode)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
@@ -282,7 +299,7 @@ class _StartPageState extends State<StartPage>
                             _selectMultiPlayerMode(context, (playerMode) =>
                                 _selectInvitingMultiPlayerOpener(
                                     context, (playerOpener) {
-                                      if (_user.name == null || _user.name?.isEmpty == true) {
+                                      if (_user.name.isEmpty) {
                                         _inputUserName(context, (username) =>
                                             _inviteOpponent(
                                                 context, playSize, playerMode,
@@ -463,8 +480,8 @@ class _StartPageState extends State<StartPage>
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
       'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
-      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
+      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
+      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
       thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InvitedPlayerChooses),
     );
   }
@@ -473,8 +490,8 @@ class _StartPageState extends State<StartPage>
       Function(PlayOpener) handlePlayOpener) {
     buildChoiceDialog(
       'Who shall start? The one who starts is Chaos.',
-      firstString: "ME", firstHandler: () => handlePlayOpener(PlayOpener.InvitedPlayer),
-      secondString: "THE OTHER", secondHandler: () => handlePlayOpener(PlayOpener.InvitingPlayer),
+      firstString: "ME", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
+      secondString: "THE OTHER", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
     );
   }
 

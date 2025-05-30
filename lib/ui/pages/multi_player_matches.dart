@@ -80,7 +80,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   CircleAvatar(
-                    backgroundColor: playHeader.getStateColor(),
+                    backgroundColor: playHeader.state.toColor(),
                     maxRadius: 6,
                   ),
                   Text(
@@ -97,7 +97,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${playHeader.getReadableState()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                   Divider(),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -142,13 +142,10 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   String _getHeaderBodyLine(PlayHeader playHeader) {
-    Role? role;
-    if (playHeader.initiator != null) {
-      role = playHeader.playOpener?.getRoleFrom(playHeader.initiator!);
-    }
+    final actorRole = playHeader.actor.getActorRoleFor(playHeader.playOpener);
     var roleString = "";
-    if (role != null) {
-      roleString = "as ${role.name}";
+    if (actorRole != null) {
+      roleString = "as ${actorRole.name}";
     }
     return "${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}";
   }

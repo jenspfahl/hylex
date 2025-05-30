@@ -26,6 +26,12 @@ class MessageService {
 
 
   sendCurrentPlayState(PlayHeader playHeader, User user, Function()? sentHandler) {
+    final actor = playHeader.actor;
+    if (!playHeader.state.forActors.contains(actor)) {
+      // cannot send this state
+      print("Actor $actor is not allowed to send a message for state ${playHeader.state}");
+      return;
+    }
     switch (playHeader.state) {
       case PlayState.RemoteOpponentInvited: {
         sendRemoteOpponentInvited(playHeader, user, sentHandler);
@@ -87,10 +93,10 @@ class MessageService {
         header.playMode,
         header.playOpener!,
         user.id,
-        user.name!);
+        user.name);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
-    sendMessage('I (${user.name!}) want to invite you to a HyleX match.',
+    sendMessage('I (${user.name}) want to invite you to a HyleX match.',
         serializedMessage, sentHandler);
   }
 
@@ -103,15 +109,15 @@ class MessageService {
         header.playId,
         playOpener,
         user.id,
-        user.name!,
+        user.name,
         initialMove
     );
     final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
 
-    var localUserRole = playOpener.getRoleFrom(header.initiator!);
-    var remoteUserRole = localUserRole!.opponentRole;
+    var localUserRole = header.actor.getActorRoleFor(playOpener);
+    var remoteUserRole = localUserRole?.opponentRole;
 
-    sendMessage("I am accepting your match request. I am ${localUserRole.name}, you are ${remoteUserRole.name}.",
+    sendMessage("I am accepting your match request. I am ${localUserRole?.name}, you are ${remoteUserRole?.name}.",
         serializedMessage, sentHandler);
   }
   

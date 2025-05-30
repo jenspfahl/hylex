@@ -4,10 +4,8 @@ import 'dart:isolate';
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/MessageService.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../model/common.dart';
-import '../model/messaging.dart';
 import '../model/move.dart';
 import '../model/user.dart';
 import '../service/PreferenceService.dart';
@@ -226,7 +224,8 @@ class MultiPlayerGameEngine extends GameEngine {
   void shareGameMove() {
     final lastMove = play.lastMoveFromJournal;
     if (lastMove != null) {
-      if (play.header.state == PlayState.InvitationPending && play.header.initiator == Initiator.RemoteUser) {
+      if (play.header.state == PlayState.InvitationPending && play.header.actor == Actor.Invitee) {
+        play.header.state = PlayState.InvitationAccepted;
         MessageService().sendInvitationAccepted(play.header, user, lastMove,
                 () => StorageService().savePlayHeader(play.header));
       }

@@ -1,5 +1,7 @@
 
 
+import 'package:hyle_x/model/play.dart';
+
 enum PlayerType {
   LocalUser, 
   LocalAi, 
@@ -14,10 +16,33 @@ enum Role {
 }
 
 // Who sent the initial invite?
-enum Initiator {
-  LocalUser,
-  RemoteUser
+enum Actor {
+  // for single play
+  Single,
+  // Who invites another
+  Invitor,
+  // Who gets invited
+  Invitee;
+
+  Role? getActorRoleFor(PlayOpener? playOpener) {
+    if (this == Actor.Invitor && playOpener == PlayOpener.Invitor) {
+      return Role.Chaos;
+    }
+    else if (this == Actor.Invitor && playOpener == PlayOpener.Invitee) {
+      return Role.Order;
+    }
+    else if (this == Actor.Invitee && playOpener == PlayOpener.Invitor) {
+      return Role.Order;
+    }
+    else if (this == Actor.Invitee && playOpener == PlayOpener.Invitee) {
+      return Role.Chaos;
+    }
+    else {
+      return null;
+    }
+  }
 }
+
 
 enum Operation {
   SendInvite,  //000
@@ -40,30 +65,12 @@ enum PlayMode {
 } 
 
 enum PlayOpener {
-  InvitingPlayer, //00
-  InvitedPlayer,  //01
+  Invitor, //00
+  Invitee,  //01
   InvitedPlayerChooses,  //10
-  unused11  //11
+  unused11,  //11
   // stuck to 2 bits, don't add more
-  ;
 
-  Role? getRoleFrom(Initiator initiator) {
-    if (initiator == Initiator.LocalUser && this == PlayOpener.InvitingPlayer) {
-      return Role.Chaos;
-    }
-    else if (initiator == Initiator.LocalUser && this == PlayOpener.InvitedPlayer) {
-      return Role.Order;
-    }
-    else if (initiator == Initiator.RemoteUser && this == PlayOpener.InvitingPlayer) {
-      return Role.Order;
-    }
-    else if (initiator == Initiator.RemoteUser && this == PlayOpener.InvitedPlayer) {
-      return Role.Chaos;
-    }
-    else {
-      return null;
-    }
-  }
 } 
 
 enum PlaySize {

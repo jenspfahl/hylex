@@ -20,42 +20,80 @@ import 'messaging.dart';
 import 'move.dart';
 
 enum PlayState {
-
+  
   // Initial state
-  Initialised,
+  Initialised({Actor.Single, Actor.Invitor}, false),
 
   // only if multiPlay == true and current == inviting player, if an invitation has been sent out
-  RemoteOpponentInvited,
+  RemoteOpponentInvited({Actor.Invitor}, false),
 
   // only if multiPlay == true, when an invitation has been received but not replied
-  InvitationPending,
+  InvitationPending({Actor.Invitee}, false),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player
-  InvitationAccepted,
+  InvitationAccepted({Actor.Invitor, Actor.Invitee}, false),
 
   // only if multiPlay == true, when an invitation has been rejected by invited player
-  InvitationRejected, // final state
+  InvitationRejected({Actor.Invitor, Actor.Invitee}, true), // final state
 
   // Current player can move
-  ReadyToMove,
+  ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false),
 
   // Current play is waiting for remote opponent to move (either RemoteUser or Ai)
-  WaitForOpponent,
+  WaitForOpponent({Actor.Single, Actor.Invitor, Actor.Invitee}, false),
 
   // current player lost. If both players on a single play are human, this is not used
-  Lost, // final state
+  Lost({Actor.Single, Actor.Invitor, Actor.Invitee}, true), // final state
 
   // current player won. If both players on a single play are human, this is not used
-  Won, // final state
+  Won({Actor.Single, Actor.Invitor, Actor.Invitee}, true), // final state
 
   // current player resigned (and the remote opponent won therefore). If both players on a single play are human, this is not used
-  Resigned, // final state
+  Resigned({Actor.Invitor, Actor.Invitee}, true), // final state
 
   // opponent player resigned (and the current opponent won therefore). If both players on a single play are human, this is not used
-  OpponentResigned, // final state
+  OpponentResigned({Actor.Invitor, Actor.Invitee}, true), // final state
 
   // used if both players on a single play are human or any other final state like no invitation response etc..
-  Closed, // final state
+  Closed({Actor.Single}, true); // final state
+
+  const PlayState(this.forActors, this.isFinal);
+  final Set<Actor> forActors;
+  final bool isFinal;
+
+  String toMessage() {
+    switch (this) {
+      case PlayState.Initialised: return "New match, send invitation needed";
+      case PlayState.RemoteOpponentInvited: return "Invitation sent out";
+      case PlayState.InvitationPending: return "Open invitation needs response";
+      case PlayState.InvitationAccepted: return "Invitation accepted";
+      case PlayState.InvitationRejected: return "Invitation rejected";
+      case PlayState.ReadyToMove: return "Your turn!";
+      case PlayState.WaitForOpponent: return "Awaiting opponent's move";
+      case PlayState.Lost: return "Match lost";
+      case PlayState.Won: return "Match won";
+      case PlayState.Resigned: return "You resigned :(";
+      case PlayState.OpponentResigned: return "Opponent resigned, you win";
+      case PlayState.Closed: return "Match finished";
+    }
+  }
+
+  Color toColor() {
+    switch (this) {
+      case PlayState.Initialised: return getColorFromIdx(6);
+      case PlayState.RemoteOpponentInvited: return getColorFromIdx(7);
+      case PlayState.InvitationPending: return getColorFromIdx(7);
+      case PlayState.InvitationAccepted: return getColorFromIdx(4);
+      case PlayState.InvitationRejected: return getColorFromIdx(8);
+      case PlayState.ReadyToMove: return getColorFromIdx(9);
+      case PlayState.WaitForOpponent: return getColorFromIdx(1);
+      case PlayState.Lost: return Colors.redAccent;
+      case PlayState.Won: return Colors.lightGreenAccent;
+      case PlayState.Resigned: return Colors.redAccent;
+      case PlayState.OpponentResigned: return Colors.lightGreenAccent;
+      case PlayState.Closed: return Colors.black54;
+    }
+  }
 }
 
 /**
@@ -65,14 +103,13 @@ enum PlayState {
 class PlayHeader {
 
   late String playId;
-  
   late PlaySize playSize;
   PlayMode playMode = PlayMode.HyleX;
   PlayState state = PlayState.Initialised;
   int currentRound = 0;
 
   // multi player attributes
-  Initiator? initiator;
+  late Actor actor;
   PlayOpener? playOpener;
   CommunicationContext commContext = CommunicationContext();
   String? opponentId;
@@ -82,6 +119,7 @@ class PlayHeader {
   PlayHeader.singlePlay(
       this.playSize) {
     playId = generateRandomString(playIdLength);
+    actor = Actor.Single;
   }
   
   PlayHeader.multiPlayInvitor(
@@ -90,14 +128,14 @@ class PlayHeader {
       this.playOpener, 
       this.state) {
     playId = generateRandomString(playIdLength);
-    initiator = Initiator.LocalUser;
+    actor = Actor.Invitor;
   }  
   
-  PlayHeader.multiPlayInvited(
+  PlayHeader.multiPlayInvitee(
       InviteMessage inviteMessage,
       this.state) {
     playId = inviteMessage.playId;
-    initiator = Initiator.RemoteUser;
+    actor = Actor.Invitee;
     playSize = inviteMessage.playSize;
     playMode = inviteMessage.playMode;
     playOpener = inviteMessage.playOpener;
@@ -113,10 +151,8 @@ class PlayHeader {
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
     state = PlayState.values.firstWhere((p) => p.name == map['state']);
     currentRound = map['currentRound'];
-    
-    if (map['initiator'] != null) {
-      initiator = Initiator.values.firstWhere((p) => p.name == map['initiator']);
-    }
+    actor = Actor.values.firstWhere((p) => p.name == map['actor']);
+
     if (map['playOpener'] != null) {
       playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
     }
@@ -135,8 +171,7 @@ class PlayHeader {
     "playMode" : playMode.name,
     "state" : state.name,
     "currentRound" : currentRound,
-
-    if (initiator != null) "initiator": initiator?.name,
+    "actor": actor.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
     if (commContext.previousSignature != null) "previousSignature" : commContext.previousSignature,
     if (opponentId != null) "opponentId" : opponentId,
@@ -153,40 +188,7 @@ class PlayHeader {
   String toString() {
     return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
   }
-
-  String getReadableState() {
-    switch (state) {
-      case PlayState.Initialised: return "New match, send invitation needed";
-      case PlayState.RemoteOpponentInvited: return "Invitation sent out";
-      case PlayState.InvitationPending: return "Open invitation needs response";
-      case PlayState.InvitationAccepted: return "Invitation accepted";
-      case PlayState.InvitationRejected: return "Invitation rejected";
-      case PlayState.ReadyToMove: return "Your turn!";
-      case PlayState.WaitForOpponent: return "Awaiting opponent's move";
-      case PlayState.Lost: return "Match lost";
-      case PlayState.Won: return "Match won";
-      case PlayState.Resigned: return "You resigned :(";
-      case PlayState.OpponentResigned: return "Opponent resigned, you win";
-      case PlayState.Closed: return "Match finished";
-    }
-  }
-
-  Color getStateColor() {
-    switch (state) {
-      case PlayState.Initialised: return getColorFromIdx(6);
-      case PlayState.RemoteOpponentInvited: return getColorFromIdx(7);
-      case PlayState.InvitationPending: return getColorFromIdx(7);
-      case PlayState.InvitationAccepted: return getColorFromIdx(4);
-      case PlayState.InvitationRejected: return getColorFromIdx(8);
-      case PlayState.ReadyToMove: return getColorFromIdx(9);
-      case PlayState.WaitForOpponent: return getColorFromIdx(1);
-      case PlayState.Lost: return Colors.redAccent;
-      case PlayState.Won: return Colors.lightGreenAccent;
-      case PlayState.Resigned: return Colors.redAccent;
-      case PlayState.OpponentResigned: return Colors.lightGreenAccent;
-      case PlayState.Closed: return Colors.black54;
-    }
-  }
+  
 }
 
 @JsonSerializable()
@@ -223,8 +225,9 @@ class Play {
   }
 
   Play.newMultiPlay(this.header) {
-    _chaosPlayer = header.initiator == Initiator.LocalUser && header.playOpener == PlayOpener.InvitingPlayer ? PlayerType.LocalUser : PlayerType.RemoteUser; //TOOO
-    _orderPlayer = _chaosPlayer == PlayerType.LocalUser ? PlayerType.RemoteUser : PlayerType.LocalUser;
+    final actorRole = header.actor.getActorRoleFor(header.playOpener);
+    _chaosPlayer = actorRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser; 
+    _orderPlayer = actorRole == Role.Order ? PlayerType.LocalUser : PlayerType.RemoteUser; 
     multiPlay = true;
     
     _init(initAi: false);

@@ -5,7 +5,7 @@ import 'messaging.dart';
 
 class User {
   late String id;
-  String? name;
+  String name = "";
   late Achievements achievements;
 
   User() {
@@ -21,7 +21,7 @@ class User {
 
   Map<String, dynamic> toJson() => {
     "id": id,
-    if (name != null) "name" : name,
+    "name" : name,
     "achievements" : achievements.toJson(),
   };
 

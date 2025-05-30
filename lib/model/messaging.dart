@@ -131,7 +131,7 @@ class AcceptInviteMessage extends Message {
       playOpener,
       readString(reader),
       readString(reader),
-      playOpener == PlayOpener.InvitedPlayer ? readMove(reader) : null,
+      playOpener == PlayOpener.Invitee ? readMove(reader) : null,
     );
   }
 
@@ -141,7 +141,7 @@ class AcceptInviteMessage extends Message {
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
     writeString(writer, invitedUserId, userIdLength);
     writeString(writer, invitedPlayerName, maxNameLength);
-    if (playOpenerDecision == PlayOpener.InvitedPlayer) {
+    if (playOpenerDecision == PlayOpener.Invitee) {
       writeMove(writer, initialMove!);
     }
   }
@@ -325,7 +325,7 @@ void testMessaging() {
        playId,
        PlaySize.Size7x7,
        PlayMode.HyleX,
-       PlayOpener.InvitingPlayer,
+       PlayOpener.Invitor,
        invitingUserId,
        "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
    );
@@ -348,7 +348,7 @@ void testMessaging() {
    // accept and respond to invite
    final acceptInviteMessage = AcceptInviteMessage(
        deserializedInviteMessage.playId,
-       PlayOpener.InvitedPlayer,
+       PlayOpener.Invitee,
        invitedUserId,
        "Remote opponents name",
        Move.placed(GameChip(1), Coordinate(3, 5)),
