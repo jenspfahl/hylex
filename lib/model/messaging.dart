@@ -19,8 +19,8 @@ const maxNameLength = 32;
 
 
 class CommunicationContext {
-  String? previousSignature;
-  String? latestRemoteSignature;
+  String? roundTripSignature;
+  SerializedMessage? predecessorMessage;
 }
 
 abstract class Message {
@@ -29,13 +29,12 @@ abstract class Message {
   Message(this.playId);
 
   SerializedMessage serializeWithContext(CommunicationContext comContext) {
-    final serializedMessage = serializeWithSignature(comContext.previousSignature);
-    comContext.previousSignature = serializedMessage.signature;
+    final serializedMessage = _serializeWithSignature(comContext.predecessorMessage?.signature);
+    comContext.roundTripSignature = serializedMessage.signature;
     return serializedMessage;
   }
 
-  // only for testing TODO make private
-  SerializedMessage serializeWithSignature(String? receivedSignature) {
+  SerializedMessage _serializeWithSignature(String? receivedSignature) {
 
     final buffer = BitBuffer();
     final writer = buffer.writer();
@@ -282,9 +281,8 @@ class SerializedMessage {
     final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
     if (comContext != null) {
-      validateSignature(
-          buffer.getLongs(), comContext, signature);
-      comContext.latestRemoteSignature = signature;
+      _validateSignature(buffer.getLongs(), comContext, signature);
+      comContext.predecessorMessage = this;
     }
 
     final reader = buffer.reader();
@@ -330,7 +328,7 @@ void testMessaging() {
        "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
    );
 
-   final serializedInvitationMessage = _send(invitationMessage.serializeWithSignature(null), invitingContext);
+   final serializedInvitationMessage = _send(invitationMessage.serializeWithContext(invitingContext));
 
 
    // receive invite
@@ -354,7 +352,7 @@ void testMessaging() {
        Move.placed(GameChip(1), Coordinate(3, 5)),
    );
 
-   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithSignature(serializedInvitationMessage.signature), invitedContext);
+   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(invitedContext));
 
 
    // receive accept invite
@@ -390,7 +388,7 @@ void testMessaging() {
        Move.moved(GameChip(1), Coordinate(3, 5), Coordinate(0, 5)),
    );
 
-   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithSignature(serializedAcceptInviteMessage.signature), invitingContext);
+   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithContext(invitingContext));
 
    final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext) as MoveMessage;
 
@@ -405,9 +403,7 @@ void testMessaging() {
 
 
 
-SerializedMessage _send(SerializedMessage message, CommunicationContext comContext) {
-  comContext.previousSignature = message.signature;
-
+SerializedMessage _send(SerializedMessage message) {
   print("|");
   print("|");
   print("payload = ${message.payload}");
@@ -433,15 +429,15 @@ List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
 }
 
 
-void validateSignature(List<int> blob, CommunicationContext commContext, String comparingSignature) {
-  if (commContext.latestRemoteSignature == commContext) {
+void _validateSignature(List<int> blob, CommunicationContext comContext, String comparingSignature) {
+  if (comContext.predecessorMessage?.signature == comparingSignature) {
     throw Exception("Message with signature $comparingSignature already processed");
   }
-  final signature = Base64Encoder().convert(createSignature(blob, commContext.previousSignature)).toUrlSafe();
+  final signature = Base64Encoder().convert(createSignature(blob, comContext.roundTripSignature)).toUrlSafe();
   print("sig1 $signature");
   print("sig2 $comparingSignature");
   if (signature != comparingSignature) {
-    throw Exception("signature mismatch $signature $comparingSignature");
+    throw Exception("signature mismatch $signature != $comparingSignature");
   }
 }
 

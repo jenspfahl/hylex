@@ -185,8 +185,12 @@ class PlayHeader {
       playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
     }
 
-    commContext.previousSignature = map['previousSignature'];
-    commContext.latestRemoteSignature = map['latestRemoteSignature'];
+    commContext.roundTripSignature = map['roundTripSignature'];
+    final predecessorMessagePayload = map['predecessorMessagePayload'];
+    final predecessorMessageSignature = map['predecessorMessageSignature'];
+    if (predecessorMessagePayload != null && predecessorMessageSignature != null) {
+      commContext.predecessorMessage = SerializedMessage(predecessorMessagePayload, predecessorMessageSignature);
+    }
 
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
@@ -201,8 +205,9 @@ class PlayHeader {
     "currentRound" : currentRound,
     "actor": actor.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
-    if (commContext.previousSignature != null) "previousSignature" : commContext.previousSignature,
-    if (commContext.latestRemoteSignature != null) "latestRemoteSignature" : commContext.latestRemoteSignature,
+    if (commContext.roundTripSignature != null) "roundTripSignature" : commContext.roundTripSignature,
+    if (commContext.predecessorMessage != null) "predecessorMessagePayload" : commContext.predecessorMessage!.payload,
+    if (commContext.predecessorMessage != null) "predecessorMessageSignature" : commContext.predecessorMessage!.signature,
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
   };
