@@ -20,11 +20,7 @@ const maxNameLength = 32;
 
 class CommunicationContext {
   String? previousSignature;
-
-  CommunicationContext();
-  
-  updatePreviousSignature(String signature) => previousSignature = signature;
-
+  String? latestRemoteSignature;
 }
 
 abstract class Message {
@@ -33,9 +29,12 @@ abstract class Message {
   Message(this.playId);
 
   SerializedMessage serializeWithContext(CommunicationContext comContext) {
-    return serializeWithSignature(comContext.previousSignature);
+    final serializedMessage = serializeWithSignature(comContext.previousSignature);
+    comContext.previousSignature = serializedMessage.signature;
+    return serializedMessage;
   }
 
+  // only for testing TODO make private
   SerializedMessage serializeWithSignature(String? receivedSignature) {
 
     final buffer = BitBuffer();
@@ -284,7 +283,8 @@ class SerializedMessage {
 
     if (comContext != null) {
       validateSignature(
-          buffer.getLongs(), comContext.previousSignature, signature);
+          buffer.getLongs(), comContext, signature);
+      comContext.latestRemoteSignature = signature;
     }
 
     final reader = buffer.reader();
@@ -433,12 +433,15 @@ List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
 }
 
 
-void validateSignature(List<int> blob, String? previousSignature, String comparingSignature) {
-  final signature = Base64Encoder().convert(createSignature(blob, previousSignature)).toUrlSafe();
+void validateSignature(List<int> blob, CommunicationContext commContext, String comparingSignature) {
+  if (commContext.latestRemoteSignature == commContext) {
+    throw Exception("Message with signature $comparingSignature already processed");
+  }
+  final signature = Base64Encoder().convert(createSignature(blob, commContext.previousSignature)).toUrlSafe();
   print("sig1 $signature");
   print("sig2 $comparingSignature");
   if (signature != comparingSignature) {
-    throw Exception("signature mismatch");
+    throw Exception("signature mismatch $signature $comparingSignature");
   }
 }
 

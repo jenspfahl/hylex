@@ -173,9 +173,7 @@ class _StartPageState extends State<StartPage>
         StorageService().savePlayHeader(header);
     
         if (playOpener == PlayOpener.Invitee) {
-          _startMultiPlayerGame(
-              context, PlayerType.RemoteUser, PlayerType.LocalUser,
-              header);
+          _startMultiPlayerGame(context, header);
         }
         else {
           // reply back, they have to start
@@ -185,9 +183,7 @@ class _StartPageState extends State<StartPage>
       });
     }
     else if (receivedInviteMessage.playOpener == PlayOpener.Invitee) {
-      _startMultiPlayerGame(
-          context, PlayerType.RemoteUser, PlayerType.LocalUser,
-          header);
+      _startMultiPlayerGame(context, header);
     }
     else if (receivedInviteMessage.playOpener == PlayOpener.Invitor) {
       MessageService().sendInvitationAccepted(header, _user, null,
@@ -203,7 +199,16 @@ class _StartPageState extends State<StartPage>
     else {
       header.state = PlayState.InvitationAccepted;
       StorageService().savePlayHeader(header);
+
       buildAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+      StorageService().loadPlayFromHeader(header).then((play) {
+        if (play != null) {
+          _continueMultiPlayerGame(context, play, message.initialMove);
+        }
+        else {
+          _startMultiPlayerGame(context, header, message.initialMove);
+        }
+      });
     }
   }
 
@@ -219,7 +224,16 @@ class _StartPageState extends State<StartPage>
   }
 
   void _handleMove(PlayHeader header, MoveMessage message) {
-    //TODO forward to game engine
+
+    StorageService().loadPlayFromHeader(header).then((play) {
+      if (play != null) {
+        play.header.state = PlayState.ReadyToMove;
+        _continueMultiPlayerGame(context, play, message.move);
+      }
+      else {
+        _startMultiPlayerGame(context, header, message.move);
+      }
+    });
   }
 
   void _handleResign(PlayHeader header, ResignMessage message) {
@@ -530,15 +544,36 @@ class _StartPageState extends State<StartPage>
         }));
   }
 
-  Future<void> _startMultiPlayerGame(BuildContext context, PlayerType chaosPlayer,
-      PlayerType orderPlayer, PlayHeader header) async {
+  Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstMove]) async {
     SmartDialog.showLoading(msg: "Loading game ...");
+    final play = Play.newMultiPlay(header);
+    if (firstMove != null) {
+      play.nextPlayer();
+      play.applyStaleMove(firstMove);
+      play.commitMove();
+    }
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
               _user,
-              Play.newMultiPlay(header));
+              play);
+        }));
+  }
+
+  Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? move) async {
+    SmartDialog.showLoading(msg: "Loading game ...");
+    if (move != null) {
+      play.nextPlayer();
+      play.applyStaleMove(move);
+      play.commitMove();
+    }
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return HyleXGround(
+              _user,
+              play);
         }));
   }
 

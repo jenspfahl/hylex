@@ -185,9 +185,9 @@ class PlayHeader {
       playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
     }
 
-    final previousSignature = map['previousSignature'];
-    commContext.previousSignature = previousSignature;
-    
+    commContext.previousSignature = map['previousSignature'];
+    commContext.latestRemoteSignature = map['latestRemoteSignature'];
+
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
     
@@ -202,6 +202,7 @@ class PlayHeader {
     "actor": actor.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
     if (commContext.previousSignature != null) "previousSignature" : commContext.previousSignature,
+    if (commContext.latestRemoteSignature != null) "latestRemoteSignature" : commContext.latestRemoteSignature,
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
   };
@@ -597,11 +598,9 @@ class Play {
     _init(initAi: false);
   }
 
-
   String getReadablePlayId() {
     return toReadableId(header.playId);
   }
-
 
 
 }

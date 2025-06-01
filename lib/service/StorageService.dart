@@ -125,7 +125,6 @@ class StorageService {
 
     final map = jsonDecode(json);
     final play = Play.fromJson(map);
-    debugPrint("Loaded play state: $play");
     return play;
   }
 
