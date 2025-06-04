@@ -161,9 +161,11 @@ class PlayHeader {
   
   PlayHeader.multiPlayInvitee(
       InviteMessage inviteMessage,
+      SerializedMessage receivedSerializedMessage,
       this.state) {
     playId = inviteMessage.playId;
     actor = Actor.Invitee;
+    commContext.predecessorMessage = receivedSerializedMessage;
     playSize = inviteMessage.playSize;
     playMode = inviteMessage.playMode;
     playOpener = inviteMessage.playOpener;

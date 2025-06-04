@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/cupertino.dart';
 
 import 'chip.dart';
 import 'common.dart';
@@ -31,6 +32,7 @@ abstract class Message {
   SerializedMessage serializeWithContext(CommunicationContext comContext) {
     final serializedMessage = _serializeWithSignature(comContext.predecessorMessage?.signature);
     comContext.roundTripSignature = serializedMessage.signature;
+    debugPrint("saving roundTripSignature ${comContext.roundTripSignature} after serialization");
     return serializedMessage;
   }
 
@@ -268,21 +270,25 @@ class SerializedMessage {
     return readEnum(reader, Operation.values);
   }
 
-  Message deserialize(CommunicationContext comContext) {
+  (Message?,String?) deserialize(CommunicationContext comContext) {
     return _deserializeAndValidate(comContext);
   }
 
-  Message deserializeWithoutValidation() {
+  (Message?,String?) deserializeWithoutValidation() {
     return _deserializeAndValidate(null);
   }
-  
-  Message _deserializeAndValidate(CommunicationContext? comContext) {
+
+  (Message?,String?) _deserializeAndValidate(CommunicationContext? comContext) {
 
     final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
     if (comContext != null) {
-      _validateSignature(buffer.getLongs(), comContext, signature);
+      final errorMessage = _validateSignature(buffer.getLongs(), comContext, signature);
+      if (errorMessage != null) {
+        return (null, errorMessage);
+      }
       comContext.predecessorMessage = this;
+      debugPrint("saving predecessorMessage after validation: ${comContext.predecessorMessage}");
     }
 
     final reader = buffer.reader();
@@ -291,16 +297,22 @@ class SerializedMessage {
     final playId = readString(reader);
 
     switch (operation) {
-      case Operation.SendInvite : return InviteMessage.deserialize(reader, playId);
-      case Operation.AcceptInvite : return AcceptInviteMessage.deserialize(reader, playId);
-      case Operation.RejectInvite : return RejectInviteMessage.deserialize(reader, playId);
-      case Operation.Move : return MoveMessage.deserialize(reader, playId);
+      case Operation.SendInvite : return (InviteMessage.deserialize(reader, playId), null);
+      case Operation.AcceptInvite : return (AcceptInviteMessage.deserialize(reader, playId), null);
+      case Operation.RejectInvite : return (RejectInviteMessage.deserialize(reader, playId), null);
+      case Operation.Move : return (MoveMessage.deserialize(reader, playId), null);
+      case Operation.Resign : return (ResignMessage.deserialize(reader, playId), null);
       default: throw Exception("Unsupported operation: $operation");
     }
   }
 
   String toUrl() {
     return "https://hx.jepfa.de/$payload/$signature";
+  }
+
+  @override
+  String toString() {
+    return toUrl();
   }
 
 }
@@ -332,7 +344,7 @@ void testMessaging() {
 
 
    // receive invite
-   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext) as InviteMessage;
+   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext).$1 as InviteMessage;
    print("playId: ${deserializedInviteMessage.playId}");
    print("playSize: ${deserializedInviteMessage.playSize}");
    print("playMode: ${deserializedInviteMessage.playMode}");
@@ -356,7 +368,7 @@ void testMessaging() {
 
 
    // receive accept invite
-   final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitingContext) as AcceptInviteMessage;
+   final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitingContext).$1 as AcceptInviteMessage;
 
    print("playId: ${deserializedAcceptInviteMessage.playId}");
    print("playOpener: ${deserializedAcceptInviteMessage.playOpenerDecision}");
@@ -390,7 +402,7 @@ void testMessaging() {
 
    final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithContext(invitingContext));
 
-   final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext) as MoveMessage;
+   final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext).$1 as MoveMessage;
 
    print("playId: ${deserializedMoveMessage.playId}");
    print("round: ${deserializedMoveMessage.round}");
@@ -429,15 +441,21 @@ List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
 }
 
 
-void _validateSignature(List<int> blob, CommunicationContext comContext, String comparingSignature) {
+String? _validateSignature(List<int> blob, CommunicationContext comContext, String comparingSignature) {
   if (comContext.predecessorMessage?.signature == comparingSignature) {
-    throw Exception("Message with signature $comparingSignature already processed");
+    print("Message with signature $comparingSignature already processed");
+    return "This link has already been processed.";
   }
   final signature = Base64Encoder().convert(createSignature(blob, comContext.roundTripSignature)).toUrlSafe();
-  print("sig1 $signature");
-  print("sig2 $comparingSignature");
+  print("computed  sig $signature");
+  print("comparing sig $comparingSignature");
+  print("roundTrip Sig ${comContext.roundTripSignature}");
   if (signature != comparingSignature) {
-    throw Exception("signature mismatch $signature != $comparingSignature");
+    print("signature mismatch $signature != $comparingSignature");
+    return "This link is not the latest of the current match.";
+  }
+  else {
+    return null;
   }
 }
 

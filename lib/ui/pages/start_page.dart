@@ -94,8 +94,13 @@ class _StartPageState extends State<StartPage>
         //TODO add button to jump to this match entry
       }
       else {
-        final message = serializedMessage.deserializeWithoutValidation() as InviteMessage;
-        _handleReceiveInvite(message);
+        final (message, error) = serializedMessage.deserializeWithoutValidation();
+        if (message != null) {
+          _handleReceiveInvite(message as InviteMessage, serializedMessage);
+        }
+        else if (error != null) {
+          buildAlertDialog(error);
+        }
       }
     }
     else if (header == null) {
@@ -104,29 +109,32 @@ class _StartPageState extends State<StartPage>
     else if (header.state.isFinal) {
       buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is already finished (${header.state.toMessage()}).");
     }
-    else if (extractOperation == Operation.AcceptInvite) {
-      final message = serializedMessage.deserialize(header.commContext) as AcceptInviteMessage;
-      _handleInviteAccepted(header, message);
-    }
-    else if (extractOperation == Operation.RejectInvite) {
-      final message = serializedMessage.deserialize(header.commContext) as RejectInviteMessage;
-      _handleInviteRejected(header, message);
-    }
-    else if (extractOperation == Operation.Move) {
-      final message = serializedMessage.deserialize(header.commContext) as MoveMessage;
-      _handleMove(header, message);
-    }
-    else if (extractOperation == Operation.Resign) {
-      final message = serializedMessage.deserialize(header.commContext) as ResignMessage;
-      _handleResign(header, message);
-    }
     else {
-      buildAlertDialog("Unknown operation for $extractOperation for ${header.getReadablePlayId()}");
+      final (message, error) = serializedMessage.deserialize(header.commContext);
+      if (error != null) {
+        buildAlertDialog(error);
+      }
+      else if (extractOperation == Operation.AcceptInvite) {
+        _handleInviteAccepted(header, message as AcceptInviteMessage);
+      }
+      else if (extractOperation == Operation.RejectInvite) {
+        _handleInviteRejected(header, message as RejectInviteMessage);
+      }
+      else if (extractOperation == Operation.Move) {
+        _handleMove(header, message as MoveMessage);
+      }
+      else if (extractOperation == Operation.Resign) {
+        _handleResign(header, message as ResignMessage);
+      }
+      else {
+        buildAlertDialog("Unknown operation for $extractOperation for ${header.getReadablePlayId()}");
+      }
+
     }
 
   }
 
-  void _handleReceiveInvite(InviteMessage receivedInviteMessage) {
+  void _handleReceiveInvite(InviteMessage receivedInviteMessage, SerializedMessage receivedSerializedMessage) {
 
     var dimension = receivedInviteMessage.playSize.toDimension();
 
@@ -139,22 +147,28 @@ class _StartPageState extends State<StartPage>
         // first ask for your name
         if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInvite(receivedInviteMessage));
+              _handleAcceptInvite(receivedInviteMessage, receivedSerializedMessage));
         }
         else {
-          _handleAcceptInvite(receivedInviteMessage);
+          _handleAcceptInvite(receivedInviteMessage, receivedSerializedMessage);
         }
 
 
       },
       secondString: "Reject",
       secondHandler: () {
-        final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationRejected);
+        final header = PlayHeader.multiPlayInvitee(
+            receivedInviteMessage,
+            receivedSerializedMessage,
+            PlayState.InvitationRejected);
         MessageService().sendInvitationRejected(header, _user, () => StorageService().savePlayHeader(header));
       },
       thirdString: "Reply later",
       thirdHandler: () {
-        final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationPending);
+        final header = PlayHeader.multiPlayInvitee(
+            receivedInviteMessage,
+            receivedSerializedMessage,
+            PlayState.InvitationPending);
         StorageService().savePlayHeader(header);
 
       },
@@ -164,8 +178,11 @@ class _StartPageState extends State<StartPage>
 
   }
 
-  void _handleAcceptInvite(InviteMessage receivedInviteMessage) {
-    final header = PlayHeader.multiPlayInvitee(receivedInviteMessage, PlayState.InvitationAccepted);
+  void _handleAcceptInvite(InviteMessage receivedInviteMessage, SerializedMessage receivedSerializedMessage) {
+    final header = PlayHeader.multiPlayInvitee(
+        receivedInviteMessage,
+        receivedSerializedMessage,
+        PlayState.InvitationAccepted);
     StorageService().savePlayHeader(header);
     if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
       _selectInvitedMultiPlayerOpener(context, (playOpener) {
