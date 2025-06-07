@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
@@ -44,6 +45,9 @@ class _StartPageState extends State<StartPage>
   late Animation<double> _animation;
 
   MenuMode _menuMode = MenuMode.None;
+
+  Map<String, Route> _playRoutes = HashMap();
+
 
   User _user = User();
 
@@ -94,9 +98,10 @@ class _StartPageState extends State<StartPage>
         //TODO add button to jump to this match entry
       }
       else {
-        final (message, error) = serializedMessage.deserializeWithoutValidation();
+        final comContext = CommunicationContext();
+        final (message, error) = serializedMessage.deserialize(comContext);
         if (message != null) {
-          _handleReceiveInvite(message as InviteMessage, serializedMessage);
+          _handleReceiveInvite(message as InviteMessage, comContext);
         }
         else if (error != null) {
           buildAlertDialog(error);
@@ -134,7 +139,7 @@ class _StartPageState extends State<StartPage>
 
   }
 
-  void _handleReceiveInvite(InviteMessage receivedInviteMessage, SerializedMessage receivedSerializedMessage) {
+  void _handleReceiveInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) {
 
     var dimension = receivedInviteMessage.playSize.toDimension();
 
@@ -147,10 +152,10 @@ class _StartPageState extends State<StartPage>
         // first ask for your name
         if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInvite(receivedInviteMessage, receivedSerializedMessage));
+              _handleAcceptInvite(receivedInviteMessage, comContext));
         }
         else {
-          _handleAcceptInvite(receivedInviteMessage, receivedSerializedMessage);
+          _handleAcceptInvite(receivedInviteMessage, comContext);
         }
 
 
@@ -159,7 +164,7 @@ class _StartPageState extends State<StartPage>
       secondHandler: () {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
-            receivedSerializedMessage,
+            comContext,
             PlayState.InvitationRejected);
         MessageService().sendInvitationRejected(header, _user, () => StorageService().savePlayHeader(header));
       },
@@ -167,7 +172,7 @@ class _StartPageState extends State<StartPage>
       thirdHandler: () {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
-            receivedSerializedMessage,
+            comContext,
             PlayState.InvitationPending);
         StorageService().savePlayHeader(header);
 
@@ -178,16 +183,16 @@ class _StartPageState extends State<StartPage>
 
   }
 
-  void _handleAcceptInvite(InviteMessage receivedInviteMessage, SerializedMessage receivedSerializedMessage) {
+  Future<void> _handleAcceptInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
     final header = PlayHeader.multiPlayInvitee(
         receivedInviteMessage,
-        receivedSerializedMessage,
+        comContext,
         PlayState.InvitationAccepted);
-    StorageService().savePlayHeader(header);
+    await StorageService().savePlayHeader(header);
     if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
-      _selectInvitedMultiPlayerOpener(context, (playOpener) {
+      _selectInvitedMultiPlayerOpener(context, (playOpener) async {
         header.playOpener = playOpener;
-        StorageService().savePlayHeader(header);
+        await StorageService().savePlayHeader(header);
     
         if (playOpener == PlayOpener.Invitee) {
           _startMultiPlayerGame(context, header);
@@ -209,13 +214,14 @@ class _StartPageState extends State<StartPage>
   }
 
 
-  void _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) {
+  Future<void> _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) async {
     if (header.state == PlayState.InvitationRejected) {
       buildAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
     }
     else {
       header.state = PlayState.InvitationAccepted;
-      StorageService().savePlayHeader(header);
+      header.playOpener = message.playOpenerDecision;
+      await StorageService().savePlayHeader(header);
 
       buildAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
       StorageService().loadPlayFromHeader(header).then((play) {
@@ -253,8 +259,16 @@ class _StartPageState extends State<StartPage>
     });
   }
 
-  void _handleResign(PlayHeader header, ResignMessage message) {
-    
+  Future<void> _handleResign(PlayHeader header, ResignMessage message) async {
+    header.state = PlayState.OpponentResigned;
+    await StorageService().savePlayHeader(header);
+    StorageService().loadPlayFromHeader(header).then((play) {
+      if (play != null) {
+        //TODO register win
+      }
+    });
+    buildAlertDialog("Your opponent '${header.opponentName}' gave up match ${header.getReadablePlayId()}, you win!");
+
   }
 
 
@@ -584,14 +598,26 @@ class _StartPageState extends State<StartPage>
       play.nextPlayer();
       play.applyStaleMove(move);
       play.commitMove();
+      //TODO make this at a central place, maybe in the GameEngine?
     }
     await Future.delayed(const Duration(seconds: 1));
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) {
-          return HyleXGround(
-              _user,
-              play);
-        }));
+
+    final routeKey = play.header.playId;
+    var route = _playRoutes[routeKey] ?? MaterialPageRoute(builder: (context) {
+      return HyleXGround(
+          _user,
+          play);
+    });
+    _playRoutes[routeKey] = route;
+
+    if (route.isCurrent == true) {
+        // TODO apply play to current route either with a callback or a state change listener / GloblKey
+      }
+      else {
+        Navigator.push(context, route);
+      }
+
+
   }
 
   _inviteOpponent(BuildContext context, PlaySize playSize,

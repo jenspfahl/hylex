@@ -271,25 +271,15 @@ class SerializedMessage {
   }
 
   (Message?,String?) deserialize(CommunicationContext comContext) {
-    return _deserializeAndValidate(comContext);
-  }
-
-  (Message?,String?) deserializeWithoutValidation() {
-    return _deserializeAndValidate(null);
-  }
-
-  (Message?,String?) _deserializeAndValidate(CommunicationContext? comContext) {
 
     final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
-    if (comContext != null) {
-      final errorMessage = _validateSignature(buffer.getLongs(), comContext, signature);
-      if (errorMessage != null) {
-        return (null, errorMessage);
-      }
-      comContext.predecessorMessage = this;
-      debugPrint("saving predecessorMessage after validation: ${comContext.predecessorMessage}");
+    final errorMessage = _validateSignature(buffer.getLongs(), comContext, signature);
+    if (errorMessage != null) {
+      return (null, errorMessage);
     }
+    comContext.predecessorMessage = this;
+    debugPrint("saving predecessorMessage after validation: ${comContext.predecessorMessage}");
 
     final reader = buffer.reader();
 

@@ -39,12 +39,8 @@ class MessageService {
       }
       case PlayState.InvitationAccepted: {
         StorageService().loadPlayFromHeader(playHeader).then((play) {
-          if (play != null) {
-            final lastMove = play.lastMoveFromJournal;
-            if (lastMove != null) {
-              sendInvitationAccepted(playHeader, user, lastMove, sentHandler);
-            }
-          }
+          final lastMove = play?.lastMoveFromJournal;
+          sendInvitationAccepted(playHeader, user, lastMove, sentHandler);
         });
         break;
       }
@@ -58,9 +54,15 @@ class MessageService {
         });
         break;
       }
+      case PlayState.Resigned: {
+        StorageService().loadPlayFromHeader(playHeader).then((play) {
+          sendResignation(playHeader, user, sentHandler);
+        });
+        break;
+      }
       case PlayState.InvitationPending:
       case PlayState.Initialised: {
-        debugPrint("nothing to send for ${playHeader.state}");
+        debugPrint("nothing to send for ${playHeader.state}, take action instead!");
       }
         // TODO: Handle this case.
         throw UnimplementedError();
@@ -73,10 +75,7 @@ class MessageService {
       case PlayState.Won:
         // TODO: Handle this case.
         throw UnimplementedError();
-      case PlayState.Resigned:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case PlayState.OpponentResigned:
+        case PlayState.OpponentResigned:
         // TODO: Handle this case.
         throw UnimplementedError();
       case PlayState.Closed:
@@ -138,11 +137,19 @@ class MessageService {
     sendMessage("This is my next move for round ${header.currentRound}", serializedMessage, sentHandler);
   }
 
+  void sendResignation(PlayHeader header, User user, Function()? sentHandler) {
+    final resignationMessage = ResignMessage(header.playId, header.currentRound);
+    final serializedMessage = resignationMessage.serializeWithContext(header.commContext);
+
+    sendMessage("Uff, I am giving up in round ${header.currentRound}.", serializedMessage, sentHandler);
+  }
+
   void sendMessage(String text, SerializedMessage message, Function()? sentHandler) {
     final playId = message.extractPlayId();
-    final textMessage = '[${toReadableId(playId)}] $text\n${message.toUrl()}';
-    debugPrint("sending: $textMessage");
-    Share.share(textMessage, subject: 'HyleX interaction')
+    final shareMessage = '[${toReadableId(playId)}] $text\n${message.toUrl()}';
+    debugPrint("sending: [${toReadableId(playId)}] $text");
+    debugPrint(" >>>>>>> ${message.toUrl()}");
+    Share.share(shareMessage, subject: 'HyleX interaction')
         .then((result) {
       if (sentHandler != null) sentHandler();
     });

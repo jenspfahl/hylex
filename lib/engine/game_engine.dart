@@ -35,7 +35,7 @@ abstract class GameEngine extends ChangeNotifier {
   }
 
   void nextPlayer() {
-    play.header.state = PlayState.ReadyToMove;
+    play.waitForOpponent = false;
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
       _finish();
@@ -216,26 +216,25 @@ class MultiPlayerGameEngine extends GameEngine {
   void _doPlayerMove() {
 
     if (play.currentPlayer == PlayerType.RemoteUser) {
-      shareGameMove();
       play.waitForOpponent = true;
+      savePlayState();
+      shareGameMove();
     }
   }
 
   void shareGameMove() {
     final lastMove = play.lastMoveFromJournal;
-    if (lastMove != null) {
-      if (play.header.state == PlayState.InvitationPending && play.header.actor == Actor.Invitee) {
-        play.header.state = PlayState.InvitationAccepted;
-        MessageService().sendInvitationAccepted(play.header, user, lastMove,
-                () => StorageService().savePlayHeader(play.header));
-      }
-      else {
-        MessageService().sendMove(play.header, user, lastMove,
-                () => StorageService().savePlayHeader(play.header));
-      }
+    final isAcceptInvite = play.header.actor == Actor.Invitee && play.header.playOpener == PlayOpener.Invitee;
+    if (isAcceptInvite) {
+      MessageService().sendInvitationAccepted(play.header, user, lastMove, null);
+    }
+    else if (lastMove != null) {
+      MessageService().sendMove(play.header, user, lastMove, null);
+    }
+    else {
+      throw Exception("No lat move but there should");
     }
   }
-
 
   @override
   void _handleGameOver() {

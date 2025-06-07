@@ -14,6 +14,7 @@ import 'package:super_tooltip/super_tooltip.dart';
 import '../../engine/game_engine.dart';
 import '../../model/chip.dart';
 import '../../model/common.dart';
+import '../../service/StorageService.dart';
 import '../chip_extension.dart';
 import '../../model/coordinate.dart';
 import '../../model/move.dart';
@@ -233,10 +234,12 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
                         onPressed: () => {
 
-                          ask('Resign?', () {
-                            //TOOO send resign
-                            //MessageService()
-                            //gameEngine.stopGame();
+                          ask('Wanna give up?', () {
+                            gameEngine.play.header.state = PlayState.Resigned;
+                            MessageService().sendResignation(gameEngine.play.header, widget.user,
+                                    () => StorageService().savePlayHeader(gameEngine.play.header));
+                            //TODO register lost game
+                            gameEngine.stopGame();
 
                           })
                         },

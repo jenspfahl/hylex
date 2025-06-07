@@ -25,7 +25,7 @@ import 'move.dart';
  *
  * Invitor:
  *     RemoteOpponentInvited --> InvitationRejected
- *     RemoteOpponentInvited --> ReadyToMove --> [ WaitForOpponent | ReadyToMove ] --> [ Won | Lost | Resigned | OpponentResigned ]
+ *     RemoteOpponentInvited --> InvitationAccepted --> [ WaitForOpponent | ReadyToMove ] --> [ Won | Lost | Resigned | OpponentResigned ]
  *
  * Invitee:
  *     InvitationPending --> InvitationRejected
@@ -40,7 +40,7 @@ import 'move.dart';
  *  Acceptance:
  *    Invitor:  RemoteOpponentInvited
  *      Invitee:  InvitationPending
- *      Invitee:  InvitationAcceptance
+ *      Invitee:  InvitationAccepted
  *        Invitor:  ReadyToMove
  *        Invitor:  WaitForOpponent
  *          Invitee: ReadyToMove
@@ -161,11 +161,13 @@ class PlayHeader {
   
   PlayHeader.multiPlayInvitee(
       InviteMessage inviteMessage,
-      SerializedMessage receivedSerializedMessage,
+      CommunicationContext? comContext,
       this.state) {
     playId = inviteMessage.playId;
     actor = Actor.Invitee;
-    commContext.predecessorMessage = receivedSerializedMessage;
+    if (comContext != null) {
+      commContext = comContext;
+    }
     playSize = inviteMessage.playSize;
     playMode = inviteMessage.playMode;
     playOpener = inviteMessage.playOpener;
@@ -262,6 +264,9 @@ class Play {
 
   Play.newMultiPlay(this.header) {
     final actorRole = header.actor.getActorRoleFor(header.playOpener);
+    if (actorRole == null) {
+      throw Exception("When creating a multi play the play opener should be decided.");
+    }
     _chaosPlayer = actorRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser; 
     _orderPlayer = actorRole == Role.Order ? PlayerType.LocalUser : PlayerType.RemoteUser; 
     multiPlay = true;

@@ -36,7 +36,7 @@ class StorageService {
     return user;
   }
   
-  void savePlay(Play play) {
+  Future<bool> savePlay(Play play) {
     final jsonToSave = jsonEncode(play);
     //debugPrint(_getPrettyJSONString(play));
     final key = play.isMultiplayerPlay
@@ -49,12 +49,12 @@ class StorageService {
         ? _getPlayHeaderKey(play.header.playId)
         : PreferenceService.DATA_CURRENT_PLAY_HEADER;
 
-    _savePlayHeader(headerKey, play.header);
+    return _savePlayHeader(headerKey, play.header);
   }
 
-  void savePlayHeader(PlayHeader header) {
+  Future<bool> savePlayHeader(PlayHeader header) {
     final key = _getPlayHeaderKey(header.playId);
-    _savePlayHeader(key, header);
+    return _savePlayHeader(key, header);
   }
 
   Future<Play?> loadCurrentSinglePlay() async {
@@ -89,11 +89,10 @@ class StorageService {
     return values
         .where((value) => value != null)
         .map((json) {
-          debugPrint("XXX"+ json.toString());
-      final map = jsonDecode(json!);
-      _getPrettyJSONString(map);
-      return PlayHeader.fromJson(map);
-    })
+          final map = jsonDecode(json!);
+          _getPrettyJSONString(map);
+          return PlayHeader.fromJson(map);
+        })
         .toList();
 
 
@@ -108,12 +107,12 @@ class StorageService {
     );
   }
 
-  void _savePlayHeader(String key, PlayHeader header) {
+  Future<bool> _savePlayHeader(String key, PlayHeader header) {
     final jsonToSave = jsonEncode(header);
     //debugPrint(_getPrettyJSONString(header));
 
     debugPrint("Save ${key} play header");
-    PreferenceService().setString(key, jsonToSave);
+    return PreferenceService().setString(key, jsonToSave);
   }
 
   String _getPlayKey(String playId) => '${PreferenceService.DATA_PLAY_PREFIX}/$playId';
