@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:bits/bits.dart';
@@ -18,10 +19,57 @@ const playIdLength = 8;
 const userIdLength = 16;
 const maxNameLength = 32;
 
+enum Channel {
+  In, Out
+}
+class ChannelMessage {
+  late Channel channel;
+  late SerializedMessage serializedMessage;
+
+  ChannelMessage(this.channel, this.serializedMessage);
+
+  Map<String, dynamic> toJson() => {
+    "channel": channel.index,
+    "serializedMessage": serializedMessage.toString()
+  };
+
+  ChannelMessage.fromJson(Map<String, dynamic> map) {
+    channel = Channel.values.firstWhere((p) => p.name == map['channel']);
+    final message = map['serializedMessage'];
+    serializedMessage = SerializedMessage.fromUrl(message)!;
+  }
+}
 
 class CommunicationContext {
   String? roundTripSignature;
   SerializedMessage? predecessorMessage;
+  List<ChannelMessage> messageHistory = [];
+
+  void registerSentMessage(SerializedMessage serializedMessage) {
+    this.roundTripSignature = serializedMessage.signature;
+    debugPrint("saving roundTripSignature ${this.roundTripSignature}");
+    final lastMessage = messageHistory.isNotEmpty
+        ? messageHistory[messageHistory.length - 1]
+        : null;
+
+    if (lastMessage == null || lastMessage.serializedMessage != serializedMessage) {
+      messageHistory.add(ChannelMessage(Channel.Out, serializedMessage));
+    }
+  }
+
+  void registerReceivedMessage(SerializedMessage serializedMessage) {
+
+    this.predecessorMessage = serializedMessage;
+    debugPrint("saving predecessorMessage: ${this.predecessorMessage}");
+
+    final lastMessage = messageHistory.isNotEmpty
+        ? messageHistory[messageHistory.length - 1]
+        : null;
+
+    if (lastMessage == null || lastMessage.serializedMessage != serializedMessage) {
+      messageHistory.add(ChannelMessage(Channel.In, serializedMessage));
+    }
+  }
 }
 
 abstract class Message {
@@ -31,8 +79,7 @@ abstract class Message {
 
   SerializedMessage serializeWithContext(CommunicationContext comContext) {
     final serializedMessage = _serializeWithSignature(comContext.predecessorMessage?.signature);
-    comContext.roundTripSignature = serializedMessage.signature;
-    debugPrint("saving roundTripSignature ${comContext.roundTripSignature} after serialization");
+    comContext.registerSentMessage(serializedMessage);
     return serializedMessage;
   }
 
@@ -278,8 +325,7 @@ class SerializedMessage {
     if (errorMessage != null) {
       return (null, errorMessage);
     }
-    comContext.predecessorMessage = this;
-    debugPrint("saving predecessorMessage after validation: ${comContext.predecessorMessage}");
+    comContext.registerReceivedMessage(this);
 
     final reader = buffer.reader();
 
@@ -305,6 +351,16 @@ class SerializedMessage {
     return toUrl();
   }
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SerializedMessage &&
+          runtimeType == other.runtimeType &&
+          payload == other.payload &&
+          signature == other.signature;
+
+  @override
+  int get hashCode => payload.hashCode ^ signature.hashCode;
 }
 
 

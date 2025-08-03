@@ -84,6 +84,9 @@ class Cursor {
 
   bool isVerticalMove() => _start != null && _end != null && _start!.x == _end!.x;
 
+  /**
+   * Sets the cursor to visualise the given move
+   */
   void adaptFromMove(Move move) {
     clear();
     if (move.isMove()) {

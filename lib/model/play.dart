@@ -196,6 +196,11 @@ class PlayHeader {
       commContext.predecessorMessage = SerializedMessage(predecessorMessagePayload, predecessorMessageSignature);
     }
 
+    final List<dynamic> messageHistory = map['messageHistory']!;
+    commContext.messageHistory.addAll(messageHistory.map((value) {
+      return ChannelMessage.fromJson(value);
+    }));
+
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
     
@@ -212,6 +217,8 @@ class PlayHeader {
     if (commContext.roundTripSignature != null) "roundTripSignature" : commContext.roundTripSignature,
     if (commContext.predecessorMessage != null) "predecessorMessagePayload" : commContext.predecessorMessage!.payload,
     if (commContext.predecessorMessage != null) "predecessorMessageSignature" : commContext.predecessorMessage!.signature,
+    "messageHistory" : commContext.messageHistory.map((m) => m.toJson()).toList(),
+
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
   };
@@ -225,6 +232,11 @@ class PlayHeader {
   @override
   String toString() {
     return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
+  }
+
+  void init() {
+    currentRound = 1;
+    state = PlayState.Initialised;
   }
   
 }
@@ -259,7 +271,7 @@ class Play {
   Move? _staleMove;
 
   Play.newSinglePlay(this.header, this._chaosPlayer, this._orderPlayer) {
-    _init(initAi: true);
+    _init(multiPlay: false);
   }
 
   Play.newMultiPlay(this.header) {
@@ -269,9 +281,8 @@ class Play {
     }
     _chaosPlayer = actorRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser; 
     _orderPlayer = actorRole == Role.Order ? PlayerType.LocalUser : PlayerType.RemoteUser; 
-    multiPlay = true;
-    
-    _init(initAi: false);
+
+    _init(multiPlay: true);
   }
 
   // PlayHeader needs to be injected
@@ -324,15 +335,19 @@ class Play {
     return _chaosPlayer;
   }
 
+  void init() {
+    _init(multiPlay: this.multiPlay);
+  }
 
   // initialises the play state to get started
-  void _init({required bool initAi}) {
+  void _init({required bool multiPlay}) {
 
+    this.multiPlay = multiPlay;
     _journal.clear();
     _opponentCursor.clear();
     _selectionCursor.clear();
     _currentRole = Role.Chaos;
-    header.currentRound = 0;//TODO init() on header
+    header.init();
 
     _matrix = Matrix(Coordinate(dimension, dimension));
 
@@ -345,7 +360,7 @@ class Play {
     nextChip();
 
 
-    if (initAi) {
+    if (!multiPlay) {
       _initAis();
     }
   }
@@ -406,7 +421,7 @@ class Play {
     _staleMove = null;
   }
 
-  Move? rollbackLastMove() {
+  Move? _removeLastMoveFromJournal() {
     if (!isJournalEmpty) {
       return _journal.removeLast();
     }
@@ -460,7 +475,7 @@ class Play {
   }
 
   Move? previousRound() {
-    final lastMove = rollbackLastMove();
+    final lastMove = _removeLastMoveFromJournal();
     if (lastMove != null) {
       _undoMove(lastMove);
 
@@ -602,12 +617,10 @@ class Play {
         debugPrint("Time to predict next Order move: $time ms");
       });
     }
-
-
   }
 
   void reset() {
-    _init(initAi: false);
+    init();
   }
 
   String getReadablePlayId() {

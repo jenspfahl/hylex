@@ -156,6 +156,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       
                               final recentRole = gameEngine.play.opponentRole.name;
                               ask('Undo $recentRole\'s last move?', () {
+                                  //TODO move this all to Play
                                   var lastMove = gameEngine.play.previousRound();
                                   if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
                                     // undo AI move also

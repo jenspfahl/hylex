@@ -22,7 +22,7 @@ abstract class GameEngine extends ChangeNotifier {
   double? get progressRatio;
 
   void startGame() {
-    _init();
+    play.init();
     _doPlayerMove();
   }
   
@@ -43,7 +43,7 @@ abstract class GameEngine extends ChangeNotifier {
     }
 
     play.nextPlayer();
-    savePlayState();
+    savePlayState(); //TODO save by listening to notify listener
     notifyListeners();
 
     _doPlayerMove();
@@ -60,9 +60,7 @@ abstract class GameEngine extends ChangeNotifier {
     StorageService().savePlay(play);
   }
 
-
-  void _init();
-
+  
   Role _finish() {
     final winner = play.finishGame();
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
@@ -116,11 +114,13 @@ abstract class GameEngine extends ChangeNotifier {
    */
   opponentMoveReceived(Move move) {
     debugPrint("opponent move received");
-    play.waitForOpponent = false;
 
     play.applyStaleMove(move);
     play.opponentCursor.adaptFromMove(move);
     play.commitMove();
+
+    play.waitForOpponent = false;
+
 
     if (play.isGameOver()) {
       _finish();
@@ -150,12 +150,6 @@ class SinglePlayerGameEngine extends GameEngine {
 
   SinglePlayerGameEngine(Play play, User user): super(play, user);
 
-  @override
-  void _init() {
-    play.multiPlay = false;
-    play.header.state = PlayState.Initialised;
-  }
-
   void _doPlayerMove() {
     if (play.currentPlayer == PlayerType.LocalAi) {
       _think();
@@ -164,7 +158,7 @@ class SinglePlayerGameEngine extends GameEngine {
   }
   
   _cleanUp() {
-    _kill();
+    _killAiAgents();
   }
 
   @override
@@ -195,7 +189,7 @@ class SinglePlayerGameEngine extends GameEngine {
 
   }
   
-  void _kill() {
+  void _killAiAgents() {
     _aiControlPort?.send('KILL');
   }
 
@@ -206,12 +200,7 @@ class MultiPlayerGameEngine extends GameEngine {
 
 
   MultiPlayerGameEngine(Play play, User user): super(play, user);
-
-  @override
-  void _init() {
-    play.multiPlay = true;
-    play.header.state = PlayState.Initialised;
-  }
+  
 
   void _doPlayerMove() {
 
@@ -232,7 +221,7 @@ class MultiPlayerGameEngine extends GameEngine {
       MessageService().sendMove(play.header, user, lastMove, null);
     }
     else {
-      throw Exception("No lat move but there should");
+      throw Exception("No last move but there should");
     }
   }
 
