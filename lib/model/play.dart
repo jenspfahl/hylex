@@ -335,10 +335,6 @@ class Play {
     return _chaosPlayer;
   }
 
-  void init() {
-    _init(multiPlay: this.multiPlay);
-  }
-
   // initialises the play state to get started
   void _init({required bool multiPlay}) {
 
@@ -620,7 +616,7 @@ class Play {
   }
 
   void reset() {
-    init();
+    _init(multiPlay: this.multiPlay);
   }
 
   String getReadablePlayId() {

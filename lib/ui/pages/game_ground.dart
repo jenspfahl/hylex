@@ -165,13 +165,15 @@ class _HyleXGroundState extends State<HyleXGround> {
       
                                   if (lastMove != null) {
                                     gameEngine.play.selectionCursor.adaptFromMove(lastMove);
-                                    _lastUndoMoveHighlighted = true;
+                                    //_lastUndoMoveHighlighted = true;
                                     final moveBefore = gameEngine.play.lastMoveFromJournal;
                                     if (moveBefore != null) {
                                       gameEngine.play.opponentCursor.adaptFromMove(moveBefore);
                                     }
       
                                     gameEngine.savePlayState();
+                                    setState(() {});
+
                                   }
                                   else {
                                     // beginning of game

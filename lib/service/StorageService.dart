@@ -36,25 +36,35 @@ class StorageService {
     return user;
   }
   
-  Future<bool> savePlay(Play play) {
-    final jsonToSave = jsonEncode(play);
-    //debugPrint(_getPrettyJSONString(play));
-    final key = play.isMultiplayerPlay
-        ? _getPlayKey(play.header.playId)
-        : PreferenceService.DATA_CURRENT_PLAY;
-    debugPrint("Save ${key} play");
-    PreferenceService().setString(key, jsonToSave);
+  Future<bool> savePlay(Play play) async {
 
     final headerKey = play.isMultiplayerPlay
         ? _getPlayHeaderKey(play.header.playId)
         : PreferenceService.DATA_CURRENT_PLAY_HEADER;
 
-    return _savePlayHeader(headerKey, play.header);
+    final key = play.isMultiplayerPlay
+        ? _getPlayKey(play.header.playId)
+        : PreferenceService.DATA_CURRENT_PLAY;
+
+
+    final results = await Future.wait([
+        _saveRawPlayHeader(headerKey, play.header),
+        _saveRawPlay(key, play)
+    ]);
+
+    return !results.any((e) => !e);
+  }
+
+  Future<bool> _saveRawPlay(String key, Play play) {
+    debugPrint("Save ${key} play:");
+    debugPrint(_getPrettyJSONString(play));
+    final jsonToSave = jsonEncode(play);
+    return PreferenceService().setString(key, jsonToSave);
   }
 
   Future<bool> savePlayHeader(PlayHeader header) {
     final key = _getPlayHeaderKey(header.playId);
-    return _savePlayHeader(key, header);
+    return _saveRawPlayHeader(key, header);
   }
 
   Future<Play?> loadCurrentSinglePlay() async {
@@ -107,11 +117,10 @@ class StorageService {
     );
   }
 
-  Future<bool> _savePlayHeader(String key, PlayHeader header) {
+  Future<bool> _saveRawPlayHeader(String key, PlayHeader header) {
+    debugPrint("Save ${key} play header:");
     final jsonToSave = jsonEncode(header);
-    //debugPrint(_getPrettyJSONString(header));
-
-    debugPrint("Save ${key} play header");
+    debugPrint(_getPrettyJSONString(header));
     return PreferenceService().setString(key, jsonToSave);
   }
 
@@ -124,6 +133,8 @@ class StorageService {
 
     final map = jsonDecode(json);
     final play = Play.fromJson(map);
+    debugPrint("Loaded play: $play");
+    debugPrint(_getPrettyJSONString(json));
     return play;
   }
 
@@ -133,7 +144,8 @@ class StorageService {
 
     final map = jsonDecode(json);
     final header = PlayHeader.fromJson(map);
-    debugPrint("Loaded header state: $header");
+    debugPrint("Loaded play header: $header");
+    debugPrint(_getPrettyJSONString(json));
     return header;
   }
 

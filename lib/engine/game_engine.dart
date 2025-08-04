@@ -22,7 +22,6 @@ abstract class GameEngine extends ChangeNotifier {
   double? get progressRatio;
 
   void startGame() {
-    play.init();
     _doPlayerMove();
   }
   
