@@ -335,6 +335,8 @@ class Play {
     return _chaosPlayer;
   }
 
+  Role getWinnerRole() => _stats.getWinner();
+
   // initialises the play state to get started
   void _init({required bool multiPlay}) {
 

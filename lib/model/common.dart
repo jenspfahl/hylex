@@ -59,7 +59,7 @@ enum Operation {
 enum PlayMode {
   HyleX,    //00
   Classic,  //01
-  unused10, //10
+  unused10, //10 TODO could be with no random chip withdrawal
   unused11, //11
   // stuck to 2 bits, don't add more
 } 

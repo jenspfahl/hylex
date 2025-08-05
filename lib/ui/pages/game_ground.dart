@@ -141,7 +141,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.undo_outlined),
                         onPressed: () {
                           if (!_isUndoAllowed()) {
-                            toastError(context, "Undo not possible here");
+                            toastInfo(context, "Undo not possible here");
                             return;
                           }
       
@@ -155,10 +155,10 @@ class _HyleXGroundState extends State<HyleXGround> {
       
                               final recentRole = gameEngine.play.opponentRole.name;
                               final currentRole = gameEngine.play.currentRole.name;
-                              var message = 'Undo $recentRole\'s last move?';
+                              var message = 'Undo last move from $recentRole?';
 
-                              if (gameEngine.play.isWithAiPlay) {
-                                message = 'Undo $recentRole\'s last move? This will also undo your ($currentRole\'s) move.';
+                              if (gameEngine.play.isWithAiPlay && gameEngine.play.journal.length > 1) {
+                                message = 'Undo last move from $recentRole? This will also undo the previous move from ${currentRole}.';
                               }
 
                               ask(message, () {
@@ -351,22 +351,26 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildMoveLine(Move move, {String? prefix, MainAxisAlignment? mainAxisAlignment}) {
     var eventLineString = move.toReadableStringWithChipPlaceholder();
+    return _replaceWithChipIcon(prefix, eventLineString, mainAxisAlignment, move.chip);
+  }
+
+  Widget _replaceWithChipIcon(String? prefix, String text, MainAxisAlignment? mainAxisAlignment, GameChip? chip) {
     Widget row;
-    if (eventLineString.contains("{chip}")) {
-      final split = eventLineString.split("{chip}");
+    if (text.contains("{chip}") && chip != null) {
+      final split = text.split("{chip}");
       final first = split[0];
       final second = split[1];
-
+    
       row = Row(
         mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
         children: [
           if (prefix != null)
             Text(prefix),
           Text(first),
-          Text(move.chip!.getChipName()),
+          Text(chip.getChipName()),
           const Text(" "),
           CircleAvatar(
-              backgroundColor: _getChipBackgroundColor(move.chip!, null),
+              backgroundColor: _getChipBackgroundColor(chip, null),
               maxRadius: 6,
           ),
           Text(second),
@@ -379,11 +383,10 @@ class _HyleXGroundState extends State<HyleXGround> {
         children: [
           if (prefix != null)
             Text(prefix),
-          Text(eventLineString),
+          Text(text),
         ],
       );
     }
-
     return row;
   }
 
@@ -398,7 +401,8 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildHint(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
-      return Text(_buildWinnerText());
+      return Text(_buildWinnerText(),
+          style: TextStyle(fontWeight: FontWeight.bold));
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
       return _buildAiProgressText();
@@ -463,7 +467,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             return;
           }
           if (gameEngine.play.currentRole == Role.Chaos && !gameEngine.play.hasStaleMove) {
-            toastInfo(context, "Chaos has to place one chip!");
+            toastInfo(context, "Chaos has to place one chip before continuing!");
             return;
           }
 
@@ -503,10 +507,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     var appendix = "";
 
     if (gameEngine.play.currentRole == Role.Order) {
-      appendix = "Now it's on Order to move a chip or skip!";
+      appendix = "➤ Now it's on Order to move a chip or skip!";
     }
     else {
-      appendix = "Now it's on Chaos to place a chip!";
+      appendix = "➤ Now it's on Chaos to place chip {chip} !";
     }
     
     return Column(
@@ -515,19 +519,21 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (lastMoveHint != null)
           lastMoveHint,
         if (!gameEngine.play.isFullAutomaticPlay)
-          Text(appendix)
+          _replaceWithChipIcon(null, appendix,
+              MainAxisAlignment.center, gameEngine.play.currentChip)
       ],
     );
     
   }
 
 
-  Text _buildAiProcessingText() {
+  Widget _buildAiProcessingText() {
     if (gameEngine.play.currentRole == Role.Order) {
       return Text("Waiting for ${gameEngine.play.currentRole.name} to move ...");
     }
     else {
-      return Text("Waiting for ${gameEngine.play.currentRole.name} to place ...");
+      return _replaceWithChipIcon(null, "Waiting for ${gameEngine.play.currentRole.name} to place {chip} ...",
+          MainAxisAlignment.center, gameEngine.play.currentChip);
     }
   }
 
@@ -544,7 +550,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     var tooltipKey = role == Role.Chaos
         ? _chaosChipTooltip
         : _orderChipTooltip;
-    final tooltipPrefix = isSelected ? "Current player" : "Waiting player";
+    final tooltipPrefix =
+      gameEngine.play.isGameOver()
+        ? gameEngine.play.getWinnerRole() == role
+            ? "Winner"
+            : "Looser"
+        : isSelected
+            ? "Current player"
+            : "Waiting player";
     final tooltipPostfix = player == PlayerType.LocalUser ?  "You" : player == PlayerType.LocalAi ? "Computer" : "Remote opponent";
     final secondLine = role == Role.Chaos ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
     return SuperTooltip(
@@ -595,7 +608,13 @@ class _HyleXGroundState extends State<HyleXGround> {
                     Icon(icon, color: color, size: 16),
                   ],
                 ),
-            backgroundColor: isSelected ? Colors.black : null
+            backgroundColor: gameEngine.play.isGameOver()
+                ? gameEngine.play.getWinnerRole() == role
+                  ? Colors.red
+                  : null
+                : isSelected
+                  ? Colors.black
+                  : null
         ),
       ),
     );
@@ -787,7 +806,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (!selectionCursor.hasStart) {
-      toastInfo(context, "Please select a chip to move first");
+      toastInfo(context, "Please select the chip to move first");
     }
     else if (/*!cursor.hasEnd && */selectionCursor.start == coordinate) {
       // clear start cursor if not target is selected
@@ -795,7 +814,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       selectionCursor.clear();
     }
     else if (!selectionCursor.trace.contains(coordinate) && selectionCursor.start != coordinate) {
-      toastInfo(context, "Chip can only move horizontally or vertically in free space");
+      toastInfo(context, "Chip can only move horizontally or vertically through free cells");
     }
     else if (selectionCursor.hasStart) {
       if (selectionCursor.hasEnd) {

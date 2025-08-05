@@ -41,10 +41,10 @@ class GameChip {
       case 5: return "Pink";
       case 6: return "Grey";
       case 7: return "Brown";
-      case 8: return "Honey";
+      case 8: return "Olive";
       case 9: return "Moss";
-      case 10: return "Indigo";
-      case 11: return "Violet";
+      case 10: return "Teal";
+      case 11: return "Indigo";
       case 12: return "Purple";
       default: return "";
     }
