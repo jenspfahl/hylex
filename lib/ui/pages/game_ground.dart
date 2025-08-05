@@ -43,7 +43,6 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   GameChip? _emphasiseAllChipsOf;
   Role? _emphasiseAllChipsOfRole;
-  bool _lastUndoMoveHighlighted = false;
   bool _gameOverShown = false;
   
   late StreamSubscription<FGBGType> fgbgSubscription;
@@ -155,30 +154,22 @@ class _HyleXGroundState extends State<HyleXGround> {
                             else {
       
                               final recentRole = gameEngine.play.opponentRole.name;
-                              ask('Undo $recentRole\'s last move?', () {
-                                  //TODO move this all to Play
-                                  var lastMove = gameEngine.play.previousRound();
-                                  if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
-                                    // undo AI move also
-                                    lastMove = gameEngine.play.previousRound();
-                                  }
-      
-                                  if (lastMove != null) {
-                                    gameEngine.play.selectionCursor.adaptFromMove(lastMove);
-                                    //_lastUndoMoveHighlighted = true;
-                                    final moveBefore = gameEngine.play.lastMoveFromJournal;
-                                    if (moveBefore != null) {
-                                      gameEngine.play.opponentCursor.adaptFromMove(moveBefore);
-                                    }
-      
-                                    gameEngine.savePlayState();
-                                    setState(() {});
+                              final currentRole = gameEngine.play.currentRole.name;
+                              var message = 'Undo $recentRole\'s last move?';
 
-                                  }
-                                  else {
-                                    // beginning of game
-                                    gameEngine.startGame();
-                                  }
+                              if (gameEngine.play.isWithAiPlay) {
+                                message = 'Undo $recentRole\'s last move? This will also undo your ($currentRole\'s) move.';
+                              }
+
+                              ask(message, () {
+                                  setState(() {
+                                    final lastMove = gameEngine.play.undoLastMove();
+                                    if (lastMove == null) {
+                                      gameEngine.startGame();
+                                    }
+                                    toastInfo(context, "Undo competed");
+                                    gameEngine.savePlayState();
+                                  });
                                 });
                             }
                           });
@@ -667,33 +658,23 @@ class _HyleXGroundState extends State<HyleXGround> {
     bool possibleTarget = false;
     Spot? startSpot;
     if (gameEngine.play.currentRole == Role.Order && where != null) {
-      possibleTarget = gameEngine.play.selectionCursor.hasStart && gameEngine.play.selectionCursor.trace.contains(where);
+      var selectionCursor = gameEngine.play.selectionCursor;
+      possibleTarget = selectionCursor.hasStart && selectionCursor.trace.contains(where);
 
-      if (gameEngine.play.selectionCursor.hasEnd) {
-        startSpot = gameEngine.play.matrix.getSpot(gameEngine.play.selectionCursor.end!);
+      if (selectionCursor.hasEnd) {
+        startSpot = gameEngine.play.matrix.getSpot(selectionCursor.end!);
       }
-      else if (gameEngine.play.selectionCursor.hasStart) {
-        startSpot = gameEngine.play.matrix.getSpot(gameEngine.play.selectionCursor.start!);
+      else if (selectionCursor.hasStart) {
+        startSpot = gameEngine.play.matrix.getSpot(selectionCursor.start!);
       }
     }
 
 
-      // show trace of opponent move
-    if (startSpot == null && gameEngine.play.opponentCursor.hasEnd && where != null) {
-      startSpot ??= gameEngine.play.matrix.getSpot(gameEngine.play.opponentCursor.end!);
-      possibleTarget |= gameEngine.play.opponentCursor.end! == where;
-      if (gameEngine.play.opponentCursor.hasStart) {
-        if (gameEngine.play.opponentCursor.isHorizontalMove()) {
-          possibleTarget |= gameEngine.play.opponentCursor.end!.y == where.y &&
-              (gameEngine.play.opponentCursor.start!.x <= where.x  && gameEngine.play.opponentCursor.end!.x >= where.x ||
-                  gameEngine.play.opponentCursor.end!.x <= where.x  && gameEngine.play.opponentCursor.start!.x >= where.x);
-        }
-        else if (gameEngine.play.opponentCursor.isVerticalMove()) {
-          possibleTarget |= gameEngine.play.opponentCursor.end!.x == where.x &&
-              (gameEngine.play.opponentCursor.start!.y <= where.y  && gameEngine.play.opponentCursor.end!.y >= where.y ||
-                  gameEngine.play.opponentCursor.end!.y <= where.y  && gameEngine.play.opponentCursor.start!.y >= where.y);
-        }
-      }
+    // show trace of opponent move
+    var opponentCursor = gameEngine.play.opponentCursor;
+    if (startSpot == null && opponentCursor.hasEnd && where != null) {
+      startSpot ??= gameEngine.play.matrix.getSpot(opponentCursor.end!);
+      possibleTarget |= opponentCursor.trace.contains(where);
     }
 
     var shadedColor = startSpot?.content?.color.withOpacity(0.2);
@@ -758,10 +739,6 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
     setState(() {
-      if (_lastUndoMoveHighlighted) {
-        gameEngine.play.selectionCursor.clear();
-      }
-      
       if (gameEngine.play.currentRole == Role.Chaos) {
         if (gameEngine.play.matrix.isFree(where)) {
           _handleFreeFieldForChaos(context, where);
@@ -792,7 +769,6 @@ class _HyleXGroundState extends State<HyleXGround> {
         toastInfo(context, "No more stock for current chip");
       }
       gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate));
-      //game.play.matrix.put(coordinate, currentChip, game.play.stock);
       gameEngine.play.selectionCursor.updateEnd(coordinate);
     }
   }
@@ -809,54 +785,54 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
-    final cursor = gameEngine.play.selectionCursor;
-    if (!cursor.hasStart) {
+    final selectionCursor = gameEngine.play.selectionCursor;
+    if (!selectionCursor.hasStart) {
       toastInfo(context, "Please select a chip to move first");
     }
-    else if (/*!cursor.hasEnd && */cursor.start == coordinate) {
+    else if (/*!cursor.hasEnd && */selectionCursor.start == coordinate) {
       // clear start cursor if not target is selected
       gameEngine.play.undoStaleMove();
-      cursor.clear();
+      selectionCursor.clear();
     }
-    else if (!cursor.trace.contains(coordinate) && cursor.start != coordinate) {
+    else if (!selectionCursor.trace.contains(coordinate) && selectionCursor.start != coordinate) {
       toastInfo(context, "Chip can only move horizontally or vertically in free space");
     }
-    else if (cursor.hasStart) {
-      if (cursor.hasEnd) {
-        final from = gameEngine.play.matrix.getSpot(cursor.end!);
+    else if (selectionCursor.hasStart) {
+      if (selectionCursor.hasEnd) {
+        final from = gameEngine.play.matrix.getSpot(selectionCursor.end!);
         // this is a correction move, so undo last move and apply again below
         gameEngine.play.undoStaleMove();
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate));
       }
       else {
-        final from = gameEngine.play.matrix.getSpot(cursor.start!);
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, cursor.start!, coordinate));
+        final from = gameEngine.play.matrix.getSpot(selectionCursor.start!);
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate));
       }
 
-      if (cursor.start == coordinate) {
+      if (selectionCursor.start == coordinate) {
         // move back to start is like a reset
-        cursor.clear();
+        selectionCursor.clear();
       }
       else {
-        cursor.updateEnd(coordinate);
+        selectionCursor.updateEnd(coordinate);
       }
 
     }
   }
 
   void _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
-    final cursor = gameEngine.play.selectionCursor;
-    if (cursor.start != null && cursor.start != coordinate && cursor.end != null) {
+    final selectionCursor = gameEngine.play.selectionCursor;
+    if (selectionCursor.start != null && selectionCursor.start != coordinate && selectionCursor.end != null) {
       toastInfo(context,
           "You can not move the selected chip on another one");
 
     }
-    else if (cursor.start == coordinate) {
-      cursor.clear();
+    else if (selectionCursor.start == coordinate) {
+      selectionCursor.clear();
     }
     else {
-      cursor.updateStart(coordinate);
-      cursor.detectTraceForOrderMove(coordinate, gameEngine.play.matrix);
+      selectionCursor.updateStart(coordinate);
+      selectionCursor.detectTraceForPossibleOrderMoves(coordinate, gameEngine.play.matrix);
     }
   }
 

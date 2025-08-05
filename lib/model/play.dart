@@ -413,7 +413,12 @@ class Play {
     if (_staleMove != null) {
       debugPrint("add move to journal: $_staleMove");
       _journal.add(_staleMove!);
+
+      selectionCursor.clear();
+      opponentCursor.adaptFromMove(_staleMove!);
+      opponentCursor.markTraceForDoneMove();
     }
+
     _staleMove = null;
   }
 
@@ -467,7 +472,6 @@ class Play {
       incRound();
     }
 
-    _selectionCursor.clear();
   }
 
   Move? previousRound() {
@@ -499,11 +503,14 @@ class Play {
 
   bool get isFullAutomaticPlay => _chaosPlayer == PlayerType.LocalAi && _orderPlayer == PlayerType.LocalAi;
 
+  bool get isWithAiPlay => _chaosPlayer == PlayerType.LocalAi || _orderPlayer == PlayerType.LocalAi;
+
   Role finishGame() {
 
     _currentRole = _stats.getWinner();
     _currentChip = null;
     _selectionCursor.clear();
+    _opponentCursor.clear();
 
     return _currentRole;
   }
@@ -621,6 +628,27 @@ class Play {
 
   String getReadablePlayId() {
     return toReadableId(header.playId);
+  }
+
+  /**
+   * Returns the last undo-ed move. If null, the beginning has reached and a game restart is required, e.g. to start AI thinking
+   */
+  Move? undoLastMove() {
+    var lastMove = previousRound();
+    if (currentPlayer == PlayerType.LocalAi) {
+      // undo AI move also
+      lastMove = previousRound();
+    }
+
+    if (lastMove != null) {
+      selectionCursor.adaptFromMove(lastMove);
+      final moveBefore = lastMoveFromJournal;
+      if (moveBefore != null) {
+        opponentCursor.adaptFromMove(moveBefore);
+        opponentCursor.markTraceForDoneMove();
+      }
+    }
+    return lastMove;
   }
 
 

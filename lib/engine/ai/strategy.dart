@@ -368,12 +368,12 @@ class MinimaxStrategy extends Strategy {
 
 
   Iterable<Move> _getPossibleMovesFor(Matrix matrix, Spot from) {
-    return matrix.detectTraceForOrderMove(from.where)
+    return matrix.detectTraceForPossibleOrderMoves(from.where)
         .map((to) => Move.moved(from.content!, from.where, to.where));
   }
 
   Iterable<Move> _getPossibleMovesForLandingOnAxisOf(Matrix matrix, Spot from, Coordinate lastWhere) {
-    return matrix.detectTraceForOrderMove(from.where)
+    return matrix.detectTraceForPossibleOrderMoves(from.where)
         .where((to) => to.where.x == lastWhere.x ||to.where.y == lastWhere.y)
         .map((to) => Move.moved(from.content!, from.where, to.where));
   }

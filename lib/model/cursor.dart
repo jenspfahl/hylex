@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'coordinate.dart';
 import 'matrix.dart';
@@ -61,7 +62,7 @@ class Cursor {
   clear() {
     _start = null;
     _end = null;
-    clearTrace();
+    _clearTrace();
   }
 
 
@@ -70,14 +71,39 @@ class Cursor {
     return 'Cursor{start: $_start, end: $_end, trace: $_trace}';
   }
 
-  void clearTrace() {
+  void _clearTrace() {
     _trace.clear();
   }
 
-  void detectTraceForOrderMove(Coordinate where, Matrix matrix) {
-    clearTrace();
+  void detectTraceForPossibleOrderMoves(Coordinate where, Matrix matrix) {
+    _clearTrace();
 
-    _trace.addAll(matrix.detectTraceForOrderMove(where).map((spot) => spot.where));
+    _trace.addAll(matrix.detectTraceForPossibleOrderMoves(where).map((spot) => spot.where));
+  }
+  
+  void markTraceForDoneMove() {
+
+    _clearTrace();
+
+    if (hasStart && hasEnd) {
+      if (isHorizontalMove()) {
+
+        for (int x = min(start!.x, end!.x); x <= max(start!.x, end!.x); x ++) {
+          _trace.add(new Coordinate(x, start!.y));
+        }
+
+      }
+      else if (isVerticalMove()) {
+
+        for (int y = min(start!.y, end!.y); y <= max(start!.y, end!.y); y ++) {
+          _trace.add(new Coordinate(start!.x, y));
+        }
+
+      }
+    }
+    else if (hasEnd) {
+      _trace.add(new Coordinate(end!.x, end!.y));
+    }
   }
 
   bool isHorizontalMove() => _start != null && _end != null && _start!.y == _end!.y;

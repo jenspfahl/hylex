@@ -15,7 +15,7 @@ String truncate(String text, { required int length, omission = '...' }) {
 
 
 toastInfo(BuildContext context, String message) {
-  _calcMessageDuration(message, false).then((duration) {
+  _calcMessageDuration(message.length, false).then((duration) {
     var messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
@@ -33,7 +33,7 @@ toastInfo(BuildContext context, String message) {
 }
 
 toastError(BuildContext context, String message) {
-  _calcMessageDuration(message, true).then((duration) {
+  _calcMessageDuration(message.length, true).then((duration) {
     var messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
@@ -51,8 +51,8 @@ toastError(BuildContext context, String message) {
   });
 }
 
-Future<Duration> _calcMessageDuration(String message, bool isError) async {
-  return Duration(milliseconds: (message.length * (isError ? 100 : 80)).toInt());
+Future<Duration> _calcMessageDuration(int messageLength, bool isError) async {
+  return Duration(milliseconds: (messageLength * (isError ? 100 : 80)).toInt());
 }
 
 
