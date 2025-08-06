@@ -416,14 +416,25 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   String _buildWinnerText() {
-    final winner = gameEngine.play.stats.getWinner();
+    final winnerRole = gameEngine.play.getWinnerRole();
     final winnerPlayer = gameEngine.play.getWinnerPlayer();
     var winnerPlayerName = winnerPlayer == PlayerType.LocalUser
         ? "You"
         : winnerPlayer == PlayerType.LocalAi
           ? "Computer"
           : "Remote opponent";
-    return "Game over! ${winner.name} (${winnerPlayerName}) wins!";
+    return "Game over! ${winnerRole.name} (${winnerPlayerName}) wins this game!";
+  }
+
+  String _buildLooserText() {
+    final looserRole = gameEngine.play.getLooserRole();
+    final looserPlayer = gameEngine.play.getLooserPlayer();
+    var looserPlayerName = looserPlayer == PlayerType.LocalUser
+        ? "You"
+        : looserPlayer == PlayerType.LocalAi
+          ? "Computer"
+          : "Remote opponent";
+    return "Game over! ${looserRole.name} (${looserPlayerName}) looses this game!";
   }
 
   Row _buildAiProgressText() {
@@ -539,13 +550,27 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _showGameOver(BuildContext context) {
     setState(() {
-      toastError(context, _buildWinnerText());
+      if (gameEngine.play.isBothSidesSinglePlay || gameEngine.play.isFullAutomaticPlay) {
+        toastWonOrLost(context, _buildWinnerText());
+      }
+      else if (gameEngine.play.getWinnerPlayer() == PlayerType.LocalUser) {
+        toastWon(context, _buildWinnerText());
+      }
+      else {
+        toastLost(context, _buildLooserText());
+      }
     });
   }
 
   Widget _buildRoleIndicator(Role role, PlayerType player, bool isLeftElseRight) {
     final isSelected = gameEngine.play.currentRole == role;
-    final color = isSelected ? Colors.white : null;
+    final color = gameEngine.play.isGameOver()
+        ? gameEngine.play.getWinnerRole() == role
+          ? Colors.black
+          : Colors.black
+        : isSelected
+          ? Colors.white
+          : null;
     final icon = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
     var tooltipKey = role == Role.Chaos
         ? _chaosChipTooltip
@@ -603,15 +628,18 @@ class _HyleXGroundState extends State<HyleXGround> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(" ${gameEngine.play.stats.getPoints(role)} - ${role.name}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
+                    Text(" ${gameEngine.play.stats.getPoints(role)} - ${role.name}",
+                        style: TextStyle(
+                            color: color,
+                            fontWeight: isSelected ? FontWeight.bold : null)),
                     const Text(" "),
                     Icon(icon, color: color, size: 16),
                   ],
                 ),
             backgroundColor: gameEngine.play.isGameOver()
                 ? gameEngine.play.getWinnerRole() == role
-                  ? Colors.red
-                  : null
+                  ? Colors.lightGreenAccent
+                  : Colors.redAccent
                 : isSelected
                   ? Colors.black
                   : null

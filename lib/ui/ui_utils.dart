@@ -15,30 +15,28 @@ String truncate(String text, { required int length, omission = '...' }) {
 
 
 toastInfo(BuildContext context, String message) {
-  _calcMessageDuration(message.length, false).then((duration) {
-    var messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-        SnackBar(
-            duration: duration,
-            showCloseIcon: true,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(5),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
-            ),
-            elevation: 10,
-            content: Text(message)));
-  });
+  toast(context, message, null);
 }
 
-toastError(BuildContext context, String message) {
+toastLost(BuildContext context, String message) {
+  toast(context, message, Colors.redAccent);
+}
+
+toastWon(BuildContext context, String message) {
+  toast(context, message, Colors.lightGreenAccent);
+}
+
+toastWonOrLost(BuildContext context, String message) {
+  toast(context, message, Colors.lightBlueAccent);
+}
+
+toast(BuildContext context, String message, Color? backgroundColor) {
   _calcMessageDuration(message.length, true).then((duration) {
     var messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
         SnackBar(
-            backgroundColor: Colors.red,
+            backgroundColor: backgroundColor,
             duration: duration,
             showCloseIcon: true,
             behavior: SnackBarBehavior.floating,

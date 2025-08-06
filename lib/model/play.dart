@@ -328,14 +328,23 @@ class Play {
   PlayerType get orderPlayer => _orderPlayer;
 
   PlayerType getWinnerPlayer() {
-    final winner = _stats.getWinner();
+    final winner = getWinnerRole();
     if (winner == Role.Order) {
       return _orderPlayer;
     }
     return _chaosPlayer;
   }
 
+  PlayerType getLooserPlayer() {
+    final looser = getLooserRole();
+    if (looser == Role.Order) {
+      return _orderPlayer;
+    }
+    return _chaosPlayer;
+  }
+
   Role getWinnerRole() => _stats.getWinner();
+  Role getLooserRole() => _stats.getWinner().opponentRole;
 
   // initialises the play state to get started
   void _init({required bool multiPlay}) {
@@ -509,7 +518,7 @@ class Play {
 
   Role finishGame() {
 
-    _currentRole = _stats.getWinner();
+    _currentRole = getWinnerRole();
     _currentChip = null;
     _selectionCursor.clear();
     _opponentCursor.clear();
@@ -644,6 +653,7 @@ class Play {
 
     if (lastMove != null) {
       selectionCursor.adaptFromMove(lastMove);
+
       final moveBefore = lastMoveFromJournal;
       if (moveBefore != null) {
         opponentCursor.adaptFromMove(moveBefore);
