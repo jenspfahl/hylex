@@ -521,7 +521,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       appendix = "➤ Now it's on Order to move a chip or skip!";
     }
     else {
-      appendix = "➤ Now it's on Chaos to place chip {chip} !";
+      appendix = "➤ Now it's on Chaos to place next chip {chip} !";
     }
     
     return Column(

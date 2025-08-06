@@ -485,7 +485,7 @@ class Play {
 
   }
 
-  Move? previousRound() {
+  Move? previousPlayer() {
     final lastMove = _removeLastMoveFromJournal();
     if (lastMove != null) {
       _undoMove(lastMove);
@@ -645,15 +645,13 @@ class Play {
    * Returns the last undo-ed move. If null, the beginning has reached and a game restart is required, e.g. to start AI thinking
    */
   Move? undoLastMove() {
-    var lastMove = previousRound();
+    var lastMove = previousPlayer();
     if (currentPlayer == PlayerType.LocalAi) {
       // undo AI move also
-      lastMove = previousRound();
+      lastMove = previousPlayer();
     }
 
     if (lastMove != null) {
-      selectionCursor.adaptFromMove(lastMove);
-
       final moveBefore = lastMoveFromJournal;
       if (moveBefore != null) {
         opponentCursor.adaptFromMove(moveBefore);
