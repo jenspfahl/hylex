@@ -29,14 +29,14 @@ class ChannelMessage {
   ChannelMessage(this.channel, this.serializedMessage);
 
   Map<String, dynamic> toJson() => {
-    "channel": channel.index,
+    "channel": channel.name,
     "serializedMessage": serializedMessage.toString()
   };
 
   ChannelMessage.fromJson(Map<String, dynamic> map) {
     channel = Channel.values.firstWhere((p) => p.name == map['channel']);
     final message = map['serializedMessage'];
-    serializedMessage = SerializedMessage.fromUrl(message)!;
+    serializedMessage = SerializedMessage.fromString(message)!;
   }
 }
 
@@ -290,6 +290,10 @@ class SerializedMessage {
   String signature;
 
   SerializedMessage(this.payload, this.signature);
+
+  static SerializedMessage? fromString(String uri) {
+    return fromUrl(Uri.parse(uri));
+  }
 
   static SerializedMessage? fromUrl(Uri uri) {
     if (uri.pathSegments.length == 2) {

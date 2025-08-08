@@ -197,9 +197,11 @@ class PlayHeader {
     }
 
     final List<dynamic> messageHistory = map['messageHistory']!;
-    commContext.messageHistory.addAll(messageHistory.map((value) {
-      return ChannelMessage.fromJson(value);
-    }));
+    if (messageHistory.isNotEmpty) {
+      commContext.messageHistory.addAll(messageHistory.map((value) {
+        return ChannelMessage.fromJson(value);
+      }));
+    }
 
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
@@ -224,6 +226,7 @@ class PlayHeader {
   };
 
   int get dimension => playSize.toDimension();
+  int get maxRounds => playSize.toDimension() * playSize.toDimension();
 
   String getReadablePlayId() {
     return toReadableId(playId);

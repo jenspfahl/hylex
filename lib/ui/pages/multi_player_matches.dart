@@ -57,8 +57,12 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 );
 
               }
+              else if (snapshot.hasError) {
+                print("loading error: ${snapshot.error}");
+                return Center(child: Text("Cannot load stored matches!"));
+              }
               else {
-                return Center(child: Text("No matches stored!"));
+                return Center(child: Text("No stored matches!"));
               }
             })
     );
@@ -76,28 +80,41 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: playHeader.state.toColor(),
-                    maxRadius: 6,
+              Container(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    buildAlertDialog('Here you will see soon details about this match', type: NotifyType.error);
+                  },
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: playHeader.state.toColor(),
+                            maxRadius: 6,
+                          ),
+                          Text(
+                              " " + _getHeaderTitleLine(playHeader),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
+                        ],
+                      ),
+                      Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                    ],
                   ),
-                  Text(
-                      " " + _getHeaderTitleLine(playHeader),
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                ],
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
-                ],
-              ),
+
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                   Divider(),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -105,9 +122,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       alignment: MainAxisAlignment.end,
                       overflowAlignment: OverflowBarAlignment.end,
                       children: [
-                          IconButton(onPressed: (){
-                            MessageService().sendCurrentPlayState(playHeader, widget.user, null);
-                            }, icon: Icon(Icons.send)),
+
                           Visibility(
                             visible: playHeader.state == PlayState.WaitForOpponent || playHeader.state == PlayState.ReadyToMove,
                             child: IconButton(onPressed: (){
@@ -115,6 +130,13 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                                   context, playHeader);
                             }, icon: Icon(Icons.not_started_outlined)),
                           ),
+                          IconButton(onPressed: (){
+                            MessageService().sendCurrentPlayState(playHeader, widget.user, null);
+                          }, icon: Icon(Icons.send)),
+                          IconButton(onPressed: (){
+                            //TODO send as QR code
+                            buildAlertDialog('Showing next move as QR code not yet implemented!', type: NotifyType.error);
+                          }, icon: Icon(Icons.qr_code_2)),
                           IconButton(onPressed: (){
                             ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}? You wont be able to continue this match afterwards.", () {
                               setState(() {
@@ -147,7 +169,11 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     if (actorRole != null) {
       roleString = "as ${actorRole.name}";
     }
-    return "${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString, Round ${playHeader.currentRound} of ${playHeader.dimension * playHeader.dimension}";
+    final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString");
+    if (playHeader.currentRound > 0) {
+      sb.write(", Round ${playHeader.currentRound} of ${playHeader.maxRounds}");
+    }
+    return sb.toString();
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {

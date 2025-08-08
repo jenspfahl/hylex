@@ -223,7 +223,16 @@ class _HyleXGroundState extends State<HyleXGround> {
                       ),
                     ),
                     Visibility(
-                      visible: gameEngine.play.isMultiplayerPlay,
+                      visible: gameEngine.play.isMultiplayerPlay && gameEngine.play.waitForOpponent,
+                      child: IconButton(
+                        icon: const Icon(Icons.qr_code_scanner),
+                        onPressed: () {
+                          buildAlertDialog('Scanning next move from QR code not yet implemented!', type: NotifyType.error);
+                        },
+                      ),
+                    ),
+                    Visibility(
+                      visible: gameEngine.play.isMultiplayerPlay && !gameEngine.play.waitForOpponent,
                       child: IconButton(
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
                         onPressed: () => {
@@ -396,7 +405,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       && !gameEngine.play.isGameOver()
       && !gameEngine.play.isFullAutomaticPlay
       && !gameEngine.play.isMultiplayerPlay
-      && !gameEngine.play.isJournalEmpty;
+      && (!gameEngine.play.isJournalEmpty || gameEngine.play.hasStaleMove);
 
 
   Widget _buildHint(BuildContext context) {
