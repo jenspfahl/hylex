@@ -85,7 +85,8 @@ class MessageService {
   }
 
 
-  void sendRemoteOpponentInvitation(PlayHeader header, User user, Function()? sentHandler) {
+  SerializedMessage sendRemoteOpponentInvitation(PlayHeader header, User user, Function()? sentHandler,
+  {bool share = true}) {
     final inviteMessage = InviteMessage(
         header.playId,
         header.playSize,
@@ -95,8 +96,12 @@ class MessageService {
         user.name);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
-    sendMessage('I (${user.name}) want to invite you to a HyleX match.',
-        serializedMessage, sentHandler);
+    if (share) {
+      sendMessage('I (${user.name}) want to invite you to a HyleX match.',
+          serializedMessage, sentHandler);
+    }
+
+    return serializedMessage;
   }
 
   void sendInvitationAccepted(PlayHeader header, User user, Move? initialMove, Function()? sentHandler) {

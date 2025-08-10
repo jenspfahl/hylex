@@ -8,8 +8,8 @@ class User {
   String name = "";
   late Achievements achievements;
 
-  User() {
-    id = generateRandomString(userIdLength);
+  User([String? id]) {
+    this.id = id ?? generateRandomString(userIdLength);
     achievements = Achievements();
   }
 

@@ -138,7 +138,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             buildAlertDialog('Showing next move as QR code not yet implemented!', type: NotifyType.error);
                           }, icon: Icon(Icons.qr_code_2)),
                           IconButton(onPressed: (){
-                            ask("Are you sure to delete the match ${playHeader.getReadablePlayId()}? You wont be able to continue this match afterwards.", () {
+                            ask("Are you sure to remove this match ${playHeader.getReadablePlayId()}? You wont be able to continue this match once removed.", () {
                               setState(() {
                                 StorageService().deletePlayHeaderAndPlay(playHeader.playId);
                               });

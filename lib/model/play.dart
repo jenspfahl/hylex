@@ -153,11 +153,11 @@ class PlayHeader {
   PlayHeader.multiPlayInvitor(
       this.playSize, 
       this.playMode, 
-      this.playOpener, 
-      this.state) {
+      this.playOpener) {
     playId = generateRandomString(playIdLength);
     actor = Actor.Invitor;
-  }  
+    state = PlayState.RemoteOpponentInvited;
+  }
   
   PlayHeader.multiPlayInvitee(
       InviteMessage inviteMessage,

@@ -204,7 +204,7 @@ class MultiPlayerGameEngine extends GameEngine {
 
   void _doPlayerMove() {
 
-    if (play.currentPlayer == PlayerType.RemoteUser) {
+    if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
       play.waitForOpponent = true;
       savePlayState();
       shareGameMove();

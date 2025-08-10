@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/ui/pages/remote_test_widget.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -425,10 +426,12 @@ class _StartPageState extends State<StartPage>
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2)
+                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2,
+                          longClickHandler: _showMultiPlayTestDialog
+                       )
                     : _menuMode == MenuMode.More
                     ? _buildCell("Achievements", 1, icon: Icons.leaderboard,
-                    clickHandler: () => _buildAchievementDialog())
+                    clickHandler: () => _showAchievementDialog())
                     : _buildEmptyCell(),
 
                 _buildCell("More", 1,
@@ -494,11 +497,12 @@ class _StartPageState extends State<StartPage>
   }
 
   Widget _buildCell(String label, int colorIdx,
-      {Function()? clickHandler, IconData? icon, bool isMain = false}) {
+      {Function()? clickHandler, Function()? longClickHandler, IconData? icon, bool isMain = false}) {
     return GestureDetector(
       onTap: clickHandler ?? () {
         buildAlertDialog('Not yet implemented!', type: NotifyType.error);
       },
+      onLongPress: longClickHandler,
       child: _buildChip(label, 80, isMain ? 15 : 13, 5, colorIdx, icon),
     );
   }
@@ -623,7 +627,7 @@ class _StartPageState extends State<StartPage>
   _inviteOpponent(BuildContext context, PlaySize playSize,
       PlayMode playMode, PlayOpener playOpener) {
 
-    final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener, PlayState.RemoteOpponentInvited);
+    final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
     MessageService().sendRemoteOpponentInvitation(header, _user,
             () => StorageService().savePlayHeader(header));
@@ -687,7 +691,7 @@ class _StartPageState extends State<StartPage>
     ]);
   }
 
-  _buildAchievementDialog() {
+  _showAchievementDialog() {
     SmartDialog.show(builder: (_) {
       final greyed = _user.achievements.getOverallGameCount() == 0;
       List<Widget> children = [
@@ -732,7 +736,7 @@ class _StartPageState extends State<StartPage>
                     _user.achievements.clearAll();
                     StorageService().saveUser(_user);
                     SmartDialog.dismiss();
-                    _buildAchievementDialog();
+                    _showAchievementDialog();
                   });
 
                 },
@@ -905,5 +909,16 @@ class _StartPageState extends State<StartPage>
     );
   }
 
+  _showMultiPlayTestDialog() {
+    SmartDialog.show(
+        builder: (_) {
+
+      return RemoteTestWidget(
+        messageHandler: (message) => _handleMessage(message),
+      );
+    });
+  }
+
 
 }
+
