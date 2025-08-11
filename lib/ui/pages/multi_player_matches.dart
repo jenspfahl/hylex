@@ -5,6 +5,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 
 import '../../model/play.dart';
 import '../../model/user.dart';
@@ -35,7 +36,16 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Continue a match')),
+        appBar: AppBar(
+          title: Text('Continue a match'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.qr_code_scanner),
+              onPressed: () {
+                buildAlertDialog('Scanning next move from QR code not yet implemented!', type: NotifyType.error);
+              }),
+          ],
+        ),
         body: FutureBuilder<List<PlayHeader>>(
             future: StorageService().loadAllPlayHeaders(),
             builder: (BuildContext context,
@@ -132,11 +142,10 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           ),
                           IconButton(onPressed: (){
                             MessageService().sendCurrentPlayState(playHeader, widget.user, null);
-                          }, icon: Icon(Icons.send)),
-                          IconButton(onPressed: (){
-                            //TODO send as QR code
-                            buildAlertDialog('Showing next move as QR code not yet implemented!', type: NotifyType.error);
-                          }, icon: Icon(Icons.qr_code_2)),
+                          }, icon: GestureDetector(
+                              child: Icon(Icons.near_me),
+                              onLongPress: () => _showMultiPlayTestDialog(playHeader),
+                          )),
                           IconButton(onPressed: (){
                             ask("Are you sure to remove this match ${playHeader.getReadablePlayId()}? You wont be able to continue this match once removed.", () {
                               setState(() {
@@ -185,6 +194,18 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               widget.user,
               play ?? Play.newMultiPlay(header));
         }));
+  }
+
+  _showMultiPlayTestDialog(PlayHeader playHeader) {
+    if (!playHeader.state.isFinal) {
+      SmartDialog.show(
+          builder: (_) {
+            return RemoteTestWidget(
+              playHeader: playHeader,
+              messageHandler: (message) => /*TODO _handleMessage(message)*/null,
+            );
+          });
+    }
   }
 
 }

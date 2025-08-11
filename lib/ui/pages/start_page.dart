@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
-import 'package:hyle_x/ui/pages/remote_test_widget.dart';
+import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -426,7 +426,7 @@ class _StartPageState extends State<StartPage>
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_2,
+                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_scanner,
                           longClickHandler: _showMultiPlayTestDialog
                        )
                     : _menuMode == MenuMode.More

@@ -85,8 +85,11 @@ class MessageService {
   }
 
 
-  SerializedMessage sendRemoteOpponentInvitation(PlayHeader header, User user, Function()? sentHandler,
-  {bool share = true}) {
+  SerializedMessage sendRemoteOpponentInvitation(
+      PlayHeader header,
+      User user,
+      Function()? sentHandler,
+      {bool share = true}) {
     final inviteMessage = InviteMessage(
         header.playId,
         header.playSize,
@@ -96,15 +99,16 @@ class MessageService {
         user.name);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
-    if (share) {
-      sendMessage('I (${user.name}) want to invite you to a HyleX match.',
-          serializedMessage, sentHandler);
-    }
-
-    return serializedMessage;
+    return _shareMessage('I (${user.name}) want to invite you to a HyleX match.',
+          serializedMessage, sentHandler, share);
   }
 
-  void sendInvitationAccepted(PlayHeader header, User user, Move? initialMove, Function()? sentHandler) {
+  SerializedMessage sendInvitationAccepted(
+      PlayHeader header,
+      User user,
+      Move? initialMove,
+      Function()? sentHandler,
+      {bool share = true}) {
     final playOpener = header.playOpener;
     if (playOpener == null  || playOpener == PlayOpener.InvitedPlayerChooses) {
       throw Exception("No playOpener decision");
@@ -121,32 +125,47 @@ class MessageService {
     var localUserRole = header.actor.getActorRoleFor(playOpener);
     var remoteUserRole = localUserRole?.opponentRole;
 
-    sendMessage("I am accepting your match request. I am ${localUserRole?.name}, you are ${remoteUserRole?.name}.",
-        serializedMessage, sentHandler);
+    return _shareMessage("I am accepting your match request. I am ${localUserRole?.name}, you are ${remoteUserRole?.name}.",
+        serializedMessage, sentHandler, share);
   }
-  
-  void sendInvitationRejected(PlayHeader header, User user, Function()? sentHandler) {
+
+  SerializedMessage sendInvitationRejected(
+      PlayHeader header,
+      User user,
+      Function()? sentHandler,
+      {bool share = true}) {
     final rejectMessage = RejectInviteMessage(
         header.playId,
         user.id);
     final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
 
-    sendMessage('I want to kindly reject your match request.',
-        serializedMessage, sentHandler);
+    return _shareMessage('I want to kindly reject your match request.',
+        serializedMessage, sentHandler, share);
   }
 
-  void sendMove(PlayHeader header, User user, Move move, Function()? sentHandler) {
+  SerializedMessage sendMove(
+      PlayHeader header,
+      User user,
+      Move move,
+      Function()? sentHandler,
+      {bool share = true}) {
     final moveMessage = MoveMessage(header.playId, header.currentRound, move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext);
 
-    sendMessage("This is my next move for round ${header.currentRound}", serializedMessage, sentHandler);
+    return _shareMessage("This is my next move for round ${header.currentRound}",
+        serializedMessage, sentHandler, share);
   }
 
-  void sendResignation(PlayHeader header, User user, Function()? sentHandler) {
+  SerializedMessage sendResignation(
+      PlayHeader header,
+      User user,
+      Function()? sentHandler,
+      {bool share = true}) {
     final resignationMessage = ResignMessage(header.playId, header.currentRound);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext);
 
-    sendMessage("Uff, I am giving up in round ${header.currentRound}.", serializedMessage, sentHandler);
+    return _shareMessage("Uff, I am giving up in round ${header.currentRound}.",
+        serializedMessage, sentHandler, share);
   }
 
   void sendMessage(String text, SerializedMessage message, Function()? sentHandler) {
@@ -159,6 +178,22 @@ class MessageService {
       if (sentHandler != null) sentHandler();
     });
   }
-  
+
+  SerializedMessage _shareMessage(
+      String text,
+      SerializedMessage serializedMessage,
+      Function()? sentHandler,
+      bool share
+      ) {
+
+    if (share) {
+      sendMessage(text, serializedMessage, sentHandler);
+    }
+
+    return serializedMessage;
+  }
+
 }
+
+
 
