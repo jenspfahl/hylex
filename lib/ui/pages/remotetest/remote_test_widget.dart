@@ -41,9 +41,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
 
     List<Widget> children = [
+      const Text(""),
       const Text(
         "Simulate remote player invitation",
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
       ),
       const Divider(),
       _buildChoseParam("PlaySize", () => playSize, (x) => playSize = x, PlaySize.values),
@@ -101,7 +102,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     );
   }
 
-  Row _buildChoseParam<T>(String paramName, T Function() getValue, Function(T) setValue, List<T> values) {
+  Row _buildChoseParam<T extends Enum>(String paramName, T Function() getValue, Function(T) setValue, List<T> values) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -110,6 +111,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         ),
         DropdownButton<T>(
           value: getValue(),
+          dropdownColor: Colors.black,
           onChanged: (T? newValue) {
             setState(() {
               if (newValue != null) {
@@ -117,10 +119,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
               }
             });
           },
-          items: values.map((T classType) {
+          items: values.where((e) => !e.name.startsWith("unused")).map((T classType) {
             return DropdownMenuItem<T>(
                 value: classType,
-                child: Text(classType.toString(),
+                child: Text(classType.name,
                   style: TextStyle(
                       color: getValue() == classType ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
