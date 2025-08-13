@@ -60,15 +60,12 @@ class MessageService {
         });
         break;
       }
+      case PlayState.ReadyToMove:
       case PlayState.InvitationPending:
+      case PlayState.RemoteOpponentAccepted:
       case PlayState.Initialised: {
         debugPrint("nothing to send for ${playHeader.state}, take action instead!");
       }
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case PlayState.ReadyToMove:
-        // TODO: Handle this case.
-        throw UnimplementedError();
       case PlayState.Lost:
         // TODO: Handle this case.
         throw UnimplementedError();
