@@ -33,14 +33,16 @@ enum MenuMode {
 }
 
 
+GlobalKey<StartPageState> globalMessageKey = GlobalKey();
+
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
 
   @override
-  State<StartPage> createState() => _StartPageState();
+  State<StartPage> createState() => StartPageState();
 }
 
-class _StartPageState extends State<StartPage>
+class StartPageState extends State<StartPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -76,15 +78,19 @@ class _StartPageState extends State<StartPage>
         }));
 
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
-      final serializedMessage = SerializedMessage.fromUrl(uri);
-      if (serializedMessage != null) {
-        _handleMessage(serializedMessage);
-      }
-      else {
-        debugPrint("invalid uri: $uri");
-        buildAlertDialog("I cannot interpret this uri : $uri");
-      }
+      handleReceivedMessage(uri);
     });
+  }
+
+  void handleReceivedMessage(Uri uri) {
+    final serializedMessage = SerializedMessage.fromUrl(uri);
+    if (serializedMessage != null) {
+      _handleMessage(serializedMessage);
+    }
+    else {
+      debugPrint("invalid uri: $uri");
+      buildAlertDialog("I cannot interpret this uri : $uri");
+    }
   }
 
   Future<void> _handleMessage(SerializedMessage serializedMessage) async {

@@ -6,6 +6,7 @@ import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
+import 'package:hyle_x/ui/pages/start_page.dart';
 
 import '../../model/play.dart';
 import '../../model/user.dart';
@@ -202,7 +203,9 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           builder: (_) {
             return RemoteTestWidget(
               playHeader: playHeader,
-              messageHandler: (message) => /*TODO _handleMessage(message)*/null,
+              messageHandler: (message) {
+                globalMessageKey.currentState?.handleReceivedMessage(message.toUri());
+              },
             );
           });
     }

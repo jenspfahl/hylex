@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
+import 'package:hyle_x/service/StorageService.dart';
 
 import '../../../model/common.dart';
 import '../../../model/messaging.dart';
@@ -27,40 +29,67 @@ class RemoteTestWidget extends StatefulWidget {
 }
 
 class _RemoteTestWidgetState extends State<RemoteTestWidget> {
-  late Operation operation;
+  Operation operation = Operation.SendInvite;
   List<Operation> allowedOperations = [Operation.SendInvite];
+
   late PlaySize playSize;
   late PlayMode playMode;
   late PlayOpener playOpener;
   late User remoteUser;
+  
+  Play? localPlay;
+  PlayHeader? remoteHeader;
+  
+  Role? role;
   Coordinate? from;
   Coordinate? to;
+  GameChip? chip;
   bool skip = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.playHeader != null) {
-      final playState = widget.playHeader!.state;
+
+    remoteUser = User("RemoteTestUser");
+    remoteUser.name = "Remote Test User";
+
+    playOpener = PlayOpener.InvitedPlayerChooses;
+    playSize = PlaySize.Size5x5;
+    playMode = PlayMode.HyleX;
+    
+    final localPlayHeader = widget.playHeader;
+    if (localPlayHeader != null) {
+      
+      final playState = localPlayHeader.state;
       if (playState == PlayState.InvitationPending) {
         allowedOperations = [Operation.AcceptInvite, Operation.RejectInvite];
+        operation = allowedOperations.first;
       }
       else if (playState.isFinal) {
         throw Exception("Unsupported play state");
       }
       else {
         allowedOperations = [Operation.Move, Operation.Resign];
+        operation = allowedOperations.first;
+
+        role = localPlayHeader.actor.getActorRoleFor(playOpener)?.opponentRole ?? Role.Chaos;
+        StorageService().loadPlayFromHeader(localPlayHeader)
+            .then((localPlay) {
+              setState(() {
+                if (localPlay != null) {
+                  this.localPlay = localPlay;
+                  chip = localPlay.currentChip;
+                }
+              });
+        });
+
+        remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
+
       }
     }
-    operation = allowedOperations.first;
-    playSize = widget.playHeader?.playSize ?? PlaySize.Size5x5;
-    playMode = widget.playHeader?.playMode ?? PlayMode.HyleX;
-    playOpener = widget.playHeader?.playOpener ?? PlayOpener.InvitedPlayerChooses;
-
-    remoteUser = User(widget.playHeader?.opponentId ?? "RemoteTestUser");
-    remoteUser.name = widget.playHeader?.opponentName ?? "Remote Test User";
 
   }
+  
   @override
   Widget build(BuildContext context) {
 
@@ -181,7 +210,6 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
 
   Widget _buildAcceptInviteParams() {
-    final opponentRole = widget.playHeader!.actor.getActorRoleFor(playOpener)!.opponentRole;
     return Column(
       children: [
         _buildChoseParam("PlayOpener", () => playOpener, (x) => playOpener = x, [PlayOpener.Invitee, PlayOpener.Invitor]),
@@ -194,20 +222,28 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     return const Text("");
   }
   Widget _buildMoveParams() {
-    final opponentRole = widget.playHeader!.actor.getActorRoleFor(playOpener)!.opponentRole;
-    if (opponentRole == Role.Chaos) {
+   final roleChooser = _buildChoseParam("Role", () => role??Role.Chaos, (x) => role = x, Role.values);
+
+    if (role == Role.Chaos) {
       return Column(
         children: [
-          _buildCoordinate("Coordinate to place", opponentRole, () => to, (x) => to = x, null),
+          roleChooser,
+          _buildChips("Chip to place", () => chip, (x) => chip = x, null),
+          _buildCoordinate("Coordinate to place", Role.Chaos, () => to, (x) => to = x, null),
         ],
       );
     }
     else {
       return Column(
         children: [
-          _buildCoordinate("Coordinate to move from", opponentRole, () => from, (x) => from = x, null),
-          _buildCoordinate("Coordinate to move to", opponentRole, () => to, (x) => to = x, null),
-          _buildBoolParam("Skip", () => skip, (x) => skip = x)
+          roleChooser,
+          _buildBoolParam("Skip", () => skip, (b) => skip = b),
+          if (!skip)
+            _buildChips("Chip to move", () => chip, (x) => chip = x, null),
+          if (!skip)
+            _buildCoordinate("Coordinate to move from", Role.Order, () => from, (x) => from = x, null),
+          if (!skip)
+            _buildCoordinate("Coordinate to move to", Role.Order, () => to, (x) => to = x, null),
         ],
       );
     }
@@ -259,7 +295,9 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         ),
         Checkbox(value: getValue(), onChanged: (newValue) {
           if (newValue != null) {
-            setValue(newValue);
+            setState(() {
+              setValue(newValue);
+            });
           }
         })
       ],
@@ -275,11 +313,13 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 14),
         ),
         DropdownButton<Coordinate>(
-          value: coordinates.first,
+          value: getValue() ?? coordinates.first,
           dropdownColor: Colors.black,
           onChanged: (newValue) {
             setState(() {
-
+              if (newValue != null) {
+                setValue(newValue);
+              }
             });
           },
           items: coordinates.map((coordinate) {
@@ -298,9 +338,53 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     );
   }
 
+
+
+  Widget _buildChips(String paramName, GameChip? Function() getValue, Function(GameChip) setValue, List<GameChip>? allowedChips) {
+    if (allowedChips == null) {
+      allowedChips = [];
+      final chipCount = widget.playHeader?.dimension ?? 0;
+      for (int i=0; i < chipCount; i++) {
+        allowedChips.add(new GameChip(i));
+      }
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text("$paramName:",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 14),
+        ),
+        DropdownButton<GameChip>(
+          value: getValue() ?? allowedChips.first,
+          dropdownColor: Colors.black,
+          onChanged: (newValue) {
+            setState(() {
+              if (newValue != null) {
+                setValue(newValue);
+              }
+            });
+          },
+          items: allowedChips.map((chip) {
+            return DropdownMenuItem<GameChip>(
+                value: chip,
+                child: Text(chip.getChipName(),
+                  style: TextStyle(
+                      color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
+                      backgroundColor: Colors.black,
+                      fontWeight: FontWeight.bold, fontSize: 14),
+                )
+            );
+          }).toList(),
+        )
+      ],
+    );
+  }
+
+  
   void _sendMessage({required bool share}) {
-    final remoteHeader = widget.playHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
-    SerializedMessage message = _createMessage(remoteHeader, share);
+    final finalRemoteHeader = remoteHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
+    
+    SerializedMessage message = _createMessage(finalRemoteHeader, share);
     if (!share && widget.messageHandler != null) {
       widget.messageHandler!(message);
     }
@@ -324,7 +408,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   Move _createMove() {
-    return Move(skipped: skip, from: from, to: to);
+    return Move(skipped: skip, from: from, to: to, chip: chip);
   }
 
   List<Coordinate> _createAllCoordinates(int dimension) {
@@ -337,6 +421,25 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     
     return coordinates;
     
+  }
+
+  PlayHeader? createRemoteFromLocalHistory(PlayHeader localPlayHeader) {
+
+    final playHeader = PlayHeader.internal(
+        localPlayHeader.playId,
+        playSize,
+        playMode,
+        PlayState.Initialised, //TODO
+        localPlayHeader.currentRound,
+        localPlayHeader.actor.opponentActor(),
+        playOpener,
+        remoteUser.id,
+        remoteUser.name);
+
+    final lastLocalMessage = localPlayHeader.commContext.messageHistory.lastOrNull?.serializedMessage;
+    playHeader.commContext.predecessorMessage = lastLocalMessage;
+
+    return playHeader;
   }
 
 }

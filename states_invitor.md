@@ -1,4 +1,5 @@
 stateDiagram-v2
+
     [*] --> Initialised
     Initialised --> RemoteOpponentInvited: SendInvite->
     RemoteOpponentInvited --> RemoteOpponentAccepted: ->AcceptInvite

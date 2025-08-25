@@ -24,6 +24,8 @@ enum Actor {
   // Who gets invited
   Invitee;
 
+  Actor opponentActor() => this == Invitor ? Invitee : this == Invitee ? Invitor : Single;
+
   Role? getActorRoleFor(PlayOpener? playOpener) {
     if (this == Actor.Invitor && playOpener == PlayOpener.Invitor) {
       return Role.Chaos;

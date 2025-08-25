@@ -180,6 +180,18 @@ class PlayHeader {
     opponentName = inviteMessage.invitingUserName;
   }
 
+  PlayHeader.internal(
+      this.playId,
+      this.playSize,
+      this.playMode,
+      this.state,
+      this.currentRound,
+      this.actor,
+      this.playOpener,
+      this.opponentId,
+      this.opponentName
+      );
+
   PlayHeader.fromJson(Map<String, dynamic> map) {
 
     playId = map['playId'];

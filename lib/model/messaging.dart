@@ -365,6 +365,8 @@ class SerializedMessage {
 
   @override
   int get hashCode => payload.hashCode ^ signature.hashCode;
+
+  Uri toUri() => Uri.parse(toUrl());
 }
 
 
