@@ -174,10 +174,10 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   String _getHeaderBodyLine(PlayHeader playHeader) {
-    final actorRole = playHeader.actor.getActorRoleFor(playHeader.playOpener);
+    final localRole = playHeader.getLocalRole();
     var roleString = "";
-    if (actorRole != null) {
-      roleString = "as ${actorRole.name}";
+    if (localRole != null) {
+      roleString = "as ${localRole.name}";
     }
     final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString");
     if (playHeader.currentRound > 0) {

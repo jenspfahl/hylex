@@ -249,6 +249,10 @@ class PlayHeader {
     return toReadableId(playId);
   }
 
+  Role? getLocalRole() {
+    return actor.getActorRoleFor(playOpener)?.opponentRole;
+  }
+
   @override
   String toString() {
     return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
@@ -428,7 +432,10 @@ class Play {
 
 
   applyStaleMove(Move move) {
+    //TODO first check move is valid (against the rules)
     if (move.isMove()) {
+      // set moved chip
+      move.chip = _matrix.getChip(move.from!);
       _matrix.move(move.from!, move.to!);
     }
     else if (!move.skipped) {

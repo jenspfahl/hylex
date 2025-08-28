@@ -449,7 +449,7 @@ void testMessaging() {
    final firstInvitingPlayerMoveMessage = MoveMessage(
        playId,
        1,
-       Move.moved(GameChip(1), Coordinate(3, 5), Coordinate(0, 5)),
+       Move.movedForMessaging(Coordinate(3, 5), Coordinate(0, 5)),
    );
 
    final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithContext(invitingContext));
@@ -518,12 +518,26 @@ String _normalize(String string, int maxLength) {
       : string.substring(0, maxLength);
 }
 
+// only positive values
 void writeInt(BitBufferWriter writer, int value, int maxValue) {
   writer.writeInt(value, signed: false, bits: getBitsNeeded(maxValue));
 }
 
+// only positive or null values
+void writeNullableInt(BitBufferWriter writer, int? nullableValue, int maxValue) {
+  final value = nullableValue == null ? 0 : nullableValue + 1;
+  writeInt(writer, value, maxValue);
+}
+
+// only positive values
 int readInt(BitBufferReader reader, int maxValue) {
   return reader.readInt(signed: false, bits: getBitsNeeded(maxValue));
+}
+
+// only positive or null values
+int? readNullableInt(BitBufferReader reader, int maxValue) {
+  final value = readInt(reader, maxValue);
+  return value == 0 ? null : value - 1;
 }
 
 void writeEnum<E extends Enum>(BitBufferWriter writer, List<E> values, E value) {
@@ -538,18 +552,18 @@ E readEnum<E extends Enum>(BitBufferReader reader, List<E> values) {
 
 void writeMove(BitBufferWriter writer, Move move) {
   writer.writeBit(move.skipped);
-  writeChip(writer, move.chip);
+  writeChip(writer, move.isMove() ? null : move.chip);
   writeCoordinate(writer, move.from);
   writeCoordinate(writer, move.to);
 }
 
 void writeCoordinate(BitBufferWriter writer, Coordinate? where) {
-  writer.writeInt(where?.x??-1, signed: true, bits: getBitsNeeded(maxDimension));
-  writer.writeInt(where?.y??-1, signed: true, bits: getBitsNeeded(maxDimension));
+  writeNullableInt(writer, where?.x, maxDimension);
+  writeNullableInt(writer, where?.y, maxDimension);
 }
 
 void writeChip(BitBufferWriter writer, GameChip? chip) {
-  writer.writeInt(chip?.id??-1, signed: true, bits: getBitsNeeded(maxDimension));
+  writeNullableInt(writer, chip?.id, maxDimension);
 }
 
 Move? readMove(BitBufferReader reader) {
@@ -557,27 +571,28 @@ Move? readMove(BitBufferReader reader) {
     final skipped = reader.readBit();
     final chip = readChip(reader);
 
-    if (skipped || chip == null) {
+    if (skipped) {
       return Move.skipped();
     }
     final from = readCoordinate(reader);
     final to = readCoordinate(reader);
     if (from != null) {
-      return Move.moved(chip, from, to!);
+      return Move.movedForMessaging(from, to!);
     }
     else {
-      return Move.placed(chip, to!);
+      return Move.placed(chip!, to!);
     }
   } catch (e) {
     print(e);
-    return null;
+    throw e;
+    //TODO return null;
   }
 }
 
 Coordinate? readCoordinate(BitBufferReader reader) {
-  final x = reader.readInt(signed: true, bits: getBitsNeeded(maxDimension));
-  final y = reader.readInt(signed: true, bits: getBitsNeeded(maxDimension));
-  if (x != -1 && y != -1) {
+  final x = readNullableInt(reader, maxDimension);
+  final y = readNullableInt(reader, maxDimension);
+  if (x != null && y != null) {
     return Coordinate(x, y);
   }
   else {
@@ -586,8 +601,8 @@ Coordinate? readCoordinate(BitBufferReader reader) {
 }
 
 GameChip? readChip(BitBufferReader reader) {
-  final id = reader.readInt(signed: true, bits: getBitsNeeded(maxDimension));
-  if (id == -1) {
+  final id = readNullableInt(reader, maxDimension);
+  if (id == null) {
     return null;
   }
   return GameChip(id);

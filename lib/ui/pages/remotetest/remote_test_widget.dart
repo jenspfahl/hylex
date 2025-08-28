@@ -29,9 +29,8 @@ class RemoteTestWidget extends StatefulWidget {
 }
 
 class _RemoteTestWidgetState extends State<RemoteTestWidget> {
-  Operation operation = Operation.SendInvite;
-  List<Operation> allowedOperations = [Operation.SendInvite];
-
+  List<Operation> allowedOperations = [];
+  late Operation operation;
   late PlaySize playSize;
   late PlayMode playMode;
   late PlayOpener playOpener;
@@ -61,18 +60,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     if (localPlayHeader != null) {
       
       final playState = localPlayHeader.state;
-      if (playState == PlayState.InvitationPending) {
-        allowedOperations = [Operation.AcceptInvite, Operation.RejectInvite];
-        operation = allowedOperations.first;
-      }
-      else if (playState.isFinal) {
-        throw Exception("Unsupported play state");
-      }
-      else {
+      if (playState != PlayState.InvitationPending) {
         allowedOperations = [Operation.Move, Operation.Resign];
-        operation = allowedOperations.first;
 
-        role = localPlayHeader.actor.getActorRoleFor(playOpener)?.opponentRole ?? Role.Chaos;
+        role = localPlayHeader.getLocalRole()!.opponentRole;
         StorageService().loadPlayFromHeader(localPlayHeader)
             .then((localPlay) {
               setState(() {
@@ -86,7 +77,16 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
 
       }
+      else if (!playState.isFinal) {
+        allowedOperations = [Operation.AcceptInvite, Operation.RejectInvite];
+
+      }
     }
+    else {
+      allowedOperations = [Operation.SendInvite];
+    }
+
+    operation = allowedOperations.firstOrNull ?? Operation.SendInvite;
 
   }
   
@@ -94,8 +94,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   Widget build(BuildContext context) {
 
     String header = "Remote player simulation";
+    String subHeader = [playOpener, playMode, playSize].toString();
     if (widget.playHeader != null) {
       header += " for ${widget.playHeader!.getReadablePlayId()}";
+      subHeader = widget.playHeader.toString();
     }
     List<Widget> children = [
       const Text(""),
@@ -104,7 +106,17 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
       ),
       const Divider(),
-      _buildChoseParam("Operation", () => operation, (x) => operation = x, allowedOperations),
+      Text(
+        subHeader,
+        style: const TextStyle(color: Colors.grey, fontSize: 14),
+      ),
+      const Divider(),
+      _buildChoseParam(
+          "Operation",
+              () => operation,
+              (x) => operation = x,
+          Operation.values,
+          allowedOperations),
       const Divider(),
       Text(
         _createHeadlineText(operation),
@@ -144,19 +156,19 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     );
 
     return MaterialApp(
-      home: Container(
-        height: 300,
-        width: 300,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: children,
+      home: SingleChildScrollView(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: children,
+            ),
           ),
         ),
       ),
@@ -167,15 +179,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     switch (operation) {
 
       case Operation.SendInvite:
-        return "Simulate remote player sends an invitation.";
+        return "Simulate the remote player sends an invitation.";
       case Operation.AcceptInvite:
-        return "Simulate remote player accepts your invitation.";
+        return "Simulate the remote player accepts your invitation.";
       case Operation.RejectInvite:
-        return "Simulate remote player rejects your invitation.";
+        return "Simulate the remote player rejects your invitation.";
       case Operation.Move:
-        return "Simulate remote player moves in current play.";
+        return "Simulate the remote player moves a chip in current play.";
       case Operation.Resign:
-        return "Simulate remote player resigns current play.";
+        return "Simulate the remote player resigns current play.";
       default: throw Exception("$operation not supported");
     }
   }
@@ -200,9 +212,9 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   Widget _buildSendInviteParams() {
     return Column(
       children: [
-        _buildChoseParam("PlaySize", () => playSize, (x) => playSize = x, PlaySize.values),
-        _buildChoseParam("PlayMode", () => playMode, (x) => playMode = x, PlayMode.values),
-        _buildChoseParam("PlayOpener", () => playOpener, (x) => playOpener = x, PlayOpener.values),
+        _buildChoseParam("PlaySize", () => playSize, (x) => playSize = x, PlaySize.values, PlaySize.values),
+        _buildChoseParam("PlayMode", () => playMode, (x) => playMode = x, PlayMode.values, PlayMode.values),
+        _buildChoseParam("PlayOpener", () => playOpener, (x) => playOpener = x, PlayOpener.values, PlayOpener.values),
 
       ],
     );
@@ -212,7 +224,12 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   Widget _buildAcceptInviteParams() {
     return Column(
       children: [
-        _buildChoseParam("PlayOpener", () => playOpener, (x) => playOpener = x, [PlayOpener.Invitee, PlayOpener.Invitor]),
+        _buildChoseParam(
+            "PlayOpener",
+                () => playOpener,
+                (x) => playOpener = x,
+            PlayOpener.values,
+            [PlayOpener.Invitee, PlayOpener.Invitor]),
         _buildMoveParams()
       ],
     );
@@ -222,14 +239,21 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     return const Text("");
   }
   Widget _buildMoveParams() {
-   final roleChooser = _buildChoseParam("Role", () => role??Role.Chaos, (x) => role = x, Role.values);
+    final remoteRole = widget.playHeader!.getLocalRole()!.opponentRole;
+    final roleChooser = _buildChoseParam(
+        "Role", 
+            () => role??Role.Chaos, 
+            (x) => role = x, 
+        Role.values,
+        [remoteRole]
+    );
 
     if (role == Role.Chaos) {
       return Column(
         children: [
           roleChooser,
-          _buildChips("Chip to place", () => chip, (x) => chip = x, null),
-          _buildCoordinate("Coordinate to place", Role.Chaos, () => to, (x) => to = x, null),
+          _buildChips("Chip to place", () => chip, (x) => chip = x),
+          _buildCoordinate("Coordinate to place", Role.Chaos, () => to, (x) => to = x, null, null),
         ],
       );
     }
@@ -239,11 +263,22 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           roleChooser,
           _buildBoolParam("Skip", () => skip, (b) => skip = b),
           if (!skip)
-            _buildChips("Chip to move", () => chip, (x) => chip = x, null),
+            _buildCoordinate(
+                "Coordinate to move from",
+                Role.Order,
+                    () => from,
+                    (x) => from = x,
+                null,
+                null),
           if (!skip)
-            _buildCoordinate("Coordinate to move from", Role.Order, () => from, (x) => from = x, null),
-          if (!skip)
-            _buildCoordinate("Coordinate to move to", Role.Order, () => to, (x) => to = x, null),
+            _buildCoordinate(
+                "Coordinate to move to",
+                Role.Order,
+                    () => to,
+                    (x) => to = x,
+                null,
+                null
+            ),
         ],
       );
     }
@@ -253,7 +288,13 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     return const Text("");
   }
 
-  Widget _buildChoseParam<T extends Enum>(String paramName, T Function() getValue, Function(T) setValue, List<T> values) {
+  Widget _buildChoseParam<T extends Enum>(
+      String paramName, 
+      T Function() getValue, 
+      Function(T) setValue, 
+      List<T> values,
+      List<T> legalValues,
+      ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -270,13 +311,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
               }
             });
           },
-          items: values.where((e) => !e.name.startsWith("unused")).map((T classType) {
+          items: values.where((e) => !e.name.startsWith("unused")).map((T value) {
             return DropdownMenuItem<T>(
-                value: classType,
-                child: Text(classType.name,
+                value: value,
+                child: Text(value.name,
                   style: TextStyle(
-                      color: getValue() == classType ? Colors.lightGreenAccent : Colors.white,
+                      decoration: legalValues.contains(value) ? TextDecoration.none : TextDecoration.lineThrough,
+                      color: getValue() == value ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
+                      decorationColor: getValue() == value ? Colors.lightGreenAccent : Colors.white,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );
@@ -304,7 +347,14 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     );
   }
 
-  Widget _buildCoordinate(String paramName, Role forRole, Coordinate? Function() getValue, Function(Coordinate) setValue, List<Move>? allowedMoves) {
+  Widget _buildCoordinate(
+      String paramName, 
+      Role forRole, 
+      Coordinate? Function() getValue,
+      Function(Coordinate) setValue, 
+      List<Move>? allowedCoordinates,
+      List<Move>? legalCoordinates,
+      ) {
     final coordinates = _createAllCoordinates(playSize.toDimension());
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -327,8 +377,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                 value: coordinate,
                 child: Text(coordinate.toReadableCoordinates(),
                   style: TextStyle(
-                      color: /*getValue() == move ? Colors.lightGreenAccent : */Colors.white,
+                      decoration: legalCoordinates?.contains(coordinate) == true ? TextDecoration.none : TextDecoration.lineThrough,
+                      color: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
+                      decorationColor: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );
@@ -340,14 +392,25 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
 
 
-  Widget _buildChips(String paramName, GameChip? Function() getValue, Function(GameChip) setValue, List<GameChip>? allowedChips) {
-    if (allowedChips == null) {
-      allowedChips = [];
-      final chipCount = widget.playHeader?.dimension ?? 0;
-      for (int i=0; i < chipCount; i++) {
-        allowedChips.add(new GameChip(i));
-      }
+  Widget _buildChips(
+      String paramName, 
+      GameChip? Function() getValue, 
+      Function(GameChip) setValue, 
+) {
+    final allChips = <GameChip>[];
+    var legalChips = <GameChip>[];
+    final currentChip = localPlay?.currentChip;
+    if (currentChip != null && widget.playHeader?.getLocalRole()?.opponentRole == Role.Chaos) {
+      legalChips.add(currentChip);
     }
+    else {
+      legalChips = allChips;
+    }
+    final chipCount = widget.playHeader?.dimension ?? 0;
+    for (int i=0; i < chipCount; i++) {
+      allChips.add(new GameChip(i));
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -355,7 +418,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 14),
         ),
         DropdownButton<GameChip>(
-          value: getValue() ?? allowedChips.first,
+          value: getValue() ?? allChips.first,
           dropdownColor: Colors.black,
           onChanged: (newValue) {
             setState(() {
@@ -364,13 +427,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
               }
             });
           },
-          items: allowedChips.map((chip) {
+          items: allChips.map((chip) {
             return DropdownMenuItem<GameChip>(
                 value: chip,
                 child: Text(chip.getChipName(),
                   style: TextStyle(
+                      decoration: legalChips?.contains(chip) == true ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
+                      decorationColor: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );

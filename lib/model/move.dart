@@ -60,6 +60,11 @@ class Move {
   Move.moved(GameChip chip, Coordinate from, Coordinate to): this(chip: chip, from: from, to: to, skipped: false);
 
   /**
+   * An possible Order move, only for messaging
+   */
+  Move.movedForMessaging(Coordinate from, Coordinate to): this(chip: null, from: from, to: to, skipped: false);
+
+  /**
    * An possible Order skip-move
    */
   Move.skipped(): this(skipped: true);
@@ -123,10 +128,10 @@ class Move {
       return "-";
     }
     if (isMove()) {
-      return "${chip?.name}@$from->$to";
+      return "${chip?.name??"?"}@$from->$to";
     }
     else {
-      return "${chip?.name}@$from";
+      return "${chip?.name??"?"}@$from";
     }
   }
 
