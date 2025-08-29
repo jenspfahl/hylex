@@ -194,7 +194,9 @@ class StartPageState extends State<StartPage>
     final header = PlayHeader.multiPlayInvitee(
         receivedInviteMessage,
         comContext,
-        PlayState.InvitationAccepted);
+        receivedInviteMessage.playOpener == PlayOpener.Invitor
+            ? PlayState.InvitationAccepted_WaitForOpponent
+            : PlayState.InvitationAccepted_ReadyToMove);
     await StorageService().savePlayHeader(header);
     if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
       _selectInvitedMultiPlayerOpener(context, (playOpener) async {
@@ -226,7 +228,7 @@ class StartPageState extends State<StartPage>
       buildAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
     }
     else {
-      header.state = PlayState.InvitationAccepted;
+      header.state = PlayState.RemoteOpponentAccepted;
       header.playOpener = message.playOpenerDecision;
       await StorageService().savePlayHeader(header);
 

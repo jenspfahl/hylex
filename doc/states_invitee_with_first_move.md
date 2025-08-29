@@ -2,11 +2,11 @@
     
         [*] --> Initialised
         Initialised --> InvitationPending: ->SendInvite
-        InvitationPending --> InvitationAccepted: AcceptInvite->
+        InvitationPending --> InvitationAccepted_ReadyToMove: AcceptInvite->
         InvitationPending --> InvitationRejected: RejectInvite->
         InvitationRejected --> [*]
-        InvitationAccepted --> ReadyToMove: ->Move
-        InvitationAccepted --> OpponentResigned: ->Resign
+        InvitationAccepted_ReadyToMove --> WaitForOpponent: ->Move
+        InvitationAccepted_ReadyToMove --> Resigned: ->Resign
         ReadyToMove --> WaitForOpponent: Move->
         WaitForOpponent --> ReadyToMove: ->Move
         ReadyToMove --> Lost: Move->

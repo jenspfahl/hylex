@@ -29,7 +29,8 @@ import 'move.dart';
  *
  * Invitee:
  *     InvitationPending --> InvitationRejected
- *     InvitationPending --> InvitationAccepted --> [ WaitForOpponent | ReadyToMove ] --> [ Won | Lost | Resigned | OpponentResigned ]
+ *     InvitationPending --> InvitationAccepted_ReadyToMove --> [ ReadyToMove | WaitForOpponent ] --> [ Won | Lost | Resigned | OpponentResigned ]
+ *     InvitationPending --> InvitationAccepted_WaitForOpponent --> [ WaitForOpponent | ReadyToMove ] --> [ Won | Lost | Resigned | OpponentResigned ]
  *
  * Multiplayer flows:
  *   Rejection:
@@ -61,8 +62,11 @@ enum PlayState {
   // only if multiPlay == true, when an invitation has been accepted by the remote player
   RemoteOpponentAccepted({Actor.Invitor}, false),
 
-  // only if multiPlay == true, when an invitation has been accepted by invited player
-  InvitationAccepted({Actor.Invitee}, false),
+  // only if multiPlay == true, when an invitation has been accepted by invited player and has to perform the first moe
+  InvitationAccepted_ReadyToMove({Actor.Invitee}, false),
+
+  // only if multiPlay == true, when an invitation has been accepted by invited player and awaits the first move from the invitor
+  InvitationAccepted_WaitForOpponent({Actor.Invitee}, false),
 
   // only if multiPlay == true, when an invitation has been rejected by invited player
   InvitationRejected({Actor.Invitor, Actor.Invitee}, true), // final state
@@ -98,7 +102,8 @@ enum PlayState {
       case PlayState.RemoteOpponentInvited: return "Invitation sent out";
       case PlayState.InvitationPending: return "Open invitation needs response";
       case PlayState.RemoteOpponentAccepted: return "Sent invitation accepted, please do your first more";
-      case PlayState.InvitationAccepted: return "Invitation accepted, wait for invitor''s first more";
+      case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first more";
+      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for invitor''s first more";
       case PlayState.InvitationRejected: return "Invitation rejected";
       case PlayState.ReadyToMove: return "Your turn!";
       case PlayState.WaitForOpponent: return "Awaiting opponent's move";
@@ -116,7 +121,8 @@ enum PlayState {
       case PlayState.RemoteOpponentInvited: return getColorFromIdx(7);
       case PlayState.InvitationPending: return getColorFromIdx(7);
       case PlayState.RemoteOpponentAccepted: return getColorFromIdx(4);
-      case PlayState.InvitationAccepted: return getColorFromIdx(4);
+      case PlayState.InvitationAccepted_ReadyToMove: return getColorFromIdx(9);
+      case PlayState.InvitationAccepted_WaitForOpponent: return getColorFromIdx(1);
       case PlayState.InvitationRejected: return getColorFromIdx(8);
       case PlayState.ReadyToMove: return getColorFromIdx(9);
       case PlayState.WaitForOpponent: return getColorFromIdx(1);

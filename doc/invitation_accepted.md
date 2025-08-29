@@ -11,14 +11,19 @@ sequenceDiagram
     alt Invitor starts
         Remote-->>-Local: <AcceptInvite>
 
-        Note over Remote: [InvitationAccepted]
+        Note over Remote: [InvitationAccepted_WaitForOpponent]
         Note over Local: [RemoteOpponentAccepted]
 
-    else Invitee starts
+    else Invitee starts with initial move
+
+        Note over Remote: [InvitationAccepted_ReadyToMove]
         Remote-->>Local: <AcceptInvite with Move>
+        Note over Remote: [InvitationAccepted_WaitForOpponent]
 
-        Note over Remote: [InvitationAccepted]
+
         Note over Local: [RemoteOpponentAccepted]
+    
+
     end
 
 
