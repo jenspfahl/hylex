@@ -70,6 +70,11 @@ class CommunicationContext {
       messageHistory.add(ChannelMessage(Channel.In, serializedMessage));
     }
   }
+
+  @override
+  String toString() {
+    return 'CommunicationContext{roundTripSignature: $roundTripSignature, predecessorMessage: $predecessorMessage, messageHistory.length: ${messageHistory.length}';
+  }
 }
 
 abstract class Message {
@@ -576,11 +581,15 @@ Move? readMove(BitBufferReader reader) {
     }
     final from = readCoordinate(reader);
     final to = readCoordinate(reader);
-    if (from != null) {
-      return Move.movedForMessaging(from, to!);
+
+    if (chip != null && from == null && to != null) {
+      return Move.placed(chip, to);
+    }
+    else if (from != null && to != null) {
+      return Move.movedForMessaging(from, to);
     }
     else {
-      return Move.placed(chip!, to!);
+      throw Exception("Invalid move data: $chip $from $to");
     }
   } catch (e) {
     print(e);

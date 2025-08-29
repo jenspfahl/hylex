@@ -250,12 +250,12 @@ class PlayHeader {
   }
 
   Role? getLocalRole() {
-    return actor.getActorRoleFor(playOpener)?.opponentRole;
+    return actor.getActorRoleFor(playOpener);
   }
 
   @override
   String toString() {
-    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener}';
+    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener, actor: $actor}';
   }
 
   void init() {
@@ -299,7 +299,7 @@ class Play {
   }
 
   Play.newMultiPlay(this.header) {
-    final actorRole = header.actor.getActorRoleFor(header.playOpener);
+    final actorRole = header.getLocalRole();
     if (actorRole == null) {
       throw Exception("When creating a multi play the play opener should be decided.");
     }
@@ -432,10 +432,15 @@ class Play {
 
 
   applyStaleMove(Move move) {
-    //TODO first check move is valid (against the rules)
+    //check move is valid (against the rules)
+    final result = validateMove(move);
+
+    if (result != null) {
+      throw Exception(result);
+    }
+
     if (move.isMove()) {
       // set moved chip
-      move.chip = _matrix.getChip(move.from!);
       _matrix.move(move.from!, move.to!);
     }
     else if (!move.skipped) {
@@ -686,6 +691,66 @@ class Play {
       }
     }
     return lastMove;
+  }
+
+
+  // returns null if the moe is valid
+  String? validateMove(Move move) {
+    if (!move.skipped && move.chip == null && move.from != null) {
+      // if move came from a message, the chip can be null (for order only)
+      move.chip = _matrix.getChip(move.from!);
+    }
+
+    if (isGameOver()) {
+      return "Game is already over";
+    }
+    if (move.isMove()) {
+      final from = move.from;
+      final to = move.to;
+
+      if (from == null) {
+        return "moving from is missing";
+      }
+      if (to == null) {
+        return "moving to is missing";
+      }
+      if (from.x != to.x && from.y != to.y) {
+        return "Move is not vertical or horizontal";
+      }
+
+      if (_matrix.isFree(from)) {
+        return "Cannot move from an empty field, no chip to move";
+      }
+      if (!_matrix.isFree(to)) {
+        return "Cannot move to an occupied field";
+      }
+
+      final possibleTargets = _matrix.detectTraceForPossibleOrderMoves(from).map((s) => s.where);
+      if (!possibleTargets.contains(to)) {
+        return "cannot move from $from to $to, either out of matrix or blocking cells in between.";
+      }
+
+    }
+    else if (move.isPlaced()) {
+      final chip = move.chip;
+      final to = move.to;
+
+      if (chip == null) {
+        return "placing chip is missing";
+      }
+      if (to == null) {
+        return "placing to is missing";
+      }
+
+      if (!stock.hasStock(chip)) {
+        return "No more stock left for $chip";
+      }
+      if (!_matrix.isFree(to)) {
+        return "Cannot place chip on an occupied filed";
+      }
+    }
+
+    return null;
   }
 
 

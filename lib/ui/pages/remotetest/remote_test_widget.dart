@@ -4,6 +4,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/ui/dialogs.dart';
 
 import '../../../model/common.dart';
 import '../../../model/messaging.dart';
@@ -29,19 +30,21 @@ class RemoteTestWidget extends StatefulWidget {
 }
 
 class _RemoteTestWidgetState extends State<RemoteTestWidget> {
-  List<Operation> allowedOperations = [];
+  late List<Operation> allowedRemoteOperations;
   late Operation operation;
-  late PlaySize playSize;
-  late PlayMode playMode;
-  late PlayOpener playOpener;
   late User remoteUser;
-  
+
+
+  late PlaySize playSize = PlaySize.Size5x5;
+  late PlayMode playMode = PlayMode.HyleX;
+  late PlayOpener playOpener = PlayOpener.InvitedPlayerChooses;
+
   Play? localPlay;
   PlayHeader? remoteHeader;
   
   Role? role;
-  Coordinate? from;
-  Coordinate? to;
+  Coordinate from = Coordinate(0, 0);
+  Coordinate to = Coordinate(0, 0);
   GameChip? chip;
   bool skip = false;
 
@@ -51,19 +54,24 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
     remoteUser = User("RemoteTestUser");
     remoteUser.name = "Remote Test User";
-
-    playOpener = PlayOpener.InvitedPlayerChooses;
-    playSize = PlaySize.Size5x5;
-    playMode = PlayMode.HyleX;
     
     final localPlayHeader = widget.playHeader;
-    if (localPlayHeader != null) {
-      
-      final playState = localPlayHeader.state;
-      if (playState != PlayState.InvitationPending) {
-        allowedOperations = [Operation.Move, Operation.Resign];
+    if (localPlayHeader == null) {
+      allowedRemoteOperations = [Operation.SendInvite];
+    }
+    else {
+      final localPlayState = localPlayHeader.state;
 
-        role = localPlayHeader.getLocalRole()!.opponentRole;
+      if (localPlayState == PlayState.RemoteOpponentInvited) {
+        allowedRemoteOperations = [Operation.AcceptInvite, Operation.RejectInvite];
+      }
+      else if (localPlayState == PlayState.InvitationPending) {
+        allowedRemoteOperations = [];
+      }
+      else if (!localPlayState.isFinal) {
+        allowedRemoteOperations = [Operation.Move, Operation.Resign];
+
+        role = localPlayHeader.getLocalRole()?.opponentRole;
         StorageService().loadPlayFromHeader(localPlayHeader)
             .then((localPlay) {
               setState(() {
@@ -77,17 +85,13 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
 
       }
-      else if (!playState.isFinal) {
-        allowedOperations = [Operation.AcceptInvite, Operation.RejectInvite];
+      else  {
+        allowedRemoteOperations = [];
 
       }
     }
-    else {
-      allowedOperations = [Operation.SendInvite];
-    }
 
-    operation = allowedOperations.firstOrNull ?? Operation.SendInvite;
-
+    operation = allowedRemoteOperations.firstOrNull ?? Operation.SendInvite;
   }
   
   @override
@@ -98,6 +102,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     if (widget.playHeader != null) {
       header += " for ${widget.playHeader!.getReadablePlayId()}";
       subHeader = widget.playHeader.toString();
+      subHeader += " ${widget.playHeader!.getLocalRole()}";
     }
     List<Widget> children = [
       const Text(""),
@@ -116,7 +121,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
               () => operation,
               (x) => operation = x,
           Operation.values,
-          allowedOperations),
+          allowedRemoteOperations),
       const Divider(),
       Text(
         _createHeadlineText(operation),
@@ -242,7 +247,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     final remoteRole = widget.playHeader!.getLocalRole()!.opponentRole;
     final roleChooser = _buildChoseParam(
         "Role", 
-            () => role??Role.Chaos, 
+            () => role??Role.Chaos,
             (x) => role = x, 
         Role.values,
         [remoteRole]
@@ -253,7 +258,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         children: [
           roleChooser,
           _buildChips("Chip to place", () => chip, (x) => chip = x),
-          _buildCoordinate("Coordinate to place", Role.Chaos, () => to, (x) => to = x, null, null),
+          _buildCoordinate("Coordinate to place", true, () => to, (x) => to = x),
         ],
       );
     }
@@ -265,19 +270,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           if (!skip)
             _buildCoordinate(
                 "Coordinate to move from",
-                Role.Order,
+                false,
                     () => from,
-                    (x) => from = x,
-                null,
-                null),
+                    (x) => from = x),
           if (!skip)
             _buildCoordinate(
                 "Coordinate to move to",
-                Role.Order,
+                true,
                     () => to,
-                    (x) => to = x,
-                null,
-                null
+                    (x) => to = x
             ),
         ],
       );
@@ -320,6 +321,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                       color: getValue() == value ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
                       decorationColor: getValue() == value ? Colors.lightGreenAccent : Colors.white,
+                      decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );
@@ -349,13 +351,22 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
   Widget _buildCoordinate(
       String paramName, 
-      Role forRole, 
+      bool freeCellsAreLegal,
       Coordinate? Function() getValue,
-      Function(Coordinate) setValue, 
-      List<Move>? allowedCoordinates,
-      List<Move>? legalCoordinates,
+      Function(Coordinate) setValue
       ) {
     final coordinates = _createAllCoordinates(playSize.toDimension());
+    var legalCoordinates = coordinates;
+
+    if (localPlay != null) {
+      if (freeCellsAreLegal) {
+        legalCoordinates = localPlay!.matrix.streamFreeSpots().map((s) => s.where).toList();
+      }
+      else {
+        legalCoordinates = localPlay!.matrix.streamOccupiedSpots().map((s) => s.where).toList();
+      }
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -377,10 +388,11 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                 value: coordinate,
                 child: Text(coordinate.toReadableCoordinates(),
                   style: TextStyle(
-                      decoration: legalCoordinates?.contains(coordinate) == true ? TextDecoration.none : TextDecoration.lineThrough,
+                      decoration: legalCoordinates.contains(coordinate) ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
                       decorationColor: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
+                      decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );
@@ -402,9 +414,6 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     final currentChip = localPlay?.currentChip;
     if (currentChip != null && widget.playHeader?.getLocalRole()?.opponentRole == Role.Chaos) {
       legalChips.add(currentChip);
-    }
-    else {
-      legalChips = allChips;
     }
     final chipCount = widget.playHeader?.dimension ?? 0;
     for (int i=0; i < chipCount; i++) {
@@ -436,6 +445,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                       color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
                       decorationColor: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
+                      decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
                 )
             );
@@ -447,8 +457,16 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
   
   void _sendMessage({required bool share}) {
+    if (localPlay != null) {
+      final result = localPlay!.validateMove(_createMove());
+      if (result != null) {
+        buildAlertDialog(result);
+        return;
+      }
+    }
+
     final finalRemoteHeader = remoteHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
-    
+
     SerializedMessage message = _createMessage(finalRemoteHeader, share);
     if (!share && widget.messageHandler != null) {
       widget.messageHandler!(message);
@@ -473,7 +491,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   Move _createMove() {
-    return Move(skipped: skip, from: from, to: to, chip: chip);
+    return Move(skipped: skip || from == to, from: from, to: to, chip: chip);
   }
 
   List<Coordinate> _createAllCoordinates(int dimension) {
