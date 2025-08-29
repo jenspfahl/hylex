@@ -585,48 +585,50 @@ class StartPageState extends State<StartPage>
         }));
   }
 
-  Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstMove]) async {
+  Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstOpponentMove]) async {
     SmartDialog.showLoading(msg: "Loading game ...");
     final play = Play.newMultiPlay(header);
-    if (firstMove != null) {
-      play.nextPlayer();
-      play.applyStaleMove(firstMove);
-      play.commitMove();
-    }
     await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
               _user,
-              play);
+              play,
+              opponentMoveToApply: firstOpponentMove,
+          );
         }));
   }
 
-  Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? move) async {
+  Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? opponentMove) async {
     SmartDialog.showLoading(msg: "Loading game ...");
-    if (move != null) {
-      play.nextPlayer();
-      play.applyStaleMove(move);
-      play.commitMove();
-      //TODO make this at a central place, maybe in the GameEngine?
-    }
     await Future.delayed(const Duration(seconds: 1));
 
+
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return HyleXGround(
+            _user,
+            play,
+            opponentMoveToApply: opponentMove,
+          );
+        }));
+    /*
     final routeKey = play.header.playId;
     var route = _playRoutes[routeKey] ?? MaterialPageRoute(builder: (context) {
       return HyleXGround(
           _user,
-          play);
+          play,
+          opponentMoveToApply: opponentMove,
+      );
     });
     _playRoutes[routeKey] = route;
 
     if (route.isCurrent == true) {
-        // TODO apply play to current route either with a callback or a state change listener / GloblKey
-      }
-      else {
-        Navigator.push(context, route);
-      }
-
+      // TODO apply play to current route either with a callback or a state change listener / GloblKey
+    }
+    else {
+      Navigator.push(context, route);
+    }*/
 
   }
 

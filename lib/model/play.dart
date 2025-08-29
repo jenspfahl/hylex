@@ -260,7 +260,6 @@ class PlayHeader {
 
   void init() {
     currentRound = 1;
-    state = PlayState.Initialised;
   }
   
 }

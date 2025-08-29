@@ -29,8 +29,9 @@ import '../dialogs.dart';
 class HyleXGround extends StatefulWidget {
   User user;
   Play play;
+  Move? opponentMoveToApply;
 
-  HyleXGround(this.user, this.play, {super.key});
+  HyleXGround(this.user, this.play, {super.key, this.opponentMoveToApply});
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -46,7 +47,6 @@ class _HyleXGroundState extends State<HyleXGround> {
   bool _gameOverShown = false;
   
   late StreamSubscription<FGBGType> fgbgSubscription;
-  late StreamSubscription<Uri> _uriLinkStreamSub;
 
   final _chaosChipTooltip = "chaosChipTooltip";
   final _orderChipTooltip = "orderChipTooltip";
@@ -86,16 +86,11 @@ class _HyleXGroundState extends State<HyleXGround> {
     gameEngine.addListener(_gameListener);
 
     gameEngine.startGame();
-
-    _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
-      if (gameEngine.play.isMultiplayerPlay) {
-        //TODO check whether in the same game
-        //gameEngine.opponentMoveReceived(Move.skipped());
-      }
-      else {
-        //TODO ask and switch to that game
-      }
-    });
+    
+    if (widget.opponentMoveToApply != null) {
+      gameEngine.opponentMoveReceived(widget.opponentMoveToApply!);
+    }
+    
   }
 
   _gameListener() {
@@ -111,7 +106,6 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   void dispose() {
-    _uriLinkStreamSub.cancel();
     gameEngine.pauseGame();
     gameEngine.removeListener(_gameListener);
     fgbgSubscription.cancel();

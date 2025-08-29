@@ -141,14 +141,14 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                   foregroundColor: Colors.lightGreenAccent),
               onPressed: () {
                 SmartDialog.dismiss();
-                _sendMessage(share: false);
+                _checkAndSendMessage(share: false);
               },
               child: const Text("APPLY")),
           OutlinedButton(
               style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.lightGreenAccent),
               onPressed: () {
-                _sendMessage(share: true);
+                _checkAndSendMessage(share: true);
               },
               child: const Text("SHARE")),
           OutlinedButton(
@@ -456,17 +456,29 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   
-  void _sendMessage({required bool share}) {
+  void _checkAndSendMessage({required bool share}) {
     if (localPlay != null) {
       final result = localPlay!.validateMove(_createMove());
       if (result != null) {
-        buildAlertDialog(result);
+        buildChoiceDialog(result, 
+            firstString: "IGNORE", 
+            firstHandler: () => _sendMessage(share),
+            secondString: "CANCEL", 
+            secondHandler: () => SmartDialog.dismiss());
         return;
       }
+      else {
+        _sendMessage(share);
+      }
     }
+    else {
+      _sendMessage(share);
+    }
+  }
 
+  void _sendMessage(bool share) {
     final finalRemoteHeader = remoteHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
-
+    
     SerializedMessage message = _createMessage(finalRemoteHeader, share);
     if (!share && widget.messageHandler != null) {
       widget.messageHandler!(message);

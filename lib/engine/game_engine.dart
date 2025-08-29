@@ -213,8 +213,9 @@ class MultiPlayerGameEngine extends GameEngine {
 
   void shareGameMove() {
     final lastMove = play.lastMoveFromJournal;
+    final moveCount = play.journal.length;
     final isAcceptInvite = play.header.actor == Actor.Invitee && play.header.playOpener == PlayOpener.Invitee;
-    if (lastMove == null && isAcceptInvite) {
+    if (moveCount <= 1 && isAcceptInvite) {
       MessageService().sendInvitationAccepted(play.header, user, lastMove, null);
     }
     else if (lastMove != null) {
