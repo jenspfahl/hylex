@@ -28,7 +28,6 @@ abstract class GameEngine extends ChangeNotifier {
   void stopGame() {
     _cleanUp();
     play.reset();
-    play.waitForOpponent = false;
     savePlayState();
     notifyListeners();
   }
@@ -212,6 +211,10 @@ class MultiPlayerGameEngine extends GameEngine {
   }
 
   void shareGameMove() {
+
+    MessageService().sendCurrentPlayState(play.header, user, null);
+
+    /*
     final lastMove = play.lastMoveFromJournal;
     final moveCount = play.journal.length;
     final isAcceptInvite = play.header.actor == Actor.Invitee && play.header.playOpener == PlayOpener.Invitee;
@@ -223,7 +226,7 @@ class MultiPlayerGameEngine extends GameEngine {
     }
     else {
       throw Exception("No last move but there should");
-    }
+    }*/
   }
 
   @override

@@ -37,7 +37,7 @@ class MessageService {
         sendRemoteOpponentInvitation(playHeader, user, sentHandler);
         break;
       }
-      case PlayState.InvitationAccepted_WaitForOpponent: { //TODO if we resend the link we already move forward with the state
+      case PlayState.InvitationAccepted_WaitForOpponent: {
         StorageService().loadPlayFromHeader(playHeader).then((play) {
           final lastMove = play?.lastMoveFromJournal;
           sendInvitationAccepted(playHeader, user, lastMove, sentHandler);
@@ -49,9 +49,17 @@ class MessageService {
         break;
       }
       case PlayState.WaitForOpponent: {
-        StorageService().loadPlayFromHeader(playHeader).then((play) {
-          sendMove(playHeader, user, play!.lastMoveFromJournal!, sentHandler);
-        });
+        if (playHeader.actor == Actor.Invitee && playHeader.currentRound == 1) {
+          StorageService().loadPlayFromHeader(playHeader).then((play) {
+            final lastMove = play?.lastMoveFromJournal;
+            sendInvitationAccepted(playHeader, user, lastMove, sentHandler);
+          });
+        }
+        else {
+          StorageService().loadPlayFromHeader(playHeader).then((play) {
+            sendMove(playHeader, user, play!.lastMoveFromJournal!, sentHandler);
+          });
+        }
         break;
       }
       case PlayState.Resigned: {

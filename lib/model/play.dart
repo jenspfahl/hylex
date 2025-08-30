@@ -96,6 +96,22 @@ enum PlayState {
   final Set<Actor> forActors;
   final bool isFinal;
 
+  checkTransition(PlayState newPlayState, Actor forActor) {
+    if (this == newPlayState) {
+      return;
+    }
+    if (!newPlayState.forActors.contains(forActor)) {
+      throw Exception("new state $newPlayState not allowed for $forActor");
+    }
+    if (this.isFinal) {
+      throw Exception("current state $this is already final");
+    }
+
+    if (allowedTransitions[this]?.contains(newPlayState) == false) {
+      throw Exception("transition from current state $this to $newPlayState not allowed");
+    }
+  }
+
   String toMessage() {
     switch (this) {
       case PlayState.Initialised: return "New game";
@@ -133,6 +149,23 @@ enum PlayState {
       case PlayState.Closed: return Colors.black54;
     }
   }
+
+  static Map<PlayState, List<PlayState>> allowedTransitions = _createAllowedTransitions();
+
+  static Map<PlayState, List<PlayState>> _createAllowedTransitions() {
+    final Map<PlayState, List<PlayState>> transitions = HashMap();
+
+    transitions[PlayState.Initialised] = [ReadyToMove, WaitForOpponent, Lost, Won, Closed];
+    transitions[PlayState.RemoteOpponentInvited] = [InvitationRejected, RemoteOpponentAccepted];
+    transitions[PlayState.InvitationPending] = [InvitationRejected, InvitationAccepted_ReadyToMove, InvitationAccepted_WaitForOpponent];
+    transitions[PlayState.RemoteOpponentAccepted] = [WaitForOpponent, Resigned];
+    transitions[PlayState.InvitationAccepted_WaitForOpponent] = [ReadyToMove, OpponentResigned];
+    transitions[PlayState.InvitationAccepted_ReadyToMove] = [WaitForOpponent, Resigned];
+    transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won];
+    transitions[PlayState.ReadyToMove] = [WaitForOpponent, Resigned, Lost, Won];
+
+    return transitions;
+  }
 }
 
 /**
@@ -144,7 +177,7 @@ class PlayHeader {
   late String playId;
   late PlaySize playSize;
   PlayMode playMode = PlayMode.HyleX;
-  PlayState state = PlayState.Initialised;
+  PlayState _state = PlayState.Initialised;
   int currentRound = 0;
 
   // multi player attributes
@@ -167,15 +200,16 @@ class PlayHeader {
       this.playOpener) {
     playId = generateRandomString(playIdLength);
     actor = Actor.Invitor;
-    state = PlayState.RemoteOpponentInvited;
+    _state = PlayState.RemoteOpponentInvited;
   }
   
   PlayHeader.multiPlayInvitee(
       InviteMessage inviteMessage,
       CommunicationContext? comContext,
-      this.state) {
+      PlayState state) {
     playId = inviteMessage.playId;
     actor = Actor.Invitee;
+    _state = state;
     if (comContext != null) {
       commContext = comContext;
     }
@@ -190,13 +224,15 @@ class PlayHeader {
       this.playId,
       this.playSize,
       this.playMode,
-      this.state,
+      PlayState state,
       this.currentRound,
       this.actor,
       this.playOpener,
       this.opponentId,
       this.opponentName
-      );
+      ) {
+    _state = state;
+  }
 
   PlayHeader.fromJson(Map<String, dynamic> map) {
 
@@ -204,7 +240,7 @@ class PlayHeader {
 
     playSize = PlaySize.values.firstWhere((p) => p.name == map['playSize']);
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
-    state = PlayState.values.firstWhere((p) => p.name == map['state']);
+    _state = PlayState.values.firstWhere((p) => p.name == map['state']);
     currentRound = map['currentRound'];
     actor = Actor.values.firstWhere((p) => p.name == map['actor']);
 
@@ -231,11 +267,20 @@ class PlayHeader {
     
   }
 
+  PlayState get state {
+    return _state;
+  }
+
+  set state(PlayState newState) {
+    _state.checkTransition(newState, actor);
+    _state = newState;
+  }
+
   Map<String, dynamic> toJson() => {
     "playId" : playId,
     "playSize" : playSize.name,
     "playMode" : playMode.name,
-    "state" : state.name,
+    "state" : _state.name,
     "currentRound" : currentRound,
     "actor": actor.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
@@ -261,11 +306,14 @@ class PlayHeader {
 
   @override
   String toString() {
-    return 'PlayHeader{playId: $playId, state: $state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener, actor: $actor}';
+    return 'PlayHeader{playId: $playId, state: $_state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener, actor: $actor}';
   }
 
-  void init() {
+  void init(bool multiPlay) {
     currentRound = 1;
+    if (!multiPlay) {
+      _state = PlayState.Initialised;
+    }
   }
   
 }
@@ -383,7 +431,7 @@ class Play {
     _opponentCursor.clear();
     _selectionCursor.clear();
     _currentRole = Role.Chaos;
-    header.init();
+    header.init(multiPlay);
 
     _matrix = Matrix(Coordinate(dimension, dimension));
 
@@ -596,14 +644,15 @@ class Play {
     header.currentRound--;
   }
 
-  bool get waitForOpponent => header.state == PlayState.WaitForOpponent;
+  bool get waitForOpponent => header.state == PlayState.WaitForOpponent || header.state == PlayState.InvitationAccepted_WaitForOpponent;
 
 
   set waitForOpponent(bool wait) {
     if (wait) {
       header.state = PlayState.WaitForOpponent;
-    } else
-      header.state = PlayState.ReadyToMove;
+    } else if (header.state != PlayState.InvitationAccepted_ReadyToMove) {
+        header.state = PlayState.ReadyToMove;
+    }
   }
 
   bool isGameOver() {
