@@ -12,9 +12,18 @@ Download the early alpha here for testing: https://hyleX.jepfa.de/hylex.apk
 
 ### Multiplayer
 
-#### Invitation
+#### Invitation state transitions
 
-State model from the perspective of an invitor (initiator of an invitation):
+
+How to read:
+
+Boxes are PlayStates, arrows are allowed transitions. Text on arrows are Operations triggering the transitions.
+
+`->Operation` means an incoming/received operation from a message.
+`Operation->` means an outgoing/sent operation from a message.
+
+##### State model from the perspective of an invitor (initiator of an invitation):
+
 ```mermaid
 stateDiagram-v2
 
@@ -39,9 +48,11 @@ stateDiagram-v2
 ```
 
 
-State model from the perspective of the invitee (receiver of an invitation):
+##### State model from the perspective of the invitee (receiver of an invitation):
 
-Invitee has to perform first move:
+
+###### Invitee has to perform first move:
+
 ```mermaid
     stateDiagram-v2
     
@@ -66,7 +77,8 @@ Invitee has to perform first move:
 ```
 
 
-Invitee has to await first move from invitor:
+###### Invitee has to await first move from invitor:
+
 ```mermaid
     stateDiagram-v2
     
@@ -91,9 +103,15 @@ Invitee has to await first move from invitor:
 ```
 
 
-### Play state transitions
+#### Play state transitions
 
-Sequence flow if an invitation gets rejected:
+How to read:
+
+Boxes are PlayStates, arrows are allowed transitions, indicating the direction. Text on arrows are Operations triggering the transitions.
+
+
+##### Sequence flow if an invitation gets rejected:
+
 ```mermaid
 sequenceDiagram
 
@@ -110,7 +128,8 @@ sequenceDiagram
 
 
 
-Sequence flow if an invitation gets accepted:
+##### Sequence flow if an invitation gets accepted:
+
 ```mermaid
 sequenceDiagram
 
