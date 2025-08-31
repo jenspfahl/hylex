@@ -160,7 +160,7 @@ enum PlayState {
     transitions[PlayState.InvitationPending] = [InvitationRejected, InvitationAccepted_ReadyToMove, InvitationAccepted_WaitForOpponent];
     transitions[PlayState.RemoteOpponentAccepted] = [WaitForOpponent, Resigned];
     transitions[PlayState.InvitationAccepted_WaitForOpponent] = [ReadyToMove, OpponentResigned];
-    transitions[PlayState.InvitationAccepted_ReadyToMove] = [WaitForOpponent, Resigned];
+    transitions[PlayState.InvitationAccepted_ReadyToMove] = [InvitationAccepted_WaitForOpponent, Resigned];
     transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won];
     transitions[PlayState.ReadyToMove] = [WaitForOpponent, Resigned, Lost, Won];
 
@@ -649,7 +649,10 @@ class Play {
 
   set waitForOpponent(bool wait) {
     if (wait) {
-      if (header.state != PlayState.InvitationAccepted_WaitForOpponent) {
+      if (header.state == PlayState.InvitationAccepted_ReadyToMove) {
+        header.state = PlayState.InvitationAccepted_WaitForOpponent;
+      }
+      else if (header.state != PlayState.InvitationAccepted_WaitForOpponent) {
         header.state = PlayState.WaitForOpponent;
       }
     } else {
