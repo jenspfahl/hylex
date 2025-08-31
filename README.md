@@ -15,22 +15,146 @@ Download the early alpha here for testing: https://hyleX.jepfa.de/hylex.apk
 #### Invitation
 
 State model from the perspective of an invitor (initiator of an invitation):
-![image](doc/states_invitor.svg)
+```mermaid
+stateDiagram-v2
+
+    [*] --> RemoteOpponentInvited: SendInvite->
+    RemoteOpponentInvited --> RemoteOpponentAccepted: ->AcceptInvite
+    RemoteOpponentInvited --> InvitationRejected: ->RejectInvite
+    InvitationRejected --> [*]
+    RemoteOpponentAccepted --> WaitForOpponent: Move->
+    RemoteOpponentAccepted --> Resigned: Resign->
+    ReadyToMove --> WaitForOpponent: Move->
+    WaitForOpponent --> ReadyToMove: ->Move
+    ReadyToMove --> Lost: Move->
+    ReadyToMove --> Won: Move->
+    ReadyToMove --> Resigned: Resign->
+    WaitForOpponent --> Lost: ->Move
+    WaitForOpponent --> Won: ->Move
+    WaitForOpponent --> OpponentResigned: ->Resign    
+    Lost --> [*]
+    Won --> [*]
+    Resigned --> [*]
+    OpponentResigned --> [*]
+```
 
 
 State model from the perspective of the invitee (receiver of an invitation):
-![image](doc/states_invitee.svg)
+
+Invitee has to perform first move:
+```mermaid
+    stateDiagram-v2
+    
+        [*] --> InvitationPending: ->SendInvite
+        InvitationPending --> InvitationAccepted_ReadyToMove: AcceptInvite->
+        InvitationPending --> InvitationRejected: RejectInvite->
+        InvitationRejected --> [*]
+        InvitationAccepted_ReadyToMove --> WaitForOpponent: Move->
+        InvitationAccepted_ReadyToMove --> Resigned: Resign->
+        ReadyToMove --> WaitForOpponent: Move->
+        WaitForOpponent --> ReadyToMove: ->Move
+        ReadyToMove --> Lost: Move->
+        ReadyToMove --> Won: Move->
+        ReadyToMove --> Resigned: Resign->
+        WaitForOpponent --> Lost: ->Move
+        WaitForOpponent --> Won: ->Move
+        WaitForOpponent --> OpponentResigned: ->Resign    
+        Lost --> [*]
+        Won --> [*]
+        Resigned --> [*]
+        OpponentResigned --> [*]
+```
 
 
-### Play state model
+Invitee has to await first move from invitor:
+```mermaid
+    stateDiagram-v2
+    
+        [*] --> InvitationPending: ->SendInvite
+        InvitationPending --> InvitationAccepted_WaitForOpponent: AcceptInvite->
+        InvitationPending --> InvitationRejected: RejectInvite->
+        InvitationRejected --> [*]
+        InvitationAccepted_WaitForOpponent --> ReadyToMove: ->Move
+        InvitationAccepted_WaitForOpponent --> OpponentResigned: ->Resign
+        ReadyToMove --> WaitForOpponent: Move->
+        WaitForOpponent --> ReadyToMove: ->Move
+        ReadyToMove --> Lost: Move->
+        ReadyToMove --> Won: Move->
+        ReadyToMove --> Resigned: Resign->
+        WaitForOpponent --> Lost: ->Move
+        WaitForOpponent --> Won: ->Move
+        WaitForOpponent --> OpponentResigned: ->Resign    
+        Lost --> [*]
+        Won --> [*]
+        Resigned --> [*]
+        OpponentResigned --> [*]
+```
 
-State model flow if an invitation gets rejected:
-![image](doc/invitation_rejected.svg)
+
+### Play state transitions
+
+Sequence flow if an invitation gets rejected:
+```mermaid
+sequenceDiagram
+
+    actor Local as Invitor
+    actor Remote as Invitee
+
+    Local->>+Remote: <SendInvite>
+    Note over Local: [RemoteOpponentInvited]
+    Note over Remote: [InvitationPending]
+    Remote-->>-Local: <RejectInvite>
+    Note over Local: [InvitationRejected]
+    Note over Remote: [InvitationRejected]
+```
 
 
 
-State model flow if an invitation gets accepted:
-![image](doc/invitation_accepted.svg)
+Sequence flow if an invitation gets accepted:
+```mermaid
+sequenceDiagram
+
+    actor Local as Invitor
+    actor Remote as Invitee
+
+    Local->>+Remote: <SendInvite>
+    Note over Local: [RemoteOpponentInvited]
+    Note over Remote: [InvitationPending]
+
+
+    alt Invitor starts
+        Remote-->>-Local: <AcceptInvite>
+
+        Note over Remote: [InvitationAccepted_WaitForOpponent]
+        Note over Local: [RemoteOpponentAccepted]
+
+    else Invitee starts with initial move
+
+        Note over Remote: [InvitationAccepted_ReadyToMove]
+        Remote-->>Local: <AcceptInvite with Move>
+        Note over Remote: [InvitationAccepted_WaitForOpponent]
+
+
+        Note over Local: [RemoteOpponentAccepted]
+    
+
+    end
+
+
+
+    loop actual play
+        Local->>+Remote: <Move>
+        Note over Local: [WaitForOpponent]
+        Note over Remote: [ReadyToMove]
+
+
+        Remote->>-Local: <Move>
+        Note over Remote: [WaitForOpponent]
+        Note over Local: [ReadyToMove]
+    end
+
+```
+
 
 
 

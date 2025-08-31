@@ -649,9 +649,13 @@ class Play {
 
   set waitForOpponent(bool wait) {
     if (wait) {
-      header.state = PlayState.WaitForOpponent;
-    } else if (header.state != PlayState.InvitationAccepted_ReadyToMove) {
+      if (header.state != PlayState.InvitationAccepted_WaitForOpponent) {
+        header.state = PlayState.WaitForOpponent;
+      }
+    } else {
+      if (header.state != PlayState.InvitationAccepted_ReadyToMove) {
         header.state = PlayState.ReadyToMove;
+      }
     }
   }
 
