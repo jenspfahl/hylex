@@ -57,10 +57,10 @@ stateDiagram-v2
     stateDiagram-v2
     
         [*] --> InvitationPending: ->SendInvite
-        InvitationPending --> InvitationAccepted_ReadyToMove: AcceptInvite->
+        InvitationPending --> InvitationAccepted_ReadyToMove
         InvitationPending --> InvitationRejected: RejectInvite->
         InvitationRejected --> [*]
-        InvitationAccepted_ReadyToMove --> InvitationAccepted_WaitForOpponent: Move->
+        InvitationAccepted_ReadyToMove --> InvitationAccepted_WaitForOpponent: AcceptInvite(with move)->
         InvitationAccepted_ReadyToMove --> Resigned: Resign->
         ReadyToMove --> WaitForOpponent: Move->
         InvitationAccepted_WaitForOpponent --> ReadyToMove: ->Move

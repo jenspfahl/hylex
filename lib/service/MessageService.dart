@@ -26,10 +26,9 @@ class MessageService {
 
 
   sendCurrentPlayState(PlayHeader playHeader, User user, Function()? sentHandler) {
-    final actor = playHeader.actor;
-    if (!playHeader.state.forActors.contains(actor)) {
+    if (!playHeader.isStateShareable()) {
       // cannot send this state
-      print("Actor $actor is not allowed to send a message for state ${playHeader.state}");
+      print("It is not possible to send a message for state ${playHeader.state}");
       return;
     }
     switch (playHeader.state) {
@@ -48,6 +47,8 @@ class MessageService {
         sendInvitationRejected(playHeader, user, sentHandler);
         break;
       }
+      case PlayState.Lost:
+      case PlayState.Won:
       case PlayState.WaitForOpponent: {
         if (playHeader.actor == Actor.Invitee && playHeader.currentRound == 1) {
           StorageService().loadPlayFromHeader(playHeader).then((play) {
@@ -72,21 +73,12 @@ class MessageService {
       case PlayState.ReadyToMove:
       case PlayState.InvitationPending:
       case PlayState.RemoteOpponentAccepted:
+      case PlayState.OpponentResigned:
+      case PlayState.Closed:
       case PlayState.Initialised: {
         debugPrint("nothing to send for ${playHeader.state}, take action instead!");
       }
-      case PlayState.Lost:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case PlayState.Won:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-        case PlayState.OpponentResigned:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case PlayState.Closed:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+
     }
   }
 

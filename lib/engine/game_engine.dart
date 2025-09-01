@@ -22,7 +22,7 @@ abstract class GameEngine extends ChangeNotifier {
   double? get progressRatio;
 
   void startGame() {
-    _doPlayerMove();
+    _doNextPlayerMove();
   }
   
   void stopGame() {
@@ -44,7 +44,7 @@ abstract class GameEngine extends ChangeNotifier {
     savePlayState(); //TODO save by listening to notify listener
     notifyListeners();
 
-    _doPlayerMove();
+    _doNextPlayerMove();
   }
   
   void pauseGame() {
@@ -105,16 +105,21 @@ abstract class GameEngine extends ChangeNotifier {
     return winner;
   }
 
-  void _doPlayerMove();
+  void _doNextPlayerMove();
 
   /**
    * Called when the opponent move is ready to be applied to the current game and play state.
    */
-  opponentMoveReceived(Move move) {
+  opponentMoveReceived(Move opponentMove) {
     debugPrint("opponent move received");
 
-    play.applyStaleMove(move);
-    play.opponentCursor.adaptFromMove(move);
+    final result = play.validateMove(opponentMove);
+    if (result != null) {
+      //TODO handle invalid opponent move gracefully
+    }
+
+    play.applyStaleMove(opponentMove);
+    play.opponentCursor.adaptFromMove(opponentMove);
     play.opponentCursor.markTraceForDoneMove();
     play.commitMove();
 
@@ -149,7 +154,7 @@ class SinglePlayerGameEngine extends GameEngine {
 
   SinglePlayerGameEngine(Play play, User user): super(play, user);
 
-  void _doPlayerMove() {
+  void _doNextPlayerMove() {
     if (play.currentPlayer == PlayerType.LocalAi) {
       _think();
     }
@@ -201,8 +206,9 @@ class MultiPlayerGameEngine extends GameEngine {
   MultiPlayerGameEngine(Play play, User user): super(play, user);
   
 
-  void _doPlayerMove() {
+  void _doNextPlayerMove() {
 
+    //TODO this should be called before play.switchRole() happens
     if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
       play.waitForOpponent = true;
       savePlayState();
@@ -212,21 +218,9 @@ class MultiPlayerGameEngine extends GameEngine {
 
   void shareGameMove() {
 
-    MessageService().sendCurrentPlayState(play.header, user, null);
-
-    /*
-    final lastMove = play.lastMoveFromJournal;
-    final moveCount = play.journal.length;
-    final isAcceptInvite = play.header.actor == Actor.Invitee && play.header.playOpener == PlayOpener.Invitee;
-    if (moveCount <= 1 && isAcceptInvite) {
-      MessageService().sendInvitationAccepted(play.header, user, lastMove, null);
+    if (play.header.isStateShareable()) {
+      MessageService().sendCurrentPlayState(play.header, user, null);
     }
-    else if (lastMove != null) {
-      MessageService().sendMove(play.header, user, lastMove, null);
-    }
-    else {
-      throw Exception("No last move but there should");
-    }*/
   }
 
   @override

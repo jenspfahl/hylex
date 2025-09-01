@@ -135,14 +135,20 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       children: [
 
                           Visibility(
-                            visible: playHeader.state == PlayState.WaitForOpponent || playHeader.state == PlayState.ReadyToMove,
+                            visible: playHeader.state.hasGameBoard,
                             child: IconButton(onPressed: (){
                               _startMultiPlayerGame(
                                   context, playHeader);
                             }, icon: Icon(Icons.not_started_outlined)),
                           ),
                           IconButton(onPressed: (){
-                            MessageService().sendCurrentPlayState(playHeader, widget.user, null);
+                            if (playHeader.isStateShareable()) {
+                              MessageService().sendCurrentPlayState(
+                                  playHeader, widget.user, null);
+                            }
+                            else {
+                              buildAlertDialog("Nothing to share, take action instead");
+                            }
                           }, icon: GestureDetector(
                               child: Icon(Icons.near_me),
                               onLongPress: () => _showMultiPlayTestDialog(playHeader),

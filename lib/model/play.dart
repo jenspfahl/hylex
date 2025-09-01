@@ -51,49 +51,51 @@ import 'move.dart';
 enum PlayState {
   
   // Initial state for single play
-  Initialised({Actor.Single}, false),
+  Initialised({Actor.Single}, false, false, false),
 
   // only if multiPlay == true and current == inviting player, if an invitation has been sent out
-  RemoteOpponentInvited({Actor.Invitor}, false),
+  RemoteOpponentInvited({Actor.Invitor}, true, false, false),
 
   // only if multiPlay == true, when an invitation has been received but not replied
-  InvitationPending({Actor.Invitee}, false),
+  InvitationPending({Actor.Invitee}, false, false, false),
 
   // only if multiPlay == true, when an invitation has been accepted by the remote player
-  RemoteOpponentAccepted({Actor.Invitor}, false),
+  RemoteOpponentAccepted({Actor.Invitor}, false, true, false),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player and has to perform the first moe
-  InvitationAccepted_ReadyToMove({Actor.Invitee}, false),
+  InvitationAccepted_ReadyToMove({Actor.Invitee}, false, true, false),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player and awaits the first move from the invitor
-  InvitationAccepted_WaitForOpponent({Actor.Invitee}, false),
+  InvitationAccepted_WaitForOpponent({Actor.Invitee}, true, true, false),
 
   // only if multiPlay == true, when an invitation has been rejected by invited player
-  InvitationRejected({Actor.Invitor, Actor.Invitee}, true), // final state
+  InvitationRejected({Actor.Invitor, Actor.Invitee}, true, false, true), // final state
 
   // Current player can move
-  ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false),
+  ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false, true, false),
 
   // Current play is waiting for remote opponent to move (either RemoteUser or Ai)
-  WaitForOpponent({Actor.Single, Actor.Invitor, Actor.Invitee}, false),
+  WaitForOpponent({Actor.Single, Actor.Invitor, Actor.Invitee}, true, true, false),
 
   // current player lost. If both players on a single play are human, this is not used
-  Lost({Actor.Single, Actor.Invitor, Actor.Invitee}, true), // final state
+  Lost({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true), // final state
 
   // current player won. If both players on a single play are human, this is not used
-  Won({Actor.Single, Actor.Invitor, Actor.Invitee}, true), // final state
+  Won({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true), // final state
 
   // current player resigned (and the remote opponent won therefore). If both players on a single play are human, this is not used
-  Resigned({Actor.Invitor, Actor.Invitee}, true), // final state
+  Resigned({Actor.Invitor, Actor.Invitee}, true, true, true), // final state
 
   // opponent player resigned (and the current opponent won therefore). If both players on a single play are human, this is not used
-  OpponentResigned({Actor.Invitor, Actor.Invitee}, true), // final state
+  OpponentResigned({Actor.Invitor, Actor.Invitee}, false, true, true), // final state
 
   // used if both players on a single play are human or any other final state like no invitation response etc..
-  Closed({Actor.Single}, true); // final state
+  Closed({Actor.Single}, false, false, true); // final state
 
-  const PlayState(this.forActors, this.isFinal);
+  const PlayState(this.forActors, this.isShareable, this.hasGameBoard, this.isFinal);
   final Set<Actor> forActors;
+  final bool? isShareable; // if null (won or lost), shareable depends on we dod the last move (it is usually chaos)
+  final bool hasGameBoard;
   final bool isFinal;
 
   checkTransition(PlayState newPlayState, Actor forActor) {
@@ -161,8 +163,8 @@ enum PlayState {
     transitions[PlayState.RemoteOpponentAccepted] = [WaitForOpponent, Resigned];
     transitions[PlayState.InvitationAccepted_WaitForOpponent] = [ReadyToMove, OpponentResigned];
     transitions[PlayState.InvitationAccepted_ReadyToMove] = [InvitationAccepted_WaitForOpponent, Resigned];
-    transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won];
-    transitions[PlayState.ReadyToMove] = [WaitForOpponent, Resigned, Lost, Won];
+    transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won, Closed];
+    transitions[PlayState.ReadyToMove] = [WaitForOpponent, Resigned, Lost, Won, Closed];
 
     return transitions;
   }
@@ -313,6 +315,16 @@ class PlayHeader {
     currentRound = 1;
     if (!multiPlay) {
       _state = PlayState.Initialised;
+    }
+  }
+
+  bool isStateShareable() {
+    if (state.isShareable == null) {
+      // Chaos does the last move
+      return actor.getActorRoleFor(playOpener) == Role.Chaos;
+    }
+    else {
+      return state.isShareable == true;
     }
   }
   
