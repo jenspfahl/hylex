@@ -193,7 +193,7 @@ class AcceptInviteMessage extends Message {
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
     writeString(writer, invitedUserId, userIdLength);
     writeString(writer, invitedPlayerName, maxNameLength);
-    if (playOpenerDecision == PlayOpener.Invitee) {
+    if (playOpenerDecision == PlayOpener.Invitee && initialMove != null) {
       writeMove(writer, initialMove!);
     }
   }

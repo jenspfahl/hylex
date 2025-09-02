@@ -116,8 +116,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildGameBody() {
     return WillPopScope(
       onWillPop: () async {
-        ask('Leave current game?', () {
-          gameEngine.pauseGame();
+        ask('Leave current game?', () async {
+          await gameEngine.pauseGame(); //await to get the play saved to avoid race conditions
           Navigator.pop(super.context); // go to start page
         });
         return false;
@@ -139,11 +139,11 @@ class _HyleXGroundState extends State<HyleXGround> {
                             return;
                           }
       
-                          setState(() {
+                          setState(() async {
                             if (gameEngine.play.hasStaleMove) {
                               gameEngine.play.undoStaleMove();
                               gameEngine.play.selectionCursor.clear();
-                              gameEngine.savePlayState();
+                              await gameEngine.savePlayState();
                             }
                             else {
       
@@ -156,13 +156,13 @@ class _HyleXGroundState extends State<HyleXGround> {
                               }
 
                               ask(message, () {
-                                  setState(() {
+                                  setState(() async {
                                     final lastMove = gameEngine.play.undoLastMove();
                                     if (lastMove == null) {
                                       gameEngine.startGame();
                                     }
                                     toastInfo(context, "Undo competed");
-                                    gameEngine.savePlayState();
+                                    await gameEngine.savePlayState();
                                   });
                                 });
                             }
@@ -231,12 +231,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
                         onPressed: () => {
 
-                          ask('Wanna give up?', () {
+                          ask('Wanna give up?', () async {
                             gameEngine.play.header.state = PlayState.Resigned;
+                            await gameEngine.stopGame();
+
+                            //TODO register lost game
+
                             MessageService().sendResignation(gameEngine.play.header, widget.user,
                                     () => StorageService().savePlayHeader(gameEngine.play.header));
-                            //TODO register lost game
-                            gameEngine.stopGame();
 
                           })
                         },
@@ -246,8 +248,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                       icon: const Icon(Icons.exit_to_app),
                       onPressed: () => {
       
-                        ask('Leave current game?', () {
-                              gameEngine.pauseGame();
+                        ask('Leave current game?', () async {
+                              await gameEngine.pauseGame();
                               Navigator.pop(super.context); // go to start page
                             })
                       },
@@ -463,8 +465,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildSubmitButton(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
       return FilledButton(
-        onPressed: () {
-          gameEngine.stopGame();
+        onPressed: () async {
+          await gameEngine.stopGame();
           gameEngine.startGame();
         },
         child: const Text("Restart"),

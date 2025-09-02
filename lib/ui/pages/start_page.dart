@@ -98,50 +98,62 @@ class StartPageState extends State<StartPage>
     final extractOperation = serializedMessage.extractOperation();
     final header = await StorageService().loadPlayHeader(playId);
 
-    debugPrint("received: [$playId] ${extractOperation.name}");
-    if (extractOperation == Operation.SendInvite) {
-      if (header != null) {
-        buildAlertDialog("You already reacted to this invite. See ${header.getReadablePlayId()}");
-        //TODO add button to jump to this match entry
+    try {
+      debugPrint("received: [$playId] ${extractOperation.name}");
+      if (extractOperation == Operation.SendInvite) {
+        if (header != null) {
+          buildAlertDialog("You already reacted to this invite. See ${header
+              .getReadablePlayId()}");
+          //TODO add button to jump to this match entry
+        }
+        else {
+          final comContext = CommunicationContext();
+          final (message, error) = serializedMessage.deserialize(comContext);
+          if (message != null) {
+            _handleReceiveInvite(message as InviteMessage, comContext);
+          }
+          else if (error != null) {
+            buildAlertDialog(error);
+          }
+        }
+      }
+      else if (header == null) {
+        buildAlertDialog("Match ${toReadableId(serializedMessage
+            .extractPlayId())} is not present! Did you delete it?");
+      }
+      else if (header.state.isFinal) {
+        buildAlertDialog("Match ${toReadableId(
+            serializedMessage.extractPlayId())} is already finished (${header
+            .state.toMessage()}).");
       }
       else {
-        final comContext = CommunicationContext();
-        final (message, error) = serializedMessage.deserialize(comContext);
-        if (message != null) {
-          _handleReceiveInvite(message as InviteMessage, comContext);
-        }
-        else if (error != null) {
+        final (message, error) = serializedMessage.deserialize(
+            header.commContext);
+        if (error != null) {
           buildAlertDialog(error);
         }
+        else if (extractOperation == Operation.AcceptInvite) {
+          _handleInviteAccepted(header, message as AcceptInviteMessage);
+        }
+        else if (extractOperation == Operation.RejectInvite) {
+          _handleInviteRejected(header, message as RejectInviteMessage);
+        }
+        else if (extractOperation == Operation.Move) {
+          _handleMove(header, message as MoveMessage);
+        }
+        else if (extractOperation == Operation.Resign) {
+          _handleResign(header, message as ResignMessage);
+        }
+        else {
+          buildAlertDialog("Unknown operation for $extractOperation for ${header
+              .getReadablePlayId()}");
+        }
       }
-    }
-    else if (header == null) {
-      buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is not present! Did you delete it?");
-    }
-    else if (header.state.isFinal) {
-      buildAlertDialog("Match ${toReadableId(serializedMessage.extractPlayId())} is already finished (${header.state.toMessage()}).");
-    }
-    else {
-      final (message, error) = serializedMessage.deserialize(header.commContext);
-      if (error != null) {
-        buildAlertDialog(error);
-      }
-      else if (extractOperation == Operation.AcceptInvite) {
-        _handleInviteAccepted(header, message as AcceptInviteMessage);
-      }
-      else if (extractOperation == Operation.RejectInvite) {
-        _handleInviteRejected(header, message as RejectInviteMessage);
-      }
-      else if (extractOperation == Operation.Move) {
-        _handleMove(header, message as MoveMessage);
-      }
-      else if (extractOperation == Operation.Resign) {
-        _handleResign(header, message as ResignMessage);
-      }
-      else {
-        buildAlertDialog("Unknown operation for $extractOperation for ${header.getReadablePlayId()}");
-      }
+    } on Exception catch (e) {
+      debugPrintStack();
+      debugPrint(e.toString());
 
+      buildAlertDialog("Cannot handle this message!");
     }
 
   }
@@ -191,15 +203,10 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _handleAcceptInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
-    final header = PlayHeader.multiPlayInvitee(
-        receivedInviteMessage,
-        comContext,
-        receivedInviteMessage.playOpener == PlayOpener.Invitor
-            ? PlayState.InvitationAccepted_WaitForOpponent
-            : PlayState.InvitationAccepted_ReadyToMove);
-    await StorageService().savePlayHeader(header);
     if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
       _selectInvitedMultiPlayerOpener(context, (playOpener) async {
+        final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
+
         header.playOpener = playOpener;
         await StorageService().savePlayHeader(header);
     
@@ -207,19 +214,34 @@ class StartPageState extends State<StartPage>
           _startMultiPlayerGame(context, header);
         }
         else {
-          // reply back, they have to start
+          // reply back, invitor has to start
           MessageService().sendInvitationAccepted(header, _user, null,
                   () => StorageService().savePlayHeader(header));
         }
       });
     }
     else if (receivedInviteMessage.playOpener == PlayOpener.Invitee) {
+      final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
+
       _startMultiPlayerGame(context, header);
     }
     else if (receivedInviteMessage.playOpener == PlayOpener.Invitor) {
+      final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
+
       MessageService().sendInvitationAccepted(header, _user, null,
               () => StorageService().savePlayHeader(header));
     }
+  }
+
+  Future<PlayHeader> _createAndStoreNewMultiPlay(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
+    final header = PlayHeader.multiPlayInvitee(
+        receivedInviteMessage,
+        comContext,
+        receivedInviteMessage.playOpener == PlayOpener.Invitor
+            ? PlayState.InvitationAccepted_WaitForOpponent
+            : PlayState.InvitationAccepted_ReadyToMove);
+    await StorageService().savePlayHeader(header);
+    return header;
   }
 
 

@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/MessageService.dart';
+import 'package:hyle_x/ui/dialogs.dart';
 
 import '../model/common.dart';
 import '../model/move.dart';
@@ -21,19 +22,16 @@ abstract class GameEngine extends ChangeNotifier {
 
   double? get progressRatio;
 
-  void startGame() {
-    _doNextPlayerMove();
-  }
+  void startGame();
   
-  void stopGame() {
+  Future<void> stopGame() async {
     _cleanUp();
     play.reset();
-    savePlayState();
+    await savePlayState();
     notifyListeners();
   }
 
-  void nextPlayer() {
-    play.waitForOpponent = false;
+  Future<void> nextPlayer() async {
     if (play.isGameOver()) {
       debugPrint("Game over, no next round");
       _finish();
@@ -41,21 +39,23 @@ abstract class GameEngine extends ChangeNotifier {
     }
 
     play.nextPlayer();
-    savePlayState(); //TODO save by listening to notify listener
+
     notifyListeners();
 
     _doNextPlayerMove();
+
+    await savePlayState();
   }
   
-  void pauseGame() {
-    savePlayState();
+  Future<void> pauseGame() async {
+    await savePlayState();
     _cleanUp();
   }
 
   bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
 
-  void savePlayState() {
-    StorageService().savePlay(play);
+  Future<bool> savePlayState() async {
+    return StorageService().savePlay(play);
   }
 
   
@@ -110,12 +110,14 @@ abstract class GameEngine extends ChangeNotifier {
   /**
    * Called when the opponent move is ready to be applied to the current game and play state.
    */
-  opponentMoveReceived(Move opponentMove) {
+  opponentMoveReceived(Move opponentMove) async {
     debugPrint("opponent move received");
 
     final result = play.validateMove(opponentMove);
     if (result != null) {
-      //TODO handle invalid opponent move gracefully
+      debugPrint("opponent move $opponentMove is invalid: $result");
+      buildAlertDialog("Cannot apply opponent's move. Reason: $result");
+      return;
     }
 
     play.applyStaleMove(opponentMove);
@@ -125,15 +127,14 @@ abstract class GameEngine extends ChangeNotifier {
 
     play.waitForOpponent = false;
 
-
     if (play.isGameOver()) {
       _finish();
-      notifyListeners();
     }
     else {
-      notifyListeners();
-      nextPlayer();
+      await nextPlayer();
     }
+    notifyListeners();
+
   }
   
   
@@ -153,6 +154,10 @@ class SinglePlayerGameEngine extends GameEngine {
   SendPort? _aiControlPort;
 
   SinglePlayerGameEngine(Play play, User user): super(play, user);
+
+  void startGame() {
+    _doNextPlayerMove();
+  }
 
   void _doNextPlayerMove() {
     if (play.currentPlayer == PlayerType.LocalAi) {
@@ -204,14 +209,14 @@ class MultiPlayerGameEngine extends GameEngine {
 
 
   MultiPlayerGameEngine(Play play, User user): super(play, user);
-  
+
+  void startGame() {
+  }
 
   void _doNextPlayerMove() {
 
-    //TODO this should be called before play.switchRole() happens
     if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
       play.waitForOpponent = true;
-      savePlayState();
       shareGameMove();
     }
   }

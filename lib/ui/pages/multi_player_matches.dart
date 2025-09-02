@@ -47,7 +47,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               }),
           ],
         ),
-        body: FutureBuilder<List<PlayHeader>>(
+        body: FutureBuilder<List<PlayHeader>>( //TODO use ListView.builder and a List state
             future: StorageService().loadAllPlayHeaders(),
             builder: (BuildContext context,
                 AsyncSnapshot<List<PlayHeader>> snapshot) {
@@ -200,11 +200,16 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           return HyleXGround(
               widget.user,
               play ?? Play.newMultiPlay(header));
-        }));
+        })).then((_) {
+          // reload when navigating back
+          setState(() {
+
+            debugPrint("reload all play header"); //TODO doesnt seem to work at all
+          });
+    });
   }
 
   _showMultiPlayTestDialog(PlayHeader playHeader) {
-    if (!playHeader.state.isFinal) {
       SmartDialog.show(
           builder: (_) {
             return RemoteTestWidget(
@@ -214,7 +219,6 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               },
             );
           });
-    }
   }
 
 }

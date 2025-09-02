@@ -60,6 +60,9 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       allowedRemoteOperations = [Operation.SendInvite];
     }
     else {
+
+      remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
+
       final localPlayState = localPlayHeader.state;
 
       if (localPlayState == PlayState.RemoteOpponentInvited) {
@@ -81,9 +84,6 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                 }
               });
         });
-
-        remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
-
       }
       else  {
         allowedRemoteOperations = [];
@@ -244,13 +244,13 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     return const Text("");
   }
   Widget _buildMoveParams() {
-    final remoteRole = widget.playHeader!.getLocalRole()!.opponentRole;
+    final remoteRole = widget.playHeader?.getLocalRole()?.opponentRole;
     final roleChooser = _buildChoseParam(
         "Role", 
             () => role??Role.Chaos,
             (x) => role = x, 
         Role.values,
-        [remoteRole]
+        [remoteRole??Role.Chaos]
     );
 
     if (role == Role.Chaos) {
@@ -478,10 +478,14 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
   void _sendMessage(bool share) {
     final finalRemoteHeader = remoteHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
-    
-    SerializedMessage message = _createMessage(finalRemoteHeader, share);
-    if (!share && widget.messageHandler != null) {
-      widget.messageHandler!(message);
+
+    try {
+      SerializedMessage message = _createMessage(finalRemoteHeader, share);
+      if (!share && widget.messageHandler != null) {
+        widget.messageHandler!(message);
+      }
+    } on Exception catch(e) {
+      buildAlertDialog("An error occurred: ${e.toString()}");
     }
   }
 
@@ -524,7 +528,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         localPlayHeader.playId,
         playSize,
         playMode,
-        PlayState.Initialised, //TODO
+        PlayState.Initialised,
         localPlayHeader.currentRound,
         localPlayHeader.actor.opponentActor(),
         playOpener,

@@ -777,6 +777,14 @@ class Play {
     if (isGameOver()) {
       return "Game is already over";
     }
+
+    if (currentRole == Role.Chaos && !move.isPlaced()) {
+      return "This move is not allowed for Chaos";
+    }
+    if (currentRole == Role.Order && move.isPlaced()) {
+      return "This move is not allowed for Order";
+    }
+
     if (move.isMove()) {
       final from = move.from;
       final to = move.to;
