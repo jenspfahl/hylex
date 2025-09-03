@@ -28,7 +28,6 @@ abstract class GameEngine extends ChangeNotifier {
     _cleanUp();
     play.reset();
     await savePlayState();
-    notifyListeners();
   }
 
   Future<void> nextPlayer() async {
@@ -39,8 +38,6 @@ abstract class GameEngine extends ChangeNotifier {
     }
 
     play.nextPlayer();
-
-    notifyListeners();
 
     _doNextPlayerMove();
 
@@ -54,8 +51,18 @@ abstract class GameEngine extends ChangeNotifier {
 
   bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
 
+  undoLastMove() async {
+    final lastMove = play.undoLastMove();
+    if (lastMove == null) {
+      startGame();
+    }
+    await savePlayState();
+  }
+
   Future<bool> savePlayState() async {
-    return StorageService().savePlay(play);
+    final saved = await StorageService().savePlay(play);
+    notifyListeners();
+    return saved;
   }
 
   
@@ -102,6 +109,8 @@ abstract class GameEngine extends ChangeNotifier {
     
     _handleGameOver();
 
+    savePlayState();
+
     return winner;
   }
 
@@ -133,8 +142,6 @@ abstract class GameEngine extends ChangeNotifier {
     else {
       await nextPlayer();
     }
-    notifyListeners();
-
   }
   
   
@@ -182,7 +189,7 @@ class SinglePlayerGameEngine extends GameEngine {
   void _think() {
     play.waitForOpponent = true;
     aiLoad = null;
-    notifyListeners();
+    savePlayState();
 
     var autoplayDelayInSec = 250;
     Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInSec :  0), () {

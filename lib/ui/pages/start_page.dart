@@ -11,7 +11,6 @@ import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/utils/fortune.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../model/common.dart';
 import '../../model/messaging.dart';
@@ -33,7 +32,7 @@ enum MenuMode {
 }
 
 
-GlobalKey<StartPageState> globalMessageKey = GlobalKey();
+GlobalKey<StartPageState> globalStartPageKey = GlobalKey();
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -444,7 +443,7 @@ class StartPageState extends State<StartPage>
                   clickHandler: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                          return MultiPlayerMatches(_user);
+                          return MultiPlayerMatches(_user, key: globalMultiPlayerMatchesKey,);
                         }));
                   }
                 )

@@ -13,7 +13,7 @@ class HylexApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: new StartPage(
-        key: globalMessageKey
+        key: globalStartPageKey
       ),
     );
   }

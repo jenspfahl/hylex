@@ -15,6 +15,8 @@ import '../ui_utils.dart';
 import 'game_ground.dart';
 
 
+GlobalKey<MultiPlayerMatchesState> globalMultiPlayerMatchesKey = GlobalKey();
+
 class MultiPlayerMatches extends StatefulWidget {
 
   final User user;
@@ -22,10 +24,10 @@ class MultiPlayerMatches extends StatefulWidget {
   const MultiPlayerMatches(this.user, {super.key});
 
   @override
-  State<MultiPlayerMatches> createState() => _MultiPlayerMatchesState();
+  State<MultiPlayerMatches> createState() => MultiPlayerMatchesState();
 }
 
-class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
+class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
 
 
@@ -47,7 +49,7 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               }),
           ],
         ),
-        body: FutureBuilder<List<PlayHeader>>( //TODO use ListView.builder and a List state
+        body: FutureBuilder<List<PlayHeader>>(
             future: StorageService().loadAllPlayHeaders(),
             builder: (BuildContext context,
                 AsyncSnapshot<List<PlayHeader>> snapshot) {
@@ -215,10 +217,16 @@ class _MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             return RemoteTestWidget(
               playHeader: playHeader,
               messageHandler: (message) {
-                globalMessageKey.currentState?.handleReceivedMessage(message.toUri());
+                globalStartPageKey.currentState?.handleReceivedMessage(message.toUri());
               },
             );
           });
+  }
+
+  void playHeaderChanged() {
+    setState(() {
+      debugPrint("enforce reload of play headers");
+    });
   }
 
 }

@@ -2,12 +2,12 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:app_links/app_links.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/service/MessageService.dart';
+import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -71,6 +71,9 @@ class _HyleXGroundState extends State<HyleXGround> {
           widget.user);
     }
     gameEngine.addListener(() {
+
+      globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
+
       if (!_gameOverShown && gameEngine.play.isGameOver()) {
         _showGameOver(context);
         _gameOverShown = true;
@@ -157,12 +160,8 @@ class _HyleXGroundState extends State<HyleXGround> {
 
                               ask(message, () {
                                   setState(() async {
-                                    final lastMove = gameEngine.play.undoLastMove();
-                                    if (lastMove == null) {
-                                      gameEngine.startGame();
-                                    }
+                                    await gameEngine.undoLastMove();
                                     toastInfo(context, "Undo competed");
-                                    await gameEngine.savePlayState();
                                   });
                                 });
                             }

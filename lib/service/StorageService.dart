@@ -81,9 +81,13 @@ class StorageService {
   }
 
   Future<Play?> loadPlayFromHeader(PlayHeader header) async {
-    final key = _getPlayKey(header.playId);
-    final play = await _loadPlay(key);
-    play?.header = header;
+    debugPrint("Load play from header $header");
+    final reloadedHeader = await _loadPlayHeader(_getPlayHeaderKey(header.playId));
+    if (reloadedHeader == null) {
+      return Future.value(null);
+    }
+    final play = await _loadPlay(_getPlayKey(header.playId));
+    play?.header = reloadedHeader;
     return play;
   }
 
