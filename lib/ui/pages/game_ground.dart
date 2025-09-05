@@ -63,25 +63,22 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (widget.play.multiPlay) {
       gameEngine = MultiPlayerGameEngine(
           widget.play,
-          widget.user);
+          widget.user,
+          _handleGameOver
+      );
     }
     else {
       gameEngine = SinglePlayerGameEngine(
           widget.play,
-          widget.user);
+          widget.user,
+          _handleGameOver
+      );
     }
-    gameEngine.addListener(() {
 
-      globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
-
-      if (!_gameOverShown && gameEngine.play.isGameOver()) {
-        _showGameOver(context);
-        _gameOverShown = true;
-      }
-    });
 
     fgbgSubscription = FGBGEvents.instance.stream.listen((event) {
       if (event == FGBGType.background) {
+        // TODO could be removed, we save whenever we change the play
         gameEngine.savePlayState();
       }
     });
@@ -96,9 +93,19 @@ class _HyleXGroundState extends State<HyleXGround> {
     
   }
 
+  _handleGameOver() {
+    if (!_gameOverShown) {
+      _showGameOver(context);
+      _gameOverShown = true;
+    }
+  }
+
   _gameListener() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        debugPrint("update UI");
+      });
+      globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
     }
   }
 
@@ -172,31 +179,47 @@ class _HyleXGroundState extends State<HyleXGround> {
                     ),
                     IconButton(
                         onPressed: () {
-                          showModalBottomSheet(
+                          showModalBottomSheet( //TODO add handle to enlarge or close
                               context: context,
+
                               builder: (BuildContext context) {
-                                final elements = gameEngine.play.journal
-                                    .indexed
-                                    .map((e) => _buildJournalEvent(e))
-                                    .toList()
-                                    .reversed
-                                    .toList();
-      
-                                elements.add(const Text("------ Game started ------"));
-                                if (gameEngine.play.isGameOver()) {
-                                  elements.insert(0, const Text("------ Game over ------"));
-                                }
-                                return Container(
-                                  height: 250, // Set your desired height
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
-                                    child: SingleChildScrollView(
-                                      child: Center(
-                                        child: Column(children: elements),
+
+                                return StatefulBuilder(
+                                  builder: (BuildContext context, setState) {
+
+                                    // TODO potential memory leak, this listener is never removed within an ongoing play
+                                    gameEngine.addListener(() {
+                                      if (context.mounted) {
+                                        setState((){});
+                                      }
+                                    });
+
+                                    final elements = gameEngine.play.journal
+                                        .indexed
+                                        .map((e) => _buildJournalEvent(e))
+                                        .toList()
+                                        .reversed
+                                        .toList();
+
+                                    elements.add(const Text("------ Game started ------"));
+                                    if (gameEngine.play.isGameOver()) {
+                                      elements.insert(0, const Text("------ Game over ------"));
+                                    }
+                                    return Container(
+                                      height: 250, // Set your desired height
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
+                                        child: SingleChildScrollView(
+                                          child: Center(
+                                            child: Column(children: elements),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 );
+
+
                             },
                           );
                         },
@@ -225,21 +248,13 @@ class _HyleXGroundState extends State<HyleXGround> {
                       ),
                     ),
                     Visibility(
-                      visible: gameEngine.play.isMultiplayerPlay && !gameEngine.play.waitForOpponent,
+                      visible: gameEngine.play.isMultiplayerPlay && !gameEngine.play.waitForOpponent &&!gameEngine.play.isGameOver(),
                       child: IconButton(
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
-                        onPressed: () => {
-
+                        onPressed: () {
                           ask('Wanna give up?', () async {
-                            gameEngine.play.header.state = PlayState.Resigned;
-                            await gameEngine.stopGame();
-
-                            //TODO register lost game
-
-                            MessageService().sendResignation(gameEngine.play.header, widget.user,
-                                    () => StorageService().savePlayHeader(gameEngine.play.header));
-
-                          })
+                            await gameEngine.resignGame();
+                          });
                         },
                       ),
                     ),
@@ -405,7 +420,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildHint(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
-      return Text(_buildWinnerText(),
+      return Text(_buildWinnerOrLooserText(),
           style: TextStyle(fontWeight: FontWeight.bold));
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
@@ -419,15 +434,43 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
   }
 
-  String _buildWinnerText() {
+  String _buildWinnerOrLooserText() {
     final winnerRole = gameEngine.play.getWinnerRole();
     final winnerPlayer = gameEngine.play.getWinnerPlayer();
-    var winnerPlayerName = winnerPlayer == PlayerType.LocalUser
-        ? "You"
-        : winnerPlayer == PlayerType.LocalAi
-          ? "Computer"
-          : "Remote opponent";
-    return "Game over! ${winnerRole.name} (${winnerPlayerName}) wins this game!";
+
+    if (gameEngine.play.isFullAutomaticPlay || gameEngine.play.isBothSidesSinglePlay) {
+      return "Game over! ${winnerRole.name} won this game!";
+    }
+    else if (gameEngine.play.isWithAiPlay) {
+      if (winnerPlayer == PlayerType.LocalUser) {
+        return "Game over! You (${winnerRole.name}) won this game!";
+      }
+      else {
+        return "Game over! You (${winnerRole.opponentRole.name}) lost this game!";
+      }
+    }
+    else if (gameEngine.play.isMultiplayerPlay) {
+      var localRole = gameEngine.play.header.getLocalRoleForMultiPlay();
+
+      var cause = "";
+      if (gameEngine.play.header.state == PlayState.Resigned) {
+        cause = ", because you resigned";
+      }
+      else if (gameEngine.play.header.state == PlayState.OpponentResigned) {
+        cause = ", because the opponent resigned";
+      }
+
+      if (winnerRole == localRole) {
+        return "Game over! You (${localRole!.name}) won this game$cause!";
+      }
+      else {
+        return "Game over! You (${localRole!.name}) lost this game$cause!";
+      }
+    }
+    else {
+      return "";
+    }
+    
   }
 
   String _buildLooserText() {
@@ -463,13 +506,23 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildSubmitButton(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
+      if (gameEngine.play.isMultiplayerPlay)
       return FilledButton(
         onPressed: () async {
-          await gameEngine.stopGame();
-          gameEngine.startGame();
+          //TODO new message ask for redo the game, either with same roles or swapped.
+          buildAlertDialog('Asking for revenge is not yet implemented!', type: NotifyType.error);
         },
-        child: const Text("Restart"),
+        child: const Text("Ask for revenge"), //TODO if Classic mode, revenge with swapped role should happen, so Text("Swap role and continue")
       );
+      else {
+        return FilledButton(
+          onPressed: () async {
+            await gameEngine.stopGame();
+            gameEngine.startGame();
+          },
+          child: const Text("Restart"),
+        );
+      }
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalUser) {
       final isDirty = gameEngine.play.hasStaleMove;
@@ -553,17 +606,16 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _showGameOver(BuildContext context) {
-    setState(() {
-      if (gameEngine.play.isBothSidesSinglePlay || gameEngine.play.isFullAutomaticPlay) {
-        toastWonOrLost(context, _buildWinnerText());
-      }
-      else if (gameEngine.play.getWinnerPlayer() == PlayerType.LocalUser) {
-        toastWon(context, _buildWinnerText());
-      }
-      else {
-        toastLost(context, _buildLooserText());
-      }
-    });
+    if (gameEngine.play.isBothSidesSinglePlay || gameEngine.play.isFullAutomaticPlay) {
+      toastWonOrLost(context, _buildWinnerOrLooserText());
+    }
+    else if (gameEngine.play.getWinnerPlayer() == PlayerType.LocalUser) {
+      toastWon(context, _buildWinnerOrLooserText());
+    }
+    else {
+      toastLost(context, _buildLooserText());
+    }
+
   }
 
   Widget _buildRoleIndicator(Role role, PlayerType player, bool isLeftElseRight) {

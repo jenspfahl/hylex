@@ -17,8 +17,9 @@ abstract class GameEngine extends ChangeNotifier {
 
   User user;
   Play play;
+  Function() handleGameOver;
 
-  GameEngine(this.play, this.user);
+  GameEngine(this.play, this.user, this.handleGameOver);
 
   double? get progressRatio;
 
@@ -106,7 +107,8 @@ abstract class GameEngine extends ChangeNotifier {
     else {
       play.header.state = PlayState.Closed;
     }
-    
+
+    handleGameOver();
     _handleGameOver();
 
     savePlayState();
@@ -152,6 +154,8 @@ abstract class GameEngine extends ChangeNotifier {
   
   void _cleanUp();
 
+  resignGame();
+
 
 }
 
@@ -160,14 +164,14 @@ class SinglePlayerGameEngine extends GameEngine {
   Load? aiLoad;
   SendPort? _aiControlPort;
 
-  SinglePlayerGameEngine(Play play, User user): super(play, user);
+  SinglePlayerGameEngine(Play play, User user, Function() handleGameOver): super(play, user, handleGameOver);
 
   void startGame() {
     _doNextPlayerMove();
   }
 
   void _doNextPlayerMove() {
-    if (play.currentPlayer == PlayerType.LocalAi) {
+    if (!play.isGameOver() && play.currentPlayer == PlayerType.LocalAi) {
       _think();
     }
     // else the user has to do the move
@@ -209,13 +213,18 @@ class SinglePlayerGameEngine extends GameEngine {
     _aiControlPort?.send('KILL');
   }
 
+  @override
+  resignGame() {
+    //not implemented for single player
+  }
+
 }
 
 
 class MultiPlayerGameEngine extends GameEngine {
 
 
-  MultiPlayerGameEngine(Play play, User user): super(play, user);
+  MultiPlayerGameEngine(Play play, User user, Function() handleGameOver): super(play, user, handleGameOver);
 
   void startGame() {
   }
@@ -252,6 +261,18 @@ class MultiPlayerGameEngine extends GameEngine {
     if (play.currentPlayer == PlayerType.RemoteUser) {
       super.opponentMoveReceived(move);
     }
+  }
+
+  @override
+  resignGame() {
+    play.header.state = PlayState.Resigned;
+
+    savePlayState();
+    //TODO register lost game
+
+    MessageService().sendResignation(play.header, user,
+            () => StorageService().savePlayHeader(play.header));
+
   }
 
 }

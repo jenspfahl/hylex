@@ -184,15 +184,17 @@ class StartPageState extends State<StartPage>
             receivedInviteMessage,
             comContext,
             PlayState.InvitationRejected);
-        MessageService().sendInvitationRejected(header, _user, () => StorageService().savePlayHeader(header));
+        MessageService().sendInvitationRejected(header, _user, () async {
+          await _saveAndNotify(header);
+        });
       },
       thirdString: "Reply later",
-      thirdHandler: () {
+      thirdHandler: () async {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
             comContext,
             PlayState.InvitationPending);
-        StorageService().savePlayHeader(header);
+        await _saveAndNotify(header);
 
       },
       fourthString: "Cancel",
@@ -207,15 +209,17 @@ class StartPageState extends State<StartPage>
         final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
 
         header.playOpener = playOpener;
-        await StorageService().savePlayHeader(header);
-    
+        await _saveAndNotify(header);
+
         if (playOpener == PlayOpener.Invitee) {
           _startMultiPlayerGame(context, header);
         }
         else {
           // reply back, invitor has to start
           MessageService().sendInvitationAccepted(header, _user, null,
-                  () => StorageService().savePlayHeader(header));
+                  () async {
+                    await _saveAndNotify(header);
+                  });
         }
       });
     }
@@ -228,7 +232,9 @@ class StartPageState extends State<StartPage>
       final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
 
       MessageService().sendInvitationAccepted(header, _user, null,
-              () => StorageService().savePlayHeader(header));
+              () async {
+                await _saveAndNotify(header);
+              });
     }
   }
 
@@ -238,8 +244,8 @@ class StartPageState extends State<StartPage>
         comContext,
         receivedInviteMessage.playOpener == PlayOpener.Invitor
             ? PlayState.InvitationAccepted_WaitForOpponent
-            : PlayState.InvitationAccepted_ReadyToMove);
-    await StorageService().savePlayHeader(header);
+            : PlayState.InvitationAccepted_ReadyToMove); //TODO wrong if localUser is Order
+    await _saveAndNotify(header);
     return header;
   }
 
@@ -251,7 +257,7 @@ class StartPageState extends State<StartPage>
     else {
       header.state = PlayState.RemoteOpponentAccepted;
       header.playOpener = message.playOpenerDecision;
-      await StorageService().savePlayHeader(header);
+      await _saveAndNotify(header);
 
       buildAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
       StorageService().loadPlayFromHeader(header).then((play) {
@@ -265,13 +271,19 @@ class StartPageState extends State<StartPage>
     }
   }
 
-  void _handleInviteRejected(PlayHeader header, RejectInviteMessage message) {
+  Future<void> _saveAndNotify(PlayHeader header) async {
+    await StorageService().savePlayHeader(header);
+    globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
+  }
+
+  Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
     if (header.state == PlayState.InvitationRejected) {
       buildAlertDialog("Match ${header.getReadablePlayId()} already rejected.");
     }
     else {
       header.state = PlayState.InvitationRejected;
-      StorageService().savePlayHeader(header);
+      await _saveAndNotify(header);
+
       buildAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
     }
   }
@@ -291,7 +303,8 @@ class StartPageState extends State<StartPage>
 
   Future<void> _handleResign(PlayHeader header, ResignMessage message) async {
     header.state = PlayState.OpponentResigned;
-    await StorageService().savePlayHeader(header);
+    await _saveAndNotify(header);
+
     StorageService().loadPlayFromHeader(header).then((play) {
       if (play != null) {
         //TODO register win

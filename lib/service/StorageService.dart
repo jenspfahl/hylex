@@ -38,11 +38,11 @@ class StorageService {
   
   Future<bool> savePlay(Play play) async {
 
-    final headerKey = play.isMultiplayerPlay
+    final headerKey = play.multiPlay
         ? _getPlayHeaderKey(play.header.playId)
         : PreferenceService.DATA_CURRENT_PLAY_HEADER;
 
-    final key = play.isMultiplayerPlay
+    final key = play.multiPlay
         ? _getPlayKey(play.header.playId)
         : PreferenceService.DATA_CURRENT_PLAY;
 

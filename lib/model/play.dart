@@ -119,9 +119,9 @@ enum PlayState {
       case PlayState.Initialised: return "New game";
       case PlayState.RemoteOpponentInvited: return "Invitation sent out";
       case PlayState.InvitationPending: return "Open invitation needs response";
-      case PlayState.RemoteOpponentAccepted: return "Sent invitation accepted, please do your first more";
-      case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first more";
-      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for invitor''s first more";
+      case PlayState.RemoteOpponentAccepted: return "Sent invitation accepted, please do your first move";
+      case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first move";
+      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for inventor's first move";
       case PlayState.InvitationRejected: return "Invitation rejected";
       case PlayState.ReadyToMove: return "Your turn!";
       case PlayState.WaitForOpponent: return "Awaiting opponent's move";
@@ -302,7 +302,7 @@ class PlayHeader {
     return toReadableId(playId);
   }
 
-  Role? getLocalRole() {
+  Role? getLocalRoleForMultiPlay() {
     return actor.getActorRoleFor(playOpener);
   }
 
@@ -364,7 +364,7 @@ class Play {
   }
 
   Play.newMultiPlay(this.header) {
-    final actorRole = header.getLocalRole();
+    final actorRole = header.getLocalRoleForMultiPlay();
     if (actorRole == null) {
       throw Exception("When creating a multi play the play opener should be decided.");
     }
@@ -432,8 +432,18 @@ class Play {
     return _chaosPlayer;
   }
 
-  Role getWinnerRole() => _stats.getWinner();
-  Role getLooserRole() => _stats.getWinner().opponentRole;
+  Role getWinnerRole() {
+    if (multiPlay && header.state == PlayState.Resigned) {
+      return header.getLocalRoleForMultiPlay()!.opponentRole;
+    }
+    else if (multiPlay && header.state == PlayState.OpponentResigned) {
+      return header.getLocalRoleForMultiPlay()!;
+    }
+    else {
+      return _stats.getWinner();
+    }
+  }
+  Role getLooserRole() => getWinnerRole().opponentRole;
 
   // initialises the play state to get started
   void _init({required bool multiPlay}) {
@@ -605,7 +615,7 @@ class Play {
 
   PlayerType get currentPlayer => _currentRole == Role.Chaos ? _chaosPlayer : _orderPlayer;
 
-  bool get isMultiplayerPlay => _chaosPlayer == PlayerType.RemoteUser || _orderPlayer == PlayerType.RemoteUser;
+  bool get isMultiplayerPlay => _chaosPlayer == PlayerType.RemoteUser || _orderPlayer == PlayerType.RemoteUser; //TODO could be replaced with this.multiPlay
 
   bool get isBothSidesSinglePlay => _chaosPlayer == PlayerType.LocalUser && _orderPlayer == PlayerType.LocalUser;
 
@@ -675,7 +685,7 @@ class Play {
   }
 
   bool isGameOver() {
-    return !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace());
+    return (!hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) || header.state.isFinal;
   }
 
   startThinking(

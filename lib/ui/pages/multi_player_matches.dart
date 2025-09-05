@@ -53,7 +53,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             future: StorageService().loadAllPlayHeaders(),
             builder: (BuildContext context,
                 AsyncSnapshot<List<PlayHeader>> snapshot) {
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) { //TODO sort by creation date, add sort and group options
                 return SingleChildScrollView(
                   child: Container(
                     color: Theme
@@ -182,7 +182,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   String _getHeaderBodyLine(PlayHeader playHeader) {
-    final localRole = playHeader.getLocalRole();
+    final localRole = playHeader.getLocalRoleForMultiPlay();
     var roleString = "";
     if (localRole != null) {
       roleString = "as ${localRole.name}";

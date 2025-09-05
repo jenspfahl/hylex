@@ -74,7 +74,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       else if (!localPlayState.isFinal) {
         allowedRemoteOperations = [Operation.Move, Operation.Resign];
 
-        role = localPlayHeader.getLocalRole()?.opponentRole;
+        role = localPlayHeader.getLocalRoleForMultiPlay()?.opponentRole;
         StorageService().loadPlayFromHeader(localPlayHeader)
             .then((localPlay) {
               setState(() {
@@ -102,7 +102,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     if (widget.playHeader != null) {
       header += " for ${widget.playHeader!.getReadablePlayId()}";
       subHeader = widget.playHeader.toString();
-      subHeader += " ${widget.playHeader!.getLocalRole()}";
+      subHeader += " ${widget.playHeader!.getLocalRoleForMultiPlay()}";
     }
     List<Widget> children = [
       const Text(""),
@@ -244,7 +244,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     return const Text("");
   }
   Widget _buildMoveParams() {
-    final remoteRole = widget.playHeader?.getLocalRole()?.opponentRole;
+    final remoteRole = widget.playHeader?.getLocalRoleForMultiPlay()?.opponentRole;
     final roleChooser = _buildChoseParam(
         "Role", 
             () => role??Role.Chaos,
@@ -412,7 +412,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     final allChips = <GameChip>[];
     var legalChips = <GameChip>[];
     final currentChip = localPlay?.currentChip;
-    if (currentChip != null && widget.playHeader?.getLocalRole()?.opponentRole == Role.Chaos) {
+    if (currentChip != null && widget.playHeader?.getLocalRoleForMultiPlay()?.opponentRole == Role.Chaos) {
       legalChips.add(currentChip);
     }
     final chipCount = widget.playHeader?.dimension ?? 0;
