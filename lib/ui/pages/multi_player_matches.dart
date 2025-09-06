@@ -144,7 +144,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             }, icon: Icon(Icons.not_started_outlined)),
                           ),
                           IconButton(onPressed: (){
-                            if (playHeader.isStateShareable()) {
+                            if (playHeader.state == PlayState.InvitationPending) {
+                              globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                            }
+                            else if (playHeader.isStateShareable()) {
                               MessageService().sendCurrentPlayState(
                                   playHeader, widget.user, null);
                             }

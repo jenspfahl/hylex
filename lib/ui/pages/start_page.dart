@@ -204,11 +204,17 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _handleAcceptInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
-    if (receivedInviteMessage.playOpener == PlayOpener.InvitedPlayerChooses) {
-      _selectInvitedMultiPlayerOpener(context, (playOpener) async {
-        final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
 
+    final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext, _getStateFromPlayOpener(receivedInviteMessage.playOpener));
+    return _handleAcceptInviteWithHeader(header);
+  }
+
+
+  Future<void> _handleAcceptInviteWithHeader(PlayHeader header) async {
+    if (header.playOpener == PlayOpener.InvitedPlayerChooses) {
+      _selectInvitedMultiPlayerOpener(context, (playOpener) async {
         header.playOpener = playOpener;
+        header.state = _getStateFromPlayOpener(playOpener);
         await _saveAndNotify(header);
 
         if (playOpener == PlayOpener.Invitee) {
@@ -218,33 +224,33 @@ class StartPageState extends State<StartPage>
           // reply back, invitor has to start
           MessageService().sendInvitationAccepted(header, _user, null,
                   () async {
-                    await _saveAndNotify(header);
-                  });
+                await _saveAndNotify(header);
+              });
         }
       });
     }
-    else if (receivedInviteMessage.playOpener == PlayOpener.Invitee) {
-      final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
+    else if (header.playOpener == PlayOpener.Invitee) {
+      header.playOpener = header.playOpener!;
+      header.state = _getStateFromPlayOpener(header.playOpener!);
+      await _saveAndNotify(header);
 
       _startMultiPlayerGame(context, header);
     }
-    else if (receivedInviteMessage.playOpener == PlayOpener.Invitor) {
-      final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext);
-
+    else if (header.playOpener == PlayOpener.Invitor) {
+      header.playOpener = header.playOpener!;
+      header.state = _getStateFromPlayOpener(header.playOpener!);
       MessageService().sendInvitationAccepted(header, _user, null,
               () async {
-                await _saveAndNotify(header);
-              });
+            await _saveAndNotify(header);
+          });
     }
   }
 
-  Future<PlayHeader> _createAndStoreNewMultiPlay(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
+  Future<PlayHeader> _createAndStoreNewMultiPlay(InviteMessage receivedInviteMessage, CommunicationContext comContext, PlayState state) async {
     final header = PlayHeader.multiPlayInvitee(
         receivedInviteMessage,
         comContext,
-        receivedInviteMessage.playOpener == PlayOpener.Invitor
-            ? PlayState.InvitationAccepted_WaitForOpponent
-            : PlayState.InvitationAccepted_ReadyToMove); //TODO wrong if localUser is Order
+        state);
     await _saveAndNotify(header);
     return header;
   }
@@ -961,6 +967,43 @@ class StartPageState extends State<StartPage>
         messageHandler: (message) => _handleMessage(message),
       );
     });
+  }
+
+  void handleReplyToInvitation(PlayHeader playHeader) {
+    var dimension = playHeader.playSize.toDimension();
+
+    buildChoiceDialog(
+      "${playHeader.opponentName} invited you to a ${playHeader.playMode.name.toLowerCase()} $dimension x $dimension match.",
+      width: 300,
+      firstString: "Accept",
+      firstHandler: () {
+        // first ask for your name
+        if (_user.name.isEmpty) {
+          _inputUserName(context, (username) =>
+              _handleAcceptInviteWithHeader(playHeader));
+        }
+        else {
+          _handleAcceptInviteWithHeader(playHeader);
+        }
+
+
+      },
+      secondString: "Reject",
+      secondHandler: () {
+        playHeader.state = PlayState.InvitationRejected;
+        MessageService().sendInvitationRejected(playHeader, _user, () async {
+          await _saveAndNotify(playHeader);
+        });
+      },
+      thirdString: "Cancel",
+      thirdHandler: () {},
+    );
+  }
+
+  PlayState _getStateFromPlayOpener(PlayOpener playOpener) {
+    return playOpener == PlayOpener.Invitor
+        ? PlayState.InvitationAccepted_WaitForOpponent
+        : PlayState.InvitationAccepted_ReadyToMove;
   }
 
 

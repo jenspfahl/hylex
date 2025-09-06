@@ -509,6 +509,15 @@ String? _validateSignature(List<int> blob, CommunicationContext comContext, Stri
   print("roundTrip Sig ${comContext.roundTripSignature}");
   if (signature != comparingSignature) {
     print("signature mismatch $signature != $comparingSignature");
+    final alreadyProcessed = comContext.messageHistory
+        .where((m) => m.serializedMessage.signature == comparingSignature)
+        .firstOrNull;
+    if (alreadyProcessed != null) {
+      if (alreadyProcessed.channel == Channel.Out) {
+        return "This link was intended for your opponent, not for you!";
+      }
+      return "This link with signature $comparingSignature already processed by you";
+    }
     return "This link is not the latest of the current match.";
   }
   else {
