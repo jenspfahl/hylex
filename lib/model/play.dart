@@ -121,7 +121,7 @@ enum PlayState {
       case PlayState.InvitationPending: return "Open invitation needs response";
       case PlayState.RemoteOpponentAccepted: return "Sent invitation accepted, please do your first move";
       case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first move";
-      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for inventor's first move";
+      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for invitor's first move";
       case PlayState.InvitationRejected: return "Invitation rejected";
       case PlayState.ReadyToMove: return "Your turn!";
       case PlayState.WaitForOpponent: return "Awaiting opponent's move";
@@ -519,7 +519,7 @@ class Play {
       _matrix.move(move.from!, move.to!);
     }
     else if (!move.skipped) {
-      _matrix.put(move.from!, move.chip!, _stock);
+      _matrix.put(move.to!, move.chip!, _stock);
     }
     _staleMove = move;
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
@@ -561,7 +561,7 @@ class Play {
       _matrix.move(move.to!, move.from!);
     }
     else if (!move.skipped) {
-      _matrix.remove(move.from!, _stock);
+      _matrix.remove(move.to!, _stock);
     }
 
     if (_staleMove == move) {
@@ -586,7 +586,7 @@ class Play {
     if (currentRole == Role.Chaos) {
       // transition from Order to Chaos
 
-      nextChip();
+      nextChip(); //TODO for multiplayer s tis should be done by the Chaos side only --> that means stick should be reduced when we receive the place-move!!!!!
       incRound();
     }
 
@@ -777,9 +777,9 @@ class Play {
   }
 
 
-  // returns null if the moe is valid
+  // returns null if the move is valid
   String? validateMove(Move move) {
-    if (!move.skipped && move.chip == null && move.from != null) {
+    if (move.isMove() && move.chip == null) {
       // if move came from a message, the chip can be null (for order only)
       move.chip = _matrix.getChip(move.from!);
     }

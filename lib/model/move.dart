@@ -9,7 +9,7 @@ import 'cursor.dart';
 
 
 /**
- * A Move is a game move, which can either be a placed chip (initiated by Chaos) or
+ * A Move is a game move, which can either be a placed chip (initiated by Chaos, set as to) or
  * a move of an already placed chip from a source cell to a free destination cell (initiated by Order).
  * If a chip was not moved (Order skipped to move), the source and the destination are null.
  */
@@ -52,7 +52,7 @@ class Move {
   /**
    * A Chaos move
    */
-  Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: where, to: where, skipped: false);
+  Move.placed(GameChip chip, Coordinate where): this(chip: chip, from: null, to: where, skipped: false);
 
   /**
    * An possible Order move
@@ -71,7 +71,7 @@ class Move {
 
   bool isMove() => !skipped && from != to && from != null && to != null;
 
-  bool isPlaced() => !isMove() && !skipped;
+  bool isPlaced() => chip != null && from == null && to != null && !skipped;
 
   /**
    * Derives the initiating role from the move according to the game rules.
@@ -131,7 +131,7 @@ class Move {
       return "${chip?.name??"?"}@$from->$to";
     }
     else {
-      return "${chip?.name??"?"}@$from";
+      return "${chip?.name??"?"}@$to";
     }
   }
 

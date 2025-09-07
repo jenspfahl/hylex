@@ -383,7 +383,7 @@ class MinimaxStrategy extends Strategy {
       matrix.move(move.from!, move.to!);
     }
     else if (move.isPlaced()) {
-      matrix.put(move.from!, currentChip!);
+      matrix.put(move.to!, currentChip!);
     }
   }
 

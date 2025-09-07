@@ -298,7 +298,6 @@ class StartPageState extends State<StartPage>
 
     StorageService().loadPlayFromHeader(header).then((play) {
       if (play != null) {
-        play.header.state = PlayState.ReadyToMove;
         _continueMultiPlayerGame(context, play, message.move);
       }
       else {

@@ -120,7 +120,7 @@ class Cursor {
       updateEnd(move.to!);
     }
     else if (!move.skipped) {
-      updateEnd(move.from!);
+      updateEnd(move.to!);
     }
   }
 

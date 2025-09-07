@@ -409,16 +409,26 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       GameChip? Function() getValue, 
       Function(GameChip) setValue, 
 ) {
-    final allChips = <GameChip>[];
-    var legalChips = <GameChip>[];
-    final currentChip = localPlay?.currentChip;
-    if (currentChip != null && widget.playHeader?.getLocalRoleForMultiPlay()?.opponentRole == Role.Chaos) {
-      legalChips.add(currentChip);
-    }
     final chipCount = widget.playHeader?.dimension ?? 0;
+    final allChips = <GameChip>[];
     for (int i=0; i < chipCount; i++) {
       allChips.add(new GameChip(i));
     }
+
+    var legalChips = <GameChip>[];
+    if (widget.playHeader?.getLocalRoleForMultiPlay()?.opponentRole == Role.Chaos) {
+      if (widget.playHeader!.state == PlayState.InvitationAccepted_WaitForOpponent) {
+        // that means remote user is Chaos and every chip can be drawn
+        legalChips.addAll(allChips);
+      }
+      else if (localPlay != null) {
+        final chipsWithStock = localPlay!.stock.getStockEntries()
+            .where((e) => e.amount > 0)
+            .map((e) => e.chip);
+        legalChips.addAll(chipsWithStock);
+      }
+    }
+
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -441,7 +451,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                 value: chip,
                 child: Text(chip.getChipName(),
                   style: TextStyle(
-                      decoration: legalChips?.contains(chip) == true ? TextDecoration.none : TextDecoration.lineThrough,
+                      decoration: legalChips.contains(chip) == true ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
                       backgroundColor: Colors.black,
                       decorationColor: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
@@ -507,7 +517,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   Move _createMove() {
-    return Move(skipped: skip || from == to, from: from, to: to, chip: chip);
+    if (chip != null && role == Role.Chaos) {
+      return Move.placed(chip!, to);
+    }
+    else if (role == Role.Order) {
+      return Move(skipped: skip || from == to, from: from, to: to, chip: chip);
+    }
+    else {
+      throw Exception("Illegal move data");
+    }
   }
 
   List<Coordinate> _createAllCoordinates(int dimension) {
