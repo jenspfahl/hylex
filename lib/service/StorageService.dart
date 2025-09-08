@@ -96,6 +96,9 @@ class StorageService {
     debugPrint("Load all headers");
     final keys = await PreferenceService().getKeys(PreferenceService.DATA_PLAY_HEADER_PREFIX);
 
+    if (keys.isEmpty) {
+      return Future.value(<PlayHeader>[]);
+    }
     final futures = keys
         .map((key) => PreferenceService().getString(key));
 

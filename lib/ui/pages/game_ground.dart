@@ -64,6 +64,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       gameEngine = MultiPlayerGameEngine(
           widget.play,
           widget.user,
+          context,
           _handleGameOver
       );
     }
@@ -71,6 +72,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       gameEngine = SinglePlayerGameEngine(
           widget.play,
           widget.user,
+          context,
           _handleGameOver
       );
     }
@@ -206,7 +208,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                       elements.insert(0, const Text("------ Game over ------"));
                                     }
                                     return Container(
-                                      height: 250, // Set your desired height
+                                      height: 250,
                                       child: Padding(
                                         padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
                                         child: SingleChildScrollView(

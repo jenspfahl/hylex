@@ -184,7 +184,7 @@ class StartPageState extends State<StartPage>
             receivedInviteMessage,
             comContext,
             PlayState.InvitationRejected);
-        MessageService().sendInvitationRejected(header, _user, () async {
+        MessageService().sendInvitationRejected(header, _user, context, () async {
           await _saveAndNotify(header);
         });
       },
@@ -222,7 +222,7 @@ class StartPageState extends State<StartPage>
         }
         else {
           // reply back, invitor has to start
-          MessageService().sendInvitationAccepted(header, _user, null,
+          MessageService().sendInvitationAccepted(header, _user, null, context,
                   () async {
                 await _saveAndNotify(header);
               });
@@ -239,7 +239,7 @@ class StartPageState extends State<StartPage>
     else if (header.playOpener == PlayOpener.Invitor) {
       header.playOpener = header.playOpener!;
       header.state = _getStateFromPlayOpener(header.playOpener!);
-      MessageService().sendInvitationAccepted(header, _user, null,
+      MessageService().sendInvitationAccepted(header, _user, null, context,
               () async {
             await _saveAndNotify(header);
           });
@@ -678,7 +678,7 @@ class StartPageState extends State<StartPage>
 
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user,
+    MessageService().sendRemoteOpponentInvitation(header, _user, context,
             () => StorageService().savePlayHeader(header));
   }
 
@@ -990,7 +990,7 @@ class StartPageState extends State<StartPage>
       secondString: "Reject",
       secondHandler: () {
         playHeader.state = PlayState.InvitationRejected;
-        MessageService().sendInvitationRejected(playHeader, _user, () async {
+        MessageService().sendInvitationRejected(playHeader, _user, context, () async {
           await _saveAndNotify(playHeader);
         });
       },

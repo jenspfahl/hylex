@@ -72,7 +72,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               }
               else if (snapshot.hasError) {
                 print("loading error: ${snapshot.error}");
-                return Center(child: Text("Cannot load stored matches!"));
+                return Center(child: Text("Cannot load stored matches!\n${snapshot.error}"));
               }
               else {
                 return Center(child: Text("No stored matches!"));
@@ -149,7 +149,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             }
                             else if (playHeader.isStateShareable()) {
                               MessageService().sendCurrentPlayState(
-                                  playHeader, widget.user, null);
+                                  playHeader, widget.user, context, null);
                             }
                             else {
                               buildAlertDialog("Nothing to share, take action instead");

@@ -17,9 +17,10 @@ abstract class GameEngine extends ChangeNotifier {
 
   User user;
   Play play;
+  BuildContext context;
   Function() handleGameOver;
 
-  GameEngine(this.play, this.user, this.handleGameOver);
+  GameEngine(this.play, this.user, this.context, this.handleGameOver);
 
   double? get progressRatio;
 
@@ -164,7 +165,8 @@ class SinglePlayerGameEngine extends GameEngine {
   Load? aiLoad;
   SendPort? _aiControlPort;
 
-  SinglePlayerGameEngine(Play play, User user, Function() handleGameOver): super(play, user, handleGameOver);
+  SinglePlayerGameEngine(Play play, User user, BuildContext context, Function() handleGameOver)
+      : super(play, user, context, handleGameOver);
 
   void startGame() {
     _doNextPlayerMove();
@@ -224,7 +226,8 @@ class SinglePlayerGameEngine extends GameEngine {
 class MultiPlayerGameEngine extends GameEngine {
 
 
-  MultiPlayerGameEngine(Play play, User user, Function() handleGameOver): super(play, user, handleGameOver);
+  MultiPlayerGameEngine(Play play, User user, BuildContext context, Function() handleGameOver)
+      : super(play, user, context, handleGameOver);
 
   void startGame() {
   }
@@ -240,7 +243,7 @@ class MultiPlayerGameEngine extends GameEngine {
   void shareGameMove() {
 
     if (play.header.isStateShareable()) {
-      MessageService().sendCurrentPlayState(play.header, user, null);
+      MessageService().sendCurrentPlayState(play.header, user, context, null);
     }
   }
 
@@ -270,7 +273,7 @@ class MultiPlayerGameEngine extends GameEngine {
     savePlayState();
     //TODO register lost game
 
-    MessageService().sendResignation(play.header, user,
+    MessageService().sendResignation(play.header, user, context,
             () => StorageService().savePlayHeader(play.header));
 
   }
