@@ -429,6 +429,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       }
     }
 
+    final firstValue = getValue() ?? allChips.first;
+    setValue(firstValue);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -437,7 +439,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 14),
         ),
         DropdownButton<GameChip>(
-          value: getValue() ?? allChips.first,
+          value: firstValue,
           dropdownColor: Colors.black,
           onChanged: (newValue) {
             setState(() {
@@ -524,7 +526,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       return Move(skipped: skip || from == to, from: from, to: to, chip: chip);
     }
     else {
-      throw Exception("Illegal move data");
+      throw Exception("Illegal move data for $role, $chip, $from, $to");
     }
   }
 

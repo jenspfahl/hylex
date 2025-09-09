@@ -8,6 +8,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
+import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -245,7 +246,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                       child: IconButton(
                         icon: const Icon(Icons.qr_code_scanner),
                         onPressed: () {
-                          buildAlertDialog('Scanning next move from QR code not yet implemented!', type: NotifyType.error);
+                          globalStartPageKey.currentState?.scanNextMove();
                         },
                       ),
                     ),
@@ -1042,5 +1043,6 @@ class _HyleXGroundState extends State<HyleXGround> {
       return "";
     }
   }
+
 }
 

@@ -3,9 +3,9 @@
 A Hyle (Entropy) board game clone
 
 
---- Still in development, Multiplayer mode not playable at the moment ! ---
+--- Still in development, Multiplayer is now playable but not error free so far ! ---
 
-Download the early alpha here for testing: https://hyleX.jepfa.de/hylex.apk
+Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
 
 ## Implementation
 

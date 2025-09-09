@@ -161,7 +161,7 @@ class MessageService {
     final moveMessage = MoveMessage(header.playId, header.currentRound, move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext);
 
-    return _shareMessage("This is my next move for round ${header.currentRound} as ${header.getLocalRoleForMultiPlay()!.name}.",
+    return _shareMessage("This is my next move for round ${header.currentRound} as ${header.getLocalRoleForMultiPlay()?.name}.",
         serializedMessage, context, sentHandler, share);
   }
 

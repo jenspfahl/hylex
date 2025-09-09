@@ -45,7 +45,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             IconButton(
               icon: const Icon(Icons.qr_code_scanner),
               onPressed: () {
-                buildAlertDialog('Scanning next move from QR code not yet implemented!', type: NotifyType.error);
+                globalStartPageKey.currentState?.scanNextMove();
               }),
           ],
         ),

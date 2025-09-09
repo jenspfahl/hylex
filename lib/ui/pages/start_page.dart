@@ -9,8 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/ui/pages/qr_reader.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/utils/fortune.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:qrcode_reading/qrcode_reading.dart';
 
 import '../../model/common.dart';
 import '../../model/messaging.dart';
@@ -43,8 +46,6 @@ class StartPage extends StatefulWidget {
 
 class StartPageState extends State<StartPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
 
   MenuMode _menuMode = MenuMode.None;
 
@@ -58,16 +59,6 @@ class StartPageState extends State<StartPage>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-    _animation = Tween<double>(begin: 18, end: 30).animate(_controller)
-      ..addListener(() {
-        setState(() {});
-      });
-    _controller.repeat(reverse: true);
-
 
     StorageService().loadUser().then((user) =>
         setState(() {
@@ -474,6 +465,7 @@ class StartPageState extends State<StartPage>
 
                 _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell("Got Invited", 3, icon: Icons.qr_code_scanner,
+                          clickHandler: scanNextMove,
                           longClickHandler: _showMultiPlayTestDialog
                        )
                     : _menuMode == MenuMode.More
@@ -726,7 +718,7 @@ class StartPageState extends State<StartPage>
           _buildChip("Y", 20, 20, chipPadding, 5),
           Text("X",
               style: TextStyle(
-                  fontSize: _animation.value,
+                  fontSize: 8,
                   fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.bold))
         ],
@@ -999,12 +991,83 @@ class StartPageState extends State<StartPage>
     );
   }
 
+  void scanNextMove() {
+    showModalBottomSheet( //TODO add handle to enlarge or close
+      context: context,
+
+      builder: (BuildContext context) {
+        _requestCameraPermission();
+
+        return StatefulBuilder(
+          builder: (BuildContext context, setState) {
+
+
+            return Container(
+              height: 170,
+
+              child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Scan opponents move or paste it if the App Link doesn't work:"),
+                      OutlinedButton(onPressed: () {
+                        Navigator.of(context).pop();
+
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                              return QrReaderPage((result) {
+                                final uri = Uri.parse(result);
+                                handleReceivedMessage(uri);
+                              });
+                            }));
+
+
+
+
+
+                      }, child: Text("Scan QR code")),
+                      FilledButton(onPressed: () {
+                        Navigator.of(context).pop();
+
+                        buildInputDialog('Paste the URL here',
+                          okHandler: (s) {
+                            final uri = Uri.parse(s);
+                            handleReceivedMessage(uri);
+                          },
+                        );
+                        }, child: Text("Paste URL")),
+                    ],
+                  )
+              ),
+            );
+          },
+        );
+
+
+      },
+    );
+
+  }
+
+
   PlayState _getStateFromPlayOpener(PlayOpener playOpener) {
     return playOpener == PlayOpener.Invitor
         ? PlayState.InvitationAccepted_WaitForOpponent
         : PlayState.InvitationAccepted_ReadyToMove;
   }
 
+  Future<void> _requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      status = await Permission.camera.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Camera permission is required to scan QR codes')),
+        );
+      }
+    }
+  }
 
 }
 

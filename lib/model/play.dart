@@ -586,8 +586,11 @@ class Play {
     if (currentRole == Role.Chaos) {
       // transition from Order to Chaos
 
-      nextChip(); //TODO for multiplayer s tis should be done by the Chaos side only --> that means stick should be reduced when we receive the place-move!!!!!
+      nextChip();
       incRound();
+    }
+    else {
+      _currentChip = null;
     }
 
   }
@@ -652,7 +655,13 @@ class Play {
   CommunicationContext get commContext => header.commContext;
 
   GameChip? nextChip() {
-    _currentChip = _stock.drawNext();
+    if (multiPlay && _chaosPlayer == PlayerType.RemoteUser) {
+      // don't show drawn chips by remote players as it happens remotely.
+      _currentChip = null;
+    }
+    else {
+      _currentChip = _stock.drawNext();
+    }
     return currentChip;
   }
 
