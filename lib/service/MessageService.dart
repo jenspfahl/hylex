@@ -188,7 +188,7 @@ class MessageService {
   }
 
   void _share(String shareMessage, SerializedMessage message, BuildContext context, Function()? sentHandler) {
-    showModalBottomSheet( //TODO add handle to enlarge or close
+    showModalBottomSheet(
       context: context,
 
       builder: (BuildContext context) {
@@ -198,14 +198,16 @@ class MessageService {
 
 
             return Container(
-              height: 170,
+              height: 220,
 
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisSize: MainAxisSize.max,
+                  spacing: 5,
                   children: [
-                    Text("Share your move with your opponent:"),
+                    Text("Share your request or move with your opponent:"),
                     OutlinedButton(onPressed: () {
                       Navigator.of(context).pop();
 

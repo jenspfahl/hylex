@@ -11,6 +11,7 @@ import 'coordinate.dart';
 import '../utils/fortune.dart';
 import 'move.dart';
 
+const shareBaseUrl = "https://hx.jepfa.de/";
 
 const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
 const maxDimension = 13;
@@ -352,7 +353,7 @@ class SerializedMessage {
   }
 
   String toUrl() {
-    return "https://hx.jepfa.de/$payload/$signature";
+    return "$shareBaseUrl$payload/$signature";
   }
 
   @override

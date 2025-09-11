@@ -20,55 +20,76 @@ class QrReaderPageState extends State<QrReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-        ),
-        actions: [
-          IconButton(
+    return WillPopScope(
+      onWillPop: () async {
+        setState(() {
+          _isFlashLightOn = false;
+        });
+        Navigator.pop(context);
+        return true;
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
             onPressed: () {
               setState(() {
-                _isFlashLightOn = !_isFlashLightOn;
+                _isFlashLightOn = false;
               });
+              Navigator.pop(context);
             },
-            icon: Icon(
-              _isFlashLightOn ? Icons.flash_off : Icons.flash_on,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: QRCodeReading(
-              isFlashLightOn: _isFlashLightOn,
-              pauseReading: pause,
-              onRead: (data) {
-                  Navigator.of(context).pop();
-                  widget.handleScannedData(data);
+          actions: [
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _isFlashLightOn = !_isFlashLightOn;
+                });
               },
-              errorWidget: Text("Cannot scan QR codes :((("),
-              loadingWidget: CircularProgressIndicator(color: Colors.black38),
-              overlayWidget: (constraints) => SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: Material(
-                  shape: ShapeQrCodeView(
-                    borderRadius: 32,
-                    borderLength: 40,
-                    borderColor: Colors.white,
+              icon: Icon(
+                _isFlashLightOn ? Icons.flash_off : Icons.flash_on,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: QRCodeReading(
+                isFlashLightOn: _isFlashLightOn,
+                pauseReading: pause,
+                onRead: (data) {
+
+                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                      setState(() {
+                        pause = true;
+                        _isFlashLightOn = false;
+                      });
+                    });
+                    Navigator.of(context).pop();
+                    widget.handleScannedData(data);
+                },
+                errorWidget: Text("Cannot scan QR code :((("),
+                loadingWidget: CircularProgressIndicator(color: Colors.black38),
+                overlayWidget: (constraints) => SizedBox(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  child: Material(
+                    shape: ShapeQrCodeView(
+                      borderRadius: 32,
+                      borderLength: 40,
+                      borderColor: Colors.white,
+                    ),
+                    color: Colors.transparent,
                   ),
-                  color: Colors.transparent,
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -40,9 +40,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   late PlayOpener playOpener = PlayOpener.InvitedPlayerChooses;
 
   Play? localPlay;
-  PlayHeader? remoteHeader;
-  
-  Role? role;
+
+  Role role = Role.Chaos;
   Coordinate from = Coordinate(0, 0);
   Coordinate to = Coordinate(0, 0);
   GameChip? chip;
@@ -61,8 +60,6 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     }
     else {
 
-      remoteHeader = createRemoteFromLocalHistory(localPlayHeader);
-
       final localPlayState = localPlayHeader.state;
 
       if (localPlayState == PlayState.RemoteOpponentInvited) {
@@ -74,7 +71,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       else if (!localPlayState.isFinal) {
         allowedRemoteOperations = [Operation.Move, Operation.Resign];
 
-        role = localPlayHeader.getLocalRoleForMultiPlay()?.opponentRole;
+        final opponentRole = localPlayHeader.getLocalRoleForMultiPlay()?.opponentRole;
+        if (opponentRole != null) {
+          role = opponentRole;
+        }
         StorageService().loadPlayFromHeader(localPlayHeader)
             .then((localPlay) {
               setState(() {
@@ -247,7 +247,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     final remoteRole = widget.playHeader?.getLocalRoleForMultiPlay()?.opponentRole;
     final roleChooser = _buildChoseParam(
         "Role", 
-            () => role??Role.Chaos,
+            () => role,
             (x) => role = x, 
         Role.values,
         [remoteRole??Role.Chaos]
@@ -489,14 +489,17 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   void _sendMessage(bool share) {
-    final finalRemoteHeader = remoteHeader ?? PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
+    final remoteHeader = widget.playHeader != null
+        ? createRemoteFromLocalHistory(widget.playHeader!)
+        : PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
     try {
-      SerializedMessage message = _createMessage(finalRemoteHeader, share);
+      SerializedMessage message = _createMessage(remoteHeader, share);
       if (!share && widget.messageHandler != null) {
         widget.messageHandler!(message);
       }
     } on Exception catch(e) {
+      print(e);
       buildAlertDialog("An error occurred: ${e.toString()}");
     }
   }
@@ -542,12 +545,12 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     
   }
 
-  PlayHeader? createRemoteFromLocalHistory(PlayHeader localPlayHeader) {
+  PlayHeader createRemoteFromLocalHistory(PlayHeader localPlayHeader) {
 
     final playHeader = PlayHeader.internal(
         localPlayHeader.playId,
-        playSize,
-        playMode,
+        localPlayHeader.playSize,
+        localPlayHeader.playMode,
         PlayState.Initialised,
         localPlayHeader.currentRound,
         localPlayHeader.actor.opponentActor(),

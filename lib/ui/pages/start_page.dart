@@ -571,7 +571,7 @@ class StartPageState extends State<StartPage>
       'Which role you will take?',
       firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
       secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
-      thirdString: "INVITED DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InvitedPlayerChooses),
+      thirdString: "INVITEE DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InvitedPlayerChooses),
     );
   }
 
@@ -587,7 +587,7 @@ class StartPageState extends State<StartPage>
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
     buildChoiceDialog(
-      'What kind of game fo you want to play? ',
+      'What kind of game do you want to play? ',
       firstString: "HYLEX-STYLE", firstHandler: () => handlePlayerMode(PlayMode.HyleX),
       secondString: "CLASSIC-STYLE", secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
@@ -669,6 +669,7 @@ class StartPageState extends State<StartPage>
       PlayMode playMode, PlayOpener playOpener) {
 
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
+    StorageService().savePlayHeader(header);
 
     MessageService().sendRemoteOpponentInvitation(header, _user, context,
             () => StorageService().savePlayHeader(header));
@@ -718,7 +719,7 @@ class StartPageState extends State<StartPage>
           _buildChip("Y", 20, 20, chipPadding, 5),
           Text("X",
               style: TextStyle(
-                  fontSize: 8,
+                  fontSize: 14,
                   fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.bold))
         ],
@@ -992,7 +993,7 @@ class StartPageState extends State<StartPage>
   }
 
   void scanNextMove() {
-    showModalBottomSheet( //TODO add handle to enlarge or close
+    showModalBottomSheet(
       context: context,
 
       builder: (BuildContext context) {
@@ -1003,27 +1004,27 @@ class StartPageState extends State<StartPage>
 
 
             return Container(
-              height: 170,
+              height: 220,
 
               child: Padding(
                   padding: const EdgeInsets.all(32),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisSize: MainAxisSize.max,
+                    spacing: 5,
                     children: [
-                      Text("Scan opponents move or paste it if the App Link doesn't work:"),
+                      Text("Scan opponents request or move or paste it if the App Link doesn't work:"),
                       OutlinedButton(onPressed: () {
                         Navigator.of(context).pop();
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
                               return QrReaderPage((result) {
+                                //TODO add error handling
                                 final uri = Uri.parse(result);
                                 handleReceivedMessage(uri);
                               });
                             }));
-
-
-
 
 
                       }, child: Text("Scan QR code")),
@@ -1032,7 +1033,12 @@ class StartPageState extends State<StartPage>
 
                         buildInputDialog('Paste the URL here',
                           okHandler: (s) {
-                            final uri = Uri.parse(s);
+                            final start = s.indexOf(shareBaseUrl);
+                            if (start == -1) {
+                              toastInfo(context, "Cannot parse this QR code");
+                            }
+                            final link = s.substring(start);
+                            final uri = Uri.parse(link);
                             handleReceivedMessage(uri);
                           },
                         );
