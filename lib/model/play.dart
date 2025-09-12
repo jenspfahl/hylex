@@ -600,7 +600,12 @@ class Play {
     if (lastMove != null) {
       _undoMove(lastMove);
 
-      _currentChip = lastMove.chip;
+      if (lastMove.isPlaced()) {
+        _currentChip = lastMove.chip;
+      }
+      else {
+        _currentChip = null;
+      }
 
       switchRole();
 

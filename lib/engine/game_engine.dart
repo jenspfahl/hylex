@@ -270,7 +270,6 @@ class MultiPlayerGameEngine extends GameEngine {
   resignGame() {
     play.header.state = PlayState.Resigned;
 
-    savePlayState();
     //TODO register lost game
 
     MessageService().sendResignation(play.header, user, context,

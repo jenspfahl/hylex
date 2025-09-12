@@ -178,16 +178,7 @@ class MessageService {
         serializedMessage, context, sentHandler, share);
   }
 
-  void sendMessage(String text, SerializedMessage message, BuildContext context,
-      Function()? sentHandler) {
-    final playId = message.extractPlayId();
-    final shareMessage = '[${toReadableId(playId)}] $text\n${message.toUrl()}';
-    debugPrint("sending: [${toReadableId(playId)}] $text");
-    debugPrint(" >>>>>>> ${message.toUrl()}");
-    _share(shareMessage, message, context, sentHandler);
-  }
-
-  void _share(String shareMessage, SerializedMessage message, BuildContext context, Function()? sentHandler) {
+  void _share(String shareMessage, SerializedMessage message, BuildContext context) {
     showModalBottomSheet(
       context: context,
 
@@ -248,10 +239,7 @@ class MessageService {
                     FilledButton(onPressed: () {
                       Navigator.of(context).pop();
                       SharePlus.instance.share(
-                          ShareParams(text: shareMessage, subject: 'HyleX interaction'))
-                          .then((result) {
-                        if (sentHandler != null) sentHandler();
-                      });
+                          ShareParams(text: shareMessage, subject: 'HyleX interaction'));
                     }, child: Text("As message")),
                   ],
                 )
@@ -270,17 +258,26 @@ class MessageService {
 
   SerializedMessage _shareMessage(
       String text,
-      SerializedMessage serializedMessage,
+      SerializedMessage message,
       BuildContext context,
       Function()? sentHandler,
       bool share
       ) {
 
+    final playId = message.extractPlayId();
+    final shareMessage = '[${toReadableId(playId)}] $text\n${message.toUrl()}';
+    debugPrint("sending: [${toReadableId(playId)}] $text");
+    debugPrint(" >>>>>>> ${message.toUrl()}");
     if (share) {
-      sendMessage(text, serializedMessage, context, sentHandler);
+      _share(shareMessage, message, context);
     }
 
-    return serializedMessage;
+    if (sentHandler != null) {
+      sentHandler();
+    }
+
+    return message;
+
   }
 
 }

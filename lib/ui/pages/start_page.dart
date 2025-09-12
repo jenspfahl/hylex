@@ -671,8 +671,9 @@ class StartPageState extends State<StartPage>
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
     StorageService().savePlayHeader(header);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user, context,
-            () => StorageService().savePlayHeader(header));
+    MessageService().sendRemoteOpponentInvitation(header, _user, context, () async {
+      await _saveAndNotify(header);
+    });
   }
 
   Widget _buildChip(String label, double radius, double textSize,
