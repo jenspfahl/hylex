@@ -1020,12 +1020,18 @@ class StartPageState extends State<StartPage>
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
-                              return QrReaderPage((result) {
-                                //TODO add error handling
-                                final uri = Uri.parse(result);
-                                handleReceivedMessage(uri);
-                              });
-                            }));
+                              return QrReaderPage();
+                            })).then((result) {
+                          if (result != null) {
+                            try {
+                              final uri = Uri.parse(result);
+                              handleReceivedMessage(uri);
+                            } catch (e) {
+                              print(e);
+                              buildAlertDialog("Cannot read this QR code!");
+                            }
+                          }
+                        });
 
 
                       }, child: Text("Scan QR code")),

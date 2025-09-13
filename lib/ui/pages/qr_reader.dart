@@ -5,9 +5,8 @@ import 'package:qrcode_reading/qrcode_reading.dart';
 
 
 class QrReaderPage extends StatefulWidget {
-  Function(String) handleScannedData;
 
-  QrReaderPage(this.handleScannedData);
+  const QrReaderPage();
 
   @override
   State<QrReaderPage> createState() => QrReaderPageState();
@@ -67,10 +66,12 @@ class QrReaderPageState extends State<QrReaderPage> {
                       setState(() {
                         pause = true;
                         _isFlashLightOn = false;
-                      });
+                      }); //TODO doesnt work
+                      if (Navigator.canPop(context)) {
+                        Navigator.of(context).pop(data);
+                      }
                     });
-                    Navigator.of(context).pop();
-                    widget.handleScannedData(data);
+
                 },
                 errorWidget: Text("Cannot scan QR code :((("),
                 loadingWidget: CircularProgressIndicator(color: Colors.black38),
