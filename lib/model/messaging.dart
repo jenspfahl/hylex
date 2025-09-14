@@ -12,6 +12,8 @@ import '../utils/fortune.dart';
 import 'move.dart';
 
 const shareBaseUrl = "https://hx.jepfa.de/";
+final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSensitive: false);
+
 
 const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
 const maxDimension = 13;
@@ -658,8 +660,8 @@ String readString(BitBufferReader reader) {
 
 extension StringExtenion on String {
   String toUrlSafe() {
-    return this.replaceAll(RegExp("#"), "-")
-        .replaceAll(RegExp("/"), "_")
-        .replaceAll(RegExp("="), "");
+    return this.replaceAll("+", "-")
+        .replaceAll("/", "_")
+        .replaceAll("=", "");
   }
 }

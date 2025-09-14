@@ -13,7 +13,7 @@ import 'package:hyle_x/ui/pages/qr_reader.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:qrcode_reading/qrcode_reading.dart';
+import 'package:listen_sharing_intent/listen_sharing_intent.dart';
 
 import '../../model/common.dart';
 import '../../model/messaging.dart';
@@ -55,6 +55,7 @@ class StartPageState extends State<StartPage>
   User _user = User();
 
   late StreamSubscription<Uri> _uriLinkStreamSub;
+  late StreamSubscription _intentSub;
 
   @override
   void initState() {
@@ -70,6 +71,33 @@ class StartPageState extends State<StartPage>
     _uriLinkStreamSub = AppLinks().uriLinkStream.listen((uri) {
       handleReceivedMessage(uri);
     });
+
+    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+      _readAndParseSharedText(value);
+    }, onError: (err) {
+      toastInfo(context, "Cannot read URL from shared text: $err");
+    });
+
+    // Get the media sharing coming from outside the app while the app is closed.
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
+      _readAndParseSharedText(value);
+      ReceiveSharingIntent.instance.reset();
+    });
+  }
+
+  void _readAndParseSharedText(List<SharedMediaFile> value) {
+    final message = value.firstOrNull;
+    if (message != null) {
+      debugPrint("intent message: ${message.mimeType} / ${message.path} / ${message.message}");
+
+      final uri = extractAppLinkFromString(message.path);
+      if (uri == null) {
+        toastInfo(context, "Cannot read URL from shared text.");
+      }
+      else {
+        handleReceivedMessage(uri);
+      }
+    }
   }
 
   void handleReceivedMessage(Uri uri) {
@@ -514,6 +542,8 @@ class StartPageState extends State<StartPage>
   @override
   void dispose() {
     _uriLinkStreamSub.cancel();
+    _intentSub.cancel();
+
     super.dispose();
   }
 
@@ -1040,13 +1070,13 @@ class StartPageState extends State<StartPage>
 
                         buildInputDialog('Paste the URL here',
                           okHandler: (s) {
-                            final start = s.indexOf(shareBaseUrl);
-                            if (start == -1) {
+                            final uri = extractAppLinkFromString(s);
+                            if (uri == null) {
                               toastInfo(context, "Cannot parse this QR code");
                             }
-                            final link = s.substring(start);
-                            final uri = Uri.parse(link);
-                            handleReceivedMessage(uri);
+                            else {
+                              handleReceivedMessage(uri);
+                            }
                           },
                         );
                         }, child: Text("Paste URL")),
@@ -1062,6 +1092,7 @@ class StartPageState extends State<StartPage>
     );
 
   }
+
 
 
   PlayState _getStateFromPlayOpener(PlayOpener playOpener) {

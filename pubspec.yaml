@@ -45,6 +45,7 @@ dependencies:
   qr_flutter: ^4.1.0
   qrcode_reading: ^1.0.10
   permission_handler: ^12.0.1
+  listen_sharing_intent: ^1.9.2
 
 dev_dependencies:
   flutter_test:
