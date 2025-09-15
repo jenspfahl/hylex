@@ -17,6 +17,38 @@ String truncate(String text, { required int length, omission = '...' }) {
 }
 
 
+Widget buildFilledButton(
+    BuildContext context,
+    IconData? iconData,
+    String text,
+    VoidCallback? onPressed,
+    {bool isBold = false}) {
+  return FilledButton(onPressed: onPressed, child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (iconData != null) Icon(iconData),
+      if (iconData != null )const Text("  "),
+      Text(text.toUpperCase(),
+          style: TextStyle(fontWeight: isBold ? FontWeight.bold : null)),
+    ],
+  ));
+}
+
+Widget buildOutlinedButton(
+    BuildContext context,
+    IconData? iconData,
+    String text,
+    VoidCallback? onPressed) {
+  return OutlinedButton(onPressed: onPressed, child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (iconData != null) Icon(iconData),
+      if (iconData != null )const Text("  "),
+      Text(text.toUpperCase()),
+    ],
+  ));
+}
+
 toastInfo(BuildContext context, String message) {
   toast(context, message, null);
 }

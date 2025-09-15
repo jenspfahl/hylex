@@ -11,7 +11,7 @@ import 'coordinate.dart';
 import '../utils/fortune.dart';
 import 'move.dart';
 
-const shareBaseUrl = "https://hx.jepfa.de/";
+const shareBaseUrl = "https://hx.jepfa.de/d/";
 final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSensitive: false);
 
 
@@ -304,7 +304,10 @@ class SerializedMessage {
   }
 
   static SerializedMessage? fromUrl(Uri uri) {
-    if (uri.pathSegments.length == 2) {
+    if (uri.pathSegments.length == 3) {
+      return SerializedMessage(uri.pathSegments[1], uri.pathSegments[2]);
+    }
+    else if (uri.pathSegments.length == 2) {
       return SerializedMessage(uri.pathSegments[0], uri.pathSegments[1]);
     }
     else {

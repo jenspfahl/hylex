@@ -1,6 +1,4 @@
-import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/model/common.dart';
@@ -12,8 +10,8 @@ import '../model/messaging.dart';
 import '../model/move.dart';
 import '../model/play.dart';
 import '../model/user.dart';
+import '../ui/ui_utils.dart';
 import '../utils/fortune.dart';
-import 'PreferenceService.dart';
 
 
 
@@ -199,48 +197,53 @@ class MessageService {
                   spacing: 5,
                   children: [
                     Text("Share your request or move with your opponent:"),
-                    OutlinedButton(onPressed: () {
-                      Navigator.of(context).pop();
+                    buildFilledButton(
+                        context,
+                        Icons.near_me,
+                        "As message",
+                            () {
+                          Navigator.of(context).pop();
+                          SharePlus.instance.share(
+                              ShareParams(text: shareMessage, subject: 'HyleX interaction'));
+                        }),
+                    buildFilledButton(
+                        context,
+                        Icons.qr_code_2,
+                        "As QR code",
+                            () {
 
-                      SmartDialog.show(builder: (_) {
+                              Navigator.of(context).pop();
 
-                        return Container(
-                          width: 280,
-                          height: 310,
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Let this scanned by your opponent", style: TextStyle(color: Colors.white)),
-                                QrImageView(
-                                  data: message.toUrl(),
-                                  version: QrVersions.auto,
-                                  backgroundColor: Colors.white,
-                                  size: 250.0,
-                                )
-                              ],
-                            ),
-                          ),
-                        );
+                              SmartDialog.show(builder: (_) {
 
+                                return Container(
+                                  width: 280,
+                                  height: 310,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(18),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Let this scanned by your opponent", style: TextStyle(color: Colors.white)),
+                                        QrImageView(
+                                          data: message.toUrl(),
+                                          version: QrVersions.auto,
+                                          backgroundColor: Colors.white,
+                                          size: 250.0,
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              });
 
+                        }),
 
-
-                      });
-
-
-                    }, child: Text("As QR code")),
-                    FilledButton(onPressed: () {
-                      Navigator.of(context).pop();
-                      SharePlus.instance.share(
-                          ShareParams(text: shareMessage, subject: 'HyleX interaction'));
-                    }, child: Text("As message")),
                   ],
                 )
               ),
@@ -255,6 +258,7 @@ class MessageService {
 
 
   }
+
 
   SerializedMessage _shareMessage(
       String text,

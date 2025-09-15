@@ -6,7 +6,6 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -15,7 +14,6 @@ import 'package:super_tooltip/super_tooltip.dart';
 import '../../engine/game_engine.dart';
 import '../../model/chip.dart';
 import '../../model/common.dart';
-import '../../service/StorageService.dart';
 import '../chip_extension.dart';
 import '../../model/coordinate.dart';
 import '../../model/move.dart';
@@ -509,59 +507,68 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildSubmitButton(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
-      if (gameEngine.play.isMultiplayerPlay)
-      return FilledButton(
-        onPressed: () async {
-          //TODO new message ask for redo the game, either with same roles or swapped.
-          buildAlertDialog('Asking for revenge is not yet implemented!', type: NotifyType.error);
-        },
-        child: const Text("Ask for revenge"), //TODO if Classic mode, revenge with swapped role should happen, so Text("Swap role and continue")
-      );
+      if (gameEngine.play.isMultiplayerPlay) {
+        return buildFilledButton(context,
+            Icons.restart_alt,
+            "Ask for revenge", //TODO if Classic mode, revenge with swapped role should happen, so "Swap role and continue"
+            () {
+            //TODO new message ask for redo the game, either with same roles or swapped.
+            buildAlertDialog('Asking for revenge is not yet implemented!',
+                type: NotifyType.error);
+          });
+      }
       else {
-        return FilledButton(
-          onPressed: () async {
+        return buildFilledButton(
+            context,
+            Icons.restart_alt,
+            "Restart",
+            () async {
             await gameEngine.stopGame();
             gameEngine.startGame();
-          },
-          child: const Text("Restart"),
-        );
+          });
       }
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalUser) {
       final isDirty = gameEngine.play.hasStaleMove;
-      return FilledButton(
-        onPressed: () {
-          if (gameEngine.isBoardLocked()) {
-            return;
-          }
-          if (gameEngine.play.isGameOver()) {
-            return;
-          }
-          if (gameEngine.play.currentRole == Role.Chaos && !gameEngine.play.hasStaleMove) {
-            toastInfo(context, "Chaos has to place one chip before continuing!");
-            return;
-          }
+      return buildFilledButton(
+          context,
+          gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
+              ? Icons.redo
+              : Icons.near_me,
+          gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
+              ? 'Skip move'
+              : 'Submit move',
+          () {
+            if (gameEngine.isBoardLocked()) {
+              return;
+            }
+            if (gameEngine.play.isGameOver()) {
+              return;
+            }
+            if (gameEngine.play.currentRole == Role.Chaos && !gameEngine.play.hasStaleMove) {
+              toastInfo(context, "Chaos has to place one chip before continuing!");
+              return;
+            }
 
-          if (!gameEngine.play.hasStaleMove && gameEngine.play.currentRole == Role.Order) {
-            gameEngine.play.applyStaleMove(Move.skipped());
-          }
-          gameEngine.play.commitMove();
-          gameEngine.nextPlayer();
-        },
-        child: Text(gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
-            ? 'Skip move'
-            : 'Submit move',
-        style: TextStyle(fontWeight: isDirty ? FontWeight.bold : null)),
+            if (!gameEngine.play.hasStaleMove && gameEngine.play.currentRole == Role.Order) {
+              gameEngine.play.applyStaleMove(Move.skipped());
+            }
+            gameEngine.play.commitMove();
+            gameEngine.nextPlayer();
+          },
+        isBold: isDirty
       );
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return OutlinedButton(
-        onPressed: () {
+      return buildOutlinedButton(
+          context,
+          Icons.near_me,
+          "Share again",
+          () {
           if (gameEngine is MultiPlayerGameEngine) {
             (gameEngine as MultiPlayerGameEngine).shareGameMove();
           }
-        },
-        child: const Text("Share again"),
+        }
       );
     }
     return Container();

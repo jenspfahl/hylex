@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/cupertino.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
 class Tooltips {

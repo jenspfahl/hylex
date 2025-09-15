@@ -1045,7 +1045,30 @@ class StartPageState extends State<StartPage>
                     spacing: 5,
                     children: [
                       Text("Scan opponents request or move or paste it if the App Link doesn't work:"),
-                      OutlinedButton(onPressed: () {
+                      buildOutlinedButton(
+                          context,
+                          Icons.paste,
+                          "Paste URL",
+                          () {
+                        Navigator.of(context).pop();
+
+                        buildInputDialog('Paste the URL here',
+                          okHandler: (s) {
+                            final uri = extractAppLinkFromString(s);
+                            if (uri == null) {
+                              toastInfo(context, "Cannot parse this QR code");
+                            }
+                            else {
+                              handleReceivedMessage(uri);
+                            }
+                          },
+                        );
+                        }),
+                      buildFilledButton(
+                          context,
+                          Icons.qr_code_scanner,
+                          "Scan QR code",
+                          () {
                         Navigator.of(context).pop();
 
                         Navigator.push(context,
@@ -1064,22 +1087,7 @@ class StartPageState extends State<StartPage>
                         });
 
 
-                      }, child: Text("Scan QR code")),
-                      FilledButton(onPressed: () {
-                        Navigator.of(context).pop();
-
-                        buildInputDialog('Paste the URL here',
-                          okHandler: (s) {
-                            final uri = extractAppLinkFromString(s);
-                            if (uri == null) {
-                              toastInfo(context, "Cannot parse this QR code");
-                            }
-                            else {
-                              handleReceivedMessage(uri);
-                            }
-                          },
-                        );
-                        }, child: Text("Paste URL")),
+                      }),
                     ],
                   )
               ),
