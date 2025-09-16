@@ -4,9 +4,10 @@ import 'package:hyle_x/ui/pages/start_page.dart';
 
 
 const String APP_NAME = 'HyleX';
-final HOMEPAGE = 'github.com';
 final HOMEPAGE_SCHEME = 'https://';
-final HOMEPAGE_PATH = '/jenspfahl/hylex';
+final HOMEPAGE = 'hylex.jepfa.de';
+final GITHUB_HOMEPAGE = 'github.com';
+final GITHUB_HOMEPAGE_PATH = '/jenspfahl/hylex';
 
 class HylexApp extends StatelessWidget {
   @override
@@ -17,6 +18,10 @@ class HylexApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown,
+         // dynamicSchemeVariant: DynamicSchemeVariant.fruitSalad,
+          surface: Colors.brown[50]
+        ),
       ),
       home: new StartPage(
         key: globalStartPageKey

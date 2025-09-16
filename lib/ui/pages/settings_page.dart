@@ -1,12 +1,12 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:hyle_x/service/StorageService.dart';
 import 'package:settings_ui/settings_ui.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../app.dart';
+import '../../model/user.dart';
 import '../../service/PreferenceService.dart';
+import '../dialogs.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -16,27 +16,23 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 
 
-  final PreferenceService _preferenceService = PreferenceService();
-
- // bool _notifyAtBreaks = PreferenceService.PREF_NOTIFY_AT_BREAKS.defaultValue;
-//  bool _vibrateAtBreaks = PreferenceService.PREF_VIBRATE_AT_BREAKS.defaultValue;
-
-
-
-  String _version = 'n/a';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('$APP_NAME Settings'), elevation: 0),
       body: FutureBuilder(
         future: _loadAllPrefs(),
-        builder: (context, AsyncSnapshot snapshot) => _buildSettingsList(),
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return _buildSettingsList(snapshot.data);
+          }
+          return Text("Loading...");
+        },
       ),
     );
   }
 
-  Widget _buildSettingsList()  {
+  Widget _buildSettingsList(User user)  {
 
     return SettingsList(
       lightTheme: SettingsThemeData(
@@ -46,14 +42,14 @@ class _SettingsPageState extends State<SettingsPage> {
               .surface
       ),
       sections: [
-        SettingsSection(
+        /*SettingsSection(
           title: Text('Common'),
           tiles: [
             SettingsTile.switchTile(
               title: const Text('Dark theme'),
               initialValue: false,
               onToggle: (bool value) {
-                /*_preferenceService.setBool(PreferenceService.PREF_DARK_MODE, value)
+                _preferenceService.setBool(PreferenceService.PREF_DARK_MODE, value)
                     .then((_) {
                   setState(() {
                     _darkMode = value;
@@ -61,28 +57,35 @@ class _SettingsPageState extends State<SettingsPage> {
                     debugPrint('dartheme=$_darkMode');
                     AppBuilder.of(context)?.rebuild();
                   });
-                });*/
+                });
               },
             ),
           ],
-        ),
+        ),*/
         SettingsSection(
           title: Text('Game Settings'),
           tiles: [
             SettingsTile.switchTile(
               title: const Text('Show coordinates'),
-              initialValue: false,
+              initialValue: PreferenceService().showCoordinates,
               onToggle: (bool value) {
-               /* _preferenceService.setBool(PreferenceService.PREF_NOTIFY_AT_BREAKS, value);
-                setState(() => _notifyAtBreaks = value);*/
+                PreferenceService().setBool(PreferenceService.PREF_SHOW_COORDINATES, value);
+                setState(() => PreferenceService().showCoordinates = value);
               },
             ),
 
             SettingsTile(
-              title: const Text('Your name'),
-              description: const Text("Shown in messages for opponents"),
-              onPressed: (value) {
-                //TODO ask for name
+              title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
+              description: const Text("Your name is shown in messages for opponents"),
+              onPressed: (value) async {
+                buildInputDialog('What\'s your name?',
+                  prefilledText: user.name,
+                  okHandler: (name) async {
+                    user.name = name;
+                    await StorageService().saveUser(user);
+                    setState(() {});
+                  },
+                );
               }
             ),
 
@@ -94,16 +97,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  _loadAllPrefs() async {
-
-    final packageInfo = await PackageInfo.fromPlatform();
-    _version = packageInfo.version;
-
-   /* final notifyAtBreaks = await _preferenceService.getBool(PreferenceService.PREF_NOTIFY_AT_BREAKS);
-    if (notifyAtBreaks != null) {
-      _notifyAtBreaks = notifyAtBreaks;
-    }*/
-
+  Future<User>_loadAllPrefs() async {
+    return await StorageService().loadUser() ?? User();
   }
 
 }

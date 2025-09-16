@@ -10,14 +10,25 @@ class PreferenceService {
   static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader';
   static final DATA_CURRENT_PLAY = '${DATA_PLAY_PREFIX}/current';
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
+  
+  static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
 
   static final PreferenceService _service = PreferenceService._internal();
+
+  bool showCoordinates = true;
 
   factory PreferenceService() {
     return _service;
   }
 
-  PreferenceService._internal() {}
+  PreferenceService._internal() {
+    // load cache
+    getBool(PREF_SHOW_COORDINATES).then((value) {
+      if (value != null) {
+        showCoordinates = value;
+      }
+    });
+  }
 
   Future<String?> getString(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();

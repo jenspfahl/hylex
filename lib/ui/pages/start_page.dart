@@ -526,6 +526,14 @@ class StartPageState extends State<StartPage>
                   IconButton(onPressed: () {
                     Navigator.push(super.context, MaterialPageRoute(builder: (context) => SettingsPage()))
                         .then((value) {
+                          StorageService().loadUser().then((value) {
+                            if (value != null) {
+                              setState(() {
+                                _user = value;
+                              });
+                            }
+                          });
+
                     });
                   }, icon: const Icon(Icons.settings_outlined)),
 
@@ -551,13 +559,13 @@ class StartPageState extends State<StartPage>
                                 TextSpan(
                                   text: 'Visit ',
                                   children: <TextSpan>[
-                                    TextSpan(text: HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
+                                    TextSpan(text: GITHUB_HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
                                     const TextSpan(text: ' to view the code, report bugs and give stars!'),
                                   ],
                                 ),
                               ),
                               onTap: () {
-                                launchUrlString(HOMEPAGE_SCHEME + HOMEPAGE + HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
+                                launchUrlString(HOMEPAGE_SCHEME + GITHUB_HOMEPAGE + GITHUB_HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
                               }),
                           const Divider(),
                           const Text('© Jens Pfahl 2025', style: TextStyle(fontSize: 12)),

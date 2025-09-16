@@ -19,11 +19,11 @@ class StorageService {
   StorageService._internal() {}
 
 
-  void saveUser(User user) {
+  Future<bool> saveUser(User user) {
     final jsonToSave = jsonEncode(user);
     debugPrint("Save current user:");
     //debugPrint(_getPrettyJSONString(user));
-    PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
+    return PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
   }
 
   Future<User?> loadUser() async {

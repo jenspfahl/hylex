@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/app.dart';
+import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -798,7 +799,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
       return Container(
         color: possibleTarget ? shadedColor : null,
-        child: where != null && text.isEmpty
+        child: where != null && text.isEmpty && PreferenceService().showCoordinates
             ? Center(child: Text(_getPositionText(where, gameEngine.play.matrix.dimension),
                 style: TextStyle(
                     fontSize: gameEngine.play.dimension > 9 ? 10 : null,
