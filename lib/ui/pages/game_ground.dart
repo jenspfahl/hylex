@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:hyle_x/app.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -137,7 +138,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                 appBar: AppBar(
                   automaticallyImplyLeading: false,
                   title: Text(
-                    'HyleX ${gameEngine.play.isMultiplayerPlay ? gameEngine.play.getReadablePlayId() : "Single Play"}',
+                    '$APP_NAME ${gameEngine.play.isMultiplayerPlay ? gameEngine.play.getReadablePlayId() : "Single Play"}',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   actions: [
                     Visibility(

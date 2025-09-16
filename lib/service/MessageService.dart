@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -103,7 +104,7 @@ class MessageService {
         user.name);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
-    return _shareMessage('I (${user.name}) want to invite you to a HyleX match. Click the link to open it: ',
+    return _shareMessage('I (${user.name}) want to invite you to a $APP_NAME match. Click the link to open it: ',
           serializedMessage, context, sentHandler, share);
   }
 
@@ -204,7 +205,7 @@ class MessageService {
                             () {
                           Navigator.of(context).pop();
                           SharePlus.instance.share(
-                              ShareParams(text: shareMessage, subject: 'HyleX interaction'));
+                              ShareParams(text: shareMessage, subject: '$APP_NAME interaction'));
                         }),
                     buildFilledButton(
                         context,

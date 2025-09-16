@@ -7,13 +7,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/qr_reader.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
+import 'package:hyle_x/ui/pages/settings_page.dart';
 import 'package:hyle_x/utils/fortune.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:listen_sharing_intent/listen_sharing_intent.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../model/common.dart';
 import '../../model/messaging.dart';
@@ -357,7 +361,7 @@ class StartPageState extends State<StartPage>
 
           children: [
             Container(
-                child: _buildGameLogo()
+                child: _buildGameLogo(20)
             ),
 
             if (_user.name.isNotEmpty)
@@ -520,7 +524,9 @@ class StartPageState extends State<StartPage>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(onPressed: () {
-
+                    Navigator.push(super.context, MaterialPageRoute(builder: (context) => SettingsPage()))
+                        .then((value) {
+                    });
                   }, icon: const Icon(Icons.settings_outlined)),
 
                   IconButton(onPressed: () {
@@ -529,8 +535,36 @@ class StartPageState extends State<StartPage>
                     });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
 
-                  IconButton(onPressed: () {
+                  IconButton(onPressed: () async {
+                    final packageInfo = await PackageInfo.fromPlatform();
 
+                    showAboutDialog(
+                      context: context,
+                      applicationName: APP_NAME,
+                      applicationVersion:packageInfo.version,
+                        children: [
+                          const Divider(),
+                          const Text('An Entropy clone'),
+                          const Text(''),
+                          InkWell(
+                              child: Text.rich(
+                                TextSpan(
+                                  text: 'Visit ',
+                                  children: <TextSpan>[
+                                    TextSpan(text: HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
+                                    const TextSpan(text: ' to view the code, report bugs and give stars!'),
+                                  ],
+                                ),
+                              ),
+                              onTap: () {
+                                launchUrlString(HOMEPAGE_SCHEME + HOMEPAGE + HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
+                              }),
+                          const Divider(),
+                          const Text('© Jens Pfahl 2025', style: TextStyle(fontSize: 12)),
+                        ],
+                        applicationIcon: SizedBox(width: 56, height: 56,
+                            child: _buildGameLogo(12))
+                    );
                   }, icon: const Icon(Icons.info_outline)),
                 ]),
           ],
@@ -740,14 +774,14 @@ class StartPageState extends State<StartPage>
     );
   }
 
-  Widget _buildGameLogo() {
+  Widget _buildGameLogo(double size) {
     const chipPadding = 1.0;
     return Column(children: [
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildChip("H", 20, 20, chipPadding, 4),
-          _buildChip("Y", 20, 20, chipPadding, 5),
+          _buildChip("H", size, size, chipPadding, 4),
+          _buildChip("Y", size, size, chipPadding, 5),
           Text("X",
               style: TextStyle(
                   fontSize: 14,
@@ -757,8 +791,8 @@ class StartPageState extends State<StartPage>
       ),
       Row(
         children: [
-          _buildChip("L", 20, 20, chipPadding, 6),
-          _buildChip("E", 20, 20, chipPadding, 7),
+          _buildChip("L", size, size, chipPadding, 7),
+          _buildChip("E", size, size, chipPadding, 8),
         ],
       ),
     ]);
