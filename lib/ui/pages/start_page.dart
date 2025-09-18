@@ -368,7 +368,7 @@ class StartPageState extends State<StartPage>
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
                   "Hello ${_user.name}!")
-            else if (kDebugMode)
+            else if (isDebug)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
                 "Hello ${_user.getReadableId()}!"),
@@ -462,7 +462,13 @@ class StartPageState extends State<StartPage>
                                 () =>
                             _menuMode = _menuMode == MenuMode.Multiplayer
                                 ? MenuMode.None
-                                : MenuMode.Multiplayer)
+                                : MenuMode.Multiplayer),
+                    longClickHandler: () {
+                      setState(() {
+                        isDebug = !isDebug;
+                      });
+                      buildAlertDialog("Debug mode set to $isDebug", type: NotifyType.error);
+                    }
                 ),
 
                 _menuMode == MenuMode.Multiplayer ||
@@ -1025,13 +1031,15 @@ class StartPageState extends State<StartPage>
   }
 
   _showMultiPlayTestDialog() {
-    SmartDialog.show(
-        builder: (_) {
-
-      return RemoteTestWidget(
-        messageHandler: (message) => _handleMessage(message),
-      );
-    });
+    if (isDebug) {
+      SmartDialog.show(
+          builder: (_) {
+            return RemoteTestWidget(
+              rootContext: context,
+              messageHandler: (message) => _handleMessage(message),
+            );
+          });
+    }
   }
 
   void handleReplyToInvitation(PlayHeader playHeader) {

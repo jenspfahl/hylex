@@ -1,12 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 
+import '../../model/common.dart';
+import '../../model/messaging.dart';
 import '../../model/play.dart';
 import '../../model/user.dart';
 import '../dialogs.dart';
@@ -95,7 +99,34 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
-                    buildAlertDialog('Here you will see soon details about this match', type: NotifyType.error);
+                    if (playHeader.state == PlayState.InvitationPending) {
+                      globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                    }
+                    else if (playHeader.state == PlayState.InvitationRejected) {
+                      final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
+                      final opponentRejected = lastMessage != null
+                          && lastMessage.channel == Channel.In
+                          && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
+                      buildAlertDialog(opponentRejected
+                          ? "Opponent rejected your invitation"
+                          : "You rejected opponent's invitation.");
+                    }
+                    else if (playHeader.isStateShareable()) {
+                      buildChoiceDialog("Your opponent needs to react to your last message.",
+                          firstString: "SHARE IT AGAIN",
+                          firstHandler: () {
+                            MessageService().sendCurrentPlayState(
+                                playHeader, widget.user, context, null);
+                          },
+                          secondString: "CANCEL",
+                          secondHandler: () {});
+
+                    }
+                    else {
+                      _startMultiPlayerGame(
+                          context, playHeader);
+                    }
+
                   },
                   child: Column(
                     children: [
@@ -141,21 +172,24 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                                   context, playHeader);
                             }, icon: Icon(Icons.not_started_outlined)),
                           ),
-                          IconButton(onPressed: (){
-                            if (playHeader.state == PlayState.InvitationPending) {
-                              globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
-                            }
-                            else if (playHeader.isStateShareable()) {
-                              MessageService().sendCurrentPlayState(
-                                  playHeader, widget.user, context, null);
-                            }
-                            else {
-                              buildAlertDialog("Nothing to share, take action instead");
-                            }
-                          }, icon: GestureDetector(
-                              child: Icon(Icons.near_me),
-                              onLongPress: () => _showMultiPlayTestDialog(playHeader),
-                          )),
+                          Visibility(
+                            visible: isDebug || (playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable()),
+                            child: IconButton(onPressed: (){
+                              if (playHeader.state == PlayState.InvitationPending) {
+                                globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                              }
+                              else if (playHeader.isStateShareable()) {
+                                MessageService().sendCurrentPlayState(
+                                    playHeader, widget.user, context, null);
+                              }
+                              else {
+                                buildAlertDialog("Nothing to share, take action instead");
+                              }
+                            }, icon: GestureDetector(
+                                child: Icon(Icons.near_me),
+                                onLongPress: () => _showMultiPlayTestDialog(playHeader),
+                            )),
+                          ),
                           IconButton(onPressed: (){
                             ask("Are you sure to remove this match ${playHeader.getReadablePlayId()}? You wont be able to continue this match once removed.", () {
                               setState(() {
@@ -206,22 +240,25 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         })).then((_) {
           // reload when navigating back
           setState(() {
-
-            debugPrint("reload all play header"); //TODO doesnt seem to work at all
+            debugPrint("reload all play header");
           });
     });
   }
 
   _showMultiPlayTestDialog(PlayHeader playHeader) {
+    if (isDebug) {
       SmartDialog.show(
           builder: (_) {
             return RemoteTestWidget(
+              rootContext: context,
               playHeader: playHeader,
               messageHandler: (message) {
-                globalStartPageKey.currentState?.handleReceivedMessage(message.toUri());
+                globalStartPageKey.currentState?.handleReceivedMessage(
+                    message.toUri());
               },
             );
           });
+    }
   }
 
   void playHeaderChanged() {

@@ -39,7 +39,8 @@ class _SettingsPageState extends State<SettingsPage> {
           settingsListBackground: Theme
               .of(context)
               .colorScheme
-              .surface
+              .surface,
+
       ),
       sections: [
         /*SettingsSection(
@@ -63,7 +64,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),*/
         SettingsSection(
-          title: Text('Game Settings'),
+          title: Text('Game Settings', style: TextStyle(color: Colors.brown[800])),
           tiles: [
             SettingsTile.switchTile(
               title: const Text('Show coordinates'),

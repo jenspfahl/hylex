@@ -137,7 +137,8 @@ class _HyleXGroundState extends State<HyleXGround> {
       },
       child: Scaffold(
                 appBar: AppBar(
-                  automaticallyImplyLeading: false,
+                  //automaticallyImplyLeading: false,
+                  leadingWidth: 25,
                   title: Text(
                     '$APP_NAME ${gameEngine.play.isMultiplayerPlay ? gameEngine.play.getReadablePlayId() : "Single Play"}',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
@@ -182,18 +183,19 @@ class _HyleXGroundState extends State<HyleXGround> {
                     ),
                     IconButton(
                         onPressed: () {
-                          showModalBottomSheet( //TODO add handle to enlarge or close
+                          showModalBottomSheet(
+                              showDragHandle: true,
                               context: context,
 
                               builder: (BuildContext context) {
 
                                 return StatefulBuilder(
-                                  builder: (BuildContext context, setState) {
+                                  builder: (BuildContext context, setSheetState) {
 
                                     // TODO potential memory leak, this listener is never removed within an ongoing play
                                     gameEngine.addListener(() {
                                       if (context.mounted) {
-                                        setState((){});
+                                        setSheetState((){});
                                       }
                                     });
 
@@ -261,16 +263,6 @@ class _HyleXGroundState extends State<HyleXGround> {
                         },
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.exit_to_app),
-                      onPressed: () => {
-      
-                        ask('Leave current game?', () async {
-                              await gameEngine.pauseGame();
-                              Navigator.pop(super.context); // go to start page
-                            })
-                      },
-                    )
                   ],
                 ),
                 body: SingleChildScrollView(
@@ -294,7 +286,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 ],
                               ),
                             ),
-                            LinearProgressIndicator(value: gameEngine.play.progress,),
+                            LinearProgressIndicator(
+                              value: gameEngine.play.progress,
+                              backgroundColor: Colors.brown[100],
+                            ),
                             Column(
                               children: [
                                 Container(

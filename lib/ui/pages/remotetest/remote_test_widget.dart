@@ -18,9 +18,10 @@ class RemoteTestWidget extends StatefulWidget {
 
   PlayHeader? playHeader;
   Function(SerializedMessage)? messageHandler;
+  BuildContext rootContext;
 
   RemoteTestWidget({
-    super.key, this.playHeader, this.messageHandler
+    super.key, this.playHeader, this.messageHandler, required this.rootContext
   });
 
   @override
@@ -141,14 +142,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                   foregroundColor: Colors.lightGreenAccent),
               onPressed: () {
                 SmartDialog.dismiss();
-                _checkAndSendRemoteMessage(share: false);
+                _checkAndSendRemoteMessage(share: false, context: widget.rootContext);
               },
               child: const Text("APPLY")),
           OutlinedButton(
               style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.lightGreenAccent),
               onPressed: () {
-                _checkAndSendRemoteMessage(share: true);
+                SmartDialog.dismiss();
+                _checkAndSendRemoteMessage(share: true, context: widget.rootContext);
               },
               child: const Text("SHARE")),
           OutlinedButton(
@@ -468,34 +470,34 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   }
 
   
-  void _checkAndSendRemoteMessage({required bool share}) {
+  void _checkAndSendRemoteMessage({required bool share, required BuildContext context}) {
     if (localPlay != null) {
       final result = localPlay!.validateMove(_createMove());
       if (result != null) {
         buildChoiceDialog(result, 
             firstString: "IGNORE", 
-            firstHandler: () => _sendRemoteMessage(share),
+            firstHandler: () => _sendRemoteMessage(share, context),
             secondString: "CANCEL", 
             secondHandler: () => SmartDialog.dismiss());
         return;
       }
       else {
-        _sendRemoteMessage(share);
+        _sendRemoteMessage(share, context);
       }
     }
     else {
-      _sendRemoteMessage(share);
+      _sendRemoteMessage(share, context);
     }
   }
 
-  void _sendRemoteMessage(bool share) {
+  void _sendRemoteMessage(bool share, BuildContext context) {
     final remoteHeader = widget.playHeader != null
         ? createRemoteFromLocalHistory(widget.playHeader!)
         : PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
     debugPrint("Remote header:\n$remoteHeader");
     try {
-      SerializedMessage message = _createRemoteMessage(remoteHeader, share);
+      SerializedMessage message = _createRemoteMessage(remoteHeader, share, context);
       if (!share && widget.messageHandler != null) {
         widget.messageHandler!(message);
       }
@@ -505,7 +507,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     }
   }
 
-  SerializedMessage _createRemoteMessage(PlayHeader remoteHeader, bool share) {
+  SerializedMessage _createRemoteMessage(PlayHeader remoteHeader, bool share, BuildContext context) {
     switch(operation) {
 
       case Operation.SendInvite:

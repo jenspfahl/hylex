@@ -69,7 +69,7 @@ enum PlayState {
   InvitationAccepted_WaitForOpponent({Actor.Invitee}, true, true, false),
 
   // only if multiPlay == true, when an invitation has been rejected by invited player
-  InvitationRejected({Actor.Invitor, Actor.Invitee}, true, false, true), // final state
+  InvitationRejected({Actor.Invitor, Actor.Invitee}, null, false, true), // final state
 
   // Current player can move
   ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false, true, false),
@@ -320,6 +320,12 @@ class PlayHeader {
 
   bool isStateShareable() {
     if (state.isShareable == null) {
+      if (state == PlayState.InvitationRejected) {
+        final lastMessage = commContext.messageHistory.lastOrNull;
+        return lastMessage != null
+            && lastMessage.channel == Channel.Out
+            && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
+      }
       // Chaos does the last move
       return actor.getActorRoleFor(playOpener) == Role.Chaos;
     }

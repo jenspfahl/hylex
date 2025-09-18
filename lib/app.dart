@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
@@ -8,6 +9,8 @@ final HOMEPAGE_SCHEME = 'https://';
 final HOMEPAGE = 'hylex.jepfa.de';
 final GITHUB_HOMEPAGE = 'github.com';
 final GITHUB_HOMEPAGE_PATH = '/jenspfahl/hylex';
+
+var isDebug = kDebugMode;
 
 class HylexApp extends StatelessWidget {
   @override
