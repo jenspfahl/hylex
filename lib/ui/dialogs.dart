@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
+const DIALOG_BG = Color(0xFF2E1B1A);
 
-void buildAlertDialog(String text, {NotifyType? type, int seconds = 3}) {
+
+void showAlertDialog(String text) {
+
+
   SmartDialog.showNotify(
     msg: text,
     clickMaskDismiss: true,
-    displayTime: Duration(seconds: seconds),
-    notifyType: type ?? NotifyType.error,
-  );
+    notifyType: NotifyType.error,
+    builder: (context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: DIALOG_BG,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.error, size: 22, color: Colors.white70),
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          child: Text(text, style: TextStyle(color: Colors.white70)),
+        ),
+      ]),
+    );
+  });
+  Future.delayed(Duration(seconds: text.length * 50)).then((_) => SmartDialog.dismiss());
 }
 
 void confirmOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
@@ -34,7 +53,7 @@ void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
 }
 
 void confirm(String text, Function() okHandler) {
-  buildChoiceDialog(text,
+  showChoiceDialog(text,
       firstString: "OK", 
       firstHandler: okHandler,
       secondString: "CANCEL",
@@ -42,7 +61,7 @@ void confirm(String text, Function() okHandler) {
 }
 
 void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler}) {
-  buildChoiceDialog(text,
+  showChoiceDialog(text,
       firstString: "YES",
       firstHandler: yesHandler,
       secondString: noString ?? "NO",
@@ -51,7 +70,7 @@ void ask(String text, Function() yesHandler, {String? noString, Function()? noHa
       });
 }
 
-void buildChoiceDialog(
+void showChoiceDialog(
     String text,
     {
       double? height,
@@ -83,7 +102,7 @@ void buildChoiceDialog(
       height: height ?? calcHeight,
       width: width ?? 220,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: DIALOG_BG,
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,
@@ -103,7 +122,7 @@ void buildChoiceDialog(
                   SmartDialog.dismiss();
                   firstHandler();
                 },
-                child: Text(firstString ?? "OK")),
+                child: Text(firstString.toUpperCase())),
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
@@ -111,7 +130,7 @@ void buildChoiceDialog(
                   SmartDialog.dismiss();
                   secondHandler();
                 },
-                child: Text(secondString)),
+                child: Text(secondString.toUpperCase())),
             if (thirdString != null && thirdHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -120,7 +139,7 @@ void buildChoiceDialog(
                     SmartDialog.dismiss();
                     thirdHandler();
                   },
-                  child: Text(thirdString)),
+                  child: Text(thirdString.toUpperCase())),
             if (fourthString != null && fourthHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -129,7 +148,7 @@ void buildChoiceDialog(
                     SmartDialog.dismiss();
                     fourthHandler();
                   }, 
-                  child: Text(fourthString)),
+                  child: Text(fourthString.toUpperCase())),
             if (fifthString != null && fifthHandler != null)
               OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -138,7 +157,7 @@ void buildChoiceDialog(
                     SmartDialog.dismiss();
                     fifthHandler();
                   },
-                  child: Text(fifthString)),
+                  child: Text(fifthString.toUpperCase())),
 
           ],
         ),
@@ -147,7 +166,33 @@ void buildChoiceDialog(
   });
 }
 
-void buildInputDialog(
+showShowLoading(String text) async {
+  SmartDialog.showLoading(msg: text, builder: (_) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+      decoration: BoxDecoration(
+        color: DIALOG_BG,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        //loading animation
+        CircularProgressIndicator(
+          strokeWidth: 3,
+          valueColor: AlwaysStoppedAnimation(Colors.white70),
+        ),
+
+        //msg
+        Container(
+          margin: const EdgeInsets.only(top: 20),
+          child: Text(text, style: TextStyle(color: Colors.white70)),
+        ),
+      ]),
+    );
+  });
+  await Future.delayed(const Duration(seconds: 1));
+}
+
+void showInputDialog(
     String text,
     {
       double? height,
@@ -163,7 +208,7 @@ void buildInputDialog(
       height: height ?? 200 + text.length.toDouble(),
       width: width ?? 300,
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: DIALOG_BG,
         borderRadius: BorderRadius.circular(10),
       ),
       alignment: Alignment.center,

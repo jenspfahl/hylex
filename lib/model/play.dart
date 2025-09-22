@@ -188,12 +188,14 @@ class PlayHeader {
   CommunicationContext commContext = CommunicationContext();
   String? opponentId;
   String? opponentName;
-  
+  DateTime? lastTimestamp;
+
 
   PlayHeader.singlePlay(
       this.playSize) {
     playId = generateRandomString(playIdLength);
     actor = Actor.Single;
+    _touch();
   }
   
   PlayHeader.multiPlayInvitor(
@@ -203,6 +205,7 @@ class PlayHeader {
     playId = generateRandomString(playIdLength);
     actor = Actor.Invitor;
     _state = PlayState.RemoteOpponentInvited;
+    _touch();
   }
   
   PlayHeader.multiPlayInvitee(
@@ -220,6 +223,7 @@ class PlayHeader {
     playOpener = inviteMessage.playOpener;
     opponentId = inviteMessage.invitingUserId;
     opponentName = inviteMessage.invitingUserName;
+    _touch();
   }
 
   PlayHeader.internal(
@@ -266,6 +270,11 @@ class PlayHeader {
 
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
+
+    final lastChange = map['lastChange'];
+    if (lastChange != null) {
+      lastTimestamp = DateTime.parse(lastChange);
+    }
     
   }
 
@@ -276,6 +285,11 @@ class PlayHeader {
   set state(PlayState newState) {
     _state.checkTransition(newState, actor);
     _state = newState;
+    _touch();
+  }
+
+  _touch() {
+    lastTimestamp = DateTime.timestamp();
   }
 
   Map<String, dynamic> toJson() => {
@@ -293,6 +307,8 @@ class PlayHeader {
 
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
+    if (lastTimestamp != null) "lastChange" : lastTimestamp!.toIso8601String(),
+
   };
 
   int get dimension => playSize.toDimension();

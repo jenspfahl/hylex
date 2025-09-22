@@ -12,6 +12,7 @@ class PreferenceService {
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
   
   static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
+  static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
 
   static final PreferenceService _service = PreferenceService._internal();
 

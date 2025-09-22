@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
+import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
@@ -13,11 +15,14 @@ import '../../model/common.dart';
 import '../../model/messaging.dart';
 import '../../model/play.dart';
 import '../../model/user.dart';
+import '../../utils/dates.dart';
 import '../dialogs.dart';
 import 'game_ground.dart';
 
 
 GlobalKey<MultiPlayerMatchesState> globalMultiPlayerMatchesKey = GlobalKey();
+
+enum SortOrder {BY_PLAY_ID, BY_STATE, BY_LATEST}
 
 class MultiPlayerMatches extends StatefulWidget {
 
@@ -31,11 +36,19 @@ class MultiPlayerMatches extends StatefulWidget {
 
 class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
-
+  late SortOrder _sortOrder;
 
   @override
   void initState() {
     super.initState();
+
+    _sortOrder = SortOrder.BY_PLAY_ID;
+    PreferenceService().getInt(PreferenceService.PREF_MATCH_SORT_ORDER)
+        .then((value) {
+          if (value != null) {
+            setState(() => _sortOrder = SortOrder.values.firstWhere((p) => p.index == value));
+          }
+    });
   }
 
   @override
@@ -49,13 +62,26 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               onPressed: () {
                 globalStartPageKey.currentState?.scanNextMove();
               }),
+            IconButton(
+                icon: const Icon(Icons.sort),
+                onPressed: () {
+                  showChoiceDialog("Sort list by",
+                      firstString: _emphasise("Match ID", _sortOrder == SortOrder.BY_PLAY_ID),
+                      firstHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
+                      secondString: _emphasise("Match State", _sortOrder == SortOrder.BY_STATE),
+                      secondHandler: () => _triggerSort(SortOrder.BY_STATE),
+                      thirdString: _emphasise("Latest", _sortOrder == SortOrder.BY_LATEST),
+                      thirdHandler: () => _triggerSort(SortOrder.BY_LATEST),
+                  );
+                }),
           ],
         ),
         body: FutureBuilder<List<PlayHeader>>(
             future: StorageService().loadAllPlayHeaders(),
             builder: (BuildContext context,
                 AsyncSnapshot<List<PlayHeader>> snapshot) {
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) { //TODO sort by creation date, add sort and group options
+              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final sorted = _sort(snapshot.data!);
                 return SingleChildScrollView(
                   child: Container(
                     color: Theme
@@ -65,7 +91,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Column(
-                        children: snapshot.data!.map(_buildPlayLine).toList(),
+                        children: sorted.map(_buildPlayLine).toList(),
                       ),
                     ),
                   ),
@@ -107,12 +133,12 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       final opponentRejected = lastMessage != null
                           && lastMessage.channel == Channel.In
                           && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
-                      buildAlertDialog(opponentRejected
+                      showAlertDialog(opponentRejected
                           ? "Opponent rejected your invitation"
                           : "You rejected opponent's invitation.");
                     }
                     else if (playHeader.isStateShareable()) {
-                      buildChoiceDialog("Your opponent needs to react to your last message.",
+                      showChoiceDialog("Your opponent needs to react to your last message.",
                           firstString: "SHARE IT AGAIN",
                           firstHandler: () {
                             MessageService().sendCurrentPlayState(
@@ -148,6 +174,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
                         ],
                       ),
+                      if (playHeader.lastTimestamp != null) Text("Last move: " + format(playHeader.lastTimestamp!), style: TextStyle(color: Colors.grey[500])),
                       Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -183,7 +210,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                                     playHeader, widget.user, context, null);
                               }
                               else {
-                                buildAlertDialog("Nothing to share, take action instead");
+                                showAlertDialog("Nothing to share, take action instead");
                               }
                             }, icon: GestureDetector(
                                 child: Icon(Icons.near_me),
@@ -230,7 +257,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {
-    SmartDialog.showLoading(msg: "Loading game ...");
+    await showShowLoading("Loading game ...");
     final play = await StorageService().loadPlayFromHeader(header);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
@@ -265,6 +292,28 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     setState(() {
       debugPrint("enforce reload of play headers");
     });
+  }
+
+  List<PlayHeader> _sort(List<PlayHeader> list) {
+    switch (_sortOrder) {
+      case SortOrder.BY_PLAY_ID:
+        return list.sortedBy((e) => e.getReadablePlayId());
+      case SortOrder.BY_STATE:
+        return list.sortedBy((e) => (e.state.isFinal.toString() + e.state.name));
+      case SortOrder.BY_LATEST:
+        return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId());
+    }
+  }
+
+  _triggerSort(SortOrder sortOrder) {
+    setState(() {
+      _sortOrder = sortOrder;
+    });
+    PreferenceService().setInt(PreferenceService.PREF_MATCH_SORT_ORDER, sortOrder.index);
+  }
+
+  _emphasise(String text, bool doIt) {
+    return doIt ? "✓ $text" : text;
   }
 
 }

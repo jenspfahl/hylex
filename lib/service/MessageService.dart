@@ -11,6 +11,7 @@ import '../model/messaging.dart';
 import '../model/move.dart';
 import '../model/play.dart';
 import '../model/user.dart';
+import '../ui/dialogs.dart';
 import '../ui/ui_utils.dart';
 import '../utils/fortune.dart';
 
@@ -221,7 +222,7 @@ class MessageService {
                                   width: 280,
                                   height: 310,
                                   decoration: BoxDecoration(
-                                    color: Colors.black,
+                                    color: DIALOG_BG,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   alignment: Alignment.center,

@@ -510,8 +510,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             "Ask for revenge", //TODO if Classic mode, revenge with swapped role should happen, so "Swap role and continue"
             () {
             //TODO new message ask for redo the game, either with same roles or swapped.
-            buildAlertDialog('Asking for revenge is not yet implemented!',
-                type: NotifyType.error);
+            showAlertDialog('Asking for revenge is not yet implemented!');
           });
       }
       else {
@@ -704,7 +703,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                   ? Colors.lightGreenAccent
                   : Colors.redAccent
                 : isSelected
-                  ? Colors.black
+                  ? DIALOG_BG
                   : null
         ),
       ),

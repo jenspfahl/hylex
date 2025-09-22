@@ -79,7 +79,7 @@ class _SettingsPageState extends State<SettingsPage> {
               title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
               description: const Text("Your name is shown in messages for opponents"),
               onPressed: (value) async {
-                buildInputDialog('What\'s your name?',
+                showInputDialog('What\'s your name?',
                   prefilledText: user.name,
                   okHandler: (name) async {
                     user.name = name;

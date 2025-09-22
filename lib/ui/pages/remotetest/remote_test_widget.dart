@@ -166,7 +166,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       home: SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.black,
+            color: DIALOG_BG,
             borderRadius: BorderRadius.circular(10),
           ),
           alignment: Alignment.center,
@@ -306,7 +306,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         ),
         DropdownButton<T>(
           value: getValue(),
-          dropdownColor: Colors.black,
+          dropdownColor: DIALOG_BG,
           onChanged: (T? newValue) {
             setState(() {
               if (newValue != null) {
@@ -321,7 +321,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                   style: TextStyle(
                       decoration: legalValues.contains(value) ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == value ? Colors.lightGreenAccent : Colors.white,
-                      backgroundColor: Colors.black,
+                      backgroundColor: DIALOG_BG,
                       decorationColor: getValue() == value ? Colors.lightGreenAccent : Colors.white,
                       decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
@@ -377,7 +377,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         ),
         DropdownButton<Coordinate>(
           value: getValue() ?? coordinates.first,
-          dropdownColor: Colors.black,
+          dropdownColor: DIALOG_BG,
           onChanged: (newValue) {
             setState(() {
               if (newValue != null) {
@@ -392,7 +392,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                   style: TextStyle(
                       decoration: legalCoordinates.contains(coordinate) ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
-                      backgroundColor: Colors.black,
+                      backgroundColor: DIALOG_BG,
                       decorationColor: getValue() == coordinate ? Colors.lightGreenAccent : Colors.white,
                       decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
@@ -442,7 +442,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         ),
         DropdownButton<GameChip>(
           value: firstValue,
-          dropdownColor: Colors.black,
+          dropdownColor: DIALOG_BG,
           onChanged: (newValue) {
             setState(() {
               if (newValue != null) {
@@ -457,7 +457,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
                   style: TextStyle(
                       decoration: legalChips.contains(chip) == true ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
-                      backgroundColor: Colors.black,
+                      backgroundColor: DIALOG_BG,
                       decorationColor: getValue() == chip ? Colors.lightGreenAccent : Colors.white,
                       decorationThickness: 2.0,
                       fontWeight: FontWeight.bold, fontSize: 14),
@@ -474,7 +474,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     if (localPlay != null) {
       final result = localPlay!.validateMove(_createMove());
       if (result != null) {
-        buildChoiceDialog(result, 
+        showChoiceDialog(result, 
             firstString: "IGNORE", 
             firstHandler: () => _sendRemoteMessage(share, context),
             secondString: "CANCEL", 
@@ -503,7 +503,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       }
     } on Exception catch(e) {
       print(e);
-      buildAlertDialog("An error occurred: ${e.toString()}");
+      showAlertDialog("An error occurred: ${e.toString()}");
     }
   }
 

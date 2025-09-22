@@ -111,7 +111,7 @@ class StartPageState extends State<StartPage>
     }
     else {
       debugPrint("invalid uri: $uri");
-      buildAlertDialog("I cannot interpret this uri : $uri");
+      showAlertDialog("I cannot interpret this uri : $uri");
     }
   }
 
@@ -124,7 +124,7 @@ class StartPageState extends State<StartPage>
       debugPrint("received: [$playId] ${extractOperation.name}");
       if (extractOperation == Operation.SendInvite) {
         if (header != null) {
-          buildAlertDialog("You already reacted to this invite. See ${header
+          showAlertDialog("You already reacted to this invite. See ${header
               .getReadablePlayId()}");
           //TODO add button to jump to this match entry
         }
@@ -135,16 +135,16 @@ class StartPageState extends State<StartPage>
             _handleReceiveInvite(message as InviteMessage, comContext);
           }
           else if (error != null) {
-            buildAlertDialog(error);
+            showAlertDialog(error);
           }
         }
       }
       else if (header == null) {
-        buildAlertDialog("Match ${toReadableId(serializedMessage
+        showAlertDialog("Match ${toReadableId(serializedMessage
             .extractPlayId())} is not present! Did you delete it?");
       }
       else if (header.state.isFinal) {
-        buildAlertDialog("Match ${toReadableId(
+        showAlertDialog("Match ${toReadableId(
             serializedMessage.extractPlayId())} is already finished (${header
             .state.toMessage()}).");
       }
@@ -152,7 +152,7 @@ class StartPageState extends State<StartPage>
         final (message, error) = serializedMessage.deserialize(
             header.commContext);
         if (error != null) {
-          buildAlertDialog(error);
+          showAlertDialog(error);
         }
         else if (extractOperation == Operation.AcceptInvite) {
           _handleInviteAccepted(header, message as AcceptInviteMessage);
@@ -167,7 +167,7 @@ class StartPageState extends State<StartPage>
           _handleResign(header, message as ResignMessage);
         }
         else {
-          buildAlertDialog("Unknown operation for $extractOperation for ${header
+          showAlertDialog("Unknown operation for $extractOperation for ${header
               .getReadablePlayId()}");
         }
       }
@@ -175,7 +175,7 @@ class StartPageState extends State<StartPage>
       debugPrintStack();
       debugPrint(e.toString());
 
-      buildAlertDialog("Cannot handle this message!");
+      showAlertDialog("Cannot handle this message!");
     }
 
   }
@@ -184,7 +184,7 @@ class StartPageState extends State<StartPage>
 
     var dimension = receivedInviteMessage.playSize.toDimension();
 
-    buildChoiceDialog(
+    showChoiceDialog(
         "${receivedInviteMessage
             .invitingUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension match.",
       width: 300,
@@ -281,14 +281,14 @@ class StartPageState extends State<StartPage>
 
   Future<void> _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) async {
     if (header.state == PlayState.InvitationRejected) {
-      buildAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
+      showAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
     }
     else {
       header.state = PlayState.RemoteOpponentAccepted;
       header.playOpener = message.playOpenerDecision;
       await _saveAndNotify(header);
 
-      buildAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+      showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, message.initialMove);
@@ -307,13 +307,13 @@ class StartPageState extends State<StartPage>
 
   Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
     if (header.state == PlayState.InvitationRejected) {
-      buildAlertDialog("Match ${header.getReadablePlayId()} already rejected.");
+      showAlertDialog("Match ${header.getReadablePlayId()} already rejected.");
     }
     else {
       header.state = PlayState.InvitationRejected;
       await _saveAndNotify(header);
 
-      buildAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
+      showAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
     }
   }
 
@@ -338,7 +338,7 @@ class StartPageState extends State<StartPage>
         //TODO register win
       }
     });
-    buildAlertDialog("Your opponent '${header.opponentName}' gave up match ${header.getReadablePlayId()}, you win!");
+    showAlertDialog("Your opponent '${header.opponentName}' gave up match ${header.getReadablePlayId()}, you win!");
 
   }
 
@@ -439,8 +439,7 @@ class StartPageState extends State<StartPage>
                     clickHandler: () async {
                       final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
-                        SmartDialog.showLoading(msg: "Loading game ...");
-                        await Future.delayed(const Duration(seconds: 1));
+                        await showShowLoading("Loading game ...");
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -448,7 +447,7 @@ class StartPageState extends State<StartPage>
                             }));
                       }
                       else {
-                        buildAlertDialog('No ongoing single play to resume.');
+                        showAlertDialog('No ongoing single play to resume.');
                       }
                     }
                 )
@@ -467,7 +466,7 @@ class StartPageState extends State<StartPage>
                       setState(() {
                         isDebug = !isDebug;
                       });
-                      buildAlertDialog("Debug mode set to $isDebug", type: NotifyType.error);
+                      showAlertDialog("Debug mode set to $isDebug");
                     }
                 ),
 
@@ -603,7 +602,7 @@ class StartPageState extends State<StartPage>
 
   void _showDimensionChooser(BuildContext context,
       Function(PlaySize) handleChosenDimension) {
-    buildChoiceDialog(
+    showChoiceDialog(
       'Which ground size?',
       firstString: "5 x 5", firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
       secondString: "7 x 7", secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
@@ -617,7 +616,7 @@ class StartPageState extends State<StartPage>
       {Function()? clickHandler, Function()? longClickHandler, IconData? icon, bool isMain = false}) {
     return GestureDetector(
       onTap: clickHandler ?? () {
-        buildAlertDialog('Not yet implemented!', type: NotifyType.error);
+        showAlertDialog('Not yet implemented!');
       },
       onLongPress: longClickHandler,
       child: _buildChip(label, 80, isMain ? 15 : 13, 5, colorIdx, icon),
@@ -634,7 +633,7 @@ class StartPageState extends State<StartPage>
 
   void _selectSinglePlayerMode(BuildContext context,
       Function(PlayerType, PlayerType) handleChosenPlayers) {
-    buildChoiceDialog(
+    showChoiceDialog(
       'Which role you will take?',
       firstString: "ORDER", firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
       secondString: "CHAOS", secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
@@ -645,7 +644,7 @@ class StartPageState extends State<StartPage>
 
   void _selectInvitingMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
-    buildChoiceDialog(
+    showChoiceDialog(
       'Which role you will take?',
       firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
       secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
@@ -655,7 +654,7 @@ class StartPageState extends State<StartPage>
 
   void _selectInvitedMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
-    buildChoiceDialog(
+    showChoiceDialog(
       'Who shall start? The one who starts is Chaos.',
       firstString: "ME", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
       secondString: "THE OTHER", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
@@ -664,7 +663,7 @@ class StartPageState extends State<StartPage>
 
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
-    buildChoiceDialog(
+    showChoiceDialog(
       'What kind of game do you want to play? ',
       firstString: "HYLEX-STYLE", firstHandler: () => handlePlayerMode(PlayMode.HyleX),
       secondString: "CLASSIC-STYLE", secondHandler: () => handlePlayerMode(PlayMode.Classic),
@@ -672,7 +671,7 @@ class StartPageState extends State<StartPage>
   }
 
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
-    buildInputDialog('What\'s your name?',
+    showInputDialog('What\'s your name?',
             prefilledText: _user.name,
             okHandler: (name) {
               _user.name = name;
@@ -685,8 +684,7 @@ class StartPageState extends State<StartPage>
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, PlaySize playSize) async {
-    SmartDialog.showLoading(msg: "Loading game ...");
-    await Future.delayed(const Duration(seconds: 1));
+    await showShowLoading("Loading game ...");
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           final header = PlayHeader.singlePlay(playSize);
@@ -697,9 +695,8 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstOpponentMove]) async {
-    SmartDialog.showLoading(msg: "Loading game ...");
+    await showShowLoading("Loading game ...");
     final play = Play.newMultiPlay(header);
-    await Future.delayed(const Duration(seconds: 1));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
@@ -711,9 +708,7 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? opponentMove) async {
-    SmartDialog.showLoading(msg: "Loading game ...");
-    await Future.delayed(const Duration(seconds: 1));
-
+    await showShowLoading("Loading game ...");
 
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
@@ -875,7 +870,7 @@ class StartPageState extends State<StartPage>
         height: 600,
         width: 350,
         decoration: BoxDecoration(
-          color: Colors.black,
+          color: DIALOG_BG,
           borderRadius: BorderRadius.circular(10),
         ),
         alignment: Alignment.center,
@@ -1045,7 +1040,7 @@ class StartPageState extends State<StartPage>
   void handleReplyToInvitation(PlayHeader playHeader) {
     var dimension = playHeader.playSize.toDimension();
 
-    buildChoiceDialog(
+    showChoiceDialog(
       "${playHeader.opponentName} invited you to a ${playHeader.playMode.name.toLowerCase()} $dimension x $dimension match.",
       width: 300,
       firstString: "Accept",
@@ -1102,7 +1097,7 @@ class StartPageState extends State<StartPage>
                           () {
                         Navigator.of(context).pop();
 
-                        buildInputDialog('Paste the URL here',
+                        showInputDialog('Paste the URL here',
                           okHandler: (s) {
                             final uri = extractAppLinkFromString(s);
                             if (uri == null) {
@@ -1131,7 +1126,7 @@ class StartPageState extends State<StartPage>
                               handleReceivedMessage(uri);
                             } catch (e) {
                               print(e);
-                              buildAlertDialog("Cannot read this QR code!");
+                              showAlertDialog("Cannot read this QR code!");
                             }
                           }
                         });
