@@ -23,6 +23,9 @@ It performs up to 4 rounds ahead, limited by the CPU power of the current device
 
 ### Multiplayer
 
+Exchanging moves between remote players happen "out-of-band", i.e. there is no central server involved. Instead, moves etc. are shared as URLs allowing to open them directly with the HyleX app. These URLs can be shared through any medium, like messengers, email, QR codes etc. So transport is not handled by this app.
+Later there is an idea to incorporate Veilid to share these URLs to remote players.
+
 #### Invitation state transitions
 
 
