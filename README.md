@@ -14,6 +14,13 @@ Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.
 ## Implementation
 
 
+### Single play against AI
+
+The AI part is implemented using an optimized Minimax algorithm,see https://en.m.wikipedia.org/wiki/Minimax. 
+It performs up to 4 rounds ahead, limited by the CPU power of the current device.
+
+
+
 ### Multiplayer
 
 #### Invitation state transitions
