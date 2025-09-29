@@ -75,30 +75,28 @@ enum PlayOpener {
 } 
 
 enum PlaySize {
-  Size5x5, //000
-  Size7x7, //001
-  Size9x9, //010
-  Size11x11, //011
-  Size13x13, //100
-  unused101, //101
-  unused110, //110
-  unused111 //111
-  ;
+  Size5x5(5, 20), //000
+  Size7x7(7, 10), //001
+  Size9x9(9, 5), //010
+  Size11x11(11, 2), //011
+  Size13x13(13, 1), //100
+  Size4x4(4, 25), //101
+  Size3x3(3, 3), //110
+  Size2x2(2, 1) //111
   // stuck to 3 bits, don't add more
 
-  int toDimension() {
-    switch (this) {
-      case PlaySize.Size5x5: return 5;
-      case PlaySize.Size7x7: return 7;
-      case PlaySize.Size9x9: return 9;
-      case PlaySize.Size11x11: return 11;
-      case PlaySize.Size13x13: return 13;
-      default: throw Exception("Unused: $this");
-    }
-  }
+  ;
+
+  final int dimension;
+  final int chaosPointsPerChip;
+
+  const PlaySize(this.dimension, this.chaosPointsPerChip);
 
   static PlaySize fromDimension(int dimension) {
     switch (dimension) {
+      case 2: return PlaySize.Size2x2;
+      case 3: return PlaySize.Size3x3;
+      case 4: return PlaySize.Size4x4;
       case 5: return PlaySize.Size5x5;
       case 7: return PlaySize.Size7x7;
       case 9: return PlaySize.Size9x9;

@@ -311,8 +311,8 @@ class PlayHeader {
 
   };
 
-  int get dimension => playSize.toDimension();
-  int get maxRounds => playSize.toDimension() * playSize.toDimension();
+  int get dimension => playSize.dimension;
+  int get maxRounds => playSize.dimension * playSize.dimension;
 
   String getReadablePlayId() {
     return toReadableId(playId);
@@ -545,7 +545,7 @@ class Play {
     }
     _staleMove = move;
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
+    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
 
   }
 
@@ -591,7 +591,7 @@ class Play {
     }
 
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos());
+    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
     }
 
   bool get hasStaleMove => _staleMove != null;
@@ -600,7 +600,7 @@ class Play {
   
   Move? get currentMove => _staleMove;
 
-  int getPointsPerChip() => _matrix.getPointsPerChip(header.dimension);
+  int getPointsPerChip() => header.playSize.chaosPointsPerChip;
 
   void nextPlayer() {
 

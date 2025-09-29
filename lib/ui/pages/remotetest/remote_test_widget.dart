@@ -357,7 +357,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       Coordinate? Function() getValue,
       Function(Coordinate) setValue
       ) {
-    final coordinates = _createAllCoordinates(playSize.toDimension());
+    final coordinates = _createAllCoordinates(playSize.dimension);
     var legalCoordinates = coordinates;
 
     if (localPlay != null) {

@@ -4,6 +4,7 @@ import 'package:hyle_x/model/spot.dart';
 import 'package:hyle_x/model/stock.dart';
 
 import 'chip.dart';
+import 'common.dart';
 import 'coordinate.dart';
 import '../utils/fortune.dart';
 
@@ -253,27 +254,10 @@ class Matrix {
           (_pointMapY.isNotEmpty ? _pointMapY.values.reduce((v, e) => v + e) : 0);
   }
 
-  int getTotalPointsForChaos() {
-    return _chipMap.keys.map((where) => getPoints(where)).where((v) => v == 0).length * getPointsPerChip(dimension.x);
+  int getTotalPointsForChaos(PlaySize playSize) {
+    return _chipMap.keys.map((where) => getPoints(where)).where((v) => v == 0).length * playSize.chaosPointsPerChip;
   }
 
-  int getPointsPerChip(int dimension) {
-    if (dimension == 5) {
-      return 20;
-    }
-    else if (dimension == 7) {
-      return 10;
-    }
-    else if (dimension == 9) {
-      return 5;
-    }
-    if (dimension == 11) {
-      return 2;
-    }
-    else {
-      return 1;
-    }
-  }
 
   bool noFreeSpace() => _chipMap.values.length >= dimension.x * dimension.y;
 

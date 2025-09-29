@@ -182,7 +182,7 @@ class StartPageState extends State<StartPage>
 
   void _handleReceiveInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) {
 
-    var dimension = receivedInviteMessage.playSize.toDimension();
+    var dimension = receivedInviteMessage.playSize.dimension;
 
     showChoiceDialog(
         "${receivedInviteMessage
@@ -602,14 +602,25 @@ class StartPageState extends State<StartPage>
 
   void _showDimensionChooser(BuildContext context,
       Function(PlaySize) handleChosenDimension) {
-    showChoiceDialog(
-      'Which ground size?',
-      firstString: "5 x 5", firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
-      secondString: "7 x 7", secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
-      thirdString: "9 x 9", thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
-      fourthString: "11 x 11", fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
-      fifthString: "13 x 13", fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
-    );
+    if (isDebug) {
+      showInputDialog("Which ground size? Allowed values: 2,3,4,5,7,9,11,13",
+          okHandler: (value) => handleChosenDimension(PlaySize.fromDimension(int.parse(value))));
+    }
+    else {
+      showChoiceDialog(
+        'Which ground size?',
+        firstString: "5 x 5",
+        firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
+        secondString: "7 x 7",
+        secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
+        thirdString: "9 x 9",
+        thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
+        fourthString: "11 x 11",
+        fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
+        fifthString: "13 x 13",
+        fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
+      );
+    }
   }
 
   Widget _buildCell(String label, int colorIdx,
@@ -1038,7 +1049,7 @@ class StartPageState extends State<StartPage>
   }
 
   void handleReplyToInvitation(PlayHeader playHeader) {
-    var dimension = playHeader.playSize.toDimension();
+    var dimension = playHeader.playSize.dimension;
 
     showChoiceDialog(
       "${playHeader.opponentName} invited you to a ${playHeader.playMode.name.toLowerCase()} $dimension x $dimension match.",
