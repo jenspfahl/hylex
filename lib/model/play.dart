@@ -19,6 +19,10 @@ import 'matrix.dart';
 import 'messaging.dart';
 import 'move.dart';
 
+
+enum PlayStateGroup {
+  AwaitOpponentAction, TakeAction, FinishedAndWon, FinishedAndLost, Other
+}
 /**
  * Single:
  *     Initialised --> [ ReadyToMove | WaitForOpponent ] --> [ Won | Lost | Closed]
@@ -51,52 +55,54 @@ import 'move.dart';
 enum PlayState {
   
   // Initial state for single play
-  Initialised({Actor.Single}, false, false, false),
+  Initialised({Actor.Single}, false, false, false, PlayStateGroup.Other),
 
   // only if multiPlay == true and current == inviting player, if an invitation has been sent out
-  RemoteOpponentInvited({Actor.Invitor}, true, false, false),
+  RemoteOpponentInvited({Actor.Invitor}, true, false, false, PlayStateGroup.AwaitOpponentAction),
 
   // only if multiPlay == true, when an invitation has been received but not replied
-  InvitationPending({Actor.Invitee}, false, false, false),
+  InvitationPending({Actor.Invitee}, false, false, false, PlayStateGroup.TakeAction),
 
   // only if multiPlay == true, when an invitation has been accepted by the remote player
-  RemoteOpponentAccepted({Actor.Invitor}, false, true, false),
+  RemoteOpponentAccepted({Actor.Invitor}, false, true, false, PlayStateGroup.TakeAction),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player and has to perform the first moe
-  InvitationAccepted_ReadyToMove({Actor.Invitee}, false, true, false),
+  InvitationAccepted_ReadyToMove({Actor.Invitee}, false, true, false, PlayStateGroup.TakeAction),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player and awaits the first move from the invitor
-  InvitationAccepted_WaitForOpponent({Actor.Invitee}, true, true, false),
+  InvitationAccepted_WaitForOpponent({Actor.Invitee}, true, true, false, PlayStateGroup.AwaitOpponentAction),
 
   // only if multiPlay == true, when an invitation has been rejected by invited player
-  InvitationRejected({Actor.Invitor, Actor.Invitee}, null, false, true), // final state
+  InvitationRejected({Actor.Invitor, Actor.Invitee}, null, false, true, PlayStateGroup.Other), // final state
 
   // Current player can move
-  ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false, true, false),
+  ReadyToMove({Actor.Single, Actor.Invitor, Actor.Invitee}, false, true, false, PlayStateGroup.TakeAction),
 
   // Current play is waiting for remote opponent to move (either RemoteUser or Ai)
-  WaitForOpponent({Actor.Single, Actor.Invitor, Actor.Invitee}, true, true, false),
+  WaitForOpponent({Actor.Single, Actor.Invitor, Actor.Invitee}, true, true, false, PlayStateGroup.AwaitOpponentAction),
 
   // current player lost. If both players on a single play are human, this is not used
-  Lost({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true), // final state
+  Lost({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true, PlayStateGroup.FinishedAndLost), // final state
 
   // current player won. If both players on a single play are human, this is not used
-  Won({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true), // final state
+  Won({Actor.Single, Actor.Invitor, Actor.Invitee}, null, true, true, PlayStateGroup.FinishedAndWon), // final state
 
   // current player resigned (and the remote opponent won therefore). If both players on a single play are human, this is not used
-  Resigned({Actor.Invitor, Actor.Invitee}, true, true, true), // final state
+  Resigned({Actor.Invitor, Actor.Invitee}, true, true, true, PlayStateGroup.FinishedAndLost), // final state
 
   // opponent player resigned (and the current opponent won therefore). If both players on a single play are human, this is not used
-  OpponentResigned({Actor.Invitor, Actor.Invitee}, false, true, true), // final state
+  OpponentResigned({Actor.Invitor, Actor.Invitee}, false, true, true, PlayStateGroup.FinishedAndWon), // final state
 
   // used if both players on a single play are human or any other final state like no invitation response etc..
-  Closed({Actor.Single}, false, false, true); // final state
+  Closed({Actor.Single}, false, false, true, PlayStateGroup.Other); // final state
 
-  const PlayState(this.forActors, this.isShareable, this.hasGameBoard, this.isFinal);
+  const PlayState(this.forActors, this.isShareable, this.hasGameBoard, this.isFinal, this.group);
+
   final Set<Actor> forActors;
-  final bool? isShareable; // if null (won or lost), shareable depends on we dod the last move (it is usually chaos)
+  final bool? isShareable; // if null (won or lost), shareable depends on we did the last move (it is usually chaos)
   final bool hasGameBoard;
   final bool isFinal;
+  final PlayStateGroup group;
 
   checkTransition(PlayState newPlayState, Actor forActor) {
     if (this == newPlayState) {

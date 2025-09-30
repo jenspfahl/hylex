@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -38,11 +39,15 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   late SortOrder _sortOrder;
 
+  Map<PlayStateGroup, bool> _hideGroup = HashMap();
+
   @override
   void initState() {
     super.initState();
 
-    _sortOrder = SortOrder.BY_PLAY_ID;
+    PlayStateGroup.values.forEach((group) => _hideGroup[group] = false);
+
+    _sortOrder = SortOrder.BY_STATE;
     PreferenceService().getInt(PreferenceService.PREF_MATCH_SORT_ORDER)
         .then((value) {
           if (value != null) {
@@ -65,13 +70,13 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             IconButton(
                 icon: const Icon(Icons.sort),
                 onPressed: () {
-                  showChoiceDialog("Sort list by",
-                      firstString: _emphasise("Match ID", _sortOrder == SortOrder.BY_PLAY_ID),
-                      firstHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
-                      secondString: _emphasise("Match State", _sortOrder == SortOrder.BY_STATE),
-                      secondHandler: () => _triggerSort(SortOrder.BY_STATE),
-                      thirdString: _emphasise("Latest", _sortOrder == SortOrder.BY_LATEST),
-                      thirdHandler: () => _triggerSort(SortOrder.BY_LATEST),
+                  showChoiceDialog("Sort the list by:",
+                      firstString: _emphasise("Current Status", _sortOrder == SortOrder.BY_STATE),
+                      firstHandler: () => _triggerSort(SortOrder.BY_STATE),
+                      secondString: _emphasise("Recently played", _sortOrder == SortOrder.BY_LATEST),
+                      secondHandler: () => _triggerSort(SortOrder.BY_LATEST),
+                      thirdString: _emphasise("Match ID", _sortOrder == SortOrder.BY_PLAY_ID),
+                      thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
                   );
                 }),
           ],
@@ -82,21 +87,45 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 AsyncSnapshot<List<PlayHeader>> snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final sorted = _sort(snapshot.data!);
-                return SingleChildScrollView(
-                  child: Container(
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .surface,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        children: sorted.map(_buildPlayLine).toList(),
+
+                if (_sortOrder == SortOrder.BY_STATE) {
+                  return SingleChildScrollView(
+                    child: Container(
+                      color: Theme
+                          .of(context)
+                          .colorScheme
+                          .surface,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Column(
+                          children: [
+                            _buildPlayGroupSection("Action needed", sorted, PlayStateGroup.TakeAction),
+                            _buildPlayGroupSection("Waiting for opponent", sorted, PlayStateGroup.AwaitOpponentAction),
+                            _buildPlayGroupSection("Won matches", sorted, PlayStateGroup.FinishedAndWon),
+                            _buildPlayGroupSection("Lost matches", sorted, PlayStateGroup.FinishedAndLost),
+                            _buildPlayGroupSection("Rejected matches", sorted, PlayStateGroup.Other),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-
+                  );
+                }
+                else {
+                  return SingleChildScrollView(
+                    child: Container(
+                      color: Theme
+                          .of(context)
+                          .colorScheme
+                          .surface,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: sorted.map(_buildPlayLine).toList(),
+                        ),
+                      ),
+                    ),
+                  );
+                }
               }
               else if (snapshot.hasError) {
                 print("loading error: ${snapshot.error}");
@@ -108,6 +137,40 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             })
     );
 
+  }
+
+  Widget _buildPlayGroupSection(String title, List<PlayHeader> sorted, PlayStateGroup group) {
+    final groupData = sorted.where((e) => e.state.group == group);
+    if (groupData.isEmpty) {
+      return const Text("");
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                IconButton(icon: _hideGroup[group] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
+                  onPressed: () {
+                    setState(() {
+                      _hideGroup[group] = !(_hideGroup[group]??false);
+                    });
+                  }),
+              ],
+            ),
+          ),
+          if (_hideGroup[group] != true)
+            Column(
+              children: groupData.map(_buildPlayLine).toList(),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _buildPlayLine(PlayHeader playHeader) {
@@ -244,12 +307,17 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   String _getHeaderBodyLine(PlayHeader playHeader) {
-    final localRole = playHeader.getLocalRoleForMultiPlay();
-    var roleString = "";
-    if (localRole != null) {
-      roleString = "as ${localRole.name}";
+
+    final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}");
+    if (playHeader.playMode == PlayMode.Classic) {
+      sb.write(" (Classic Mode)");
     }
-    final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}, Mode: ${playHeader.playMode.name}, $roleString");
+
+    final localRole = playHeader.getLocalRoleForMultiPlay();
+
+    if (localRole != null) {
+      sb.write(" as ${localRole.name}");
+    }
     if (playHeader.currentRound > 0) {
       sb.write(", Round ${playHeader.currentRound} of ${playHeader.maxRounds}");
     }
@@ -299,7 +367,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       case SortOrder.BY_PLAY_ID:
         return list.sortedBy((e) => e.getReadablePlayId());
       case SortOrder.BY_STATE:
-        return list.sortedBy((e) => (e.state.isFinal.toString() + e.state.name));
+        return list.sortedBy((e) => ((e.state.group.index * 100) + e.state.index).toString());
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
     }

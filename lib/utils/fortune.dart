@@ -1,8 +1,12 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+
 final rnd = Random();
 const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 const _upperChars = 'ABCDEFGHIJKLMOPQRSTUVWXYZ';
+const _upperVocals = 'AEIJOU';
+const _upperConsonants = 'BCDFGHKLMPQRSTVWXZ';
 const _digits = '1234567890';
 
 bool probabilityOf(double probability) => rnd.nextDouble() < probability;
@@ -25,14 +29,26 @@ String toReadableId(String id) {
   if (id.length < 7) {
     return id;
   }
-  return _mapToCharSet(id.codeUnitAt(0), _upperChars)
-    + _mapToCharSet(id.codeUnitAt(1), _upperChars)
-    + _mapToCharSet(id.codeUnitAt(2), _upperChars)
-    + _mapToCharSet(id.codeUnitAt(3), _upperChars)
-    + "-"
-    + _mapToCharSet(id.codeUnitAt(4), _digits)
-    + _mapToCharSet(id.codeUnitAt(5), _digits)
-    + _mapToCharSet(id.codeUnitAt(6), _digits);
+  if (id.codeUnits.sum % 3 == 0) {
+    return _mapToCharSet(id.codeUnitAt(0), _upperConsonants)
+        + _mapToCharSet(id.codeUnitAt(1), _upperVocals)
+        + _mapToCharSet(id.codeUnitAt(2), _upperConsonants)
+        + _mapToCharSet(id.codeUnitAt(3), _upperVocals)
+        + "-"
+        + _mapToCharSet(id.codeUnitAt(4), _digits)
+        + _mapToCharSet(id.codeUnitAt(5), _digits)
+        + _mapToCharSet(id.codeUnitAt(6), _digits);
+  }
+  else {
+    return _mapToCharSet(id.codeUnitAt(0), _upperVocals)
+        + _mapToCharSet(id.codeUnitAt(1), _upperConsonants)
+        + _mapToCharSet(id.codeUnitAt(2), _upperVocals)
+        + _mapToCharSet(id.codeUnitAt(3), _upperConsonants)
+        + "-"
+        + _mapToCharSet(id.codeUnitAt(4), _digits)
+        + _mapToCharSet(id.codeUnitAt(5), _digits)
+        + _mapToCharSet(id.codeUnitAt(6), _digits);
+  }
 }
 
 String _mapToCharSet(int code, String charSet) => charSet[code % charSet.length];

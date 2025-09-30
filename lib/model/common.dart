@@ -81,7 +81,7 @@ enum PlaySize {
   Size11x11(11, 2), //011
   Size13x13(13, 1), //100
   Size4x4(4, 25), //101
-  Size3x3(3, 3), //110
+  Size3x3(3, 4), //110
   Size2x2(2, 1) //111
   // stuck to 3 bits, don't add more
 
