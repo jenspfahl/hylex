@@ -10,8 +10,5 @@ void main() {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
       .then((_) {
     runApp(HylexApp());
-    if (!kReleaseMode) {
-      testMessaging();
-    }
   });
 }

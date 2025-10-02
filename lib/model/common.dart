@@ -68,7 +68,7 @@ enum PlayMode {
 enum PlayOpener {
   Invitor, //00
   Invitee,  //01
-  InvitedPlayerChooses,  //10
+  InviteeChooses,  //10
   unused11,  //11
   // stuck to 2 bits, don't add more
 

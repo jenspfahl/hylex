@@ -117,7 +117,7 @@ class MessageService {
       Function()? sentHandler,
       {bool share = true}) {
     final playOpener = header.playOpener;
-    if (playOpener == null  || playOpener == PlayOpener.InvitedPlayerChooses) {
+    if (playOpener == null  || playOpener == PlayOpener.InviteeChooses) {
       throw Exception("No playOpener decision");
     }
     final acceptMessage = AcceptInviteMessage(

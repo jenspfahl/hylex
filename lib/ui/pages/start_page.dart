@@ -186,7 +186,7 @@ class StartPageState extends State<StartPage>
 
     showChoiceDialog(
         "${receivedInviteMessage
-            .invitingUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension match.",
+            .invitorUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension match.",
       width: 300,
       firstString: "Accept",
       firstHandler: () {
@@ -234,8 +234,8 @@ class StartPageState extends State<StartPage>
 
 
   Future<void> _handleAcceptInviteWithHeader(PlayHeader header) async {
-    if (header.playOpener == PlayOpener.InvitedPlayerChooses) {
-      _selectInvitedMultiPlayerOpener(context, (playOpener) async {
+    if (header.playOpener == PlayOpener.InviteeChooses) {
+      _selectInviteeMultiPlayerOpener(context, (playOpener) async {
         header.playOpener = playOpener;
         header.state = _getStateFromPlayOpener(playOpener);
         await _saveAndNotify(header);
@@ -414,7 +414,7 @@ class StartPageState extends State<StartPage>
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (playSize) =>
                             _selectMultiPlayerMode(context, (playerMode) =>
-                                _selectInvitingMultiPlayerOpener(
+                                _selectInvitorMultiPlayerOpener(
                                     context, (playerOpener) {
                                       if (_user.name.isEmpty) {
                                         _inputUserName(context, (username) =>
@@ -653,17 +653,17 @@ class StartPageState extends State<StartPage>
     );
   }
 
-  void _selectInvitingMultiPlayerOpener(BuildContext context,
+  void _selectInvitorMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
       'Which role you will take?',
       firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
       secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
-      thirdString: "INVITEE DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InvitedPlayerChooses),
+      thirdString: "INVITEE DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InviteeChooses),
     );
   }
 
-  void _selectInvitedMultiPlayerOpener(BuildContext context,
+  void _selectInviteeMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
       'Who shall start? The one who starts is Chaos.',

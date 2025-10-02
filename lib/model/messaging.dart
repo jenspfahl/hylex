@@ -123,16 +123,16 @@ class InviteMessage extends Message {
   PlaySize playSize;
   PlayMode playMode;
   PlayOpener playOpener;
-  String invitingUserId;
-  String invitingUserName;
+  String invitorUserId;
+  String invitorUserName;
 
   InviteMessage(
       String playId,
       this.playSize,
       this.playMode,
       this.playOpener,
-      this.invitingUserId,
-      this.invitingUserName,
+      this.invitorUserId,
+      this.invitorUserName,
       ): super(playId);
 
   factory InviteMessage.deserialize(
@@ -154,8 +154,8 @@ class InviteMessage extends Message {
     writeEnum(writer, PlaySize.values, playSize);
     writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlayOpener.values, playOpener);
-    writeString(writer, invitingUserId, userIdLength);
-    writeString(writer, invitingUserName, maxNameLength);
+    writeString(writer, invitorUserId, userIdLength);
+    writeString(writer, invitorUserName, maxNameLength);
   }
 
   @override
@@ -164,15 +164,15 @@ class InviteMessage extends Message {
 
 class AcceptInviteMessage extends Message {
   PlayOpener playOpenerDecision;
-  String invitedUserId;
-  String invitedPlayerName;
+  String inviteeUserId;
+  String inviteeUserName;
   Move? initialMove;
 
   AcceptInviteMessage(
       String playId,
       this.playOpenerDecision,
-      this.invitedUserId,
-      this.invitedPlayerName,
+      this.inviteeUserId,
+      this.inviteeUserName,
       this.initialMove,
       ): super(playId);
 
@@ -194,8 +194,8 @@ class AcceptInviteMessage extends Message {
   void serializeToBuffer(BitBufferWriter writer) {
 
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
-    writeString(writer, invitedUserId, userIdLength);
-    writeString(writer, invitedPlayerName, maxNameLength);
+    writeString(writer, inviteeUserId, userIdLength);
+    writeString(writer, inviteeUserName, maxNameLength);
     if (playOpenerDecision == PlayOpener.Invitee && initialMove != null) {
       writeMove(writer, initialMove!);
     }
@@ -381,120 +381,6 @@ class SerializedMessage {
 }
 
 
-void testMessaging() {
-
-   final invitingUserId = generateRandomString(userIdLength);
-   final invitedUserId = generateRandomString(userIdLength);
-   final playId = generateRandomString(playIdLength);
-
-   final invitingContext = CommunicationContext();
-   final invitedContext = CommunicationContext();
-
-   print("----- send invite --------");
-
-
-   // send invite
-   final invitationMessage = InviteMessage(
-       playId,
-       PlaySize.Size7x7,
-       PlayMode.HyleX,
-       PlayOpener.Invitor,
-       invitingUserId,
-       "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz"
-   );
-
-   final serializedInvitationMessage = _send(invitationMessage.serializeWithContext(invitingContext));
-
-
-   // receive invite
-   final deserializedInviteMessage = serializedInvitationMessage.deserialize(invitedContext).$1 as InviteMessage;
-   print("playId: ${deserializedInviteMessage.playId}");
-   print("playSize: ${deserializedInviteMessage.playSize}");
-   print("playMode: ${deserializedInviteMessage.playMode}");
-   print("playOpener: ${deserializedInviteMessage.playOpener}");
-   print("userId: ${deserializedInviteMessage.invitingUserId}");
-   print("invitingName: ${deserializedInviteMessage.invitingUserName}");
-
-
-   print("----- accept invite --------");
-
-   // accept and respond to invite
-   final acceptInviteMessage = AcceptInviteMessage(
-       deserializedInviteMessage.playId,
-       PlayOpener.Invitee,
-       invitedUserId,
-       "Remote opponents name",
-       Move.placed(GameChip(1), Coordinate(3, 5)),
-   );
-
-   final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(invitedContext));
-
-
-   // receive accept invite
-   final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitingContext).$1 as AcceptInviteMessage;
-
-   print("playId: ${deserializedAcceptInviteMessage.playId}");
-   print("playOpener: ${deserializedAcceptInviteMessage.playOpenerDecision}");
-   print("userId: ${deserializedAcceptInviteMessage.invitedUserId}");
-   print("invitedName: ${deserializedAcceptInviteMessage.invitedPlayerName}");
-   print("initialMove: ${deserializedAcceptInviteMessage.initialMove}");
-
- /*  print("------ reject invite -------");
-
-
-   // accept and respond to invite
-   final rejectInviteMessage = RejectInviteMessage(
-     deserializedInviteMessage.playId);
-
-   final serializedRejectInviteMessage = _send(rejectInviteMessage.serialize(serializedInvitationMessage), invitedContext);
-
-
-   // receive reject invite
-   final deserializedRejectInviteMessage = serializedRejectInviteMessage.deserialize(invitingContext) as RejectInviteMessage;
-
-   print("playId: ${deserializedRejectInviteMessage.playId}");
-*/
-   print("----- first move --------");
-
-   // first order move from inviting player
-   final firstInvitingPlayerMoveMessage = MoveMessage(
-       playId,
-       1,
-       Move.movedForMessaging(Coordinate(3, 5), Coordinate(0, 5)),
-   );
-
-   final serializedMoveMessage = _send(firstInvitingPlayerMoveMessage.serializeWithContext(invitingContext));
-
-   final deserializedMoveMessage = serializedMoveMessage.deserialize(invitedContext).$1 as MoveMessage;
-
-   print("playId: ${deserializedMoveMessage.playId}");
-   print("round: ${deserializedMoveMessage.round}");
-   print("move: ${deserializedMoveMessage.move}");
-
-
-   print("-------------");
-
-}
-
-
-
-SerializedMessage _send(SerializedMessage message) {
-  print("|");
-  print("|");
-  print("payload = ${message.payload}");
-  print("signature = ${message.signature}");
-  print("url = ${message.toUrl()}");
-  print("|");
-  print("|");
-  print("|");
-  print("V");
-
-  return message;
-}
-
-
-
-
 List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
   final previousSignature = previousSignatureBase64 != null
       ? Base64Codec.urlSafe().decoder.convert(previousSignatureBase64)
@@ -531,7 +417,7 @@ String? _validateSignature(List<int> blob, CommunicationContext comContext, Stri
   }
 }
 
-String _normalize(String string, int maxLength) {
+String normalizeString(String string, int maxLength) {
   string = string.replaceAll(RegExp(r'[^a-zA-Z0-9\-\ ]'), " ");
   return (string.length < maxLength)
       ? string
@@ -640,7 +526,7 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
   if (maxLength > 63) {
     throw Exception("String too long");
   }
-  string = _normalize(string, maxLength);
+  string = normalizeString(string, maxLength);
   // max length 32-1 to fit into 5 bits
   writer.writeInt(string.length, signed: false, bits: 6);
   string

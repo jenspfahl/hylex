@@ -38,7 +38,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
   late PlaySize playSize = PlaySize.Size5x5;
   late PlayMode playMode = PlayMode.HyleX;
-  late PlayOpener playOpener = PlayOpener.InvitedPlayerChooses;
+  late PlayOpener playOpener = PlayOpener.InviteeChooses;
 
   Play? localPlay;
 

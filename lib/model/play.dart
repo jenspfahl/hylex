@@ -57,7 +57,7 @@ enum PlayState {
   // Initial state for single play
   Initialised({Actor.Single}, false, false, false, PlayStateGroup.Other),
 
-  // only if multiPlay == true and current == inviting player, if an invitation has been sent out
+  // only if multiPlay == true and current == invitor player, if an invitation has been sent out
   RemoteOpponentInvited({Actor.Invitor}, true, false, false, PlayStateGroup.AwaitOpponentAction),
 
   // only if multiPlay == true, when an invitation has been received but not replied
@@ -227,8 +227,8 @@ class PlayHeader {
     playSize = inviteMessage.playSize;
     playMode = inviteMessage.playMode;
     playOpener = inviteMessage.playOpener;
-    opponentId = inviteMessage.invitingUserId;
-    opponentName = inviteMessage.invitingUserName;
+    opponentId = inviteMessage.invitorUserId;
+    opponentName = inviteMessage.invitorUserName;
     _touch();
   }
 
