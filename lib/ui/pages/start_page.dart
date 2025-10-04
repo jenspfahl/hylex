@@ -207,7 +207,7 @@ class StartPageState extends State<StartPage>
             receivedInviteMessage,
             comContext,
             PlayState.InvitationRejected);
-        MessageService().sendInvitationRejected(header, _user, context, () async {
+        MessageService().sendInvitationRejected(header, _user, () => context, () async {
           await _saveAndNotify(header);
         });
       },
@@ -245,7 +245,7 @@ class StartPageState extends State<StartPage>
         }
         else {
           // reply back, invitor has to start
-          MessageService().sendInvitationAccepted(header, _user, null, context,
+          MessageService().sendInvitationAccepted(header, _user, null, () => context,
                   () async {
                 await _saveAndNotify(header);
               });
@@ -262,7 +262,7 @@ class StartPageState extends State<StartPage>
     else if (header.playOpener == PlayOpener.Invitor) {
       header.playOpener = header.playOpener!;
       header.state = _getStateFromPlayOpener(header.playOpener!);
-      MessageService().sendInvitationAccepted(header, _user, null, context,
+      MessageService().sendInvitationAccepted(header, _user, null, () => context,
               () async {
             await _saveAndNotify(header);
           });
@@ -755,7 +755,7 @@ class StartPageState extends State<StartPage>
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
     StorageService().savePlayHeader(header);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user, context, () async {
+    MessageService().sendRemoteOpponentInvitation(header, _user, () => context, () async {
       await _saveAndNotify(header);
     });
   }
@@ -1070,7 +1070,7 @@ class StartPageState extends State<StartPage>
       secondString: "Reject",
       secondHandler: () {
         playHeader.state = PlayState.InvitationRejected;
-        MessageService().sendInvitationRejected(playHeader, _user, context, () async {
+        MessageService().sendInvitationRejected(playHeader, _user, () => context, () async {
           await _saveAndNotify(playHeader);
         });
       },

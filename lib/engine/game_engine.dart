@@ -1,7 +1,8 @@
 
 import 'dart:isolate';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/ui/dialogs.dart';
@@ -17,10 +18,10 @@ abstract class GameEngine extends ChangeNotifier {
 
   User user;
   Play play;
-  BuildContext context;
+  BuildContext Function()? contextProvider;
   Function() handleGameOver;
 
-  GameEngine(this.play, this.user, this.context, this.handleGameOver);
+  GameEngine(this.play, this.user, this.contextProvider, this.handleGameOver);
 
   double? get progressRatio;
 
@@ -37,6 +38,12 @@ abstract class GameEngine extends ChangeNotifier {
       debugPrint("Game over, no next round");
       _finish();
       return;
+    }
+
+    // check if player did a move
+    final lastMove = play.journal.lastOrNull;
+    if (lastMove == null || !lastMove.isFrom(play.currentRole)) {
+      throw Exception("Cannot switch to next player, current player didn't apply a move.");
     }
 
     play.nextPlayer();
@@ -165,8 +172,12 @@ class SinglePlayerGameEngine extends GameEngine {
   Load? aiLoad;
   SendPort? _aiControlPort;
 
-  SinglePlayerGameEngine(Play play, User user, BuildContext context, Function() handleGameOver)
-      : super(play, user, context, handleGameOver);
+  SinglePlayerGameEngine(
+      Play play,
+      User user,
+      BuildContext Function()? contextProvider,
+      Function() handleGameOver
+      ) : super(play, user, contextProvider, handleGameOver);
 
   void startGame() {
     _doNextPlayerMove();
@@ -226,8 +237,12 @@ class SinglePlayerGameEngine extends GameEngine {
 class MultiPlayerGameEngine extends GameEngine {
 
 
-  MultiPlayerGameEngine(Play play, User user, BuildContext context, Function() handleGameOver)
-      : super(play, user, context, handleGameOver);
+  MultiPlayerGameEngine(
+      Play play,
+      User user,
+      BuildContext Function()? contextProvider,
+      Function() handleGameOver)
+      : super(play, user, contextProvider, handleGameOver);
 
   void startGame() {
   }
@@ -243,7 +258,7 @@ class MultiPlayerGameEngine extends GameEngine {
   void shareGameMove() {
 
     if (play.header.isStateShareable()) {
-      MessageService().sendCurrentPlayState(play.header, user, context, null);
+      MessageService().sendCurrentPlayState(play.header, user, contextProvider, null);
     }
   }
 
@@ -272,7 +287,7 @@ class MultiPlayerGameEngine extends GameEngine {
 
     //TODO register lost game
 
-    MessageService().sendResignation(play.header, user, context,
+    MessageService().sendResignation(play.header, user, contextProvider,
             () => StorageService().savePlayHeader(play.header));
 
   }

@@ -12,6 +12,8 @@ class StorageService {
 
   static final StorageService _service = StorageService._internal();
 
+  static bool enableMocking = false;
+
   factory StorageService() {
     return _service;
   }
@@ -23,10 +25,13 @@ class StorageService {
     final jsonToSave = jsonEncode(user);
     debugPrint("Save current user:");
     //debugPrint(_getPrettyJSONString(user));
+    if (enableMocking) return Future.value(true);
     return PreferenceService().setString(PreferenceService.DATA_CURRENT_USER, jsonToSave);
   }
 
   Future<User?> loadUser() async {
+    if (enableMocking) return Future.value(null);
+
     final json = await PreferenceService().getString(PreferenceService.DATA_CURRENT_USER);
     if (json == null) return null;
 
@@ -37,6 +42,7 @@ class StorageService {
   }
   
   Future<bool> savePlay(Play play) async {
+    if (enableMocking) return Future.value(true);
 
     final headerKey = play.multiPlay
         ? _getPlayHeaderKey(play.header.playId)
@@ -63,11 +69,15 @@ class StorageService {
   }
 
   Future<bool> savePlayHeader(PlayHeader header) {
+    if (enableMocking) return Future.value(true);
+
     final key = _getPlayHeaderKey(header.playId);
     return _saveRawPlayHeader(key, header);
   }
 
   Future<Play?> loadCurrentSinglePlay() async {
+    if (enableMocking) return Future.value(null);
+
     final play = await _loadPlay(PreferenceService.DATA_CURRENT_PLAY);
     final header = await _loadPlayHeader(PreferenceService.DATA_CURRENT_PLAY_HEADER);
     if (play == null || header == null) return null;
@@ -76,11 +86,15 @@ class StorageService {
   }
 
   Future<PlayHeader?> loadPlayHeader(String playId) async {
+    if (enableMocking) return Future.value(null);
+
     final key = _getPlayHeaderKey(playId);
     return _loadPlayHeader(key);
   }
 
   Future<Play?> loadPlayFromHeader(PlayHeader header) async {
+    if (enableMocking) return Future.value(null);
+
     debugPrint("Load play from header $header");
     final reloadedHeader = await _loadPlayHeader(_getPlayHeaderKey(header.playId));
     if (reloadedHeader == null) {
@@ -92,6 +106,7 @@ class StorageService {
   }
 
   Future<List<PlayHeader>> loadAllPlayHeaders() async {
+    if (enableMocking) return Future.value([]);
 
     debugPrint("Load all headers");
     final keys = await PreferenceService().getKeys(PreferenceService.DATA_PLAY_HEADER_PREFIX);
@@ -117,6 +132,8 @@ class StorageService {
   }
 
   Future<void> deletePlayHeaderAndPlay(String playId) async {
+    if (enableMocking) return Future.value(null);
+
     final key = _getPlayHeaderKey(playId);
 
     await Future.wait([

@@ -20,6 +20,8 @@ import '../utils/fortune.dart';
 class MessageService {
 
   static final MessageService _service = MessageService._internal();
+  static bool enableMocking = false;
+
 
   factory MessageService() {
     return _service;
@@ -31,27 +33,35 @@ class MessageService {
   sendCurrentPlayState(
       PlayHeader playHeader,
       User user,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler) {
     if (!playHeader.isStateShareable()) {
       // cannot send this state
       print("It is not possible to send a message for state ${playHeader.state}");
       return;
     }
+
+    if (enableMocking) {
+      print("sendState ${playHeader.state}");
+      return;
+    }
+
+
     switch (playHeader.state) {
       case PlayState.RemoteOpponentInvited: {
-        sendRemoteOpponentInvitation(playHeader, user, context, sentHandler);
+        sendRemoteOpponentInvitation(playHeader, user, contextProvider, sentHandler);
         break;
       }
+
       case PlayState.InvitationAccepted_WaitForOpponent: {
         StorageService().loadPlayFromHeader(playHeader).then((play) {
           final lastMove = play?.lastMoveFromJournal;
-          sendInvitationAccepted(playHeader, user, lastMove, context, sentHandler);
+          sendInvitationAccepted(playHeader, user, lastMove, contextProvider, sentHandler);
         });
         break;
       }
       case PlayState.InvitationRejected: {
-        sendInvitationRejected(playHeader, user, context, sentHandler);
+        sendInvitationRejected(playHeader, user, contextProvider, sentHandler);
         break;
       }
       case PlayState.Lost:
@@ -60,19 +70,19 @@ class MessageService {
         if (playHeader.actor == Actor.Invitee && playHeader.currentRound == 1) {
           StorageService().loadPlayFromHeader(playHeader).then((play) {
             final lastMove = play?.lastMoveFromJournal;
-            sendInvitationAccepted(playHeader, user, lastMove, context, sentHandler);
+            sendInvitationAccepted(playHeader, user, lastMove, contextProvider, sentHandler);
           });
         }
         else {
           StorageService().loadPlayFromHeader(playHeader).then((play) {
-            sendMove(playHeader, user, play!.lastMoveFromJournal!, context, sentHandler);
+            sendMove(playHeader, user, play!.lastMoveFromJournal!, contextProvider, sentHandler);
           });
         }
         break;
       }
       case PlayState.Resigned: {
         StorageService().loadPlayFromHeader(playHeader).then((play) {
-          sendResignation(playHeader, user, context, sentHandler);
+          sendResignation(playHeader, user, contextProvider, sentHandler);
         });
         break;
       }
@@ -93,7 +103,7 @@ class MessageService {
   SerializedMessage sendRemoteOpponentInvitation(
       PlayHeader header,
       User user,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       {bool share = true}) {
     final inviteMessage = InviteMessage(
@@ -105,15 +115,21 @@ class MessageService {
         user.name);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
+    if (enableMocking) {
+      print("send ${serializedMessage.toUrl()}");
+      return serializedMessage;
+    }
+
+
     return _shareMessage('I (${user.name}) want to invite you to a $APP_NAME match. Click the link to open it: ',
-          serializedMessage, context, sentHandler, share);
+          serializedMessage, contextProvider, sentHandler, share);
   }
 
   SerializedMessage sendInvitationAccepted(
       PlayHeader header,
       User user,
       Move? initialMove,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       {bool share = true}) {
     final playOpener = header.playOpener;
@@ -129,17 +145,22 @@ class MessageService {
     );
     final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
 
+    if (enableMocking) {
+      print("send ${serializedMessage.toUrl()}");
+      return serializedMessage;
+    }
+
     var localUserRole = header.actor.getActorRoleFor(playOpener);
     var remoteUserRole = localUserRole?.opponentRole;
 
     return _shareMessage("I am accepting your match request. I am ${localUserRole?.name}, you are ${remoteUserRole?.name}.",
-        serializedMessage, context, sentHandler, share);
+        serializedMessage, contextProvider, sentHandler, share);
   }
 
   SerializedMessage sendInvitationRejected(
       PlayHeader header,
       User user,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       {bool share = true}) {
     final rejectMessage = RejectInviteMessage(
@@ -148,34 +169,44 @@ class MessageService {
     final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
 
     return _shareMessage('I want to kindly reject your match request.',
-        serializedMessage, context, sentHandler, share);
+        serializedMessage, contextProvider, sentHandler, share);
   }
 
   SerializedMessage sendMove(
       PlayHeader header,
       User user,
       Move move,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       {bool share = true}) {
     final moveMessage = MoveMessage(header.playId, header.currentRound, move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext);
 
+    if (enableMocking) {
+      print("send ${serializedMessage.toUrl()}");
+      return serializedMessage;
+    }
+
     return _shareMessage("This is my next move for round ${header.currentRound} as ${header.getLocalRoleForMultiPlay()?.name}.",
-        serializedMessage, context, sentHandler, share);
+        serializedMessage, contextProvider, sentHandler, share);
   }
 
   SerializedMessage sendResignation(
       PlayHeader header,
       User user,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       {bool share = true}) {
     final resignationMessage = ResignMessage(header.playId, header.currentRound);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext);
 
+    if (enableMocking) {
+      print("send ${serializedMessage.toUrl()}");
+      return serializedMessage;
+    }
+
     return _shareMessage("Uff, I am giving up in round ${header.currentRound}.",
-        serializedMessage, context, sentHandler, share);
+        serializedMessage, contextProvider, sentHandler, share);
   }
 
   void _share(String shareMessage, SerializedMessage message, BuildContext context) {
@@ -265,7 +296,7 @@ class MessageService {
   SerializedMessage _shareMessage(
       String text,
       SerializedMessage message,
-      BuildContext context,
+      BuildContext Function()? contextProvider,
       Function()? sentHandler,
       bool share
       ) {
@@ -274,8 +305,8 @@ class MessageService {
     final shareMessage = '[${toReadableId(playId)}] $text\n${message.toUrl()}';
     debugPrint("sending: [${toReadableId(playId)}] $text");
     debugPrint(" >>>>>>> ${message.toUrl()}");
-    if (share) {
-      _share(shareMessage, message, context);
+    if (share && contextProvider != null) {
+      _share(shareMessage, message, contextProvider());
     }
 
     if (sentHandler != null) {

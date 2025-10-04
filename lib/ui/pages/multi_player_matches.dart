@@ -205,7 +205,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           firstString: "SHARE IT AGAIN",
                           firstHandler: () {
                             MessageService().sendCurrentPlayState(
-                                playHeader, widget.user, context, null);
+                                playHeader, widget.user, () => context, null);
                           },
                           secondString: "CANCEL",
                           secondHandler: () {});
@@ -270,7 +270,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                               }
                               else if (playHeader.isStateShareable()) {
                                 MessageService().sendCurrentPlayState(
-                                    playHeader, widget.user, context, null);
+                                    playHeader, widget.user, () => context, null);
                               }
                               else {
                                 showAlertDialog("Nothing to share, take action instead");

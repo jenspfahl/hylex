@@ -65,7 +65,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       gameEngine = MultiPlayerGameEngine(
           widget.play,
           widget.user,
-          context,
+          () => context,
           _handleGameOver
       );
     }
@@ -73,7 +73,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       gameEngine = SinglePlayerGameEngine(
           widget.play,
           widget.user,
-          context,
+          () => context,
           _handleGameOver
       );
     }

@@ -134,4 +134,13 @@ class Move {
     }
   }
 
+  bool isFrom(Role role) {
+    if (role == Role.Chaos) {
+      return isPlaced();
+    }
+    else {
+      return skipped || isMove();
+    }
+  }
+
 }
