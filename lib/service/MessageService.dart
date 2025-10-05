@@ -89,7 +89,7 @@ class MessageService {
       case PlayState.InvitationAccepted_ReadyToMove:
       case PlayState.ReadyToMove:
       case PlayState.InvitationPending:
-      case PlayState.RemoteOpponentAccepted:
+      case PlayState.RemoteOpponentAccepted_ReadyToMove:
       case PlayState.OpponentResigned:
       case PlayState.Closed:
       case PlayState.Initialised: {

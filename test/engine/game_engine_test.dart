@@ -7,6 +7,7 @@ import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/model/move.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/user.dart';
+import 'package:hyle_x/service/MessageReceiver.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/utils/fortune.dart';
@@ -90,8 +91,15 @@ void main() {
 
       expect(play.header.state, PlayState.RemoteOpponentInvited);
 
-      play.header.state = PlayState.RemoteOpponentAccepted;
-      play.header.playOpener = PlayOpener.Invitor;
+      final acceptMessage = AcceptInviteMessage(
+          play.header.playId,
+          PlayOpener.Invitor,
+          "1",
+          "Remote User",
+          null);
+
+      final errorMessage = await MessageReceiver().handleInviteAccepted(play.header, acceptMessage);
+      expect(errorMessage, null);
 
       final engine = MultiPlayerGameEngine(play, user, null, () {});
 
@@ -113,21 +121,25 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
 
       final header = PlayHeader.multiPlayInvitor(
-          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitor);
+          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee);
       final play = Play.newMultiPlay(header);
 
       expect(play.header.state, PlayState.RemoteOpponentInvited);
 
-      play.header.state = PlayState.RemoteOpponentAccepted;
-      play.header.playOpener = PlayOpener.Invitee;
-      final initialMove = Move.placed(GameChip(0), Coordinate(0, 0));
+      final acceptMessage = AcceptInviteMessage(
+          play.header.playId,
+          PlayOpener.Invitee,
+          "1",
+          "Remote User",
+          Move.placed(GameChip(0), Coordinate(0, 0)));
 
-      play.applyStaleMove(initialMove);
-      play.commitMove();
+      final errorMessage = await MessageReceiver().handleInviteAccepted(play.header, acceptMessage);
+      expect(errorMessage, null);
 
       final engine = MultiPlayerGameEngine(play, user, null, () {});
 
-      engine.startGame();
+      engine.opponentMoveReceived(acceptMessage.initialMove!);
+
       expect(play.currentRole, Role.Order);
       expect(play.currentRound, 1);
       expect(engine.isBoardLocked(), false);

@@ -42,11 +42,11 @@ Boxes are PlayStates, arrows are allowed transitions. Text on arrows are Operati
 stateDiagram-v2
 
     [*] --> RemoteOpponentInvited: SendInvite->
-    RemoteOpponentInvited --> RemoteOpponentAccepted: ->AcceptInvite
+    RemoteOpponentInvited --> RemoteOpponentAccepted_ReadyToMove: ->AcceptInvite
     RemoteOpponentInvited --> InvitationRejected: ->RejectInvite
     InvitationRejected --> [*]
-    RemoteOpponentAccepted --> WaitForOpponent: Move->
-    RemoteOpponentAccepted --> Resigned: Resign->
+    RemoteOpponentAccepted_ReadyToMove --> WaitForOpponent: Move->
+    RemoteOpponentAccepted_ReadyToMove --> Resigned: Resign->
     ReadyToMove --> WaitForOpponent: Move->
     WaitForOpponent --> ReadyToMove: ->Move
     ReadyToMove --> Lost: Move->
@@ -160,7 +160,7 @@ sequenceDiagram
         Remote-->>-Local: <AcceptInvite>
 
         Note over Remote: [InvitationAccepted_WaitForOpponent]
-        Note over Local: [RemoteOpponentAccepted]
+        Note over Local: [RemoteOpponentAccepted_ReadyToMove]
 
     else Invitee starts with initial move
 
@@ -169,7 +169,7 @@ sequenceDiagram
         Note over Remote: [InvitationAccepted_WaitForOpponent]
 
 
-        Note over Local: [RemoteOpponentAccepted]
+        Note over Local: [RemoteOpponentAccepted_ReadyToMove]
     
 
     end

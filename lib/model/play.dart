@@ -64,7 +64,7 @@ enum PlayState {
   InvitationPending({Actor.Invitee}, false, false, false, PlayStateGroup.TakeAction),
 
   // only if multiPlay == true, when an invitation has been accepted by the remote player
-  RemoteOpponentAccepted({Actor.Invitor}, false, true, false, PlayStateGroup.TakeAction),
+  RemoteOpponentAccepted_ReadyToMove({Actor.Invitor}, false, true, false, PlayStateGroup.TakeAction),
 
   // only if multiPlay == true, when an invitation has been accepted by invited player and has to perform the first moe
   InvitationAccepted_ReadyToMove({Actor.Invitee}, false, true, false, PlayStateGroup.TakeAction),
@@ -125,7 +125,7 @@ enum PlayState {
       case PlayState.Initialised: return "New game";
       case PlayState.RemoteOpponentInvited: return "Invitation sent out";
       case PlayState.InvitationPending: return "Open invitation needs response";
-      case PlayState.RemoteOpponentAccepted: return "Sent invitation accepted, please do your first move";
+      case PlayState.RemoteOpponentAccepted_ReadyToMove: return "Sent invitation accepted, please do your first move";
       case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first move";
       case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for invitor's first move";
       case PlayState.InvitationRejected: return "Invitation rejected";
@@ -144,7 +144,7 @@ enum PlayState {
       case PlayState.Initialised: return getColorFromIdx(6);
       case PlayState.RemoteOpponentInvited: return getColorFromIdx(7);
       case PlayState.InvitationPending: return getColorFromIdx(7);
-      case PlayState.RemoteOpponentAccepted: return getColorFromIdx(4);
+      case PlayState.RemoteOpponentAccepted_ReadyToMove: return getColorFromIdx(4);
       case PlayState.InvitationAccepted_ReadyToMove: return getColorFromIdx(9);
       case PlayState.InvitationAccepted_WaitForOpponent: return getColorFromIdx(1);
       case PlayState.InvitationRejected: return getColorFromIdx(8);
@@ -164,9 +164,9 @@ enum PlayState {
     final Map<PlayState, List<PlayState>> transitions = HashMap();
 
     transitions[PlayState.Initialised] = [ReadyToMove, WaitForOpponent, Lost, Won, Closed];
-    transitions[PlayState.RemoteOpponentInvited] = [InvitationRejected, RemoteOpponentAccepted];
+    transitions[PlayState.RemoteOpponentInvited] = [InvitationRejected, RemoteOpponentAccepted_ReadyToMove];
     transitions[PlayState.InvitationPending] = [InvitationRejected, InvitationAccepted_ReadyToMove, InvitationAccepted_WaitForOpponent];
-    transitions[PlayState.RemoteOpponentAccepted] = [WaitForOpponent, Resigned];
+    transitions[PlayState.RemoteOpponentAccepted_ReadyToMove] = [WaitForOpponent, Resigned];
     transitions[PlayState.InvitationAccepted_WaitForOpponent] = [ReadyToMove, OpponentResigned];
     transitions[PlayState.InvitationAccepted_ReadyToMove] = [InvitationAccepted_WaitForOpponent, Resigned];
     transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won, Closed];
@@ -720,7 +720,8 @@ class Play {
         header.state = PlayState.WaitForOpponent;
       }
     } else {
-      if (header.state != PlayState.InvitationAccepted_ReadyToMove) {
+      if (header.state != PlayState.InvitationAccepted_ReadyToMove
+        && header.state != PlayState.RemoteOpponentAccepted_ReadyToMove) {
         header.state = PlayState.ReadyToMove;
       }
     }

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/app.dart';
+import 'package:hyle_x/service/MessageReceiver.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/qr_reader.dart';
@@ -280,12 +281,12 @@ class StartPageState extends State<StartPage>
 
 
   Future<void> _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) async {
-    if (header.state == PlayState.InvitationRejected) {
-      showAlertDialog("Match ${header.getReadablePlayId()} already rejected, cannot accept afterwards.");
+    final errorMessage = await MessageReceiver().handleInviteAccepted(header, message);
+
+    if (errorMessage != null) {
+      showAlertDialog(errorMessage);
     }
     else {
-      header.state = PlayState.RemoteOpponentAccepted;
-      header.playOpener = message.playOpenerDecision;
       await _saveAndNotify(header);
 
       showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
