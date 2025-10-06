@@ -40,7 +40,7 @@ class PlayStateManager {
       header.state = header.playOpener! == PlayOpener.Invitor
           ? PlayState.InvitationAccepted_WaitForOpponent
           : PlayState.InvitationAccepted_ReadyToMove;
-      await _saveAndNotify(header);
+      await StorageService().savePlayHeader(header);
       return null;
     } on Exception catch (e) {
       print(e);
@@ -56,7 +56,7 @@ class PlayStateManager {
       try {
         header.state = PlayState.RemoteOpponentAccepted_ReadyToMove;
         header.playOpener = message.playOpenerDecision;
-        await _saveAndNotify(header);
+        await StorageService().savePlayHeader(header);
         return null;
       } on Exception catch (e) {
         print(e);
@@ -72,7 +72,7 @@ class PlayStateManager {
     else {
       try {
         header.state = PlayState.InvitationRejected;
-        await _saveAndNotify(header);
+        await StorageService().savePlayHeader(header);
         return null;
       } on Exception catch (e) {
         print(e);
@@ -90,8 +90,7 @@ class PlayStateManager {
         user.achievements.incLostGame(role, header.dimension);
         StorageService().saveUser(user);
       }
-
-      await _saveAndNotify(header);
+      await StorageService().savePlayHeader(header);
       return null;
     } on Exception catch (e) {
       print(e);
@@ -113,7 +112,7 @@ class PlayStateManager {
             play.stats.getPoints(role));
         await StorageService().saveUser(user);
       }
-      await _saveAndNotify(header);
+      await StorageService().savePlayHeader(header);
       return null;
     } on Exception catch (e) {
       print(e);
@@ -121,10 +120,6 @@ class PlayStateManager {
     }
   }
 
-  Future<void> _saveAndNotify(PlayHeader header) async {
-    await StorageService().savePlayHeader(header);
-    globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
-  }
 
 }
 

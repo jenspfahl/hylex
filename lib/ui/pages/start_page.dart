@@ -207,17 +207,15 @@ class StartPageState extends State<StartPage>
             receivedInviteMessage,
             comContext,
             PlayState.InvitationRejected);
-        MessageService().sendInvitationRejected(header, _user, () => context, () async {
-          await _saveAndNotify(header);
-        });
+        MessageService().sendInvitationRejected(header, _user, () => context);
       },
       thirdString: "Reply later",
-      thirdHandler: () async {
+      thirdHandler: () {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
             comContext,
             PlayState.InvitationPending);
-        await _saveAndNotify(header);
+        StorageService().savePlayHeader(header);
 
       },
       fourthString: "Cancel",
@@ -254,10 +252,7 @@ class StartPageState extends State<StartPage>
       _startMultiPlayerGame(context, header);
     }
     else if (header.playOpener == PlayOpener.Invitor) {
-      MessageService().sendInvitationAccepted(header, _user, null, () => context,
-              () async {
-            await _saveAndNotify(header);
-          });
+      await MessageService().sendInvitationAccepted(header, _user, null, () => context);
     }
   }
 
@@ -282,10 +277,6 @@ class StartPageState extends State<StartPage>
     }
   }
 
-  Future<void> _saveAndNotify(PlayHeader header) async {
-    await StorageService().savePlayHeader(header);
-    globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
-  }
 
   Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
     final error = await PlayStateManager().doAndHandleRejectInvite(header);
@@ -735,9 +726,7 @@ class StartPageState extends State<StartPage>
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
     StorageService().savePlayHeader(header);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user, () => context, () async {
-      await _saveAndNotify(header);
-    });
+    MessageService().sendRemoteOpponentInvitation(header, _user, () => context);
   }
 
   Widget _buildChip(String label, double radius, double textSize,
@@ -1054,10 +1043,7 @@ class StartPageState extends State<StartPage>
           showAlertDialog(error);
         }
         else {
-          MessageService().sendInvitationRejected(playHeader, _user, () => context,
-                  () async {
-                await _saveAndNotify(playHeader);
-              });
+          await MessageService().sendInvitationRejected(playHeader, _user, () => context);
         }
       },
       thirdString: "Cancel",

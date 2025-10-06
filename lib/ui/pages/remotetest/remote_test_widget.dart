@@ -490,14 +490,14 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     }
   }
 
-  void _sendRemoteMessage(bool share, BuildContext context) {
+  Future<void> _sendRemoteMessage(bool share, BuildContext context) async {
     final remoteHeader = widget.playHeader != null
         ? createRemoteFromLocalHistory(widget.playHeader!)
         : PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
     debugPrint("Remote header:\n$remoteHeader");
     try {
-      SerializedMessage message = _createRemoteMessage(remoteHeader, share, context);
+      SerializedMessage message = await _createRemoteMessage(remoteHeader, share, context);
       if (!share && widget.messageHandler != null) {
         widget.messageHandler!(message);
       }
@@ -507,19 +507,19 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     }
   }
 
-  SerializedMessage _createRemoteMessage(PlayHeader remoteHeader, bool share, BuildContext context) {
+  Future<SerializedMessage> _createRemoteMessage(PlayHeader remoteHeader, bool share, BuildContext context) {
     switch(operation) {
 
       case Operation.SendInvite:
-        return MessageService().sendRemoteOpponentInvitation(remoteHeader, remoteUser, () => context, null, share: share);
+        return MessageService().sendRemoteOpponentInvitation(remoteHeader, remoteUser, () => context, saveState: false, share: share);
       case Operation.AcceptInvite:
-        return MessageService().sendInvitationAccepted(remoteHeader, remoteUser, _createMove(), () => context, null, share: share);
+        return MessageService().sendInvitationAccepted(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share);
       case Operation.RejectInvite:
-        return MessageService().sendInvitationRejected(remoteHeader, remoteUser, () => context, null, share: share);
+        return MessageService().sendInvitationRejected(remoteHeader, remoteUser, () => context, saveState: false, share: share);
       case Operation.Move:
-        return MessageService().sendMove(remoteHeader, remoteUser, _createMove(), () => context, null, share: share);
+        return MessageService().sendMove(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share);
       case Operation.Resign:
-        return MessageService().sendResignation(remoteHeader, remoteUser, () => context, null, share: share);
+        return MessageService().sendResignation(remoteHeader, remoteUser, () => context, saveState: false, share: share);
       default:
         throw Exception("$operation not supported");
     }

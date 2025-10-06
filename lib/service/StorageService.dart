@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../model/play.dart';
 import '../model/user.dart';
+import '../ui/pages/multi_player_matches.dart';
 import 'PreferenceService.dart';
 
 
@@ -68,11 +69,15 @@ class StorageService {
     return PreferenceService().setString(key, jsonToSave);
   }
 
-  Future<bool> savePlayHeader(PlayHeader header) {
+  Future<bool> savePlayHeader(PlayHeader header) async {
     if (enableMocking) return Future.value(true);
 
     final key = _getPlayHeaderKey(header.playId);
-    return _saveRawPlayHeader(key, header);
+    var saved = await _saveRawPlayHeader(key, header);
+
+    globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
+
+    return saved;
   }
 
   Future<Play?> loadCurrentSinglePlay() async {

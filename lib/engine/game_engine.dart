@@ -258,7 +258,7 @@ class MultiPlayerGameEngine extends GameEngine {
   void shareGameMove() {
 
     if (play.header.isStateShareable()) {
-      MessageService().sendCurrentPlayState(play.header, user, contextProvider, null);
+      MessageService().sendCurrentPlayState(play.header, user, contextProvider);
     }
   }
 
@@ -284,10 +284,7 @@ class MultiPlayerGameEngine extends GameEngine {
   @override
   resignGame() async {
     await PlayStateManager().doResign(play.header, user);
-
-    MessageService().sendResignation(play.header, user, contextProvider,
-            () => StorageService().savePlayHeader(play.header));
-
+    await MessageService().sendResignation(play.header, user, contextProvider);
   }
 
 }
