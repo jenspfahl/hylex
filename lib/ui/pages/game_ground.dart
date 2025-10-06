@@ -259,6 +259,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                         onPressed: () {
                           ask('Wanna give up?', () async {
                             await gameEngine.resignGame();
+                            setState(() {});
                           });
                         },
                       ),

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/MessageService.dart';
+import 'package:hyle_x/service/PlayStateManager.dart';
 import 'package:hyle_x/ui/dialogs.dart';
 
 import '../model/common.dart';
@@ -78,7 +79,6 @@ abstract class GameEngine extends ChangeNotifier {
   Role _finish() {
     final winner = play.finishGame();
     if (!play.isFullAutomaticPlay && !play.isBothSidesSinglePlay) {
-      //TODO add match-achievements
       if (winner == Role.Order) {
         if (play.orderPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Won;
@@ -282,10 +282,8 @@ class MultiPlayerGameEngine extends GameEngine {
   }
 
   @override
-  resignGame() {
-    play.header.state = PlayState.Resigned;
-
-    //TODO register lost game
+  resignGame() async {
+    await PlayStateManager().doResign(play.header, user);
 
     MessageService().sendResignation(play.header, user, contextProvider,
             () => StorageService().savePlayHeader(play.header));

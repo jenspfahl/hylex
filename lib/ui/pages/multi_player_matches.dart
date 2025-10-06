@@ -45,7 +45,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   void initState() {
     super.initState();
 
-    PlayStateGroup.values.forEach((group) => _hideGroup[group] = false);
+    PlayStateGroup.values.forEach((group) => _hideGroup[group] = group.isFinal);
 
     _sortOrder = SortOrder.BY_STATE;
     PreferenceService().getInt(PreferenceService.PREF_MATCH_SORT_ORDER)
@@ -142,8 +142,12 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   Widget _buildPlayGroupSection(String title, List<PlayHeader> sorted, PlayStateGroup group) {
     final groupData = sorted.where((e) => e.state.group == group);
     if (groupData.isEmpty) {
-      return const Text("");
+      return Container();
     }
+    if (_hideGroup[group] == true) {
+      title += " (${groupData.length})";
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
@@ -299,7 +303,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   String _getHeaderTitleLine(PlayHeader playHeader) {
     if (playHeader.opponentName != null) {
-      return "${playHeader.getReadablePlayId()} against ${playHeader.opponentName}";
+      return "${playHeader.getReadablePlayId()} against '${playHeader.opponentName}'";
     }
     else {
       return playHeader.getReadablePlayId();

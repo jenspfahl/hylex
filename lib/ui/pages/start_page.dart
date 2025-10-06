@@ -3,12 +3,10 @@ import 'dart:collection';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/app.dart';
-import 'package:hyle_x/service/MessageReceiver.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/qr_reader.dart';
@@ -25,6 +23,7 @@ import '../../model/messaging.dart';
 import '../../model/move.dart';
 import '../../model/play.dart';
 import '../../model/user.dart';
+import '../../service/PlayStateManager.dart';
 import '../../service/PreferenceService.dart';
 import '../dialogs.dart';
 import '../ui_utils.dart';
@@ -229,40 +228,32 @@ class StartPageState extends State<StartPage>
 
   Future<void> _handleAcceptInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
 
-    final header = await _createAndStoreNewMultiPlay(receivedInviteMessage, comContext, _getStateFromPlayOpener(receivedInviteMessage.playOpener));
-    return _handleAcceptInviteWithHeader(header);
+    final header = PlayHeader.multiPlayInvitee(
+        receivedInviteMessage,
+        comContext,
+        PlayState.InvitationPending);
+    return _handleAcceptInviteAfterReplyLater(header);
   }
 
 
-  Future<void> _handleAcceptInviteWithHeader(PlayHeader header) async {
+  Future<void> _handleAcceptInviteAfterReplyLater(PlayHeader header) async {
     if (header.playOpener == PlayOpener.InviteeChooses) {
       _selectInviteeMultiPlayerOpener(context, (playOpener) async {
-        header.playOpener = playOpener;
-        header.state = _getStateFromPlayOpener(playOpener);
-        await _saveAndNotify(header);
-
-        if (playOpener == PlayOpener.Invitee) {
-          _startMultiPlayerGame(context, header);
-        }
-        else {
-          // reply back, invitor has to start
-          MessageService().sendInvitationAccepted(header, _user, null, () => context,
-                  () async {
-                await _saveAndNotify(header);
-              });
-        }
+        _continueAcceptInvite(header, playOpener);
       });
     }
-    else if (header.playOpener == PlayOpener.Invitee) {
-      header.playOpener = header.playOpener!;
-      header.state = _getStateFromPlayOpener(header.playOpener!);
-      await _saveAndNotify(header);
+    else {
+      _continueAcceptInvite(header, header.playOpener!);
+    }
+  }
 
+  Future<void> _continueAcceptInvite(PlayHeader header, PlayOpener playOpener) async {
+    await PlayStateManager().doAcceptInvite(header, playOpener);
+
+    if (header.playOpener == PlayOpener.Invitee) {
       _startMultiPlayerGame(context, header);
     }
     else if (header.playOpener == PlayOpener.Invitor) {
-      header.playOpener = header.playOpener!;
-      header.state = _getStateFromPlayOpener(header.playOpener!);
       MessageService().sendInvitationAccepted(header, _user, null, () => context,
               () async {
             await _saveAndNotify(header);
@@ -270,25 +261,15 @@ class StartPageState extends State<StartPage>
     }
   }
 
-  Future<PlayHeader> _createAndStoreNewMultiPlay(InviteMessage receivedInviteMessage, CommunicationContext comContext, PlayState state) async {
-    final header = PlayHeader.multiPlayInvitee(
-        receivedInviteMessage,
-        comContext,
-        state);
-    await _saveAndNotify(header);
-    return header;
-  }
 
 
   Future<void> _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) async {
-    final errorMessage = await MessageReceiver().handleInviteAccepted(header, message);
+    final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(header, message);
 
     if (errorMessage != null) {
       showAlertDialog(errorMessage);
     }
     else {
-      await _saveAndNotify(header);
-
       showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
@@ -307,13 +288,11 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
-    if (header.state == PlayState.InvitationRejected) {
-      showAlertDialog("Match ${header.getReadablePlayId()} already rejected.");
+    final error = await PlayStateManager().doAndHandleRejectInvite(header);
+    if (error != null) {
+      showAlertDialog(error);
     }
     else {
-      header.state = PlayState.InvitationRejected;
-      await _saveAndNotify(header);
-
       showAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
     }
   }
@@ -331,16 +310,16 @@ class StartPageState extends State<StartPage>
   }
 
   Future<void> _handleResign(PlayHeader header, ResignMessage message) async {
-    header.state = PlayState.OpponentResigned;
-    await _saveAndNotify(header);
 
-    StorageService().loadPlayFromHeader(header).then((play) {
-      if (play != null) {
-        //TODO register win
-      }
-    });
-    showAlertDialog("Your opponent '${header.opponentName}' gave up match ${header.getReadablePlayId()}, you win!");
-
+    final error = await PlayStateManager().handleResignedByRemote(header, _user);
+    if (error != null) {
+      showAlertDialog(error);
+    }
+    else {
+      showAlertDialog(
+          "Your opponent '${header.opponentName}' gave up match ${header
+              .getReadablePlayId()}, you win!");
+    }
   }
 
 
@@ -1060,20 +1039,26 @@ class StartPageState extends State<StartPage>
         // first ask for your name
         if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInviteWithHeader(playHeader));
+              _handleAcceptInviteAfterReplyLater(playHeader));
         }
         else {
-          _handleAcceptInviteWithHeader(playHeader);
+          _handleAcceptInviteAfterReplyLater(playHeader);
         }
 
 
       },
       secondString: "Reject",
-      secondHandler: () {
-        playHeader.state = PlayState.InvitationRejected;
-        MessageService().sendInvitationRejected(playHeader, _user, () => context, () async {
-          await _saveAndNotify(playHeader);
-        });
+      secondHandler: () async {
+        final error = await PlayStateManager().doAndHandleRejectInvite(playHeader);
+        if (error != null) {
+          showAlertDialog(error);
+        }
+        else {
+          MessageService().sendInvitationRejected(playHeader, _user, () => context,
+                  () async {
+                await _saveAndNotify(playHeader);
+              });
+        }
       },
       thirdString: "Cancel",
       thirdHandler: () {},
@@ -1159,12 +1144,6 @@ class StartPageState extends State<StartPage>
   }
 
 
-
-  PlayState _getStateFromPlayOpener(PlayOpener playOpener) {
-    return playOpener == PlayOpener.Invitor
-        ? PlayState.InvitationAccepted_WaitForOpponent
-        : PlayState.InvitationAccepted_ReadyToMove;
-  }
 
   Future<void> _requestCameraPermission() async {
     var status = await Permission.camera.status;

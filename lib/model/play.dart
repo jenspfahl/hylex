@@ -21,7 +21,14 @@ import 'move.dart';
 
 
 enum PlayStateGroup {
-  AwaitOpponentAction, TakeAction, FinishedAndWon, FinishedAndLost, Other
+  AwaitOpponentAction(false),
+  TakeAction(false),
+  FinishedAndWon(true),
+  FinishedAndLost(true),
+  Other(true);
+
+  final bool isFinal;
+  const PlayStateGroup(this.isFinal);
 }
 /**
  * Single:
@@ -257,6 +264,7 @@ class PlayHeader {
     actor = Actor.values.firstWhere((p) => p.name == map['actor']);
 
     if (map['playOpener'] != null) {
+      debugPrint(map['playOpener']);
       playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
     }
 

@@ -7,8 +7,8 @@ import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/model/move.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/user.dart';
-import 'package:hyle_x/service/MessageReceiver.dart';
 import 'package:hyle_x/service/MessageService.dart';
+import 'package:hyle_x/service/PlayStateManager.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/utils/fortune.dart';
 
@@ -98,7 +98,7 @@ void main() {
           "Remote User",
           null);
 
-      final errorMessage = await MessageReceiver().handleInviteAccepted(play.header, acceptMessage);
+      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(play.header, acceptMessage);
       expect(errorMessage, null);
 
       final engine = MultiPlayerGameEngine(play, user, null, () {});
@@ -133,7 +133,7 @@ void main() {
           "Remote User",
           Move.placed(GameChip(0), Coordinate(0, 0)));
 
-      final errorMessage = await MessageReceiver().handleInviteAccepted(play.header, acceptMessage);
+      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(play.header, acceptMessage);
       expect(errorMessage, null);
 
       final engine = MultiPlayerGameEngine(play, user, null, () {});
