@@ -194,6 +194,7 @@ class PlayHeader {
   PlayMode playMode = PlayMode.HyleX;
   PlayState _state = PlayState.Initialised;
   int currentRound = 0;
+  Map<String, dynamic> props = HashMap();
 
   // multi player attributes
   late Actor actor;
@@ -282,6 +283,14 @@ class PlayHeader {
       }));
     }
 
+    final List<dynamic>? propList = map['props'];
+    if (propList != null) {
+      propList.forEach((e) {
+        final keyValue = e as Map<String, dynamic>;
+        props.addAll(keyValue);
+      });
+    }
+
     opponentId = map['opponentId'];
     opponentName = map['opponentName'];
 
@@ -289,6 +298,8 @@ class PlayHeader {
     if (lastChange != null) {
       lastTimestamp = DateTime.parse(lastChange);
     }
+
+
     
   }
 
@@ -300,6 +311,15 @@ class PlayHeader {
     _state.checkTransition(newState, actor);
     _state = newState;
     _touch();
+  }
+
+  String getTitle() {
+    if (opponentName != null) {
+      return "${getReadablePlayId()} against '${opponentName}'";
+    }
+    else {
+      return getReadablePlayId();
+    }
   }
 
   _touch() {
@@ -318,6 +338,7 @@ class PlayHeader {
     if (commContext.predecessorMessage != null) "predecessorMessagePayload" : commContext.predecessorMessage!.payload,
     if (commContext.predecessorMessage != null) "predecessorMessageSignature" : commContext.predecessorMessage!.signature,
     "messageHistory" : commContext.messageHistory.map((m) => m.toJson()).toList(),
+    "props" : props.entries.map((e) => {e.key: e.value}).toList(),
 
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,

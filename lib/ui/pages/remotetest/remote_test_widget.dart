@@ -511,15 +511,15 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     switch(operation) {
 
       case Operation.SendInvite:
-        return MessageService().sendRemoteOpponentInvitation(remoteHeader, remoteUser, () => context, saveState: false, share: share);
+        return MessageService().sendRemoteOpponentInvitation(remoteHeader, remoteUser, () => context, saveState: false, share: share, showAllOptions: true);
       case Operation.AcceptInvite:
-        return MessageService().sendInvitationAccepted(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share);
+        return MessageService().sendInvitationAccepted(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share, showAllOptions: true);
       case Operation.RejectInvite:
-        return MessageService().sendInvitationRejected(remoteHeader, remoteUser, () => context, saveState: false, share: share);
+        return MessageService().sendInvitationRejected(remoteHeader, remoteUser, () => context, saveState: false, share: share, showAllOptions: true);
       case Operation.Move:
-        return MessageService().sendMove(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share);
+        return MessageService().sendMove(remoteHeader, remoteUser, _createMove(), () => context, saveState: false, share: share, showAllOptions: true);
       case Operation.Resign:
-        return MessageService().sendResignation(remoteHeader, remoteUser, () => context, saveState: false, share: share);
+        return MessageService().sendResignation(remoteHeader, remoteUser, () => context, saveState: false, share: share, showAllOptions: true);
       default:
         throw Exception("$operation not supported");
     }

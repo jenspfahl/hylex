@@ -129,18 +129,16 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildGameBody() {
     return WillPopScope(
       onWillPop: () async {
-        ask('Leave current game?', () async {
-          await gameEngine.pauseGame(); //await to get the play saved to avoid race conditions
-          Navigator.pop(super.context); // go to start page
-        });
-        return false;
+        await gameEngine.pauseGame(); //await to get the play saved to avoid race conditions
+        Navigator.pop(super.context); // go to start page
+        return true;
       },
       child: Scaffold(
                 appBar: AppBar(
                   //automaticallyImplyLeading: false,
                   leadingWidth: 25,
                   title: Text(
-                    '$APP_NAME ${gameEngine.play.isMultiplayerPlay ? gameEngine.play.getReadablePlayId() : "Single Play"}',
+                    gameEngine.play.isMultiplayerPlay ? gameEngine.play.header.getTitle() : "Single Play",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   actions: [
                     Visibility(
@@ -542,30 +540,47 @@ class _HyleXGroundState extends State<HyleXGround> {
             if (gameEngine.play.isGameOver()) {
               return;
             }
-            if (gameEngine.play.currentRole == Role.Chaos && !gameEngine.play.hasStaleMove) {
+            if (gameEngine.play.currentRole == Role.Chaos && !isDirty) {
               toastInfo(context, "Chaos has to place one chip before continuing!");
               return;
             }
 
-            if (!gameEngine.play.hasStaleMove && gameEngine.play.currentRole == Role.Order) {
-              gameEngine.play.applyStaleMove(Move.skipped());
+            final skipMove = !isDirty && gameEngine.play.currentRole == Role.Order;
+            if (gameEngine.play.multiPlay && skipMove) {
+              ask('Do you really want to skip this move?', () async {
+                gameEngine.play.applyStaleMove(Move.skipped());
+                gameEngine.play.commitMove();
+                gameEngine.nextPlayer();
+              });
             }
-            gameEngine.play.commitMove();
-            gameEngine.nextPlayer();
+            else {
+              if (skipMove) {
+                gameEngine.play.applyStaleMove(Move.skipped());
+              }
+              gameEngine.play.commitMove();
+              gameEngine.nextPlayer();
+            }
           },
         isBold: isDirty
       );
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return buildOutlinedButton(
-          context,
-          Icons.near_me,
-          "Share again",
-          () {
+      return GestureDetector(
+        onLongPress: () {
           if (gameEngine is MultiPlayerGameEngine) {
-            (gameEngine as MultiPlayerGameEngine).shareGameMove();
+            (gameEngine as MultiPlayerGameEngine).shareGameMove(true);
           }
-        }
+        },
+        child: buildOutlinedButton(
+            context,
+            Icons.near_me,
+            "Share again",
+            () {
+            if (gameEngine is MultiPlayerGameEngine) {
+              (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
+            }
+          }
+        ),
       );
     }
     return Container();

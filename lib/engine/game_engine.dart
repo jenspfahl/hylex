@@ -251,14 +251,14 @@ class MultiPlayerGameEngine extends GameEngine {
 
     if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
       play.waitForOpponent = true;
-      shareGameMove();
+      shareGameMove(false);
     }
   }
 
-  void shareGameMove() {
+  void shareGameMove(bool showAllOptions) {
 
     if (play.header.isStateShareable()) {
-      MessageService().sendCurrentPlayState(play.header, user, contextProvider);
+      MessageService().sendCurrentPlayState(play.header, user, contextProvider, showAllOptions);
     }
   }
 

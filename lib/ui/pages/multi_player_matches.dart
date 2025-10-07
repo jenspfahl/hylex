@@ -209,7 +209,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           firstString: "SHARE IT AGAIN",
                           firstHandler: () {
                             MessageService().sendCurrentPlayState(
-                                playHeader, widget.user, () => context);
+                                playHeader, widget.user, () => context, false);
                           },
                           secondString: "CANCEL",
                           secondHandler: () {});
@@ -221,6 +221,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     }
 
                   },
+                  onLongPress: () => _showMultiPlayTestDialog(playHeader),
                   child: Column(
                     children: [
                       Row(
@@ -231,7 +232,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             maxRadius: 6,
                           ),
                           Text(
-                              " " + _getHeaderTitleLine(playHeader),
+                              " " + playHeader.getTitle(),
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                         ],
                       ),
@@ -267,21 +268,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             }, icon: Icon(Icons.not_started_outlined)),
                           ),
                           Visibility(
-                            visible: isDebug || (playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable()),
-                            child: IconButton(onPressed: (){
-                              if (playHeader.state == PlayState.InvitationPending) {
-                                globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
-                              }
-                              else if (playHeader.isStateShareable()) {
-                                MessageService().sendCurrentPlayState(
-                                    playHeader, widget.user, () => context);
-                              }
-                              else {
-                                showAlertDialog("Nothing to share, take action instead");
-                              }
-                            }, icon: GestureDetector(
-                                child: Icon(Icons.near_me),
-                                onLongPress: () => _showMultiPlayTestDialog(playHeader),
+                            visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
+                            child: IconButton(onPressed: ()=> _shareCurrentAction(playHeader, false),
+                                icon: GestureDetector(
+                                  child: Icon(Icons.near_me),
+                                  onLongPress: () => _shareCurrentAction(playHeader, true),
                             )),
                           ),
                           IconButton(onPressed: (){
@@ -300,13 +291,16 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     );
   }
 
-
-  String _getHeaderTitleLine(PlayHeader playHeader) {
-    if (playHeader.opponentName != null) {
-      return "${playHeader.getReadablePlayId()} against '${playHeader.opponentName}'";
+  void _shareCurrentAction(PlayHeader playHeader, bool showAllOptions) {
+    if (playHeader.state == PlayState.InvitationPending) {
+      globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+    }
+    else if (playHeader.isStateShareable()) {
+      MessageService().sendCurrentPlayState(
+          playHeader, widget.user, () => context, showAllOptions);
     }
     else {
-      return playHeader.getReadablePlayId();
+      showAlertDialog("Nothing to share, take action instead");
     }
   }
 
