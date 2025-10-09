@@ -10,6 +10,7 @@ import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
+import 'package:hyle_x/utils/fortune.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
@@ -97,7 +98,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   _handleGameOver() {
-    if (!_gameOverShown) {
+    if (!gameEngine.play.isMultiplayerPlay && !_gameOverShown) {
       _showGameOver(context);
       _gameOverShown = true;
     }
@@ -138,7 +139,13 @@ class _HyleXGroundState extends State<HyleXGround> {
                   //automaticallyImplyLeading: false,
                   leadingWidth: 25,
                   title: Text(
-                    gameEngine.play.isMultiplayerPlay ? gameEngine.play.header.getTitle() : "Single Play",
+                    gameEngine.play.isMultiplayerPlay
+                        ? gameEngine.play.header.getTitle()
+                        : gameEngine.play.isFullAutomaticPlay
+                          ? "Automatic Play"
+                          : gameEngine.play.isBothSidesSinglePlay
+                            ? "Alternate Single Play"
+                            : "Single Play against AI",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   actions: [
                     Visibility(
@@ -280,7 +287,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
-                                  Text("Round ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
+                                  Text("Turn ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
                                   _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
                                 ],
                               ),
@@ -354,7 +361,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildJournalEvent((int, Move) e) {
     final move = e.$2;
     final round = ((e.$1+1)/2).ceil();
-    Widget row = _buildMoveLine(move, prefix: "Round $round: ");
+    Widget row = _buildMoveLine(move, prefix: "Turn $round: ");
 
     return Column(
       children: [
@@ -504,13 +511,59 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildSubmitButton(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
       if (gameEngine.play.isMultiplayerPlay) {
-        return buildFilledButton(context,
-            Icons.restart_alt,
-            "Ask for revenge", //TODO if Classic mode, revenge with swapped role should happen, so "Swap role and continue"
-            () {
-            //TODO new message ask for redo the game, either with same roles or swapped.
-            showAlertDialog('Asking for revenge is not yet implemented!');
-          });
+        return Column(
+          children: [
+            if (gameEngine.play.header.playMode == PlayMode.HyleX)
+              buildFilledButton(context,
+                  Icons.restart_alt,
+                  "Ask for revenge",
+                      () {
+
+                    if (gameEngine.play.header.successorPlayId != null) {
+                      showChoiceDialog("You already asked for revenge with ${toReadableId(gameEngine.play.header.successorPlayId!)}.",
+                          firstString: 'Ask again',
+                          firstHandler: () {
+                            globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                                context,
+                                gameEngine.play.header.playSize,
+                                gameEngine.play.header.playMode,
+                                predecessorPlay: gameEngine.play.header
+                            );
+                          },
+                          secondString: 'Cancel',
+                          secondHandler: () {  });
+                    }
+                    else {
+                      globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                          context,
+                          gameEngine.play.header.playSize,
+                          gameEngine.play.header.playMode,
+                          predecessorPlay: gameEngine.play.header
+                      );
+                    }
+
+                  })
+            ,
+            if (gameEngine.play.header.isStateShareable())
+              GestureDetector(
+                onLongPress: () {
+                  if (gameEngine is MultiPlayerGameEngine) {
+                    (gameEngine as MultiPlayerGameEngine).shareGameMove(true);
+                  }
+                },
+                child: buildOutlinedButton(
+                    context,
+                    Icons.near_me,
+                    "Share again",
+                        () {
+                      if (gameEngine is MultiPlayerGameEngine) {
+                        (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
+                      }
+                    }
+                ),
+              ),
+          ],
+        );
       }
       else {
         return buildFilledButton(
@@ -519,6 +572,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             "Restart",
             () async {
             await gameEngine.stopGame();
+            _gameOverShown = false;
             gameEngine.startGame();
           });
       }
@@ -629,7 +683,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   void _showGameOver(BuildContext context) {
     if (gameEngine.play.isBothSidesSinglePlay || gameEngine.play.isFullAutomaticPlay) {
-      toastWonOrLost(context, _buildWinnerOrLooserText());
+      toastInfo(context, _buildWinnerOrLooserText());
     }
     else if (gameEngine.play.getWinnerPlayer() == PlayerType.LocalUser) {
       toastWon(context, _buildWinnerOrLooserText());
@@ -649,7 +703,12 @@ class _HyleXGroundState extends State<HyleXGround> {
         : isSelected
           ? Colors.white
           : null;
-    final icon = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.record_voice_over : MdiIcons.account;
+
+    final iconData = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.transcribe : MdiIcons.account;
+    final icon = Transform.flip(
+        flipX: player == PlayerType.RemoteUser,
+        child: Icon(iconData, color: color, size: 16));
+
     var tooltipKey = role == Role.Chaos
         ? _chaosChipTooltip
         : _orderChipTooltip;
@@ -663,6 +722,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             : "Waiting player";
     final tooltipPostfix = player == PlayerType.LocalUser ?  "You" : player == PlayerType.LocalAi ? "Computer" : "Remote opponent";
     final secondLine = role == Role.Chaos ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
+
     return SuperTooltip(
       controller: Tooltips().controlTooltip(tooltipKey),
       onShow: () => Tooltips().hideTooltipLater(tooltipKey),
@@ -690,14 +750,14 @@ class _HyleXGroundState extends State<HyleXGround> {
         child: Chip(
             padding: EdgeInsets.zero,
             shape: isLeftElseRight
-                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20),bottomRight: Radius.circular(20)))
-                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20),bottomLeft: Radius.circular(20))),
+                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20), bottomRight: Radius.circular(20)))
+                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20))),
             label: isLeftElseRight
                 ? Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Icon(icon, color: color, size: 16),
+                    icon,
                     const Text(" "),
                     Text("${role.name} - ${gameEngine.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
                   ],
@@ -711,7 +771,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             color: color,
                             fontWeight: isSelected ? FontWeight.bold : null)),
                     const Text(" "),
-                    Icon(icon, color: color, size: 16),
+                    icon,
                   ],
                 ),
             backgroundColor: gameEngine.play.isGameOver()
@@ -720,7 +780,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                   : Colors.redAccent
                 : isSelected
                   ? DIALOG_BG
-                  : null
+                  : null,
+            elevation: 3,
+            shadowColor: player == PlayerType.LocalUser ? Colors.black : null,
         ),
       ),
     );

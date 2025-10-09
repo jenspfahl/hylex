@@ -61,17 +61,12 @@ toastWon(BuildContext context, String message) {
   toast(context, message, Colors.lightGreenAccent);
 }
 
-toastWonOrLost(BuildContext context, String message) {
-  toast(context, message, Colors.lightBlueAccent);
-}
-
-toast(BuildContext context, String message, Color? backgroundColor) {
+toast(BuildContext context, String message, Color? color) {
   _calcMessageDuration(message.length, true).then((duration) {
     var messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
         SnackBar(
-            backgroundColor: backgroundColor,
             duration: duration,
             showCloseIcon: true,
             behavior: SnackBarBehavior.floating,
@@ -80,7 +75,7 @@ toast(BuildContext context, String message, Color? backgroundColor) {
               borderRadius: BorderRadius.only(topLeft: Radius.circular(15), topRight: Radius.circular(15)),
             ),
             elevation: 10,
-            content: Text(message)));
+            content: Text(message, style: TextStyle(color: color))));
   });
 }
 

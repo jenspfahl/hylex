@@ -76,14 +76,19 @@ void showChoiceDialog(
       double? height,
       double? width,
       required String firstString,
+      String? firstDescriptionString,
       required Function() firstHandler,
       required String secondString,
+      String? secondDescriptionString,
       required Function() secondHandler,
       String? thirdString,
+      String? thirdDescriptionString,
       Function()? thirdHandler,
       String? fourthString,
+      String? fourthDescriptionString,
       Function()? fourthHandler,
       String? fifthString,
+      String? fifthDescriptionString,
       Function()? fifthHandler,
   }) {
   SmartDialog.show(builder: (_) {
@@ -96,6 +101,22 @@ void showChoiceDialog(
     }
     if (fifthString != null && fifthHandler != null) {
       calcHeight += 50;
+    }
+
+    if (firstDescriptionString != null) {
+      calcHeight += firstDescriptionString.length.toDouble() * 2;
+    }
+    if (secondDescriptionString != null) {
+      calcHeight += secondDescriptionString.length.toDouble() * 2;
+    }
+    if (thirdDescriptionString != null) {
+      calcHeight += thirdDescriptionString.length.toDouble() * 2;
+    }
+    if (fourthDescriptionString != null) {
+      calcHeight += fourthDescriptionString.length.toDouble() * 2;
+    }
+    if (fifthDescriptionString != null) {
+      calcHeight += fifthDescriptionString.length.toDouble() * 2;
     }
 
     return Container(
@@ -115,55 +136,56 @@ void showChoiceDialog(
               text,
               style: const TextStyle(color: Colors.white),
             ),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () {
-                  SmartDialog.dismiss();
-                  firstHandler();
-                },
-                child: Text(firstString.toUpperCase())),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () {
-                  SmartDialog.dismiss();
-                  secondHandler();
-                },
-                child: Text(secondString.toUpperCase())),
+            _buildChoiceButton(firstHandler, firstString, firstDescriptionString),
+            _buildChoiceButton(secondHandler, secondString, secondDescriptionString),
             if (thirdString != null && thirdHandler != null)
-              OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.lightGreenAccent),
-                  onPressed: () {
-                    SmartDialog.dismiss();
-                    thirdHandler();
-                  },
-                  child: Text(thirdString.toUpperCase())),
+              _buildChoiceButton(thirdHandler, thirdString, thirdDescriptionString),
             if (fourthString != null && fourthHandler != null)
-              OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.lightGreenAccent),
-                  onPressed: () {
-                    SmartDialog.dismiss();
-                    fourthHandler();
-                  }, 
-                  child: Text(fourthString.toUpperCase())),
+              _buildChoiceButton(fourthHandler, fourthString, fourthDescriptionString),
             if (fifthString != null && fifthHandler != null)
-              OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.lightGreenAccent),
-                  onPressed: () {
-                    SmartDialog.dismiss();
-                    fifthHandler();
-                  },
-                  child: Text(fifthString.toUpperCase())),
-
+              _buildChoiceButton(fifthHandler, fifthString, fifthDescriptionString),
           ],
         ),
       ),
     );
   });
+}
+
+OutlinedButton _buildChoiceButton(Function() handler, String title, String? description) {
+  if (description != null) {
+    return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.lightGreenAccent),
+        onPressed: () {
+          SmartDialog.dismiss();
+          handler();
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
+              child: Text(title.toUpperCase()),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+              child: Text(description,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  textAlign: TextAlign.center),
+            ),
+          ],
+        ));
+  }
+  else {
+    return OutlinedButton(
+        style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.lightGreenAccent),
+        onPressed: () {
+          SmartDialog.dismiss();
+          handler();
+        },
+        child: Text(title.toUpperCase()));
+  }
 }
 
 showShowLoading(String text) async {

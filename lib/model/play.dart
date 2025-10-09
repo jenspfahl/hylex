@@ -203,6 +203,7 @@ class PlayHeader {
   String? opponentId;
   String? opponentName;
   DateTime? lastTimestamp;
+  String? successorPlayId;
 
 
   PlayHeader.singlePlay(
@@ -257,6 +258,7 @@ class PlayHeader {
   PlayHeader.fromJson(Map<String, dynamic> map) {
 
     playId = map['playId'];
+    successorPlayId = map['successorPlayId'];
 
     playSize = PlaySize.values.firstWhere((p) => p.name == map['playSize']);
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
@@ -343,6 +345,7 @@ class PlayHeader {
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,
     if (lastTimestamp != null) "lastChange" : lastTimestamp!.toIso8601String(),
+    "successorPlayId" : successorPlayId,
 
   };
 

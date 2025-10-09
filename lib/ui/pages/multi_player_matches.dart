@@ -317,7 +317,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       sb.write(" as ${localRole.name}");
     }
     if (playHeader.currentRound > 0) {
-      sb.write(", Round ${playHeader.currentRound} of ${playHeader.maxRounds}");
+      sb.write(", Turn ${playHeader.currentRound} of ${playHeader.maxRounds}");
     }
     return sb.toString();
   }

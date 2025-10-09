@@ -368,7 +368,7 @@ class StartPageState extends State<StartPage>
                         final json = await PreferenceService().getString(
                             PreferenceService.DATA_CURRENT_PLAY);
                         confirmOrDo(json != null,
-                            'Starting a new game will delete an ongoing game.', () {
+                            'Starting a new game will delete an ongoing Single Play game.', () {
                               _selectPlayerGroundSize(context, (dimension) =>
                                   _selectSinglePlayerMode(
                                       context, (chaosPlayer, orderPlayer) =>
@@ -384,21 +384,8 @@ class StartPageState extends State<StartPage>
                     clickHandler: () async {
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (playSize) =>
-                            _selectMultiPlayerMode(context, (playerMode) =>
-                                _selectInvitorMultiPlayerOpener(
-                                    context, (playerOpener) {
-                                      if (_user.name.isEmpty) {
-                                        _inputUserName(context, (username) =>
-                                            _inviteOpponent(
-                                                context, playSize, playerMode,
-                                                playerOpener));
-                                      }
-                                      else {
-                                        _inviteOpponent(
-                                            context, playSize, playerMode,
-                                            playerOpener);
-                                      }
-                                    })));
+                            _selectMultiPlayerMode(context, (playMode) =>
+                              inviteRemoteOpponentForRevenge(context, playSize, playMode)));
                       }
                     }
                 )
@@ -557,6 +544,30 @@ class StartPageState extends State<StartPage>
     );
   }
 
+  void inviteRemoteOpponentForRevenge(
+      BuildContext context,
+      PlaySize
+      playSize, PlayMode playMode,
+        {
+          PlayHeader? predecessorPlay
+        }
+      ) {
+    return _selectInvitorMultiPlayerOpener(
+                  context, (playerOpener) {
+                    if (_user.name.isEmpty) {
+                      _inputUserName(context, (username) =>
+                          _inviteOpponent(
+                              context, playSize, playMode,
+                              playerOpener, predecessorPlay));
+                    }
+                    else {
+                      _inviteOpponent(
+                          context, playSize, playMode,
+                          playerOpener, predecessorPlay);
+                    }
+                  });
+  }
+
   @override
   void dispose() {
     _uriLinkStreamSub.cancel();
@@ -580,15 +591,21 @@ class StartPageState extends State<StartPage>
     else {
       showChoiceDialog(
         'Which ground size?',
+        width: 300,
         firstString: "5 x 5",
+        firstDescriptionString: "Beginners level, takes a couple of minutes",
         firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
         secondString: "7 x 7",
+        secondDescriptionString: "Classic Entropy size, advanced",
         secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
         thirdString: "9 x 9",
+        thirdDescriptionString: "Enhanced level, if 7 x 7 is not enough",
         thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
         fourthString: "11 x 11",
+        fourthDescriptionString: "Professional and long ongoing game",
         fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
         fifthString: "13 x 13",
+        fifthDescriptionString: "Supreme level! Super hard!",
         fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
       );
     }
@@ -616,21 +633,38 @@ class StartPageState extends State<StartPage>
   void _selectSinglePlayerMode(BuildContext context,
       Function(PlayerType, PlayerType) handleChosenPlayers) {
     showChoiceDialog(
-      'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
-      secondString: "CHAOS", secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
-      thirdString: "BOTH", thirdHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalUser),
-      fourthString: "NONE", fourthHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalAi),
+      'What role would you like to take on?',
+      width: 300,
+      firstString: "ORDER",
+      firstDescriptionString: "The computer is Chaos and starts the game",
+      firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
+      secondString: "CHAOS",
+      secondDescriptionString: "The computer is Order, but you start the game",
+      secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
+      thirdString: "BOTH",
+      thirdDescriptionString: "You play both, maybe with a friend on the same device",
+      thirdHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalUser),
+      fourthString: "NONE",
+        fourthDescriptionString: "The computer plays alone, you only observe",
+      fourthHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalAi),
     );
   }
 
   void _selectInvitorMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
-      'Which role you will take?',
-      firstString: "ORDER", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
-      secondString: "CHAOS", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
-      thirdString: "INVITEE DECIDES", thirdHandler: () => handlePlayOpener(PlayOpener.InviteeChooses),
+      'What role would you like to take on?',
+      width: 300,
+      height: 500,
+      firstString: "ORDER",
+      firstDescriptionString: "Your opponent is Chaos and start the match",
+      firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
+      secondString: "CHAOS",
+      secondDescriptionString: "Your opponent is Order, but you start the match",
+      secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
+      thirdString: "INVITEE DECIDES",
+      thirdDescriptionString: "Your opponent can decide whether he or she is Order or Chaos and who starts the match",
+      thirdHandler: () => handlePlayOpener(PlayOpener.InviteeChooses),
     );
   }
 
@@ -646,9 +680,15 @@ class StartPageState extends State<StartPage>
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
     showChoiceDialog(
-      'What kind of game do you want to play? ',
-      firstString: "HYLEX-STYLE", firstHandler: () => handlePlayerMode(PlayMode.HyleX),
-      secondString: "CLASSIC-STYLE", secondHandler: () => handlePlayerMode(PlayMode.Classic),
+      'What kind of match do you want to play? ',
+      width: 300,
+      height: 450,
+      firstString: "HYLEX-STYLE",
+      firstDescriptionString: "Both Order and Chaos can score points. The player with the most points wins. The match ends after one round.",
+      firstHandler: () => handlePlayerMode(PlayMode.HyleX),
+      secondString: "CLASSIC-STYLE",
+      secondDescriptionString: "Only Order can score points. A match consists of two rounds. After the first round, the players swap roles. The player with the most points wins.",
+      secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
   }
 
@@ -721,12 +761,18 @@ class StartPageState extends State<StartPage>
   }
 
   _inviteOpponent(BuildContext context, PlaySize playSize,
-      PlayMode playMode, PlayOpener playOpener) {
+      PlayMode playMode, PlayOpener playOpener, PlayHeader? predecessor) {
 
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
     StorageService().savePlayHeader(header);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user, () => context, showAllOptions: true);
+    MessageService().sendRemoteOpponentInvitation(header, _user, () => context, showAllOptions: true)
+        .then((_) {
+          if (predecessor != null) {
+            predecessor.successorPlayId = header.playId;
+            StorageService().savePlayHeader(predecessor);
+          }
+    });
   }
 
   Widget _buildChip(String label, double radius, double textSize,
