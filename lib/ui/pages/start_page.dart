@@ -684,10 +684,10 @@ class StartPageState extends State<StartPage>
       width: 300,
       height: 450,
       firstString: "HYLEX-STYLE",
-      firstDescriptionString: "Both Order and Chaos can score points. The player with the most points wins. The match ends after one round.",
+      firstDescriptionString: "Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.",
       firstHandler: () => handlePlayerMode(PlayMode.HyleX),
       secondString: "CLASSIC-STYLE",
-      secondDescriptionString: "Only Order can score points. A match consists of two rounds. After the first round, the players swap roles. The player with the most points wins.",
+      secondDescriptionString: "Only Order can score points. A match consists of two games. After the first round, the players swap roles. The player with the most points wins.",
       secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
   }

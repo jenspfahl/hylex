@@ -250,7 +250,7 @@ class MessageService {
       _shareAsMessage(context, shareMessage);
     }
     else if (!showAllOptions && header.props["remember"] == "as_qr_code") {
-      _shareAsQrCode(context, message);
+      _shareAsQrCode(context, message, header);
     }
     else {
     
@@ -299,7 +299,7 @@ class MessageService {
                                   await StorageService().savePlayHeader(header);
                                 }
                                 Navigator.of(context).pop();
-                                _shareAsQrCode(context, message);
+                                _shareAsQrCode(context, message, header);
 
                           }),
                       CheckboxListTile(
@@ -330,13 +330,13 @@ class MessageService {
 
   }
 
-  void _shareAsQrCode(BuildContext context, SerializedMessage message) {
+  void _shareAsQrCode(BuildContext context, SerializedMessage message, PlayHeader playHeader) {
 
     SmartDialog.show(builder: (_) {
     
       return Container(
         width: 280,
-        height: 310,
+        height: 330,
         decoration: BoxDecoration(
           color: DIALOG_BG,
           borderRadius: BorderRadius.circular(10),
@@ -347,7 +347,8 @@ class MessageService {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Let this scanned by your opponent", style: TextStyle(color: Colors.white)),
+              Text("[${playHeader.getReadablePlayId()}]", style: TextStyle(color: Colors.white)),
+              Text("Let your opponent scan this!", style: TextStyle(color: Colors.white)),
               QrImageView(
                 data: message.toUrl(),
                 version: QrVersions.auto,

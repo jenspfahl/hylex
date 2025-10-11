@@ -71,11 +71,15 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 icon: const Icon(Icons.sort),
                 onPressed: () {
                   showChoiceDialog("Sort the list by:",
+                      width: 260,
                       firstString: _emphasise("Current Status", _sortOrder == SortOrder.BY_STATE),
+                      firstDescriptionString: "Sorted and grouped by the status ",
                       firstHandler: () => _triggerSort(SortOrder.BY_STATE),
                       secondString: _emphasise("Recently played", _sortOrder == SortOrder.BY_LATEST),
+                      secondDescriptionString: "The recently played match is on top",
                       secondHandler: () => _triggerSort(SortOrder.BY_LATEST),
                       thirdString: _emphasise("Match ID", _sortOrder == SortOrder.BY_PLAY_ID),
+                      thirdDescriptionString: "Sort by the Match Identifier, alphabetically ascending",
                       thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
                   );
                 }),
@@ -317,7 +321,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       sb.write(" as ${localRole.name}");
     }
     if (playHeader.currentRound > 0) {
-      sb.write(", Turn ${playHeader.currentRound} of ${playHeader.maxRounds}");
+      sb.write(", Round ${playHeader.currentRound} of ${playHeader.maxRounds}");
     }
     return sb.toString();
   }
@@ -365,10 +369,18 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       case SortOrder.BY_PLAY_ID:
         return list.sortedBy((e) => e.getReadablePlayId());
       case SortOrder.BY_STATE:
+        return list.sortedBy((e) => "${(e.state.group.index * 100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
         return list.sortedBy((e) => ((e.state.group.index * 100) + e.state.index).toString());
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
     }
+  }
+
+  int? _getReversedTimestamp(PlayHeader e) {
+    if (e.lastTimestamp == null) {
+      return null;
+    }
+    return 0x7FFFFFFFFFFFFFFF - e.lastTimestamp!.millisecondsSinceEpoch;
   }
 
   _triggerSort(SortOrder sortOrder) {

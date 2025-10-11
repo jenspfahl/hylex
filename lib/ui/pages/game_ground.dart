@@ -287,7 +287,11 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
-                                  Text("Turn ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
+                                  Column(children: [
+                                    Text("Round ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
+                                    if (gameEngine.play.header.rolesSwapped != null)
+                                      Text (gameEngine.play.header.rolesSwapped! ? "Roles swapped" : "Classic Style", style: TextStyle(fontStyle: FontStyle.italic),),
+                                  ]),
                                   _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
                                 ],
                               ),
@@ -347,7 +351,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             ),
                             Padding(
                               padding: const EdgeInsets.only(
-                                  left: 0, top: 0, right: 0, bottom: 10),
+                                  left: 0, top: 0, right: 0, bottom: 16),
                               child: _buildSubmitButton(context),
                             ),
                           ]),
@@ -361,7 +365,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildJournalEvent((int, Move) e) {
     final move = e.$2;
     final round = ((e.$1+1)/2).ceil();
-    Widget row = _buildMoveLine(move, prefix: "Turn $round: ");
+    Widget row = _buildMoveLine(move, prefix: "Round $round: ");
 
     return Column(
       children: [
@@ -425,13 +429,13 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _buildHint(BuildContext context) {
     if (gameEngine.play.isGameOver()) {
       return Text(_buildWinnerOrLooserText(),
-          style: TextStyle(fontWeight: FontWeight.bold));
+          style: TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center);
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move..."); //TODO add link to share again
+      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move..."); 
     }
     else {
       return _buildDoneText();
@@ -513,36 +517,39 @@ class _HyleXGroundState extends State<HyleXGround> {
       if (gameEngine.play.isMultiplayerPlay) {
         return Column(
           children: [
-            if (gameEngine.play.header.playMode == PlayMode.HyleX)
-              buildFilledButton(context,
-                  Icons.restart_alt,
-                  "Ask for revenge",
-                      () {
+            if (gameEngine.play.getWinnerPlayer() != PlayerType.LocalUser && gameEngine.play.header.playMode == PlayMode.HyleX)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: buildFilledButton(context,
+                    Icons.restart_alt,
+                    "Ask for a rematch",
+                        () {
 
-                    if (gameEngine.play.header.successorPlayId != null) {
-                      showChoiceDialog("You already asked for revenge with ${toReadableId(gameEngine.play.header.successorPlayId!)}.",
-                          firstString: 'Ask again',
-                          firstHandler: () {
-                            globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
-                                context,
-                                gameEngine.play.header.playSize,
-                                gameEngine.play.header.playMode,
-                                predecessorPlay: gameEngine.play.header
-                            );
-                          },
-                          secondString: 'Cancel',
-                          secondHandler: () {  });
-                    }
-                    else {
-                      globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
-                          context,
-                          gameEngine.play.header.playSize,
-                          gameEngine.play.header.playMode,
-                          predecessorPlay: gameEngine.play.header
-                      );
-                    }
+                      if (gameEngine.play.header.successorPlayId != null) {
+                        showChoiceDialog("You already asked for a rematch with ${toReadableId(gameEngine.play.header.successorPlayId!)}.",
+                            firstString: 'Ask again',
+                            firstHandler: () {
+                              globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                                  context,
+                                  gameEngine.play.header.playSize,
+                                  gameEngine.play.header.playMode,
+                                  predecessorPlay: gameEngine.play.header
+                              );
+                            },
+                            secondString: 'Cancel',
+                            secondHandler: () {  });
+                      }
+                      else {
+                        globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                            context,
+                            gameEngine.play.header.playSize,
+                            gameEngine.play.header.playMode,
+                            predecessorPlay: gameEngine.play.header
+                        );
+                      }
 
-                  })
+                    }),
+              )
             ,
             if (gameEngine.play.header.isStateShareable())
               GestureDetector(
@@ -721,7 +728,10 @@ class _HyleXGroundState extends State<HyleXGround> {
             ? "Current player"
             : "Waiting player";
     final tooltipPostfix = player == PlayerType.LocalUser ?  "You" : player == PlayerType.LocalAi ? "Computer" : "Remote opponent";
-    final secondLine = role == Role.Chaos ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}": "";
+
+    final secondLine = (role == Role.Chaos && gameEngine.play.header.playMode != PlayMode.Classic)
+        ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}"
+        : "";
 
     return SuperTooltip(
       controller: Tooltips().controlTooltip(tooltipKey),
@@ -816,7 +826,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     var pointText = spot.points > 0 ? spot.points.toString() : "";
 
     if (_emphasiseAllChipsOfRole == Role.Chaos) {
-      if (chip != null && spot.points == 0) {
+      if (chip != null && spot.points == 0 && gameEngine.play.header.playMode != PlayMode.Classic) {
         pointText = gameEngine.play.getPointsPerChip().toString();
       }
       else {

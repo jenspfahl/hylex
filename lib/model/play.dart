@@ -194,6 +194,7 @@ class PlayHeader {
   PlayMode playMode = PlayMode.HyleX;
   PlayState _state = PlayState.Initialised;
   int currentRound = 0;
+  bool? rolesSwapped = null; // only true if PlayMode.CLASSIC and the second game goes on
   Map<String, dynamic> props = HashMap();
 
   // multi player attributes
@@ -220,6 +221,9 @@ class PlayHeader {
     playId = generateRandomString(playIdLength);
     actor = Actor.Invitor;
     _state = PlayState.RemoteOpponentInvited;
+    if (playMode == PlayMode.Classic) {
+      rolesSwapped = false;
+    }
     _touch();
   }
   
@@ -238,6 +242,9 @@ class PlayHeader {
     playOpener = inviteMessage.playOpener;
     opponentId = inviteMessage.invitorUserId;
     opponentName = inviteMessage.invitorUserName;
+    if (playMode == PlayMode.Classic) {
+      rolesSwapped = false;
+    }
     _touch();
   }
 
@@ -264,10 +271,10 @@ class PlayHeader {
     playMode = PlayMode.values.firstWhere((p) => p.name == map['playMode']);
     _state = PlayState.values.firstWhere((p) => p.name == map['state']);
     currentRound = map['currentRound'];
+    rolesSwapped = map['rolesSwapped'];
     actor = Actor.values.firstWhere((p) => p.name == map['actor']);
 
     if (map['playOpener'] != null) {
-      debugPrint(map['playOpener']);
       playOpener = PlayOpener.values.firstWhere((p) => p.name == map['playOpener']);
     }
 
@@ -334,6 +341,7 @@ class PlayHeader {
     "playMode" : playMode.name,
     "state" : _state.name,
     "currentRound" : currentRound,
+    "rolesSwapped" : rolesSwapped,
     "actor": actor.name,
     if (playOpener != null) "playOpener" : playOpener?.name,
     if (commContext.roundTripSignature != null) "roundTripSignature" : commContext.roundTripSignature,
@@ -583,8 +591,9 @@ class Play {
     }
     _staleMove = move;
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
-
+    if (header.playMode != PlayMode.Classic) {
+      _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
+    }
   }
 
   commitMove() {
@@ -629,8 +638,10 @@ class Play {
     }
 
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
-    _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
+    if (header.playMode != PlayMode.Classic) {
+      _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
     }
+  }
 
   bool get hasStaleMove => _staleMove != null;
   

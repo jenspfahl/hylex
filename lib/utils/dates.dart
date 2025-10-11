@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 String formatToDateTime(DateTime dateTime) {
   final DateFormat dateFormatter = DateFormat.yMd();
-  final DateFormat timeFormatter = DateFormat.Hms();
+  final DateFormat timeFormatter = DateFormat('H:mm');
   return dateFormatter.format(dateTime) + " " + timeFormatter.format(dateTime);
 }
 
