@@ -435,7 +435,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move..."); 
+      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move...");
     }
     else {
       return _buildDoneText();
@@ -757,43 +757,11 @@ class _HyleXGroundState extends State<HyleXGround> {
             _emphasiseAllChipsOfRole = null;
           })
         },
-        child: Chip(
-            padding: EdgeInsets.zero,
-            shape: isLeftElseRight
-                ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20), bottomRight: Radius.circular(20)))
-                : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20))),
-            label: isLeftElseRight
-                ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    icon,
-                    const Text(" "),
-                    Text("${role.name} - ${gameEngine.play.stats.getPoints(role)}", style: TextStyle(color: color, fontWeight: isSelected ? FontWeight.bold : null)),
-                  ],
-                )
-                : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(" ${gameEngine.play.stats.getPoints(role)} - ${role.name}",
-                        style: TextStyle(
-                            color: color,
-                            fontWeight: isSelected ? FontWeight.bold : null)),
-                    const Text(" "),
-                    icon,
-                  ],
-                ),
-            backgroundColor: gameEngine.play.isGameOver()
-                ? gameEngine.play.getWinnerRole() == role
-                  ? Colors.lightGreenAccent
-                  : Colors.redAccent
-                : isSelected
-                  ? DIALOG_BG
-                  : null,
-            elevation: 3,
-            shadowColor: player == PlayerType.LocalUser ? Colors.black : null,
-        ),
+        child: buildRoleIndicator(role,
+            playerType: player,
+            gameEngine: gameEngine,
+            isSelected: isSelected,
+            color: color),
       ),
     );
   }
@@ -876,43 +844,22 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     var shadedColor = startSpot?.content?.color.withOpacity(0.2);
 
-
-    if (chip == null) {
-
-      return Container(
-        color: possibleTarget ? shadedColor : null,
-        child: where != null && text.isEmpty && PreferenceService().showCoordinates
-            ? Center(child: Text(_getPositionText(where, gameEngine.play.matrix.dimension),
-                style: TextStyle(
-                    fontSize: gameEngine.play.dimension > 9 ? 10 : null,
-                    color: Colors.grey[400])))
-            : null,
-      );
-    }
-    return Container(
-      color: possibleTarget ? shadedColor : null,
-      child: GestureDetector(
-        onLongPressStart: (details) {
-          setState(() {
-            _emphasiseAllChipsOf = chip;
-          });
-        },
-        onLongPressEnd: (details) => {
-          setState(() {
-            _emphasiseAllChipsOf = null;
-          })
-        },
-        child: CircleAvatar(
-          backgroundColor: _getChipBackgroundColor(chip, where),
-          maxRadius: 60,
-          child: Text(text,
-              style: TextStyle(
-                fontSize: gameEngine.play.dimension > 7 ? 12 : 16,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              )),
-        ),
-      ),
+    return buildGameChip(text,
+      chipColor: chip != null ? _getChipBackgroundColor(chip, where): null,
+      backgroundColor: possibleTarget ? shadedColor : null,
+      dimension: gameEngine.play.dimension,
+      showCoordinates: PreferenceService().showCoordinates,
+      where: where,
+      onLongPressStart: (details) {
+        setState(() {
+          _emphasiseAllChipsOf = chip;
+        });
+      },
+      onLongPressEnd: (details) => {
+        setState(() {
+          _emphasiseAllChipsOf = null;
+        })
+      },
     );
   }
 
@@ -1115,24 +1062,6 @@ class _HyleXGroundState extends State<HyleXGround> {
           child: widget);
     }
     return widget;
-  }
-
-  String _getPositionText(Coordinate where, Coordinate dimension) {
-    if (where.x == 0 && where.y == 0 ||
-        where.x == 0 && where.y == dimension.y-1 ||
-        where.x == dimension.x-1 && where.y == 0 ||
-        where.x == dimension.x-1 && where.y == dimension.y-1) {
-      return where.toReadableCoordinates();
-    }
-    else if (where.x > 0 && where.y == 0 || where.x > 0 && where.y == dimension.y-1) {
-      return String.fromCharCode('A'.codeUnitAt(0) + where.x);
-    }
-    else if (where.y > 0 && where.x == 0 || where.y > 0 && where.x == dimension.x-1) {
-      return (where.y + 1).toString();
-    }
-    else {
-      return "";
-    }
   }
 
 }

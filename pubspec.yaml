@@ -50,6 +50,7 @@ dependencies:
   package_info_plus: ^9.0.0
   url_launcher: ^6.3.2
   settings_ui: ^2.0.2
+  introduction_screen: ^4.0.0
 
   collection: any
   json_annotation: any

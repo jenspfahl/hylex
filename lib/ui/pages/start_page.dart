@@ -28,6 +28,7 @@ import '../../service/PreferenceService.dart';
 import '../dialogs.dart';
 import '../ui_utils.dart';
 import 'game_ground.dart';
+import 'intro.dart';
 import 'multi_player_matches.dart';
 
 enum MenuMode {
@@ -455,7 +456,11 @@ class StartPageState extends State<StartPage>
 
                 _menuMode == MenuMode.More
                     ? _buildCell(
-                    "How to Play", 1, icon: CupertinoIcons.question_circle_fill)
+                    " How to Play", 1, icon: CupertinoIcons.question_circle_fill,
+                    clickHandler: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return Intro();
+                        })))
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
@@ -839,7 +844,7 @@ class StartPageState extends State<StartPage>
       List<Widget> children = [
               const Text(
                 "Achievements",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const Divider(),
               //if (_user.name != null) Text(_user.name!),

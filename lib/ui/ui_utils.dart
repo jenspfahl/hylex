@@ -1,7 +1,13 @@
 
 import 'package:flutter/material.dart';
+import 'package:hyle_x/engine/game_engine.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
+import '../model/chip.dart';
+import '../model/common.dart';
+import '../model/coordinate.dart';
 import '../model/messaging.dart';
+import 'dialogs.dart';
 
 
 
@@ -159,4 +165,142 @@ Color getColorFromIdx(int i) {
   return Color.fromARGB(
       210, r, g, b);
 }
+
+
+Widget buildRoleIndicator(
+    Role role, {
+      required bool isSelected,
+      PlayerType? playerType,
+      GameEngine? gameEngine,
+      Color? color,
+    }) {
+  final isLeftElseRight = role == Role.Chaos;
+
+  final iconData = playerType == PlayerType.LocalAi
+      ? MdiIcons.brain
+      : playerType == PlayerType.RemoteUser
+      ? Icons.transcribe
+      : playerType == PlayerType.LocalUser
+      ? MdiIcons.account
+      : null;
+  final icon = iconData != null
+      ? Transform.flip(
+        flipX: playerType == PlayerType.RemoteUser,
+        child: Icon(iconData, color: color, size: 16))
+      : null;
+
+  var points = gameEngine != null
+      ? gameEngine.play.stats.getPoints(role)
+      : null;
+
+  if (gameEngine?.play.header.playMode == PlayMode.Classic && role == Role.Chaos) {
+    // no points for Chaos if Classic mode
+    points = null;
+  }
+
+  return Chip(
+    padding: EdgeInsets.zero,
+    shape: isLeftElseRight
+        ? const RoundedRectangleBorder(borderRadius: BorderRadius.only(topRight: Radius.circular(20), bottomRight: Radius.circular(20)))
+        : const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20))),
+    label: isLeftElseRight
+        ? Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        if (icon != null ) icon,
+        if (icon != null ) const Text(" "),
+        Text(points != null ? "${role.name} - ${points}" : role.name,
+            style: TextStyle(
+                color: color,
+                fontWeight: isSelected ? FontWeight.bold : null)),
+      ],
+    )
+        : Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(points != null ? " ${points} - ${role.name}" : role.name,
+            style: TextStyle(
+                color: color,
+                fontWeight: isSelected ? FontWeight.bold : null)),
+        if (icon != null ) const Text(" "),
+        if (icon != null ) icon,
+      ],
+    ),
+    backgroundColor: gameEngine?.play.isGameOver() == true
+        ? gameEngine!.play.getWinnerRole() == role
+        ? Colors.lightGreenAccent
+        : Colors.redAccent
+        : isSelected
+        ? DIALOG_BG
+        : null,
+    elevation: 3,
+    shadowColor: playerType == PlayerType.LocalUser || playerType == null ? Colors.black : null,
+  );
+}
+
+Widget buildGameChip(
+    String text,
+    {
+      required int dimension,
+      required bool showCoordinates,
+      Color? chipColor,
+      Color? backgroundColor,
+      Coordinate? where,
+      GestureLongPressStartCallback? onLongPressStart,
+      GestureLongPressEndCallback? onLongPressEnd,
+    }) {
+
+  if (chipColor == null) {
+
+    return Container(
+      color: backgroundColor,
+      child: where != null && text.isEmpty && showCoordinates
+          ? Center(child: Text(_getPositionText(where, dimension),
+          style: TextStyle(
+              fontSize: dimension > 9 ? 10 : null,
+              color: Colors.grey[400])))
+          : null,
+    );
+  }
+  return Container(
+    color: backgroundColor,
+    child: GestureDetector(
+      onLongPressStart: onLongPressStart,
+      onLongPressEnd: onLongPressEnd,
+      child: CircleAvatar(
+        backgroundColor: chipColor,
+        maxRadius: 60,
+        child: Text(text,
+            style: TextStyle(
+              fontSize: dimension > 7 ? 12 : 16,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            )),
+      ),
+    ),
+  );
+}
+
+
+String _getPositionText(Coordinate where, int dimension) {
+  if (where.x == 0 && where.y == 0 ||
+      where.x == 0 && where.y == dimension - 1 ||
+      where.x == dimension - 1 && where.y == 0 ||
+      where.x == dimension - 1 && where.y == dimension - 1) {
+    return where.toReadableCoordinates();
+  }
+  else if (where.x > 0 && where.y == 0 || where.x > 0 && where.y == dimension - 1) {
+    return String.fromCharCode('A'.codeUnitAt(0) + where.x);
+  }
+  else if (where.y > 0 && where.x == 0 || where.y > 0 && where.x == dimension - 1) {
+    return (where.y + 1).toString();
+  }
+  else {
+    return "";
+  }
+}
+
+
 
