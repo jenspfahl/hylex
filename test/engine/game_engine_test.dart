@@ -150,6 +150,72 @@ void main() {
       await engine.nextPlayer();
 
     });
+
+
+    test('Test multi play, invitee perspective, invitor starts', () async {
+
+      TestWidgetsFlutterBinding.ensureInitialized();
+
+      final playId = "ABC";
+      final playOpener = PlayOpener.Invitor;
+
+      final inviteMessage = InviteMessage(
+          playId,
+          PlaySize.Size5x5,
+          PlayMode.HyleX,
+          playOpener,
+          "invitorUserId",
+          "invitorUserName");
+
+      final header = PlayHeader.multiPlayInvitee(
+          inviteMessage, null, PlayState.InvitationPending);
+
+      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
+      expect(errorMessage, null);
+
+      final play = Play.newMultiPlay(header);
+      expect(play.header.state, PlayState.InvitationAccepted_WaitForOpponent);
+
+    });
+
+    test('Test multi play, invitee perspective, invitee starts', () async {
+
+      TestWidgetsFlutterBinding.ensureInitialized();
+
+      final playId = "ABC";
+      final playOpener = PlayOpener.Invitee;
+
+      final inviteMessage = InviteMessage(
+          playId,
+          PlaySize.Size5x5,
+          PlayMode.HyleX,
+          playOpener,
+          "invitorUserId",
+          "invitorUserName");
+
+      final header = PlayHeader.multiPlayInvitee(
+          inviteMessage, null, PlayState.InvitationPending);
+
+      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
+      expect(errorMessage, null);
+
+      final play = Play.newMultiPlay(header);
+
+      expect(play.header.state, PlayState.InvitationAccepted_ReadyToMove);
+
+      final engine = MultiPlayerGameEngine(play, user, null, () {});
+
+      engine.startGame();
+      expect(play.currentRole, Role.Chaos);
+      expect(play.currentRound, 1);
+      expect(engine.isBoardLocked(), false);
+
+      play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0)));
+      play.commitMove();
+
+      await engine.nextPlayer();
+
+    });
     
 
   });

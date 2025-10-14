@@ -40,7 +40,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
     animatedPageController = AnimationController(
         duration: const Duration(milliseconds: 10000),
         lowerBound: 0,
-        upperBound: 10,
+        upperBound: 15,
         animationBehavior: AnimationBehavior.preserve,
         vsync: this
     );
@@ -96,7 +96,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
           bodyWidget: Align(
             child: Column(
               children: [
-                Text("One player causes chaos .. ", style: bodyStyle),
+                Text("One player causes Chaos .. ", style: bodyStyle),
                 Align(alignment: Alignment.centerLeft,
                     child: buildRoleIndicator(Role.Chaos, isSelected: false)),
                 Text(""),
@@ -120,19 +120,20 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                   children: [
                     Text("Chaos randomly draws chips from the stock and places them as chaotic as possible.", style: bodyStyle),
                     Text(""),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
-                        _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
-                        _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(2)),
-                        _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(1)),
-                        _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
-                      ]),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
+                    _buildCellRow(
+                        second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
+                    ),
+                    _buildCellRow(
+                        third: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(2)),
+                    ),
+                    _buildCellRow(
+                        first: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                    ),
+                    _buildCellRow(
+                        fourth: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(1)),
+                        fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                    ),
+                    _buildCellRow(),
                   ]
               );
             },
@@ -150,19 +151,21 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                   children: [
                     Text("Order wants to bring the placed chips into a horizontal or vertical symmetric order, called Palindromes.", style: bodyStyle),
                     Text(""),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(0)),
-                        _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(1)),
-                        _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(2)),
-                        _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
-                        _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
-                      ],),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
+                    _buildCellRow(),
+                    _buildCellRow(
+                      second: _buildGameChip(chipVisibleFrom: 6, chipColor: getColorFromIdx(3)),
+                    ),
+                    _buildCellRow(
+                      first: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(0)),
+                      second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(1)),
+                      third: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(2)),
+                      fourth: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                      fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                    ),
+                    _buildCellRow(
+                      second: _buildGameChip(chipVisibleFrom: 7, chipColor: getColorFromIdx(3)),
+                    ),
+                    _buildCellRow(),
                   ]
               );
             },
@@ -183,42 +186,60 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                   children: [
                     Text("Order may slide any placed chip horizontally or vertically through empty cells. Order may also skip its current turn.", style: bodyStyle),
                     Text(""),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
-                    Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildGameChip(
-                            chipColor: getColorFromIdx(0),
-                            backgroundColor: chipBackgroundColor,
-                            chipVisibleAt: [0,1,2],
-                            backgroundVisibleAt: [2,3,4,5],
-                        ),
-                        _buildGameChip(
-                            chipColor: getColorFromIdx(0),
-                            backgroundColor: chipBackgroundColor,
-                            chipVisibleAt: [3],
-                            backgroundVisibleAt: [2,3,4,5],
-                        ),
-                        _buildGameChip(
-                            chipColor: getColorFromIdx(0),
-                            backgroundColor: chipBackgroundColor,
-                            chipVisibleAt: [4],
-                            backgroundVisibleAt: [2,3,4,5],
-                        ),
-                        _buildGameChip(
-                            chipColor: getColorFromIdx(0),
-                            backgroundColor: chipBackgroundColor,
-                            chipVisibleAt: [5,6,7,8,9],
-                            backgroundVisibleAt: [2,3,4,5],
-                        ),
-                        _buildGameChip(
-                            chipColor: getColorFromIdx(1),
-                        ),
-                      ]
+                    _buildCellRow(
+                      first: _buildGameChip(
+                        backgroundColor: chipBackgroundColor,
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
                     ),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                        backgroundColor: chipBackgroundColor,
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                    ),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                        chipColor: getColorFromIdx(0),
+                        backgroundColor: chipBackgroundColor,
+                        chipVisibleAt: [0,1,2],
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                      second: _buildGameChip(
+                        chipColor: getColorFromIdx(0),
+                        backgroundColor: chipBackgroundColor,
+                        chipVisibleAt: [3],
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                      third: _buildGameChip(
+                        chipColor: getColorFromIdx(0),
+                        backgroundColor: chipBackgroundColor,
+                        chipVisibleAt: [4],
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                      fourth: _buildGameChip(
+                        chipColor: getColorFromIdx(0),
+                        backgroundColor: chipBackgroundColor,
+                        //chipVisibleFrom: 5,
+                        chipVisibleAt: [5,6,7,8,9,10,11,12,13,14],
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                      fifth: _buildGameChip(
+                        chipColor: getColorFromIdx(1),
+                      ),
+                    ),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                        backgroundColor: chipBackgroundColor,
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                    ),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                        backgroundColor: chipBackgroundColor,
+                        backgroundVisibleAt: [2,3,4,5],
+                      ),
+                    ),
                   ]
               );
             },
@@ -238,32 +259,29 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                   children: [
                     Text("Chaos collects points for each chip outside of a Palindrome  ..", style: bodyStyle),
                     Text(""),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
-                    Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildGameChip(
-                              chipColor: getColorFromIdx(0)),
-                          _buildGameChip(
-                              chipColor: getColorFromIdx(2)),
-                          _buildGameChip(
-                              chipColor: getColorFromIdx(2)),
-                          _buildGameChip(
-                              chipColor: getColorFromIdx(0)),
-                          _buildGameChip(
-                              text: "20",
-                              textVisibleFrom: 2,
-                              chipColor: getColorFromIdx(1)),
-                        ]
+                    _buildCellRow(),
+                    _buildCellRow(),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                          chipColor: getColorFromIdx(0)),
+                      second: _buildGameChip(
+                          chipColor: getColorFromIdx(2)),
+                      third: _buildGameChip(
+                          chipColor: getColorFromIdx(2)),
+                      fourth: _buildGameChip(
+                          chipColor: getColorFromIdx(0)),
+                      fifth: _buildGameChip(
+                          text: "20",
+                          textVisibleFrom: 2,
+                          chipColor: getColorFromIdx(1)),
                     ),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
+                    _buildCellRow(),
+                    _buildCellRow(),
                     Visibility(
                         visible: animatedPageController.value.toInt() > 3,
                         child: Column(children: [
                           Text(""),
-                          Text(" ..  which makes 20 points in this example.", style: bodyStyle),
+                          Text(" ..  which is 20 points per chip in this example.", style: bodyStyle),
                           Align(alignment: Alignment.centerLeft,
                               child: buildRoleIndicator(Role.Chaos, points: 20, isSelected: false)),
                         ],)
@@ -288,39 +306,36 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                   children: [
                     Text("Whereas Order collects points for each chip which is part of a Palindrome ..", style: bodyStyle),
                     Text(""),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildGameChip(
-                            text: "1",
-                            textVisibleFrom: 2,
-                            chipColor: getColorFromIdx(0)),
-                        _buildGameChip(
-                            text: "2",
-                            textVisibleFrom: 3,
-                            chipColor: getColorFromIdx(2)),
-                        _buildGameChip(
-                            text: "2",
-                            textVisibleFrom: 3,
-                            chipColor: getColorFromIdx(2)),
-                        _buildGameChip(
-                            text: "1",
-                            textVisibleFrom: 2,
-                            chipColor: getColorFromIdx(0)),
-                        _buildGameChip(
-                          chipColor: getColorFromIdx(1),
-                        ),
-                      ]
+                    _buildCellRow(),
+                    _buildCellRow(),
+                    _buildCellRow(
+                      first: _buildGameChip(
+                          text: "1",
+                          textVisibleFrom: 2,
+                          chipColor: getColorFromIdx(0)),
+                      second: _buildGameChip(
+                          text: "2",
+                          textVisibleFrom: 3,
+                          chipColor: getColorFromIdx(2)),
+                      third: _buildGameChip(
+                          text: "2",
+                          textVisibleFrom: 3,
+                          chipColor: getColorFromIdx(2)),
+                      fourth: _buildGameChip(
+                          text: "1",
+                          textVisibleFrom: 2,
+                          chipColor: getColorFromIdx(0)),
+                      fifth: _buildGameChip(
+                        chipColor: getColorFromIdx(1),
+                      ),
                     ),
-                    _buildEmptyRow(),
-                    _buildEmptyRow(),
+                    _buildCellRow(),
+                    _buildCellRow(),
                     Visibility(
-                        visible: animatedPageController.value.toInt() > 4,
+                        visible: animatedPageController.value.toInt() >= 4,
                         child: Column(children: [
                           Text(""),
-                          Text(" ..  which makes 6 points in this example.", style: bodyStyle),
+                          Text(" ..  which makes 6 points, because of two Palindromes (green-green and red-green-green-red).", style: bodyStyle),
                           Align(alignment: Alignment.centerRight,
                               child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
                         ],)
@@ -348,167 +363,153 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                     Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.3,
-                                      chipColor: getColorFromIdx(0)),
-                                  _buildGameChip(
-                                      text: "3",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 2.6,
-                                      chipColor: getColorFromIdx(2)),
-                                  _buildGameChip(
-                                      text: "2",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 0.5,
-                                      chipColor: getColorFromIdx(2)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 2.5,
-                                      chipColor: getColorFromIdx(0)),
-                                  _buildGameChip(
-                                    text: "20",
-                                    textVisibleFrom: 6,
-                                    chipVisibleFrom: 0.3,
-                                    chipColor: getColorFromIdx(1),
-                                  ),
-                                ]
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.3,
+                                  chipColor: getColorFromIdx(0)),
+                              second: _buildGameChip(
+                                  text: "3",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 2.6,
+                                  chipColor: getColorFromIdx(2)),
+                              third: _buildGameChip(
+                                  text: "2",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 0.5,
+                                  chipColor: getColorFromIdx(2)),
+                              fourth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 2.5,
+                                  chipColor: getColorFromIdx(0)),
+                              fifth: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 0.3,
+                                  chipColor: getColorFromIdx(1)),
                             ),
 
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 3.0,
-                                      chipColor: getColorFromIdx(4)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.7,
-                                      chipColor: getColorFromIdx(2)),
-                                  _buildGameChip(
-                                      text: "20",
-                                      textVisibleFrom: 6,
-                                      chipVisibleFrom: 2.7,
-                                      chipColor: getColorFromIdx(3)),
-                                  _buildGameChip(
-                                      text: "20",
-                                      textVisibleFrom: 6,
-                                      chipVisibleFrom: 0.9,
-                                      chipColor: getColorFromIdx(1)),
-                                  _buildGameChip(
-                                    text: "1",
-                                    textVisibleFrom: 4,
-                                    chipVisibleFrom: 2.8,
-                                    chipColor: getColorFromIdx(2),
-                                  ),
-                                ]
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 3.0,
+                                  chipColor: getColorFromIdx(4)),
+                              second: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.7,
+                                  chipColor: getColorFromIdx(2)),
+                              third: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 2.7,
+                                  chipColor: getColorFromIdx(3)),
+                              fourth: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 0.9,
+                                  chipColor: getColorFromIdx(1)),
+                              fifth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 2.8,
+                                  chipColor: getColorFromIdx(2)),
                             ),
 
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.9,
-                                      chipColor: getColorFromIdx(1)),
-                                  _buildGameChip(
-                                      text: "20",
-                                      textVisibleFrom: 6,
-                                      chipVisibleFrom: 1.1,
-                                      chipColor: getColorFromIdx(0)),
-                                  _buildGameChip(
-                                      text: "20",
-                                      textVisibleFrom: 6,
-                                      chipVisibleFrom: 2.4,
-                                      chipColor: getColorFromIdx(4)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.0,
-                                      chipColor: getColorFromIdx(3)),
-                                  _buildGameChip(
-                                    text: "1",
-                                    textVisibleFrom: 4,
-                                    chipVisibleFrom: 0.6,
-                                    chipColor: getColorFromIdx(2),
-                                  ),
-                                ]
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.9,
+                                  chipColor: getColorFromIdx(1)),
+                              second: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 1.1,
+                                  chipColor: getColorFromIdx(0)),
+                              third: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 2.4,
+                                  chipColor: getColorFromIdx(4)),
+                              fourth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.0,
+                                  chipColor: getColorFromIdx(3)),
+                              fifth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 0.6,
+                                  chipColor: getColorFromIdx(2)),
                             ),
 
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildGameChip(
-                                      text: "2",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.1,
-                                      chipColor: getColorFromIdx(4)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 2.8,
-                                      chipColor: getColorFromIdx(3)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.6,
-                                      chipColor: getColorFromIdx(1)),
-                                  _buildGameChip(
-                                      text: "3",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 0.7,
-                                      chipColor: getColorFromIdx(3)),
-                                  _buildGameChip(
-                                    text: "1",
-                                    textVisibleFrom: 4,
-                                    chipVisibleFrom: 1.3,
-                                    chipColor: getColorFromIdx(3),
-                                  ),
-                                ]
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "2",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.1,
+                                  chipColor: getColorFromIdx(4)),
+                              second: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 2.8,
+                                  chipColor: getColorFromIdx(3)),
+                              third: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.6,
+                                  chipColor: getColorFromIdx(1)),
+                              fourth: _buildGameChip(
+                                  text: "3",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 0.7,
+                                  chipColor: getColorFromIdx(3)),
+                              fifth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.3,
+                                  chipColor: getColorFromIdx(3)),
                             ),
 
-                            Row(mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildGameChip(
-                                      text: "2",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.0,
-                                      chipColor: getColorFromIdx(4)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 2.2,
-                                      chipColor: getColorFromIdx(4)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.8,
-                                      chipColor: getColorFromIdx(0)),
-                                  _buildGameChip(
-                                      text: "1",
-                                      textVisibleFrom: 4,
-                                      chipVisibleFrom: 1.4,
-                                      chipColor: getColorFromIdx(0)),
-                                  _buildGameChip(
-                                    text: "20",
-                                    textVisibleFrom: 6,
-                                    chipVisibleFrom: 2.0,
-                                    chipColor: getColorFromIdx(1),
-                                  ),
-                                ]
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "2",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.0,
+                                  chipColor: getColorFromIdx(4)),
+                              second: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 2.2,
+                                  chipColor: getColorFromIdx(4)),
+                              third: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.8,
+                                  chipColor: getColorFromIdx(0)),
+                              fourth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 4,
+                                  chipVisibleFrom: 1.4,
+                                  chipColor: getColorFromIdx(0)),
+                              fifth: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 6,
+                                  chipVisibleFrom: 2.0,
+                                  chipColor: getColorFromIdx(1)),
                             ),
+
                           ],
                     ),
                     Visibility(
                         visible: animatedPageController.value.toInt() > 4,
                         child: Column(children: [
                           Text(""),
-                          Text(" ..  The player with the most points win.", style: bodyStyle),
+                          Text(".. and the player with the most points win.", style: bodyStyle),
                           Row(children: [
                             Align(alignment: Alignment.centerLeft,
                                 child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
@@ -552,19 +553,25 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
     );
   }
 
-  _buildEmptyRow() {
+  Widget _buildCellRow({
+    Widget? first,
+    Widget? second,
+    Widget? third,
+    Widget? fourth,
+    Widget? fifth,
+  }) {
     return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildGameChip(),
-          _buildGameChip(),
-          _buildGameChip(),
-          _buildGameChip(),
-          _buildGameChip(),
+          first ?? _buildGameChip(),
+          second ?? _buildGameChip(),
+          third ?? _buildGameChip(),
+          fourth ?? _buildGameChip(),
+          fifth ?? _buildGameChip(),
         ]);
   }
 
-  _buildGameChip(
+  Widget _buildGameChip(
       {
         Color? chipColor,
         String text = "",
