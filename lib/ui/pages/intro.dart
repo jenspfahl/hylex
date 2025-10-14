@@ -30,12 +30,20 @@ class Intro extends StatefulWidget {
   State<Intro> createState() => IntroState();
 }
 
-class IntroState extends State<Intro> {
+class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
+  late AnimationController animatedPageController;
 
   @override
   void initState() {
     super.initState();
+    animatedPageController = AnimationController(
+        duration: const Duration(milliseconds: 10000),
+        lowerBound: 0,
+        upperBound: 10,
+        animationBehavior: AnimationBehavior.preserve,
+        vsync: this
+    );
   }
 
   void _onIntroEnd(BuildContext context) {
@@ -75,10 +83,13 @@ class IntroState extends State<Intro> {
       pageColor: backgroundColor,
    //   imagePadding: EdgeInsets.zero,
     );
-
+    
     return IntroductionScreen(
       globalBackgroundColor: backgroundColor,
       allowImplicitScrolling: true,
+      onChange: (_) {
+        animatedPageController.reset();
+      },
       pages: [
         PageViewModel(
           title: "The eternal fight between Chaos and Order",
@@ -89,7 +100,7 @@ class IntroState extends State<Intro> {
                 Align(alignment: Alignment.centerLeft,
                     child: buildRoleIndicator(Role.Chaos, isSelected: false)),
                 Text(""),
-                Text(" ..  the other counteracts as Order", style: bodyStyle),
+                Text(" ..  the other counteracts as Order.", style: bodyStyle),
                 Align(alignment: Alignment.centerRight,
                     child: buildRoleIndicator(Role.Order, isSelected: false)),
 
@@ -101,51 +112,420 @@ class IntroState extends State<Intro> {
 
         PageViewModel(
           title: "The role of Chaos",
-          bodyWidget: Align(
-            child: Column(
-                children: [
-                  Text("Chaos randomly draws chips from the stock and places them as chaotic as possible.", style: bodyStyle),
-                  Text(""),
-                  Align(alignment: Alignment.center,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                        _buildGameChip("", dimension: 11, chipColor: getColorFromIdx(1), showCoordinates: false),
-                        _buildGameChip("", dimension: 11, chipColor: getColorFromIdx(0), showCoordinates: false),
-                        _buildGameChip("", dimension: 11, chipColor: getColorFromIdx(2), showCoordinates: false),
-                        _buildGameChip("", dimension: 11, chipColor: getColorFromIdx(1), showCoordinates: false),
-                        _buildGameChip("", dimension: 11, chipColor: getColorFromIdx(0), showCoordinates: false),
-                      ],)),
-
-                ]
-            ),
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+              animatedPageController.repeat();
+              return Column(
+                  children: [
+                    Text("Chaos randomly draws chips from the stock and places them as chaotic as possible.", style: bodyStyle),
+                    Text(""),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                        _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
+                        _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(2)),
+                        _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(1)),
+                        _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                      ]),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                  ]
+              );
+            },
           ),
           decoration: pageDecoration,
         ),
 
         PageViewModel(
           title: "The role of Order",
-          bodyWidget: Align(
-            child: Column(
-                children: [
-                  Text("Order wants to move the placed chips into a symmetric order.", style: bodyStyle),
-                  Text(""),
-                  Align(alignment: Alignment.center,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildGameChip("1", dimension: 11, chipColor: getColorFromIdx(0), showCoordinates: false),
-                          _buildGameChip("2", dimension: 11, chipColor: getColorFromIdx(1), showCoordinates: false),
-                          _buildGameChip("3", dimension: 11, chipColor: getColorFromIdx(2), showCoordinates: false),
-                          _buildGameChip("2", dimension: 11, chipColor: getColorFromIdx(1), showCoordinates: false),
-                          _buildGameChip("1", dimension: 11, chipColor: getColorFromIdx(0), showCoordinates: false),
-                        ],)),
-
-                ]
-            ),
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+              animatedPageController.repeat();
+              return Column(
+                  children: [
+                    Text("Order wants to bring the placed chips into a horizontal or vertical symmetric order, called Palindromes.", style: bodyStyle),
+                    Text(""),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(0)),
+                        _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(1)),
+                        _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(2)),
+                        _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                        _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                      ],),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                  ]
+              );
+            },
           ),
           decoration: pageDecoration,
         ),
+
+        PageViewModel(
+          title: "The role of Order",
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+
+              animatedPageController.repeat();
+              final chipBackgroundColor = getColorFromIdx(0).withOpacity(0.2);
+
+              return Column(
+                  children: [
+                    Text("Order may slide any placed chip horizontally or vertically through empty cells. Order may also skip its current turn.", style: bodyStyle),
+                    Text(""),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildGameChip(
+                            chipColor: getColorFromIdx(0),
+                            backgroundColor: chipBackgroundColor,
+                            chipVisibleAt: [0,1,2],
+                            backgroundVisibleAt: [2,3,4,5],
+                        ),
+                        _buildGameChip(
+                            chipColor: getColorFromIdx(0),
+                            backgroundColor: chipBackgroundColor,
+                            chipVisibleAt: [3],
+                            backgroundVisibleAt: [2,3,4,5],
+                        ),
+                        _buildGameChip(
+                            chipColor: getColorFromIdx(0),
+                            backgroundColor: chipBackgroundColor,
+                            chipVisibleAt: [4],
+                            backgroundVisibleAt: [2,3,4,5],
+                        ),
+                        _buildGameChip(
+                            chipColor: getColorFromIdx(0),
+                            backgroundColor: chipBackgroundColor,
+                            chipVisibleAt: [5,6,7,8,9],
+                            backgroundVisibleAt: [2,3,4,5],
+                        ),
+                        _buildGameChip(
+                            chipColor: getColorFromIdx(1),
+                        ),
+                      ]
+                    ),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                  ]
+              );
+            },
+          ),
+          decoration: pageDecoration,
+        ),
+
+        PageViewModel(
+          title: "Who wins?",
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+
+              animatedPageController.repeat();
+
+              return Column(
+                  children: [
+                    Text("Chaos collects points for each chip outside of a Palindrome  ..", style: bodyStyle),
+                    Text(""),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildGameChip(
+                              chipColor: getColorFromIdx(0)),
+                          _buildGameChip(
+                              chipColor: getColorFromIdx(2)),
+                          _buildGameChip(
+                              chipColor: getColorFromIdx(2)),
+                          _buildGameChip(
+                              chipColor: getColorFromIdx(0)),
+                          _buildGameChip(
+                              text: "20",
+                              textVisibleFrom: 2,
+                              chipColor: getColorFromIdx(1)),
+                        ]
+                    ),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Visibility(
+                        visible: animatedPageController.value.toInt() > 3,
+                        child: Column(children: [
+                          Text(""),
+                          Text(" ..  which makes 20 points in this example.", style: bodyStyle),
+                          Align(alignment: Alignment.centerLeft,
+                              child: buildRoleIndicator(Role.Chaos, points: 20, isSelected: false)),
+                        ],)
+                    )
+                  ]
+              );
+            },
+          ),
+          decoration: pageDecoration,
+        ),
+
+        PageViewModel(
+          title: "Who wins?",
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+
+              animatedPageController.repeat();
+
+              return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Whereas Order collects points for each chip which is part of a Palindrome ..", style: bodyStyle),
+                    Text(""),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildGameChip(
+                            text: "1",
+                            textVisibleFrom: 2,
+                            chipColor: getColorFromIdx(0)),
+                        _buildGameChip(
+                            text: "2",
+                            textVisibleFrom: 3,
+                            chipColor: getColorFromIdx(2)),
+                        _buildGameChip(
+                            text: "2",
+                            textVisibleFrom: 3,
+                            chipColor: getColorFromIdx(2)),
+                        _buildGameChip(
+                            text: "1",
+                            textVisibleFrom: 2,
+                            chipColor: getColorFromIdx(0)),
+                        _buildGameChip(
+                          chipColor: getColorFromIdx(1),
+                        ),
+                      ]
+                    ),
+                    _buildEmptyRow(),
+                    _buildEmptyRow(),
+                    Visibility(
+                        visible: animatedPageController.value.toInt() > 4,
+                        child: Column(children: [
+                          Text(""),
+                          Text(" ..  which makes 6 points in this example.", style: bodyStyle),
+                          Align(alignment: Alignment.centerRight,
+                              child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
+                        ],)
+                    )
+                  ]
+              );
+            },
+          ),
+          decoration: pageDecoration,
+        ),
+
+        PageViewModel(
+          title: "Who wins?",
+          bodyWidget: AnimatedBuilder(
+            animation: animatedPageController,
+            builder: (BuildContext context, Widget? child) {
+
+              animatedPageController.repeat();
+
+              return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("The game is over when all chips are placed ..", style: bodyStyle),
+                    Text(""),
+                    Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.3,
+                                      chipColor: getColorFromIdx(0)),
+                                  _buildGameChip(
+                                      text: "3",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 2.6,
+                                      chipColor: getColorFromIdx(2)),
+                                  _buildGameChip(
+                                      text: "2",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 0.5,
+                                      chipColor: getColorFromIdx(2)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 2.5,
+                                      chipColor: getColorFromIdx(0)),
+                                  _buildGameChip(
+                                    text: "20",
+                                    textVisibleFrom: 6,
+                                    chipVisibleFrom: 0.3,
+                                    chipColor: getColorFromIdx(1),
+                                  ),
+                                ]
+                            ),
+
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 3.0,
+                                      chipColor: getColorFromIdx(4)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.7,
+                                      chipColor: getColorFromIdx(2)),
+                                  _buildGameChip(
+                                      text: "20",
+                                      textVisibleFrom: 6,
+                                      chipVisibleFrom: 2.7,
+                                      chipColor: getColorFromIdx(3)),
+                                  _buildGameChip(
+                                      text: "20",
+                                      textVisibleFrom: 6,
+                                      chipVisibleFrom: 0.9,
+                                      chipColor: getColorFromIdx(1)),
+                                  _buildGameChip(
+                                    text: "1",
+                                    textVisibleFrom: 4,
+                                    chipVisibleFrom: 2.8,
+                                    chipColor: getColorFromIdx(2),
+                                  ),
+                                ]
+                            ),
+
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.9,
+                                      chipColor: getColorFromIdx(1)),
+                                  _buildGameChip(
+                                      text: "20",
+                                      textVisibleFrom: 6,
+                                      chipVisibleFrom: 1.1,
+                                      chipColor: getColorFromIdx(0)),
+                                  _buildGameChip(
+                                      text: "20",
+                                      textVisibleFrom: 6,
+                                      chipVisibleFrom: 2.4,
+                                      chipColor: getColorFromIdx(4)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.0,
+                                      chipColor: getColorFromIdx(3)),
+                                  _buildGameChip(
+                                    text: "1",
+                                    textVisibleFrom: 4,
+                                    chipVisibleFrom: 0.6,
+                                    chipColor: getColorFromIdx(2),
+                                  ),
+                                ]
+                            ),
+
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildGameChip(
+                                      text: "2",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.1,
+                                      chipColor: getColorFromIdx(4)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 2.8,
+                                      chipColor: getColorFromIdx(3)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.6,
+                                      chipColor: getColorFromIdx(1)),
+                                  _buildGameChip(
+                                      text: "3",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 0.7,
+                                      chipColor: getColorFromIdx(3)),
+                                  _buildGameChip(
+                                    text: "1",
+                                    textVisibleFrom: 4,
+                                    chipVisibleFrom: 1.3,
+                                    chipColor: getColorFromIdx(3),
+                                  ),
+                                ]
+                            ),
+
+                            Row(mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildGameChip(
+                                      text: "2",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.0,
+                                      chipColor: getColorFromIdx(4)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 2.2,
+                                      chipColor: getColorFromIdx(4)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.8,
+                                      chipColor: getColorFromIdx(0)),
+                                  _buildGameChip(
+                                      text: "1",
+                                      textVisibleFrom: 4,
+                                      chipVisibleFrom: 1.4,
+                                      chipColor: getColorFromIdx(0)),
+                                  _buildGameChip(
+                                    text: "20",
+                                    textVisibleFrom: 6,
+                                    chipVisibleFrom: 2.0,
+                                    chipColor: getColorFromIdx(1),
+                                  ),
+                                ]
+                            ),
+                          ],
+                    ),
+                    Visibility(
+                        visible: animatedPageController.value.toInt() > 4,
+                        child: Column(children: [
+                          Text(""),
+                          Text(" ..  The player with the most points win.", style: bodyStyle),
+                          Row(children: [
+                            Align(alignment: Alignment.centerLeft,
+                                child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
+                            Spacer(),
+                            Align(alignment: Alignment.centerRight,
+                                child: buildRoleIndicator(Role.Order, points: 26, isSelected: false, backgroundColor: Colors.redAccent)),
+                          ]),
+
+                        ],)
+                    )
+                  ]
+              );
+            },
+          ),
+          decoration: pageDecoration,
+        ),
+
       ],
       onDone: () => _onIntroEnd(context),
       onSkip: () => _onIntroEnd(context),
@@ -157,10 +537,10 @@ class IntroState extends State<Intro> {
       done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
       curve: Curves.fastLinearToSlowEaseIn,
     //  controlsMargin: const EdgeInsets.all(16),
-     // controlsPadding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 4.0),
+      controlsPadding: const EdgeInsets.all(8),
       dotsDecorator: const DotsDecorator(
-        size: Size(10.0, 10.0),
-        activeSize: Size(22.0, 10.0),
+       // size: Size(10.0, 10.0),
+       // activeSize: Size(22.0, 10.0),
         activeShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(25.0)),
         ),
@@ -172,7 +552,32 @@ class IntroState extends State<Intro> {
     );
   }
 
-  _buildGameChip(String text, {required int dimension, required Color chipColor, required bool showCoordinates}) {
+  _buildEmptyRow() {
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildGameChip(),
+          _buildGameChip(),
+          _buildGameChip(),
+          _buildGameChip(),
+          _buildGameChip(),
+        ]);
+  }
+
+  _buildGameChip(
+      {
+        Color? chipColor,
+        String text = "",
+        Color? backgroundColor,
+        double? chipVisibleFrom,
+        double? textVisibleFrom,
+        List<int>? chipVisibleAt,
+        List<int>? backgroundVisibleAt,
+      }) {
+
+    const dimension = 11;
+    final currentStep = animatedPageController.value;
+
     return
       Container(
         decoration: BoxDecoration(
@@ -183,7 +588,22 @@ class IntroState extends State<Intro> {
           child: SizedBox(
             height: dimension * 4,
             width: dimension * 4,
-            child: buildGameChip(text, dimension: dimension, chipColor: chipColor, showCoordinates: showCoordinates)),
+            child: Visibility(
+              visible: chipVisibleFrom != null ? currentStep >= chipVisibleFrom : true,
+              child: buildGameChip(
+                  textVisibleFrom != null
+                      ? currentStep >= textVisibleFrom
+                      ? text
+                      : ""
+                      : text,
+                  dimension: dimension,
+                  chipColor: chipVisibleAt != null
+                      ? chipVisibleAt.contains(currentStep.toInt()) ? chipColor : null
+                      : chipColor,
+                  backgroundColor: backgroundVisibleAt != null
+                      ? backgroundVisibleAt.contains(currentStep.toInt()) ? backgroundColor : null
+                      : backgroundColor),
+            )),
         ),
       );
   }

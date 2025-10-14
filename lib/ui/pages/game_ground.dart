@@ -397,7 +397,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           Text(chip.getChipName()),
           const Text(" "),
           CircleAvatar(
-              backgroundColor: _getChipBackgroundColor(chip, null),
+              backgroundColor: _getChipColor(chip, null),
               maxRadius: 6,
           ),
           Text(second),
@@ -711,6 +711,14 @@ class _HyleXGroundState extends State<HyleXGround> {
           ? Colors.white
           : null;
 
+    final backgroundColor = gameEngine.play.isGameOver() == true
+        ? gameEngine.play.getWinnerRole() == role
+        ? Colors.lightGreenAccent
+        : Colors.redAccent
+        : isSelected
+        ? DIALOG_BG
+        : null;
+
     final iconData = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.transcribe : MdiIcons.account;
     final icon = Transform.flip(
         flipX: player == PlayerType.RemoteUser,
@@ -761,7 +769,9 @@ class _HyleXGroundState extends State<HyleXGround> {
             playerType: player,
             gameEngine: gameEngine,
             isSelected: isSelected,
-            color: color),
+            color: color,
+            backgroundColor: backgroundColor
+        ),
       ),
     );
   }
@@ -845,7 +855,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     var shadedColor = startSpot?.content?.color.withOpacity(0.2);
 
     return buildGameChip(text,
-      chipColor: chip != null ? _getChipBackgroundColor(chip, where): null,
+      chipColor: chip != null ? _getChipColor(chip, where): null,
       backgroundColor: possibleTarget ? shadedColor : null,
       dimension: gameEngine.play.dimension,
       showCoordinates: PreferenceService().showCoordinates,
@@ -863,7 +873,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
-  Color _getChipBackgroundColor(GameChip chip, Coordinate? considerPointsAt) {
+  Color _getChipColor(GameChip chip, Coordinate? considerPointsAt) {
     Role? roleAtPos = null;
     if (_emphasiseAllChipsOfRole != null && considerPointsAt != null) {
       final points = gameEngine.play.matrix.getPoints(considerPointsAt);
@@ -1026,7 +1036,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         padding: EdgeInsets.all(gameEngine.play.dimension > 5 ? gameEngine.play.dimension > 7 ? 0 : 2 : 4),
         child: Container(
             decoration: BoxDecoration(
-              color: _getChipBackgroundColor(entry.chip, null),
+              color: _getChipColor(entry.chip, null),
               border: Border.all(width: 1),
               borderRadius: const BorderRadius.all(
                 Radius.circular(10.0),

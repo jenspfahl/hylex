@@ -49,8 +49,7 @@ class StartPage extends StatefulWidget {
   State<StartPage> createState() => StartPageState();
 }
 
-class StartPageState extends State<StartPage>
-    with SingleTickerProviderStateMixin {
+class StartPageState extends State<StartPage> {
 
   MenuMode _menuMode = MenuMode.None;
 

@@ -173,6 +173,8 @@ Widget buildRoleIndicator(
       PlayerType? playerType,
       GameEngine? gameEngine,
       Color? color,
+      Color? backgroundColor,
+      int? points,
     }) {
   final isLeftElseRight = role == Role.Chaos;
 
@@ -189,13 +191,13 @@ Widget buildRoleIndicator(
         child: Icon(iconData, color: color, size: 16))
       : null;
 
-  var points = gameEngine != null
+  var _points = gameEngine != null
       ? gameEngine.play.stats.getPoints(role)
-      : null;
+      : points;
 
   if (gameEngine?.play.header.playMode == PlayMode.Classic && role == Role.Chaos) {
     // no points for Chaos if Classic mode
-    points = null;
+    _points = null;
   }
 
   return Chip(
@@ -210,7 +212,7 @@ Widget buildRoleIndicator(
       children: [
         if (icon != null ) icon,
         if (icon != null ) const Text(" "),
-        Text(points != null ? "${role.name} - ${points}" : role.name,
+        Text(_points != null ? "${role.name} - ${_points}" : role.name,
             style: TextStyle(
                 color: color,
                 fontWeight: isSelected ? FontWeight.bold : null)),
@@ -220,7 +222,7 @@ Widget buildRoleIndicator(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text(points != null ? " ${points} - ${role.name}" : role.name,
+        Text(_points != null ? " ${_points} - ${role.name}" : role.name,
             style: TextStyle(
                 color: color,
                 fontWeight: isSelected ? FontWeight.bold : null)),
@@ -228,13 +230,7 @@ Widget buildRoleIndicator(
         if (icon != null ) icon,
       ],
     ),
-    backgroundColor: gameEngine?.play.isGameOver() == true
-        ? gameEngine!.play.getWinnerRole() == role
-        ? Colors.lightGreenAccent
-        : Colors.redAccent
-        : isSelected
-        ? DIALOG_BG
-        : null,
+    backgroundColor: backgroundColor,
     elevation: 3,
     shadowColor: playerType == PlayerType.LocalUser || playerType == null ? Colors.black : null,
   );
@@ -244,7 +240,7 @@ Widget buildGameChip(
     String text,
     {
       required int dimension,
-      required bool showCoordinates,
+      bool showCoordinates = false,
       Color? chipColor,
       Color? backgroundColor,
       Coordinate? where,
