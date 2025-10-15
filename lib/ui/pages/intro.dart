@@ -1,31 +1,13 @@
-import 'dart:async';
-import 'dart:collection';
 
-import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:hyle_x/app.dart';
-import 'package:hyle_x/service/MessageService.dart';
-import 'package:hyle_x/service/PreferenceService.dart';
-import 'package:hyle_x/service/StorageService.dart';
-import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
-import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
 import '../../model/common.dart';
-import '../../model/messaging.dart';
-import '../../model/play.dart';
-import '../../model/user.dart';
-import '../../utils/dates.dart';
-import '../dialogs.dart';
-import 'game_ground.dart';
 
 
 
 class Intro extends StatefulWidget {
-
 
   State<Intro> createState() => IntroState();
 }
@@ -38,7 +20,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     animatedPageController = AnimationController(
-        duration: const Duration(milliseconds: 10000),
+        duration: const Duration(seconds: 15),
         lowerBound: 0,
         upperBound: 15,
         animationBehavior: AnimationBehavior.preserve,
@@ -50,22 +32,6 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
     Navigator.of(context).pop();
   }
 
-  Widget _buildImage() {
-    return Row(children: [
-      CircleAvatar(
-        backgroundColor: getColorFromIdx(0),
-        maxRadius: 60,
-      ),
-      CircleAvatar(
-        backgroundColor: getColorFromIdx(1),
-        maxRadius: 60,
-      ),
-      CircleAvatar(
-        backgroundColor: getColorFromIdx(2),
-        maxRadius: 60,
-      ),
-    ]);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +49,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       pageColor: backgroundColor,
    //   imagePadding: EdgeInsets.zero,
     );
-    
+
     return IntroductionScreen(
       globalBackgroundColor: backgroundColor,
       allowImplicitScrolling: true,
@@ -115,7 +81,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
-              animatedPageController.repeat();
+
+              _startAnimation();
+              
               return Column(
                   children: [
                     Text("Chaos randomly draws chips from the stock and places them as chaotic as possible.", style: bodyStyle),
@@ -146,7 +114,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
-              animatedPageController.repeat();
+
+              _startAnimation();
+
               return Column(
                   children: [
                     Text("Order wants to bring the placed chips into a horizontal or vertical symmetric order, called Palindromes.", style: bodyStyle),
@@ -179,7 +149,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              animatedPageController.repeat();
+              _startAnimation();
               final chipBackgroundColor = getColorFromIdx(0).withOpacity(0.2);
 
               return Column(
@@ -253,13 +223,18 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              animatedPageController.repeat();
+              _startAnimation();
 
               return Column(
                   children: [
                     Text("Chaos collects points for each chip outside of a Palindrome  ..", style: bodyStyle),
                     Text(""),
-                    _buildCellRow(),
+                    _buildCellRow(
+                      second: _buildGameChip(
+                          text: "20",
+                          textVisibleFrom: 2,
+                          chipColor: getColorFromIdx(3)),
+                    ),
                     _buildCellRow(),
                     _buildCellRow(
                       first: _buildGameChip(
@@ -281,9 +256,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                         visible: animatedPageController.value.toInt() > 3,
                         child: Column(children: [
                           Text(""),
-                          Text(" ..  which is 20 points per chip in this example.", style: bodyStyle),
+                          Text(" ..  which is 20 points per chip in this example, so total 40.", style: bodyStyle),
                           Align(alignment: Alignment.centerLeft,
-                              child: buildRoleIndicator(Role.Chaos, points: 20, isSelected: false)),
+                              child: buildRoleIndicator(Role.Chaos, points: 40, isSelected: false)),
                         ],)
                     )
                   ]
@@ -299,14 +274,18 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              animatedPageController.repeat();
+              _startAnimation();
 
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Whereas Order collects points for each chip which is part of a Palindrome ..", style: bodyStyle),
                     Text(""),
-                    _buildCellRow(),
+                    _buildCellRow(
+                      second: _buildGameChip(
+                        chipColor: getColorFromIdx(3),
+                      ),
+                    ),
                     _buildCellRow(),
                     _buildCellRow(
                       first: _buildGameChip(
@@ -353,7 +332,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              animatedPageController.repeat();
+              _startAnimation();
 
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -538,7 +517,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
       curve: Curves.fastLinearToSlowEaseIn,
     //  controlsMargin: const EdgeInsets.all(16),
-      controlsPadding: const EdgeInsets.all(8),
+      controlsPadding: const EdgeInsets.symmetric(vertical: 16),
       dotsDecorator: const DotsDecorator(
        // size: Size(10.0, 10.0),
        // activeSize: Size(22.0, 10.0),
@@ -551,6 +530,10 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         shape: const RoundedRectangleBorder(),
       ),
     );
+  }
+
+  void _startAnimation() {
+    animatedPageController.repeat();
   }
 
   Widget _buildCellRow({

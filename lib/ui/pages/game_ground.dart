@@ -820,7 +820,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (gameEngine.play.selectionCursor.start == where) {
       return DottedBorder(
-        dashPattern: const [2,4],
+        options: RectDottedBorderOptions(
+          dashPattern: const [2,4]),
         child: _buildChip(chip, pointText, where),
       );
     }
@@ -1055,20 +1056,22 @@ class _HyleXGroundState extends State<HyleXGround> {
   Widget _wrapLastMove(Widget widget, Coordinate where) {
     if (gameEngine.play.opponentCursor.hasStart && gameEngine.play.opponentCursor.start == where) {
       return DottedBorder(
-          padding: EdgeInsets.zero,
-          strokeWidth: 1,
-          strokeCap: StrokeCap.butt,
-          borderType: BorderType.Circle,
-          color: Colors.grey,
+          options: CircularDottedBorderOptions(
+            padding: EdgeInsets.zero,
+            strokeWidth: 1,
+            strokeCap: StrokeCap.butt,
+            color: Colors.grey
+          ),
           child: widget);
     }
     else if (gameEngine.play.opponentCursor.hasEnd && gameEngine.play.opponentCursor.end == where) {
       return DottedBorder(
-          padding: EdgeInsets.zero,
-          strokeWidth: 3,
-          strokeCap: StrokeCap.butt,
-          borderType: BorderType.Circle,
-          color: Colors.grey,
+          options: CircularDottedBorderOptions(
+            padding: EdgeInsets.zero,
+            strokeWidth: 3,
+            strokeCap: StrokeCap.butt,
+            color: Colors.grey
+          ),
           child: widget);
     }
     return widget;
