@@ -653,6 +653,13 @@ class Play {
 
   void nextPlayer() {
 
+    if (header.playMode == PlayMode.Classic
+        && header.rolesSwapped == false
+        && !hasStaleMove
+        && (_stock.isEmpty() || _matrix.noFreeSpace())) {
+      // TODO swap roles and clear play board but remember order points
+    }
+
     switchRole();
     if (currentRole == Role.Chaos) {
       // transition from Order to Chaos
@@ -771,7 +778,15 @@ class Play {
   }
 
   bool isGameOver() {
-    return (!hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) || header.state.isFinal;
+    if (header.playMode == PlayMode.HyleX) {
+      return (!hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) ||
+          header.state.isFinal;
+    }
+    else if (header.playMode == PlayMode.Classic) {
+      return (header.rolesSwapped == true && !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) ||
+          header.state.isFinal;
+    }
+    throw Exception("Unknown play mode ${header.playMode} for isGameOver");
   }
 
   startThinking(

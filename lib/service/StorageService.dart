@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:hyle_x/model/common.dart';
 
 import '../model/play.dart';
 import '../model/user.dart';
@@ -56,7 +57,7 @@ class StorageService {
 
     final results = await Future.wait([
         _saveRawPlayHeader(headerKey, play.header),
-        _saveRawPlay(key, play)
+        _saveRawPlay(key, play),
     ]);
 
     return !results.any((e) => !e);

@@ -158,7 +158,7 @@ class StartPageState extends State<StartPage> {
           _handleInviteAccepted(header, message as AcceptInviteMessage);
         }
         else if (extractOperation == Operation.RejectInvite) {
-          _handleInviteRejected(header, message as RejectInviteMessage);
+          _handleInviteRejected(header);
         }
         else if (extractOperation == Operation.Move) {
           _handleMove(header, message as MoveMessage);
@@ -278,7 +278,7 @@ class StartPageState extends State<StartPage> {
   }
 
 
-  Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
+  Future<void> _handleInviteRejected(PlayHeader header) async {
     final error = await PlayStateManager().doAndHandleRejectInvite(header);
     if (error != null) {
       showAlertDialog(error);

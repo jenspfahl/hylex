@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:hyle_x/model/play.dart';
+import 'package:hyle_x/model/user.dart';
 
 import 'chip.dart';
 import 'common.dart';
@@ -134,6 +136,15 @@ class InviteMessage extends Message {
       this.invitorUserId,
       this.invitorUserName,
       ): super(playId);
+
+  InviteMessage.fromHeaderAndUser(PlayHeader header, User user)  : this(
+      header.playId,
+      header.playSize,
+      header.playMode, 
+      header.playOpener!,
+      user.id,
+      user.name
+  );
 
   factory InviteMessage.deserialize(
       BitBufferReader reader,

@@ -107,13 +107,7 @@ class MessageService {
         bool share = true,
         bool showAllOptions = false,
       }) {
-    final inviteMessage = InviteMessage(
-        header.playId,
-        header.playSize,
-        header.playMode,
-        header.playOpener!,
-        user.id,
-        user.name);
+    final inviteMessage = InviteMessage.fromHeaderAndUser(header, user);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
 
     return _saveAndShare(

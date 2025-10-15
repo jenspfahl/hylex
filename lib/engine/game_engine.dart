@@ -187,6 +187,10 @@ class SinglePlayerGameEngine extends GameEngine {
     if (!play.isGameOver() && play.currentPlayer == PlayerType.LocalAi) {
       _think();
     }
+    else {
+      play.waitForOpponent = false;
+      savePlayState();
+    }
     // else the user has to do the move
   }
   
@@ -275,9 +279,9 @@ class MultiPlayerGameEngine extends GameEngine {
   double? get progressRatio => null;
 
   @override
-  opponentMoveReceived(Move move) {
+  opponentMoveReceived(Move move) async {
     if (play.currentPlayer == PlayerType.RemoteUser) {
-      super.opponentMoveReceived(move);
+      await super.opponentMoveReceived(move);
     }
   }
 
