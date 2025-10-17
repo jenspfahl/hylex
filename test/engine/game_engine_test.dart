@@ -15,18 +15,17 @@ import 'package:hyle_x/utils/fortune.dart';
 void main() {
   StorageService.enableMocking = true;
   MessageService.enableMocking = true;
-
-  group("Test game engine", () {
+  
+  group("Test game engine single play", () {
 
     final user = User(generateRandomString(userIdLength));
-    final remoteUser = User(generateRandomString(userIdLength));
 
-    test('Test single play no AI', () async {
-
+    test('without AI', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
 
       final header = PlayHeader.singlePlay(PlaySize.Size5x5);
-      final play = Play.newSinglePlay(header, PlayerType.LocalUser, PlayerType.LocalUser);
+      final play = Play.newSinglePlay(
+          header, PlayerType.LocalUser, PlayerType.LocalUser);
 
       final engine = SinglePlayerGameEngine(play, user, null, () {});
 
@@ -37,8 +36,7 @@ void main() {
       expect(play.header.state, PlayState.ReadyToMove);
       expect(engine.isBoardLocked(), false);
 
-      play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0)));
-      play.commitMove();
+      _commitMove(play, Move.placed(play.currentChip!, Coordinate(0, 0)));
 
       await engine.nextPlayer();
 
@@ -47,7 +45,8 @@ void main() {
       expect(play.header.state, PlayState.ReadyToMove);
       expect(engine.isBoardLocked(), false);
 
-      play.applyStaleMove(Move.moved(GameChip(1), Coordinate(0, 0), Coordinate(0, 3)));
+      play.applyStaleMove(
+          Move.moved(GameChip(1), Coordinate(0, 0), Coordinate(0, 3)));
       play.commitMove();
 
       await engine.nextPlayer();
@@ -55,15 +54,14 @@ void main() {
       expect(play.currentRole, Role.Chaos);
       expect(play.currentRound, 2);
       expect(engine.isBoardLocked(), false);
-
     });
 
-    test('Test single play with Order AI', () async {
-
+    test('with Order AI', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
 
       final header = PlayHeader.singlePlay(PlaySize.Size5x5);
-      final play = Play.newSinglePlay(header, PlayerType.LocalUser, PlayerType.LocalAi);
+      final play = Play.newSinglePlay(
+          header, PlayerType.LocalUser, PlayerType.LocalAi);
 
       final engine = SinglePlayerGameEngine(play, user, null, () {});
 
@@ -74,8 +72,7 @@ void main() {
       expect(play.header.state, PlayState.ReadyToMove);
       expect(engine.isBoardLocked(), false);
 
-      play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0)));
-      play.commitMove();
+      _commitMove(play, Move.placed(play.currentChip!, Coordinate(0, 0)));
 
       await engine.nextPlayer();
 
@@ -83,377 +80,368 @@ void main() {
       expect(play.currentRound, 1);
       expect(play.header.state, PlayState.WaitForOpponent);
       expect(engine.isBoardLocked(), true);
-
-
-
     });
+  });
 
-    test('Test multi play, invitor perspective, invitee rejected', () async {
+  group("Test game engine multi play, invitor perspective", () {
+
+    final localUser = User(generateRandomString(userIdLength));
+    final remoteUser = User(generateRandomString(userIdLength));
+
+    test('invitee rejected', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final header = PlayHeader.multiPlayInvitor(
-          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitor);
-      final play = Play.newMultiPlay(header);
+      final localPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
+          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitor));
 
-      expect(play.header.state, PlayState.RemoteOpponentInvited);
+      expect(localPlay.header.state, PlayState.RemoteOpponentInvited);
 
-      final errorMessage = await PlayStateManager().doAndHandleRejectInvite(play.header);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().doAndHandleRejectInvite(localPlay.header), null);
 
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
-
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
       engine.startGame();
-      expect(play.currentRole, Role.Chaos);
-      expect(play.header.state, PlayState.InvitationRejected);
-      expect(play.currentRound, 1);
+      
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.header.state, PlayState.InvitationRejected);
+      expect(localPlay.currentRound, 1);
       expect(engine.isBoardLocked(), true);
-      expect(play.isGameOver(), true);
+      expect(localPlay.isGameOver(), true);
 
-      expect(() => play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0))),
+      expect(() => _commitMove(localPlay, Move.placed(localPlay.currentChip!, Coordinate(0, 0))),
           throwsA(TypeMatcher<Exception>()));
 
     });
 
-    test('Test multi play, invitor perspective, invitor starts', () async {
+    test('invitor starts', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final header = PlayHeader.multiPlayInvitor(
-          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitor);
-      final play = Play.newMultiPlay(header);
+      final localPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
+          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitor));
 
-      expect(play.header.state, PlayState.RemoteOpponentInvited);
+      expect(localPlay.header.state, PlayState.RemoteOpponentInvited);
 
-      final acceptMessage = AcceptInviteMessage(
-          play.header.playId,
+      final remoteAcceptMessage = AcceptInviteMessage(
+          localPlay.header.playId,
           PlayOpener.Invitor,
-          "1",
-          "Remote User",
+          remoteUser.id,
+          remoteUser.name,
           null);
 
-      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(play.header, acceptMessage);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().handleInviteAcceptedByRemote(localPlay.header, remoteAcceptMessage), null);
 
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
       engine.startGame();
-      expect(play.currentRole, Role.Chaos);
-      expect(play.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
-      expect(play.currentRound, 1);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
+      expect(localPlay.currentRound, 1);
       expect(engine.isBoardLocked(), false);
+      expect(localPlay.isGameOver(), false);
 
-      play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0)));
-      play.commitMove();
+      _commitMove(localPlay, Move.placed(localPlay.currentChip!, Coordinate(0, 0)));
 
       await engine.nextPlayer();
-      expect(play.currentRole, Role.Order);
-      expect(play.header.state, PlayState.WaitForOpponent);
-      expect(play.currentRound, 1);
+      expect(localPlay.currentRole, Role.Order);
+      expect(localPlay.header.state, PlayState.WaitForOpponent);
+      expect(localPlay.currentRound, 1);
       expect(engine.isBoardLocked(), true);
 
     });
 
-    test('Test multi play, invitor perspective, invitee starts', () async {
+    test('invitee starts', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final header = PlayHeader.multiPlayInvitor(
-          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee);
-      final play = Play.newMultiPlay(header);
+      final localPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
+          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee));
 
-      expect(play.header.state, PlayState.RemoteOpponentInvited);
+      expect(localPlay.header.state, PlayState.RemoteOpponentInvited);
 
-      final acceptMessage = AcceptInviteMessage(
-          play.header.playId,
+      final remoteAcceptMessage = AcceptInviteMessage(
+          localPlay.header.playId,
           PlayOpener.Invitee,
-          "1",
-          "Remote User",
+          remoteUser.id,
+          remoteUser.name,
           Move.placed(GameChip(0), Coordinate(0, 0)));
 
-      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(play.header, acceptMessage);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().handleInviteAcceptedByRemote(localPlay.header, remoteAcceptMessage), null);
 
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
-      await engine.opponentMoveReceived(acceptMessage.initialMove!);
+      await engine.opponentMoveReceived(remoteAcceptMessage.initialMove!);
 
-      expect(play.currentRole, Role.Order);
-      expect(play.currentRound, 1);
-      expect(play.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
+      expect(localPlay.currentRole, Role.Order);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
       expect(engine.isBoardLocked(), false);
+      expect(localPlay.isGameOver(), false);
 
-      play.applyStaleMove(Move.moved(GameChip(1), Coordinate(0, 0), Coordinate(0, 3)));
-      play.commitMove();
+      _commitMove(localPlay, Move.moved(GameChip(1), Coordinate(0, 0), Coordinate(0, 3)));
 
       await engine.nextPlayer();
 
-      expect(play.currentRole, Role.Chaos);
-      expect(play.currentRound, 2);
-      expect(play.header.state, PlayState.WaitForOpponent);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 2);
+      expect(localPlay.header.state, PlayState.WaitForOpponent);
       expect(engine.isBoardLocked(), true);
+      expect(localPlay.isGameOver(), false);
 
     });
 
-    test('Test multi play, invitor perspective, invitor resigns', () async {
+    test('invitor resigns', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final header = PlayHeader.multiPlayInvitor(
-          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee);
-      final play = Play.newMultiPlay(header);
+      final loalPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
+          PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee));
 
-      expect(play.header.state, PlayState.RemoteOpponentInvited);
+      expect(loalPlay.header.state, PlayState.RemoteOpponentInvited);
 
-      final acceptMessage = AcceptInviteMessage(
-          play.header.playId,
+      final remoteAcceptMessage = AcceptInviteMessage(
+          loalPlay.header.playId,
           PlayOpener.Invitee,
-          "1",
-          "Remote User",
+          remoteUser.id,
+          remoteUser.name,
           Move.placed(GameChip(0), Coordinate(0, 0)));
 
-      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(play.header, acceptMessage);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().handleInviteAcceptedByRemote(loalPlay.header, remoteAcceptMessage), null);
 
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final engine = MultiPlayerGameEngine(loalPlay, localUser, null, () {});
 
-      await engine.opponentMoveReceived(acceptMessage.initialMove!);
+      await engine.opponentMoveReceived(remoteAcceptMessage.initialMove!);
 
-      expect(play.currentRole, Role.Order);
-      expect(play.currentRound, 1);
-      expect(play.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
+      expect(loalPlay.currentRole, Role.Order);
+      expect(loalPlay.currentRound, 1);
+      expect(loalPlay.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
       expect(engine.isBoardLocked(), false);
+      expect(loalPlay.isGameOver(), false);
 
-      expect(await PlayStateManager().doResign(header, user), null);
+      expect(await PlayStateManager().doResign(loalPlay.header, localUser), null);
 
-      expect(play.header.state, PlayState.Resigned);
+      expect(loalPlay.header.state, PlayState.Resigned);
 
-      expect(play.isGameOver(), true);
-      expect(play.getWinnerRole(), Role.Chaos);
-      expect(play.getWinnerPlayer(), PlayerType.RemoteUser);
+      expect(loalPlay.isGameOver(), true);
+      expect(loalPlay.getWinnerRole(), Role.Chaos);
+      expect(loalPlay.getWinnerPlayer(), PlayerType.RemoteUser);
       expect(engine.isBoardLocked(), true);
 
     });
 
-    test('Test multi play, invitor perspective, invitee resigns', () async {
+    test('invitee resigns', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final invitorPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
+      final localPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
           PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee));
 
       final inviteePlay = Play.newMultiPlay(PlayHeader.multiPlayInvitee(
           new InviteMessage.fromHeaderAndUser(
-              invitorPlay.header, user),
+              localPlay.header, localUser),
           null,
           PlayState.InvitationAccepted_ReadyToMove
       ));
 
-      expect(invitorPlay.header.state, PlayState.RemoteOpponentInvited);
+      expect(localPlay.header.state, PlayState.RemoteOpponentInvited);
 
-      final acceptMessage = AcceptInviteMessage(
-          invitorPlay.header.playId,
+      final remoteAcceptMessage = AcceptInviteMessage(
+          localPlay.header.playId,
           PlayOpener.Invitee,
-          "1",
-          "Remote User",
+          remoteUser.id,
+          remoteUser.name,
           Move.placed(GameChip(0), Coordinate(0, 0)));
 
-      final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(invitorPlay.header, acceptMessage);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().handleInviteAcceptedByRemote(localPlay.header, remoteAcceptMessage), null);
 
-      final engine = MultiPlayerGameEngine(invitorPlay, user, null, () {});
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
-      await engine.opponentMoveReceived(acceptMessage.initialMove!);
+      await engine.opponentMoveReceived(remoteAcceptMessage.initialMove!);
 
-      expect(invitorPlay.currentRole, Role.Order);
-      expect(invitorPlay.currentRound, 1);
-      expect(invitorPlay.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
+      expect(localPlay.currentRole, Role.Order);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.header.state, PlayState.RemoteOpponentAccepted_ReadyToMove);
       expect(engine.isBoardLocked(), false);
+      expect(localPlay.isGameOver(), false);
 
-      invitorPlay.applyStaleMove(Move.skipped());
-      invitorPlay.commitMove();
+      _commitMove(localPlay, Move.skipped());
 
       await engine.nextPlayer();
 
-      expect(invitorPlay.currentRole, Role.Chaos);
-      expect(invitorPlay.currentRound, 2);
-      expect(invitorPlay.header.state, PlayState.WaitForOpponent);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 2);
+      expect(localPlay.header.state, PlayState.WaitForOpponent);
       expect(engine.isBoardLocked(), true);
+      expect(localPlay.isGameOver(), false);
 
-      expect(await PlayStateManager().handleResignedByRemote(invitorPlay.header, remoteUser), null);
+      expect(await PlayStateManager().handleResignedByRemote(localPlay.header, remoteUser), null);
 
-      expect(invitorPlay.header.state, PlayState.OpponentResigned);
+      expect(localPlay.header.state, PlayState.OpponentResigned);
 
-     // expect(() => engine.nextPlayer(), throwsA(TypeMatcher<Exception>()));
-
-      expect(invitorPlay.currentRole, Role.Chaos); //TODO whyß race condition in nextPlayer()?
-      expect(invitorPlay.currentRound, 2);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 2);
       expect(engine.isBoardLocked(), true);
-      expect(invitorPlay.isGameOver(), true);
-      expect(invitorPlay.getWinnerRole(), Role.Chaos);
-      expect(invitorPlay.getWinnerPlayer(), PlayerType.RemoteUser);
+      expect(localPlay.isGameOver(), true);
+      expect(localPlay.getWinnerRole(), Role.Order);
+      expect(localPlay.getWinnerPlayer(), PlayerType.LocalUser);
 
     });
 
 
+  });
 
+  group("Test game engine multi play, invitee perspective", () {
 
+    final localPlayId = "local_id";
+    final localUser = User(generateRandomString(userIdLength));
+    final remoteUser = User(generateRandomString(userIdLength));
 
-    test('Test multi play, invitee perspective, invitor starts', () async {
+    test('invitor starts', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final playId = "ABC";
       final playOpener = PlayOpener.Invitor;
 
-      final inviteMessage = InviteMessage(
-          playId,
+      final remoteInviteMessage = InviteMessage(
+          localPlayId,
           PlaySize.Size5x5,
           PlayMode.HyleX,
           playOpener,
-          "invitorUserId",
-          "invitorUserName");
+          remoteUser.id,
+          remoteUser.name);
 
-      final header = PlayHeader.multiPlayInvitee(
-          inviteMessage, null, PlayState.InvitationPending);
+      final localHeader = PlayHeader.multiPlayInvitee(
+          remoteInviteMessage, null, PlayState.InvitationPending);
 
-      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().doAcceptInvite(localHeader, playOpener), null);
+      expect(localHeader.state, PlayState.InvitationAccepted_WaitForOpponent);
 
-      final play = Play.newMultiPlay(header);
-      expect(play.header.state, PlayState.InvitationAccepted_WaitForOpponent);
+      final localPlay = Play.newMultiPlay(localHeader);
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
+      engine.startGame();
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.isGameOver(), false);
+      expect(engine.isBoardLocked(), true);
     });
 
-    test('Test multi play, invitee perspective, invitee starts', () async {
+    test('invitee starts', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final playId = "ABC";
       final playOpener = PlayOpener.Invitee;
 
-      final inviteMessage = InviteMessage(
-          playId,
+      final remoteInviteMessage = InviteMessage(
+          localPlayId,
           PlaySize.Size5x5,
           PlayMode.HyleX,
           playOpener,
-          "invitorUserId",
-          "invitorUserName");
+          remoteUser.id,
+          remoteUser.name);
 
-      final header = PlayHeader.multiPlayInvitee(
-          inviteMessage, null, PlayState.InvitationPending);
+      final localHeader = PlayHeader.multiPlayInvitee(
+          remoteInviteMessage, null, PlayState.InvitationPending);
 
-      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().doAcceptInvite(localHeader, playOpener), null);
+      expect(localHeader.state, PlayState.InvitationAccepted_ReadyToMove);
 
-      final play = Play.newMultiPlay(header);
-
-      expect(play.header.state, PlayState.InvitationAccepted_ReadyToMove);
-
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final localPlay = Play.newMultiPlay(localHeader);
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
       engine.startGame();
-      expect(play.currentRole, Role.Chaos);
-      expect(play.currentRound, 1);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.isGameOver(), false);
       expect(engine.isBoardLocked(), false);
 
-      play.applyStaleMove(Move.placed(play.currentChip!, Coordinate(0, 0)));
-      play.commitMove();
+      _commitMove(localPlay, Move.placed(localPlay.currentChip!, Coordinate(0, 0)));
 
       await engine.nextPlayer();
 
-      expect(play.currentRole, Role.Order);
-      expect(play.currentRound, 1);
+      expect(localHeader.state, PlayState.InvitationAccepted_WaitForOpponent);
+      expect(localPlay.currentRole, Role.Order);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.isGameOver(), false);
       expect(engine.isBoardLocked(), true);
 
     });
 
-    test('Test multi play, invitee perspective, invitee resigns', () async {
+    test('invitee resigns', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final playId = "ABC";
       final playOpener = PlayOpener.Invitee;
 
-      final inviteMessage = InviteMessage(
-          playId,
+      final remoteInviteMessage = InviteMessage(
+          localPlayId,
           PlaySize.Size5x5,
           PlayMode.HyleX,
           playOpener,
-          "invitorUserId",
-          "invitorUserName");
+          remoteUser.id,
+          remoteUser.name);
 
-      final header = PlayHeader.multiPlayInvitee(
-          inviteMessage, null, PlayState.InvitationPending);
+      final localHeader = PlayHeader.multiPlayInvitee(
+          remoteInviteMessage, null, PlayState.InvitationPending);
 
-      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().doAcceptInvite(localHeader, playOpener), null);
+      expect(localHeader.state, PlayState.InvitationAccepted_ReadyToMove);
 
-      final play = Play.newMultiPlay(header);
-
-      expect(play.header.state, PlayState.InvitationAccepted_ReadyToMove);
-
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final localPlay = Play.newMultiPlay(localHeader);
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
       engine.startGame();
-      expect(play.currentRole, Role.Chaos);
-      expect(play.currentRound, 1);
-      expect(play.isGameOver(), false);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.isGameOver(), false);
       expect(engine.isBoardLocked(), false);
 
+      expect(await PlayStateManager().doResign(localHeader, localUser), null);
 
-      expect(await PlayStateManager().doResign(header, user), null);
-
-      expect(play.header.state, PlayState.Resigned);
-
-      expect(play.isGameOver(), true);
-      expect(play.getWinnerRole(), Role.Order);
-      expect(play.getWinnerPlayer(), PlayerType.RemoteUser);
+      expect(localPlay.header.state, PlayState.Resigned);
+      expect(localPlay.isGameOver(), true);
+      expect(localPlay.getWinnerRole(), Role.Order);
+      expect(localPlay.getWinnerPlayer(), PlayerType.RemoteUser);
       expect(engine.isBoardLocked(), true);
 
     });
 
-    test('Test multi play, invitee perspective, invitor resigns', () async {
+    test('invitor resigns', () async {
 
       TestWidgetsFlutterBinding.ensureInitialized();
 
-      final playId = "ABC";
-      final playOpener = PlayOpener.Invitee;
+      final playOpener = PlayOpener.Invitor;
 
-      final inviteMessage = InviteMessage(
-          playId,
+      final remoteInviteMessage = InviteMessage(
+          localPlayId,
           PlaySize.Size5x5,
           PlayMode.HyleX,
           playOpener,
-          "invitorUserId",
-          "invitorUserName");
+          remoteUser.id,
+          remoteUser.name);
 
-      final header = PlayHeader.multiPlayInvitee(
-          inviteMessage, null, PlayState.InvitationPending);
+      final localHeader = PlayHeader.multiPlayInvitee(
+          remoteInviteMessage, null, PlayState.InvitationPending);
 
-      final errorMessage = await PlayStateManager().doAcceptInvite(header, playOpener);
-      expect(errorMessage, null);
+      expect(await PlayStateManager().doAcceptInvite(localHeader, playOpener), null);
+      expect(localHeader.state, PlayState.InvitationAccepted_WaitForOpponent);
 
-      final play = Play.newMultiPlay(header);
-
-      expect(play.header.state, PlayState.InvitationAccepted_ReadyToMove);
-
-      final engine = MultiPlayerGameEngine(play, user, null, () {});
+      final localPlay = Play.newMultiPlay(localHeader);
+      final engine = MultiPlayerGameEngine(localPlay, localUser, null, () {});
 
       engine.startGame();
-      expect(play.currentRole, Role.Chaos);
-      expect(play.currentRound, 1);
-      expect(play.isGameOver(), false);
-      expect(engine.isBoardLocked(), false);
+      expect(localPlay.currentRole, Role.Chaos);
+      expect(localPlay.currentRound, 1);
+      expect(localPlay.isGameOver(), false);
+      expect(engine.isBoardLocked(), true);
 
+      expect(await PlayStateManager().handleResignedByRemote(localHeader, localUser), null);
 
-      expect(await PlayStateManager().doResign(header, user), null);
+      expect(localPlay.header.state, PlayState.OpponentResigned);
 
-      expect(play.header.state, PlayState.Resigned);
-
-      expect(play.isGameOver(), true);
-      expect(play.getWinnerRole(), Role.Order);
-      expect(play.getWinnerPlayer(), PlayerType.RemoteUser);
+      expect(localPlay.isGameOver(), true);
+      expect(localPlay.getWinnerRole(), Role.Order);
+      expect(localPlay.getWinnerPlayer(), PlayerType.LocalUser);
       expect(engine.isBoardLocked(), true);
 
     });
@@ -461,5 +449,10 @@ void main() {
 
   });
 
+}
+
+_commitMove(Play play, Move move) {
+  play.applyStaleMove(move);
+  play.commitMove();
 }
 

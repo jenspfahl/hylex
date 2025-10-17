@@ -36,7 +36,7 @@ abstract class GameEngine extends ChangeNotifier {
 
   Future<void> nextPlayer() async {
     if (play.isGameOver()) {
-      debugPrint("Game over, no next round");
+      debugPrint("Game over detected, no next round");
       _finish();
       return;
     }
