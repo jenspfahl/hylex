@@ -334,7 +334,8 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           return HyleXGround(
               widget.user,
               play ?? Play.newMultiPlay(header));
-        })).then((_) {
+        },
+            settings: RouteSettings(name: PLAY_GROUND))).then((_) {
           // reload when navigating back
           setState(() {
             debugPrint("reload all play header");

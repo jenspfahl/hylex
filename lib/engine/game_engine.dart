@@ -129,7 +129,7 @@ abstract class GameEngine extends ChangeNotifier {
   /**
    * Called when the opponent move is ready to be applied to the current game and play state.
    */
-  opponentMoveReceived(Move opponentMove) async {
+  Future<void> opponentMoveReceived(Move opponentMove) async {
     debugPrint("opponent move received");
 
     final result = play.validateMove(opponentMove);
@@ -279,7 +279,7 @@ class MultiPlayerGameEngine extends GameEngine {
   double? get progressRatio => null;
 
   @override
-  opponentMoveReceived(Move move) async {
+  Future<void> opponentMoveReceived(Move move) async {
     if (play.currentPlayer == PlayerType.RemoteUser) {
       await super.opponentMoveReceived(move);
     }

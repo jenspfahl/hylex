@@ -39,6 +39,7 @@ enum MenuMode {
   More
 }
 
+const PLAY_GROUND = "play_ground";
 
 GlobalKey<StartPageState> globalStartPageKey = GlobalKey();
 
@@ -402,7 +403,9 @@ class StartPageState extends State<StartPage> {
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
                               return HyleXGround(_user, play);
-                            }));
+                            },
+                                settings: RouteSettings(name: PLAY_GROUND)
+                            ));
                       }
                       else {
                         showAlertDialog('No ongoing single play to resume.');
@@ -717,50 +720,44 @@ class StartPageState extends State<StartPage> {
           return HyleXGround(
               _user,
               Play.newSinglePlay(header, chaosPlayer, orderPlayer));
-        }));
+        },
+            settings: RouteSettings(name: PLAY_GROUND)));
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstOpponentMove]) async {
     await showShowLoading("Loading game ...");
     final play = Play.newMultiPlay(header);
-    Navigator.push(context,
+    Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
               _user,
               play,
               opponentMoveToApply: firstOpponentMove,
           );
-        }));
+        },
+          settings: RouteSettings(name: PLAY_GROUND),
+        ), (r) {
+          return r.settings.name != PLAY_GROUND|| r.isFirst;
+        }
+    );
   }
 
   Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? opponentMove) async {
     await showShowLoading("Loading game ...");
 
-    Navigator.push(context,
+    Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
           return HyleXGround(
             _user,
             play,
             opponentMoveToApply: opponentMove,
           );
-        }));
-    /*
-    final routeKey = play.header.playId;
-    var route = _playRoutes[routeKey] ?? MaterialPageRoute(builder: (context) {
-      return HyleXGround(
-          _user,
-          play,
-          opponentMoveToApply: opponentMove,
-      );
-    });
-    _playRoutes[routeKey] = route;
-
-    if (route.isCurrent == true) {
-      // TODO apply play to current route either with a callback or a state change listener / GloblKey
-    }
-    else {
-      Navigator.push(context, route);
-    }*/
+        },
+          settings: RouteSettings(name: PLAY_GROUND),
+        ), (r) {
+          return r.settings.name != PLAY_GROUND || r.isFirst;
+        }
+    );
 
   }
 
