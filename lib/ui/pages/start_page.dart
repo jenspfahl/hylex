@@ -54,9 +54,6 @@ class StartPageState extends State<StartPage> {
 
   MenuMode _menuMode = MenuMode.None;
 
-  Map<String, Route> _playRoutes = HashMap();
-
-
   User _user = User();
 
   late StreamSubscription<Uri> _uriLinkStreamSub;
@@ -266,13 +263,16 @@ class StartPageState extends State<StartPage> {
       showAlertDialog(errorMessage);
     }
     else {
-      showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
-          _continueMultiPlayerGame(context, play, message.initialMove);
+          _continueMultiPlayerGame(context, play, message.initialMove, () {
+            showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+          });
         }
         else {
-          _startMultiPlayerGame(context, header, message.initialMove);
+          _startMultiPlayerGame(context, header, message.initialMove, () {
+            showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+          });
         }
       });
     }
@@ -308,9 +308,15 @@ class StartPageState extends State<StartPage> {
       showAlertDialog(error);
     }
     else {
-      showAlertDialog(
-          "Your opponent '${header.opponentName}' gave up match ${header
-              .getReadablePlayId()}, you win!");
+      StorageService().loadPlayFromHeader(header).then((play) {
+        if (play != null) {
+          _continueMultiPlayerGame(context, play, null, () {
+            showAlertDialog(
+                "Your opponent '${header.opponentName}' gave up match ${header
+                    .getReadablePlayId()}, you win!");
+          });
+        }
+      });
     }
   }
 
@@ -713,7 +719,7 @@ class StartPageState extends State<StartPage> {
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, PlaySize playSize) async {
-    await showShowLoading("Loading game ...");
+    await showShowLoading("Initialising game ...");
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           final header = PlayHeader.singlePlay(playSize);
@@ -724,8 +730,14 @@ class StartPageState extends State<StartPage> {
             settings: RouteSettings(name: PLAY_GROUND)));
   }
 
-  Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header, [Move? firstOpponentMove]) async {
-    await showShowLoading("Loading game ...");
+  Future<void> _startMultiPlayerGame(
+      BuildContext context,
+      PlayHeader header,
+      [
+        Move? firstOpponentMove,
+        Function()? loadHandler,
+      ]) async {
+    await showShowLoading("Initialising game ...");
     final play = Play.newMultiPlay(header);
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -733,6 +745,7 @@ class StartPageState extends State<StartPage> {
               _user,
               play,
               opponentMoveToApply: firstOpponentMove,
+              loadHandler: loadHandler,
           );
         },
           settings: RouteSettings(name: PLAY_GROUND),
@@ -742,7 +755,12 @@ class StartPageState extends State<StartPage> {
     );
   }
 
-  Future<void> _continueMultiPlayerGame(BuildContext context, Play play, Move? opponentMove) async {
+  Future<void> _continueMultiPlayerGame(
+      BuildContext context,
+      Play play,
+      Move? opponentMove,
+      [Function()? loadHandler]
+      ) async {
     await showShowLoading("Loading game ...");
 
     Navigator.pushAndRemoveUntil(context,
@@ -751,6 +769,7 @@ class StartPageState extends State<StartPage> {
             _user,
             play,
             opponentMoveToApply: opponentMove,
+            loadHandler: loadHandler,
           );
         },
           settings: RouteSettings(name: PLAY_GROUND),

@@ -20,8 +20,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     animatedPageController = AnimationController(
-        duration: const Duration(seconds: 15),
-        lowerBound: 0,
+        duration: const Duration(seconds: 15 + 4),
+        lowerBound: -5,//waiting time to read the text
         upperBound: 15,
         animationBehavior: AnimationBehavior.preserve,
         vsync: this
@@ -82,7 +82,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-4);
               
               return Column(
                   children: [
@@ -115,7 +115,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-5);
 
               return Column(
                   children: [
@@ -149,7 +149,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-5);
               final chipBackgroundColor = getColorFromIdx(0).withOpacity(0.2);
 
               return Column(
@@ -172,7 +172,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                       first: _buildGameChip(
                         chipColor: getColorFromIdx(0),
                         backgroundColor: chipBackgroundColor,
-                        chipVisibleAt: [0,1,2],
+                        chipVisibleAt: [-5,-4,-3,-2,-1,0,1,2],
                         backgroundVisibleAt: [2,3,4,5],
                       ),
                       second: _buildGameChip(
@@ -190,7 +190,6 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                       fourth: _buildGameChip(
                         chipColor: getColorFromIdx(0),
                         backgroundColor: chipBackgroundColor,
-                        //chipVisibleFrom: 5,
                         chipVisibleAt: [5,6,7,8,9,10,11,12,13,14],
                         backgroundVisibleAt: [2,3,4,5],
                       ),
@@ -223,7 +222,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-3);
 
               return Column(
                   children: [
@@ -274,7 +273,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-3);
 
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -332,7 +331,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
 
-              _startAnimation();
+              _startAnimation(-3);
 
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -532,8 +531,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
     );
   }
 
-  void _startAnimation() {
-    animatedPageController.repeat();
+  void _startAnimation(int startAt) {
+    animatedPageController.repeat(min: startAt.toDouble());
   }
 
   Widget _buildCellRow({

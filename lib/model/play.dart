@@ -745,7 +745,7 @@ class Play {
     else {
       _currentChip = _stock.drawNext();
     }
-    return currentChip;
+    return _currentChip;
   }
 
 

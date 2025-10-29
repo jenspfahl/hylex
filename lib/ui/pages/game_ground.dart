@@ -32,8 +32,9 @@ class HyleXGround extends StatefulWidget {
   User user;
   Play play;
   Move? opponentMoveToApply;
+  Function()? loadHandler;
 
-  HyleXGround(this.user, this.play, {super.key, this.opponentMoveToApply});
+  HyleXGround(this.user, this.play, {super.key, this.opponentMoveToApply, this.loadHandler});
 
   @override
   State<HyleXGround> createState() => _HyleXGroundState();
@@ -94,7 +95,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (widget.opponentMoveToApply != null) {
       gameEngine.opponentMoveReceived(widget.opponentMoveToApply!);
     }
-    
+
+    if (widget.loadHandler != null) {
+      widget.loadHandler!();
+    }
   }
 
   _handleGameOver() {

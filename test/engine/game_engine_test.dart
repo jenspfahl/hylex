@@ -236,13 +236,6 @@ void main() {
       final localPlay = Play.newMultiPlay(PlayHeader.multiPlayInvitor(
           PlaySize.Size5x5, PlayMode.HyleX, PlayOpener.Invitee));
 
-      final inviteePlay = Play.newMultiPlay(PlayHeader.multiPlayInvitee(
-          new InviteMessage.fromHeaderAndUser(
-              localPlay.header, localUser),
-          null,
-          PlayState.InvitationAccepted_ReadyToMove
-      ));
-
       expect(localPlay.header.state, PlayState.RemoteOpponentInvited);
 
       final remoteAcceptMessage = AcceptInviteMessage(

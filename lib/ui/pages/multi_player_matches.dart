@@ -162,7 +162,14 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                GestureDetector(
+                    child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    setState(() {
+                      _hideGroup[group] = !(_hideGroup[group]??false);
+                    });
+                  },
+                ),
                 IconButton(icon: _hideGroup[group] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
                   onPressed: () {
                     setState(() {
