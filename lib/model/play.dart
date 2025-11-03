@@ -101,7 +101,15 @@ enum PlayState {
   OpponentResigned({Actor.Invitor, Actor.Invitee}, false, true, true, PlayStateGroup.FinishedAndWon), // final state
 
   // used if both players on a single play are human or any other final state like no invitation response etc..
-  Closed({Actor.Single}, false, false, true, PlayStateGroup.Other); // final state
+  Closed({Actor.Single}, false, false, true, PlayStateGroup.Other),
+
+  // Classic mode only: First game has been finished, now the roles can be swapped and the local player becomes Chaos to take the first move of the second game
+  FirstGameFinished_ReadyToSwap({Actor.Invitor, Actor.Invitee}, false, true, false, PlayStateGroup.TakeAction),
+
+  // Classic mode only: First game has been finished, now the roles can be swapped and the local player becomes Order who has to wait for the opponents first move of the second game
+  FirstGameFinished_WaitForOpponent({Actor.Invitor, Actor.Invitee}, true, true, false, PlayStateGroup.AwaitOpponentAction),
+
+  ;
 
   const PlayState(this.forActors, this.isShareable, this.hasGameBoard, this.isFinal, this.group);
 
@@ -138,6 +146,8 @@ enum PlayState {
       case PlayState.InvitationRejected: return "Invitation rejected";
       case PlayState.ReadyToMove: return "Your turn!";
       case PlayState.WaitForOpponent: return "Awaiting opponent's move";
+      case PlayState.FirstGameFinished_ReadyToSwap: return "First game finished: Your turn to initiate second game!";
+      case PlayState.FirstGameFinished_WaitForOpponent: return "First game finished: Awaiting opponent's first move for second game";
       case PlayState.Lost: return "Match lost";
       case PlayState.Won: return "Match won";
       case PlayState.Resigned: return "You resigned :(";
@@ -157,6 +167,8 @@ enum PlayState {
       case PlayState.InvitationRejected: return getColorFromIdx(8);
       case PlayState.ReadyToMove: return getColorFromIdx(9);
       case PlayState.WaitForOpponent: return getColorFromIdx(1);
+      case PlayState.FirstGameFinished_ReadyToSwap: return getColorFromIdx(9);
+      case PlayState.FirstGameFinished_WaitForOpponent: return getColorFromIdx(1);
       case PlayState.Lost: return Colors.redAccent;
       case PlayState.Won: return Colors.lightGreenAccent;
       case PlayState.Resigned: return Colors.redAccent;
@@ -176,8 +188,10 @@ enum PlayState {
     transitions[PlayState.RemoteOpponentAccepted_ReadyToMove] = [WaitForOpponent, Resigned];
     transitions[PlayState.InvitationAccepted_WaitForOpponent] = [ReadyToMove, OpponentResigned];
     transitions[PlayState.InvitationAccepted_ReadyToMove] = [InvitationAccepted_WaitForOpponent, Resigned];
-    transitions[PlayState.WaitForOpponent] = [ReadyToMove, OpponentResigned, Lost, Won, Closed];
-    transitions[PlayState.ReadyToMove] = [WaitForOpponent, Resigned, Lost, Won, Closed];
+    transitions[PlayState.WaitForOpponent] = [ReadyToMove, FirstGameFinished_ReadyToSwap, OpponentResigned, Lost, Won, Closed];
+    transitions[PlayState.ReadyToMove] = [WaitForOpponent, FirstGameFinished_WaitForOpponent, Resigned, Lost, Won, Closed];
+    transitions[PlayState.FirstGameFinished_WaitForOpponent] = [ReadyToMove, OpponentResigned];
+    transitions[PlayState.FirstGameFinished_ReadyToSwap] = [WaitForOpponent, Resigned];
 
     return transitions;
   }
@@ -514,13 +528,13 @@ class Play {
   Role getLooserRole() => getWinnerRole().opponentRole;
 
   // initialises the play state to get started
-  void _init({required bool multiPlay}) {
+  void _init({required bool multiPlay, Role? role}) {
 
     this.multiPlay = multiPlay;
     _journal.clear();
     _opponentCursor.clear();
     _selectionCursor.clear();
-    _currentRole = Role.Chaos;
+    _currentRole = role ?? Role.Chaos;
     header.init(multiPlay);
 
     _matrix = Matrix(Coordinate(dimension, dimension));
@@ -651,15 +665,27 @@ class Play {
 
   int getPointsPerChip() => header.playSize.chaosPointsPerChip;
 
+  bool shouldGameBeOver() => !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace());
+
+  void swapGameForClassicMode() {
+    _stats.classicModeFirstRoundOrderPoints = _stats.getPoints(Role.Order);
+    // swap roles and clear play board but remember order points
+    _init(multiPlay: true, role: header.getLocalRoleForMultiPlay()!.opponentRole);
+    //TODO swap player types
+    //chaosPlayer = orderPlayer;
+    // orderPlayer =
+    header.rolesSwapped = true;
+
+    header.state = header.getLocalRoleForMultiPlay() == Role.Chaos
+        ? PlayState.ReadyToMove // remote becomes Chaos
+        : PlayState.WaitForOpponent; // local becomes Chaos
+  }
+
+  bool isFirstGameOverForClassicMode() => header.playMode == PlayMode.Classic
+      && header.rolesSwapped == false
+      && shouldGameBeOver();
+
   void nextPlayer() {
-
-    if (header.playMode == PlayMode.Classic
-        && header.rolesSwapped == false
-        && !hasStaleMove
-        && (_stock.isEmpty() || _matrix.noFreeSpace())) {
-      // TODO swap roles and clear play board but remember order points
-    }
-
     switchRole();
     if (currentRole == Role.Chaos) {
       // transition from Order to Chaos
@@ -734,6 +760,7 @@ class Play {
   Cursor get opponentCursor => _opponentCursor;
 
   GameChip? get currentChip => _currentChip;
+  set currentChip(GameChip? chip) => _currentChip = chip;
 
   CommunicationContext get commContext => header.commContext;
 
@@ -758,7 +785,9 @@ class Play {
     header.currentRound--;
   }
 
-  bool get waitForOpponent => header.state == PlayState.WaitForOpponent || header.state == PlayState.InvitationAccepted_WaitForOpponent;
+  bool get waitForOpponent => header.state == PlayState.WaitForOpponent
+      || header.state == PlayState.InvitationAccepted_WaitForOpponent
+      || header.state == PlayState.FirstGameFinished_WaitForOpponent;
 
 
   set waitForOpponent(bool wait) {
@@ -766,12 +795,14 @@ class Play {
       if (header.state == PlayState.InvitationAccepted_ReadyToMove) {
         header.state = PlayState.InvitationAccepted_WaitForOpponent;
       }
-      else if (header.state != PlayState.InvitationAccepted_WaitForOpponent) {
+      else if (header.state != PlayState.InvitationAccepted_WaitForOpponent
+          && header.state != PlayState.FirstGameFinished_WaitForOpponent) {
         header.state = PlayState.WaitForOpponent;
       }
     } else {
       if (header.state != PlayState.InvitationAccepted_ReadyToMove
-        && header.state != PlayState.RemoteOpponentAccepted_ReadyToMove) {
+          && header.state != PlayState.RemoteOpponentAccepted_ReadyToMove
+          && header.state != PlayState.FirstGameFinished_ReadyToSwap) {
         header.state = PlayState.ReadyToMove;
       }
     }
@@ -779,12 +810,11 @@ class Play {
 
   bool isGameOver() {
     if (header.playMode == PlayMode.HyleX) {
-      return (!hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) ||
-          header.state.isFinal;
+      return shouldGameBeOver() || header.state.isFinal;
     }
     else if (header.playMode == PlayMode.Classic) {
-      return (header.rolesSwapped == true && !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace())) ||
-          header.state.isFinal;
+      return (header.rolesSwapped == true && shouldGameBeOver())
+          || header.state.isFinal;
     }
     throw Exception("Unknown play mode ${header.playMode} for isGameOver");
   }

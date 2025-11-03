@@ -52,10 +52,14 @@ stateDiagram-v2
     WaitForOpponent --> ReadyToMove: ->Move
     ReadyToMove --> Lost: Move->
     ReadyToMove --> Won: Move->
+    ReadyToMove --> FirstGameFinished_WaitForOpponent: Move->
     ReadyToMove --> Resigned: Resign->
     WaitForOpponent --> Lost: ->Move
     WaitForOpponent --> Won: ->Move
+    WaitForOpponent --> FirstGameFinished_ReadyToSwap: ->Move
     WaitForOpponent --> OpponentResigned: ->Resign    
+    FirstGameFinished_ReadyToSwap --> ReadyToMove
+    FirstGameFinished_WaitForOpponent --> ReadyToMove: ->Move
     Lost --> [*]
     Won --> [*]
     Resigned --> [*]
@@ -82,10 +86,14 @@ stateDiagram-v2
         WaitForOpponent --> ReadyToMove: ->Move
         ReadyToMove --> Lost: Move->
         ReadyToMove --> Won: Move->
+        ReadyToMove --> FirstGameFinished_WaitForOpponent: Move->
         ReadyToMove --> Resigned: Resign->
         WaitForOpponent --> Lost: ->Move
         WaitForOpponent --> Won: ->Move
+        WaitForOpponent --> FirstGameFinished_ReadyToSwap: ->Move
         WaitForOpponent --> OpponentResigned: ->Resign    
+        FirstGameFinished_ReadyToSwap --> ReadyToMove
+        FirstGameFinished_WaitForOpponent --> ReadyToMove: ->Move
         Lost --> [*]
         Won --> [*]
         Resigned --> [*]
@@ -108,10 +116,14 @@ stateDiagram-v2
         WaitForOpponent --> ReadyToMove: ->Move
         ReadyToMove --> Lost: Move->
         ReadyToMove --> Won: Move->
+        ReadyToMove --> FirstGameFinished_WaitForOpponent: Move->
         ReadyToMove --> Resigned: Resign->
         WaitForOpponent --> Lost: ->Move
         WaitForOpponent --> Won: ->Move
+        WaitForOpponent --> FirstGameFinished_ReadyToSwap: ->Move
         WaitForOpponent --> OpponentResigned: ->Resign    
+        FirstGameFinished_ReadyToSwap --> ReadyToMove
+        FirstGameFinished_WaitForOpponent --> ReadyToMove: ->Move
         Lost --> [*]
         Won --> [*]
         Resigned --> [*]

@@ -6,6 +6,7 @@ import 'common.dart';
 
 class Stats {
   final _points = HashMap<Role, int>();
+  int? classicModeFirstRoundOrderPoints;
  
   Stats();
 
@@ -16,10 +17,16 @@ class Stats {
       final role = Role.values.firstWhere((r) => r.name == key);
       return MapEntry(role, value);
     }));
+
+    final _classicModeFirstRoundOrderPoints = map['classicModeFirstRoundOrderPoints'];
+    if (_classicModeFirstRoundOrderPoints != null) {
+      classicModeFirstRoundOrderPoints = _classicModeFirstRoundOrderPoints;
+    }
   }
 
   Map<String, dynamic> toJson() => {
     'points' : _points.map((key, value) => MapEntry(key.name, value)),
+    if (classicModeFirstRoundOrderPoints != null) 'classicModeFirstRoundOrderPoints' : classicModeFirstRoundOrderPoints!,
   };
 
   

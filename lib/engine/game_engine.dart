@@ -47,8 +47,6 @@ abstract class GameEngine extends ChangeNotifier {
       throw Exception("Cannot switch to next player, current player didn't apply a move.");
     }
 
-    play.nextPlayer();
-
     _doNextPlayerMove();
 
     await savePlayState();
@@ -144,8 +142,6 @@ abstract class GameEngine extends ChangeNotifier {
     play.opponentCursor.markTraceForDoneMove();
     play.commitMove();
 
-    play.waitForOpponent = false;
-
     if (play.isGameOver()) {
       _finish();
     }
@@ -184,7 +180,10 @@ class SinglePlayerGameEngine extends GameEngine {
   }
 
   void _doNextPlayerMove() {
+    play.nextPlayer();
+
     if (!play.isGameOver() && play.currentPlayer == PlayerType.LocalAi) {
+      play.waitForOpponent = true;
       _think();
     }
     else {
@@ -208,7 +207,6 @@ class SinglePlayerGameEngine extends GameEngine {
   double? get progressRatio => aiLoad?.ratio;
 
   void _think() {
-    play.waitForOpponent = true;
     aiLoad = null;
     savePlayState();
 
@@ -253,10 +251,29 @@ class MultiPlayerGameEngine extends GameEngine {
 
   void _doNextPlayerMove() {
 
-    if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
-      play.waitForOpponent = true;
+    if (play.isFirstGameOverForClassicMode()) {
+
+      play.stats.classicModeFirstRoundOrderPoints = play.stats.getPoints(Role.Order);
+      play.header.state = play.header.getLocalRoleForMultiPlay() == Role.Chaos
+          ? PlayState.FirstGameFinished_WaitForOpponent // remote becomes Chaos
+          : PlayState.FirstGameFinished_ReadyToSwap; // local becomes Chaos
+
+      play.switchRole(); // to indicate that the other (remote Order) has to react
+      play.currentChip = null;
+      debugPrint("Switch to ${play.header.state}");
       shareGameMove(false);
     }
+    else {
+      play.nextPlayer();
+      if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
+        play.waitForOpponent = true;
+        shareGameMove(false);
+      }
+      else {
+        play.waitForOpponent = false;
+      }
+    }
+
   }
 
   void shareGameMove(bool showAllOptions) {

@@ -8,7 +8,9 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
-      .then((_) {
+      .then((_) async {
+    //await SystemChrome.setEnabledSystemUIMode(
+    //    SystemUiMode.leanBack);
     runApp(HylexApp());
   });
 }

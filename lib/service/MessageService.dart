@@ -66,6 +66,7 @@ class MessageService {
       }
       case PlayState.Lost:
       case PlayState.Won:
+      case PlayState.FirstGameFinished_WaitForOpponent:
       case PlayState.WaitForOpponent: {
         if (playHeader.actor == Actor.Invitee && playHeader.currentRound == 1) {
           StorageService().loadPlayFromHeader(playHeader).then((play) {
@@ -88,6 +89,7 @@ class MessageService {
       }
       case PlayState.InvitationAccepted_ReadyToMove:
       case PlayState.ReadyToMove:
+      case PlayState.FirstGameFinished_ReadyToSwap:
       case PlayState.InvitationPending:
       case PlayState.RemoteOpponentAccepted_ReadyToMove:
       case PlayState.OpponentResigned:
@@ -95,6 +97,7 @@ class MessageService {
       case PlayState.Initialised: {
         debugPrint("nothing to send for ${playHeader.state}, take action instead!");
       }
+
     }
   }
   

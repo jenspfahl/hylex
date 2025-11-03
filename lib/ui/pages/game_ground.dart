@@ -216,6 +216,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                                         .toList();
 
                                     elements.add(const Text("------ Game started ------"));
+                                    if (gameEngine.play.isFirstGameOverForClassicMode()) {
+                                      elements.insert(0, const Text("------ Role swap ------"));
+                                    }
                                     if (gameEngine.play.isGameOver()) {
                                       elements.insert(0, const Text("------ Game over ------"));
                                     }
@@ -438,6 +441,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     else if (gameEngine.play.currentPlayer == PlayerType.LocalAi) {
       return _buildAiProgressText();
     }
+    else if (gameEngine.play.header.state == PlayState.FirstGameFinished_WaitForOpponent) {
+      return Text( "First game finished, roles will be swapped, so remote opponent becomes Chaos!");
+    }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
       return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move...");
     }
@@ -589,6 +595,17 @@ class _HyleXGroundState extends State<HyleXGround> {
       }
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalUser) {
+      if (gameEngine.play.header.state == PlayState.FirstGameFinished_ReadyToSwap) {
+        return buildFilledButton(
+            context,
+            Icons.swap_horiz_outlined,
+            'Swap roles and continue',
+                () {
+              gameEngine.play.swapGameForClassicMode();
+              gameEngine.savePlayState();
+            },
+        );
+      }
       final isDirty = gameEngine.play.hasStaleMove;
       return buildFilledButton(
           context,
@@ -661,13 +678,16 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     var appendix = "";
 
-    if (gameEngine.play.currentRole == Role.Order) {
+    if (gameEngine.play.header.state == PlayState.FirstGameFinished_ReadyToSwap) {
+      appendix = "➤ First game finished, time to swap role!";
+    }
+    else if (gameEngine.play.currentRole == Role.Order) {
       appendix = "➤ Now it's on Order to move a chip or skip!";
     }
-    else {
+    else if (gameEngine.play.currentRole == Role.Chaos) {
       appendix = "➤ Now it's on Chaos to place next chip {chip} !";
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
