@@ -130,6 +130,7 @@ abstract class GameEngine extends ChangeNotifier {
   Future<void> opponentMoveReceived(Move opponentMove) async {
     debugPrint("opponent move received");
 
+    
     final result = play.validateMove(opponentMove);
     if (result != null) {
       debugPrint("opponent move $opponentMove is invalid: $result");
@@ -142,12 +143,8 @@ abstract class GameEngine extends ChangeNotifier {
     play.opponentCursor.markTraceForDoneMove();
     play.commitMove();
 
-    if (play.isGameOver()) {
-      _finish();
-    }
-    else {
-      await nextPlayer();
-    }
+    await nextPlayer();
+    
   }
   
   
@@ -252,16 +249,13 @@ class MultiPlayerGameEngine extends GameEngine {
   void _doNextPlayerMove() {
 
     if (play.isFirstGameOverForClassicMode()) {
-
-      play.stats.classicModeFirstRoundOrderPoints = play.stats.getPoints(Role.Order);
-      play.header.state = play.header.getLocalRoleForMultiPlay() == Role.Chaos
-          ? PlayState.FirstGameFinished_WaitForOpponent // remote becomes Chaos
-          : PlayState.FirstGameFinished_ReadyToSwap; // local becomes Chaos
-
-      play.switchRole(); // to indicate that the other (remote Order) has to react
-      play.currentChip = null;
-      debugPrint("Switch to ${play.header.state}");
-      shareGameMove(false);
+      if (play.header.getLocalRoleForMultiPlay() == Role.Order) {
+        _readyForRoleSwapForClassicMode();
+      }
+      else {
+        _waitForRoleSwapForClassicMode();
+        shareGameMove(false);
+      }
     }
     else {
       play.nextPlayer();
@@ -274,6 +268,18 @@ class MultiPlayerGameEngine extends GameEngine {
       }
     }
 
+  }
+
+  void _readyForRoleSwapForClassicMode() {
+    play.header.state = PlayState.FirstGameFinished_ReadyToSwap;
+    debugPrint("ready: Switch to ${play.header.state}");
+  }
+
+  void _waitForRoleSwapForClassicMode() {
+    play.header.state = PlayState.FirstGameFinished_WaitForOpponent;
+    play.switchRole(); // to indicate that the other (remote Order) has to react
+    play.currentChip = null;
+    debugPrint("wait: Switch to ${play.header.state}");
   }
 
   void shareGameMove(bool showAllOptions) {
@@ -298,6 +304,13 @@ class MultiPlayerGameEngine extends GameEngine {
   @override
   Future<void> opponentMoveReceived(Move move) async {
     if (play.currentPlayer == PlayerType.RemoteUser) {
+
+      if (play.isFirstGameOverForClassicMode()
+        && play.header.state == PlayState.FirstGameFinished_WaitForOpponent) {
+
+        play.swapGameForClassicMode();
+        play.nextPlayer();
+      }
       await super.opponentMoveReceived(move);
     }
   }

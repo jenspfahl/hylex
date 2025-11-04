@@ -9,6 +9,7 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
+import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -208,17 +209,16 @@ class _HyleXGroundState extends State<HyleXGround> {
                                       }
                                     });
 
+                                    final roundsPerGame = gameEngine.play.header.playSize.dimension * gameEngine.play.header.playSize.dimension;
+                                    final journalLength = gameEngine.play.journal.length;
                                     final elements = gameEngine.play.journal
                                         .indexed
-                                        .map((e) => _buildJournalEvent(e))
+                                        .map((e) => _buildJournalEvent(e, gameEngine.play.header.playMode == PlayMode.Classic, roundsPerGame))
                                         .toList()
                                         .reversed
                                         .toList();
 
                                     elements.add(const Text("------ Game started ------"));
-                                    if (gameEngine.play.isFirstGameOverForClassicMode()) {
-                                      elements.insert(0, const Text("------ Role swap ------"));
-                                    }
                                     if (gameEngine.play.isGameOver()) {
                                       elements.insert(0, const Text("------ Game over ------"));
                                     }
@@ -257,11 +257,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                     ),
                     Visibility(
                       visible: gameEngine.play.isMultiplayerPlay && gameEngine.play.waitForOpponent,
-                      child: IconButton(
-                        icon: const Icon(Icons.qr_code_scanner),
-                        onPressed: () {
-                          globalStartPageKey.currentState?.scanNextMove();
-                        },
+                      child: GestureDetector(
+                        onLongPress: () => _showMultiPlayTestDialog(gameEngine.play.header),
+                        child: IconButton(
+                          icon: const Icon(Icons.qr_code_scanner),
+                          onPressed: () {
+                            globalStartPageKey.currentState?.scanNextMove();
+                          },
+                        ),
                       ),
                     ),
                     Visibility(
@@ -369,18 +372,46 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   }
 
-  Widget _buildJournalEvent((int, Move) e) {
+  Widget _buildJournalEvent((int, Move) e, bool isClassic, int maxRound) {
+    var swapThreshold = (maxRound * 2) - 1;
+    var isRoleSwap = isClassic && (e.$1 == swapThreshold);
+    var isSecondGame = isClassic && (e.$1 >= swapThreshold);
+
+    var idx = (e.$1+1)/2;
+    var round = isSecondGame ? idx.floor() : idx.ceil();
+    if (isSecondGame) {
+      round = (round % maxRound) + 1;
+    }
+
     final move = e.$2;
-    final round = ((e.$1+1)/2).ceil();
     Widget row = _buildMoveLine(move, prefix: "Round $round: ");
 
     return Column(
       children: [
         if (move.toRole() == Role.Order) Text("------------------------------------"),
         row,
+        if (isRoleSwap) Text("------ Role swap ------"),
       ]
     );
   }
+
+
+  _showMultiPlayTestDialog(PlayHeader playHeader) {
+    if (isDebug) {
+      SmartDialog.show(
+          builder: (_) {
+            return RemoteTestWidget(
+              rootContext: context,
+              playHeader: playHeader,
+              messageHandler: (message) {
+                globalStartPageKey.currentState?.handleReceivedMessage(
+                    message.toUri());
+              },
+            );
+          });
+    }
+  }
+
 
 
   Widget _buildMoveLine(Move move, {String? prefix, MainAxisAlignment? mainAxisAlignment}) {

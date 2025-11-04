@@ -384,11 +384,11 @@ class PlayHeader {
 
   @override
   String toString() {
-    return 'PlayHeader{playId: $playId, state: $_state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener, actor: $actor}';
+    return 'PlayHeader{playId: $playId, state: $_state, commContext: $commContext, playSize: $playSize, currentRound: $currentRound, name: $opponentName, playMode: $playMode, playOpener: $playOpener, actor: $actor, roleSwapped: $rolesSwapped}';
   }
 
-  void init(bool multiPlay) {
-    currentRound = 1;
+  void init(bool multiPlay, int round) {
+    currentRound = round;
     if (!multiPlay) {
       _state = PlayState.Initialised;
     }
@@ -428,8 +428,8 @@ class Play {
 
   late Matrix _matrix;
   late Stock _stock;
-  late final PlayerType _chaosPlayer;
-  late final PlayerType _orderPlayer;
+  late PlayerType _chaosPlayer;
+  late PlayerType _orderPlayer;
 
   Ai? chaosAi;
   Ai? orderAi;
@@ -528,14 +528,31 @@ class Play {
   Role getLooserRole() => getWinnerRole().opponentRole;
 
   // initialises the play state to get started
-  void _init({required bool multiPlay, Role? role}) {
+  void _init({
+    required bool multiPlay,
+    Role? role,
+    PlayerType? chaosPlayer,
+    PlayerType? orderPlayer,
+    bool clearJournal = true,
+    int? round,
+  }) {
 
     this.multiPlay = multiPlay;
-    _journal.clear();
+    if (clearJournal) {
+      _journal.clear();
+    }
     _opponentCursor.clear();
     _selectionCursor.clear();
     _currentRole = role ?? Role.Chaos;
-    header.init(multiPlay);
+
+    if (chaosPlayer != null) {
+      _chaosPlayer = chaosPlayer;
+    }
+    if (orderPlayer != null) {
+      _orderPlayer = orderPlayer;
+    }
+
+    header.init(multiPlay, round ?? 1);
 
     _matrix = Matrix(Coordinate(dimension, dimension));
 
@@ -544,6 +561,7 @@ class Play {
       final chip = GameChip(i);
       chips[chip] = dimension; // the stock per chip is the dimension value
     }
+    //TODO clear stats_
     _stock = Stock(chips);
     nextChip();
 
@@ -670,15 +688,20 @@ class Play {
   void swapGameForClassicMode() {
     _stats.classicModeFirstRoundOrderPoints = _stats.getPoints(Role.Order);
     // swap roles and clear play board but remember order points
-    _init(multiPlay: true, role: header.getLocalRoleForMultiPlay()!.opponentRole);
-    //TODO swap player types
-    //chaosPlayer = orderPlayer;
-    // orderPlayer =
+    _init(
+      multiPlay: true,
+      role: header.getLocalRoleForMultiPlay()!.opponentRole,
+      chaosPlayer: orderPlayer,
+      orderPlayer: chaosPlayer,
+      clearJournal: false,
+      round: header.getLocalRoleForMultiPlay() == Role.Chaos ? 0 : 1 //TODO is else correct?
+    );
+
+    header.playOpener = header.playOpener == PlayOpener.Invitor ? PlayOpener.Invitee : PlayOpener.Invitor;
     header.rolesSwapped = true;
 
-    header.state = header.getLocalRoleForMultiPlay() == Role.Chaos
-        ? PlayState.ReadyToMove // remote becomes Chaos
-        : PlayState.WaitForOpponent; // local becomes Chaos
+    debugPrint("swapped: ${header.state}");
+
   }
 
   bool isFirstGameOverForClassicMode() => header.playMode == PlayMode.Classic
