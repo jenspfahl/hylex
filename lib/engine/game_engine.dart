@@ -57,7 +57,9 @@ abstract class GameEngine extends ChangeNotifier {
     _cleanUp();
   }
 
-  bool isBoardLocked() => play.waitForOpponent || play.isGameOver();
+  bool isBoardLocked() => play.waitForOpponent
+      || play.header.state == PlayState.FirstGameFinished_ReadyToSwap
+      || play.isGameOver();
 
   undoLastMove() async {
     final lastMove = play.undoLastMove();
@@ -173,13 +175,19 @@ class SinglePlayerGameEngine extends GameEngine {
       ) : super(play, user, contextProvider, handleGameOver);
 
   void startGame() {
-    _doNextPlayerMove();
+    _thinkOrWait();
   }
 
   void _doNextPlayerMove() {
     play.nextPlayer();
+    _thinkOrWait();
+  }
 
-    if (!play.isGameOver() && play.currentPlayer == PlayerType.LocalAi) {
+  void _thinkOrWait() {
+    if (play.isGameOver()) {
+      return;
+    }
+    if (play.currentPlayer == PlayerType.LocalAi) {
       play.waitForOpponent = true;
       _think();
     }
@@ -187,7 +195,6 @@ class SinglePlayerGameEngine extends GameEngine {
       play.waitForOpponent = false;
       savePlayState();
     }
-    // else the user has to do the move
   }
   
   _cleanUp() {
@@ -272,7 +279,9 @@ class MultiPlayerGameEngine extends GameEngine {
 
   void _readyForRoleSwapForClassicMode() {
     play.header.state = PlayState.FirstGameFinished_ReadyToSwap;
-    debugPrint("ready: Switch to ${play.header.state}");
+    play.switchRole(); // to indicate that the other (remote Order) has to react
+    play.currentChip = null;
+    debugPrint("ready: Switch to ${play.header.state} and role ${play.currentRole}");
   }
 
   void _waitForRoleSwapForClassicMode() {

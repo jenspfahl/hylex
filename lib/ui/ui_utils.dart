@@ -196,8 +196,14 @@ Widget buildRoleIndicator(
       : points;
 
   if (gameEngine?.play.header.playMode == PlayMode.Classic && role == Role.Chaos) {
-    // no points for Chaos if Classic mode
-    _points = null;
+    if (gameEngine?.play.header.rolesSwapped == true) {
+      // Order points of first game  for Chaos if Classic mode in second Game
+      _points = gameEngine?.play.stats.classicModeFirstRoundOrderPoints;
+    }
+    else {
+      // no points for Chaos if Classic mode in first Game
+      _points = null;
+    }
   }
 
   return Chip(

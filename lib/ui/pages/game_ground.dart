@@ -210,7 +210,6 @@ class _HyleXGroundState extends State<HyleXGround> {
                                     });
 
                                     final roundsPerGame = gameEngine.play.header.playSize.dimension * gameEngine.play.header.playSize.dimension;
-                                    final journalLength = gameEngine.play.journal.length;
                                     final elements = gameEngine.play.journal
                                         .indexed
                                         .map((e) => _buildJournalEvent(e, gameEngine.play.header.playMode == PlayMode.Classic, roundsPerGame))
@@ -218,14 +217,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                                         .reversed
                                         .toList();
 
-                                    elements.add(const Text("------ Game started ------"));
+                                    elements.add(const Text("--------- Game started ---------"));
                                     if (gameEngine.play.isGameOver()) {
-                                      elements.insert(0, const Text("------ Game over ------"));
+                                      elements.insert(0, const Text("--------- Game over ---------"));
                                     }
                                     return Container(
-                                      height: 250,
+                                      height: MediaQuery.sizeOf(context).height / 2,
                                       child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(16, 32, 8, 0),
+                                        padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
                                         child: SingleChildScrollView(
                                           child: Center(
                                             child: Column(children: elements),
@@ -390,7 +389,9 @@ class _HyleXGroundState extends State<HyleXGround> {
       children: [
         if (move.toRole() == Role.Order) Text("------------------------------------"),
         row,
-        if (isRoleSwap) Text("------ Role swap ------"),
+        if (isRoleSwap) Text(""),
+        if (isRoleSwap) Text("--------- Roles swapped ---------"),
+        if (isRoleSwap) Text(""),
       ]
     );
   }
@@ -773,11 +774,6 @@ class _HyleXGroundState extends State<HyleXGround> {
         : isSelected
         ? DIALOG_BG
         : null;
-
-    final iconData = player == PlayerType.LocalAi ? MdiIcons.brain : player == PlayerType.RemoteUser ? Icons.transcribe : MdiIcons.account;
-    final icon = Transform.flip(
-        flipX: player == PlayerType.RemoteUser,
-        child: Icon(iconData, color: color, size: 16));
 
     var tooltipKey = role == Role.Chaos
         ? _chaosChipTooltip

@@ -43,4 +43,8 @@ class Stats {
     return Role.Chaos;
   }
 
+  void clear() {
+    _points.clear();
+  }
+
 }

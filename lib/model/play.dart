@@ -191,7 +191,7 @@ enum PlayState {
     transitions[PlayState.WaitForOpponent] = [ReadyToMove, FirstGameFinished_ReadyToSwap, OpponentResigned, Lost, Won, Closed];
     transitions[PlayState.ReadyToMove] = [WaitForOpponent, FirstGameFinished_WaitForOpponent, Resigned, Lost, Won, Closed];
     transitions[PlayState.FirstGameFinished_WaitForOpponent] = [ReadyToMove, OpponentResigned];
-    transitions[PlayState.FirstGameFinished_ReadyToSwap] = [WaitForOpponent, Resigned];
+    transitions[PlayState.FirstGameFinished_ReadyToSwap] = [ReadyToMove, Resigned];
 
     return transitions;
   }
@@ -555,13 +555,13 @@ class Play {
     header.init(multiPlay, round ?? 1);
 
     _matrix = Matrix(Coordinate(dimension, dimension));
+    _stats.clear();
 
     var chips = HashMap<GameChip, int>();
     for (int i = 0; i < dimension; i++) {
       final chip = GameChip(i);
       chips[chip] = dimension; // the stock per chip is the dimension value
     }
-    //TODO clear stats_
     _stock = Stock(chips);
     nextChip();
 
@@ -597,6 +597,7 @@ class Play {
   Role get opponentRole => currentRole.opponentRole;
 
   switchRole() {
+    debugPrint("Switch role from $_currentRole");
     _currentRole = opponentRole;
   }
 
@@ -697,8 +698,10 @@ class Play {
       round: header.getLocalRoleForMultiPlay() == Role.Chaos ? 0 : 1 //TODO is else correct?
     );
 
+
     header.playOpener = header.playOpener == PlayOpener.Invitor ? PlayOpener.Invitee : PlayOpener.Invitor;
     header.rolesSwapped = true;
+    header.state = PlayState.ReadyToMove;
 
     debugPrint("swapped: ${header.state}");
 
