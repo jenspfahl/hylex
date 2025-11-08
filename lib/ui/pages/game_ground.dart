@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/app.dart';
+import 'package:hyle_x/model/matrix.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
@@ -225,7 +226,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                     return Container(
                                       height: MediaQuery.sizeOf(context).height / 2,
                                       child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                                         child: SingleChildScrollView(
                                           child: Center(
                                             child: Column(children: elements),
@@ -285,13 +286,17 @@ class _HyleXGroundState extends State<HyleXGround> {
                           if (item == 0) {
                             _showGameDetails(gameEngine.play);
                           }
-                          else {
-                            showAlertDialog("Not yet implemented ");
+                          else if (gameEngine.play.classicModeFirstMatrix != null) {
+                            _showFirstGameOfClassicMode(
+                                gameEngine.play.classicModeFirstMatrix!,
+                                gameEngine.play.header.getLocalRoleForMultiPlay()!.opponentRole,
+                                gameEngine.play.stats.classicModeFirstRoundOrderPoints!);
                           }
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem<int>(value: 0, child: Text('Match Info')),
-                          if (gameEngine.play.header.rolesSwapped == true)
+                          if (gameEngine.play.header.rolesSwapped == true 
+                              && gameEngine.play.classicModeFirstMatrix != null)
                             PopupMenuItem<int>(value: 1, child: Text('Show first game')),
                         ],
                       ),
@@ -357,18 +362,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             ),
                             AspectRatio(
                               aspectRatio: 1,
-                              child: Container(
-                                margin: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.black, width: 2.0)),
-                                child: GridView.builder(
-                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: gameEngine.play.dimension,
-                                    ),
-                                    itemBuilder: _buildBoardGrid,
-                                    itemCount: gameEngine.play.dimension * gameEngine.play.dimension,
-                                    physics: const NeverScrollableScrollPhysics()),
-                              ),
+                              child: _buildChipGrid(_buildBoardGrid),
                             ),
       
                             Padding(
@@ -386,6 +380,21 @@ class _HyleXGroundState extends State<HyleXGround> {
                 )),
     );
 
+  }
+
+  Widget _buildChipGrid(NullableIndexedWidgetBuilder builder) {
+    return Container(
+      margin: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.black, width: 2.0)),
+      child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: gameEngine.play.dimension,
+          ),
+          itemBuilder: builder,
+          itemCount: gameEngine.play.dimension * gameEngine.play.dimension,
+          physics: const NeverScrollableScrollPhysics()),
+    );
   }
 
   String _getGameTitle() {
@@ -881,6 +890,33 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
+
+  Widget _buildReadOnlyBoardGrid(BuildContext context, int index) {
+    int x, y = 0;
+    x = (index % gameEngine.play.matrix.dimension.x);
+    y = (index / gameEngine.play.matrix.dimension.y).floor();
+    final where = Coordinate(x, y);
+    final chip = gameEngine.play.classicModeFirstMatrix!.getChip(where);
+    final points = gameEngine.play.classicModeFirstMatrix!.getPoints(where);
+    return GestureDetector(
+      child: GridTile(
+        child: Container(
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.black.withAlpha(80), width: 0.5)),
+          child: Center(
+            child: buildGameChip(
+              points > 0 ? points.toString() : "",
+              chipColor: chip != null ? _getChipColor(chip, where): null,
+              dimension: gameEngine.play.dimension,
+              showCoordinates: PreferenceService().showCoordinates,
+              where: where,
+            )
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildGridItem(Coordinate where) {
 
     final spot = gameEngine.play.matrix.getSpot(where);
@@ -1248,6 +1284,45 @@ class _HyleXGroundState extends State<HyleXGround> {
         Text(value,
             style: const TextStyle(color: Colors.white, fontSize: 15)),
       ],
+    );
+  }
+
+  void _showFirstGameOfClassicMode(Matrix matrix, Role localRole, int orderPoints) {
+    showModalBottomSheet(
+      showDragHandle: true,
+      context: context,
+      isScrollControlled: true,
+
+      builder: (BuildContext context) {
+
+        return StatefulBuilder(
+          builder: (BuildContext context, setSheetState) {
+
+            final chaosPlayerType = localRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser;
+            final orderPlayerType = localRole == Role.Chaos ? PlayerType.RemoteUser : PlayerType.LocalUser;
+            return Container(
+              height: MediaQuery.sizeOf(context).height / 1.5,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: Column(children: [
+                      Text("Final state of the first game"),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        buildRoleIndicator(Role.Chaos, playerType: chaosPlayerType, isSelected: false, backgroundColor: Colors.white),
+                        buildRoleIndicator(Role.Order, playerType: orderPlayerType, isSelected: false, backgroundColor: Colors.white, points: orderPoints),
+                      ],),
+                      AspectRatio(aspectRatio: 1, child: _buildChipGrid(_buildReadOnlyBoardGrid))
+                    ]),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+
+
+      },
     );
   }
 

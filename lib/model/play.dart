@@ -427,7 +427,7 @@ class Play {
   Cursor _opponentCursor = Cursor();
 
   late Matrix _matrix;
-  late Matrix? _classicModeFirstMatrix;
+  Matrix? _classicModeFirstMatrix;
   late Stock _stock;
   late PlayerType _chaosPlayer;
   late PlayerType _orderPlayer;
@@ -794,6 +794,7 @@ class Play {
   Stock get stock => _stock;
   int get dimension => header.dimension;
   Matrix get matrix => _matrix;
+  Matrix? get classicModeFirstMatrix => _classicModeFirstMatrix;
   Cursor get selectionCursor => _selectionCursor;
   Cursor get opponentCursor => _opponentCursor;
 
