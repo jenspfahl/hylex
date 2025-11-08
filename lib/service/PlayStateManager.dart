@@ -104,6 +104,7 @@ class PlayStateManager {
       header.state = PlayState.OpponentResigned;
       final play = await StorageService().loadPlayFromHeader(header);
       if (play != null) {
+        play.finishGame();
         var role = header.getLocalRoleForMultiPlay()!;
         user.achievements.incWonGame(role, header.dimension);
         user.achievements.registerPointsForScores(

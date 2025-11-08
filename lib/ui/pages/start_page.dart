@@ -696,10 +696,10 @@ class StartPageState extends State<StartPage> {
       'What kind of match do you want to play? ',
       width: 300,
       height: 450,
-      firstString: "HYLEX-STYLE",
+      firstString: PlayMode.HyleX.label,
       firstDescriptionString: "Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.",
       firstHandler: () => handlePlayerMode(PlayMode.HyleX),
-      secondString: "CLASSIC-STYLE",
+      secondString: PlayMode.Classic.label,
       secondDescriptionString: "Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.",
       secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );

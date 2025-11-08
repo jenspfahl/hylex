@@ -11,6 +11,7 @@ import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
+import 'package:hyle_x/utils/dates.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
@@ -143,15 +144,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                 appBar: AppBar(
                   //automaticallyImplyLeading: false,
                   leadingWidth: 25,
-                  title: Text(
-                    gameEngine.play.isMultiplayerPlay
-                        ? gameEngine.play.header.getTitle()
-                        : gameEngine.play.isFullAutomaticPlay
-                          ? "Automatic Play"
-                          : gameEngine.play.isBothSidesSinglePlay
-                            ? "Alternate Single Play"
-                            : "Single Play against AI",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                  title: GestureDetector(
+                    onTap: () {
+                      showAlertDialog(_getGameTitle(), icon: null);
+                    },
+                    child: Text(
+                      _getGameTitle(),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                  ),
                   actions: [
                     Visibility(
                       visible: _isUndoAllowed(),
@@ -209,17 +209,18 @@ class _HyleXGroundState extends State<HyleXGround> {
                                       }
                                     });
 
-                                    final roundsPerGame = gameEngine.play.header.playSize.dimension * gameEngine.play.header.playSize.dimension;
                                     final elements = gameEngine.play.journal
                                         .indexed
-                                        .map((e) => _buildJournalEvent(e, gameEngine.play.header.playMode == PlayMode.Classic, roundsPerGame))
+                                        .map((e) => _buildJournalEvent(e))
                                         .toList()
                                         .reversed
                                         .toList();
 
+                                    elements.add(const Text(""));
                                     elements.add(const Text("--------- Game started ---------"));
                                     if (gameEngine.play.isGameOver()) {
                                       elements.insert(0, const Text("--------- Game over ---------"));
+                                      elements.insert(1, const Text(""));
                                     }
                                     return Container(
                                       height: MediaQuery.sizeOf(context).height / 2,
@@ -278,6 +279,22 @@ class _HyleXGroundState extends State<HyleXGround> {
                         },
                       ),
                     ),
+                    if (gameEngine.play.isMultiplayerPlay)
+                      PopupMenuButton<int>(
+                        onSelected: (item) {
+                          if (item == 0) {
+                            _showGameDetails(gameEngine.play);
+                          }
+                          else {
+                            showAlertDialog("Not yet implemented ");
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem<int>(value: 0, child: Text('Match Info')),
+                          if (gameEngine.play.header.rolesSwapped == true)
+                            PopupMenuItem<int>(value: 1, child: Text('Show first game')),
+                        ],
+                      ),
                   ],
                 ),
                 body: SingleChildScrollView(
@@ -371,7 +388,20 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   }
 
-  Widget _buildJournalEvent((int, Move) e, bool isClassic, int maxRound) {
+  String _getGameTitle() {
+    return gameEngine.play.isMultiplayerPlay
+                        ? gameEngine.play.header.getTitle()
+                        : gameEngine.play.isFullAutomaticPlay
+                          ? "Automatic Play"
+                          : gameEngine.play.isBothSidesSinglePlay
+                            ? "Alternate Single Play"
+                            : "Single Play against AI";
+  }
+
+  Widget _buildJournalEvent((int, Move) e) {
+    final maxRound = gameEngine.play.header.playSize.dimension * gameEngine.play.header.playSize.dimension;
+    final isClassic = gameEngine.play.header.playMode == PlayMode.Classic;
+
     var swapThreshold = (maxRound * 2) - 1;
     var isRoleSwap = isClassic && (e.$1 == swapThreshold);
     var isSecondGame = isClassic && (e.$1 >= swapThreshold);
@@ -383,7 +413,16 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
     final move = e.$2;
-    Widget row = _buildMoveLine(move, prefix: "Round $round: ");
+    final role = move.toRole();
+    final localPlayer = gameEngine.play.getPlayerTypeOf(role);
+    final opponentPlayer = gameEngine.play.getPlayerTypeOf(role.opponentRole);
+
+    Widget row = _buildMoveLine(move, prefix: "Round $round: ",
+        playerType: !gameEngine.play.isBothSidesSinglePlay
+            ? (isClassic
+              ? (isSecondGame ? localPlayer : opponentPlayer)
+              : localPlayer)
+            : null);
 
     return Column(
       children: [
@@ -415,8 +454,8 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
 
-  Widget _buildMoveLine(Move move, {String? prefix, MainAxisAlignment? mainAxisAlignment}) {
-    var eventLineString = move.toReadableStringWithChipPlaceholder();
+  Widget _buildMoveLine(Move move, {String? prefix, MainAxisAlignment? mainAxisAlignment, PlayerType? playerType}) {
+    var eventLineString = move.toReadableStringWithChipPlaceholder(playerType);
     return _replaceWithChipIcon(prefix, eventLineString, mainAxisAlignment, move.chip);
   }
 
@@ -526,12 +565,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   String _buildLooserText() {
     final looserRole = gameEngine.play.getLooserRole();
     final looserPlayer = gameEngine.play.getLooserPlayer();
-    var looserPlayerName = looserPlayer == PlayerType.LocalUser
-        ? "You"
-        : looserPlayer == PlayerType.LocalAi
-          ? "Computer"
-          : "Remote opponent";
-    return "Game over! ${looserRole.name} (${looserPlayerName}) looses this game!";
+    return "Game over! ${looserRole.name} (${looserPlayer.readableName}) looses this game!";
   }
 
   Row _buildAiProgressText() {
@@ -786,10 +820,9 @@ class _HyleXGroundState extends State<HyleXGround> {
         : isSelected
             ? "Current player"
             : "Waiting player";
-    final tooltipPostfix = player == PlayerType.LocalUser ?  "You" : player == PlayerType.LocalAi ? "Computer" : "Remote opponent";
 
     final secondLine = (role == Role.Chaos && gameEngine.play.header.playMode != PlayMode.Classic)
-        ? "\nOne unordered chip counts ${gameEngine.play.getPointsPerChip()}"
+        ? "\nOne unordered chip counts ${gameEngine.play.getChaosPointsPerChip()}"
         : "";
 
     return SuperTooltip(
@@ -798,7 +831,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       showBarrier: false,
       hideTooltipOnTap: true,
       content: Text(
-        "$tooltipPrefix: $tooltipPostfix$secondLine",
+        "$tooltipPrefix: ${player.readableName}$secondLine",
         softWrap: true,
 
         style: TextStyle(
@@ -856,7 +889,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     if (_emphasiseAllChipsOfRole == Role.Chaos) {
       if (chip != null && spot.points == 0 && gameEngine.play.header.playMode != PlayMode.Classic) {
-        pointText = gameEngine.play.getPointsPerChip().toString();
+        pointText = gameEngine.play.getChaosPointsPerChip().toString();
       }
       else {
         pointText = "";
@@ -1126,6 +1159,96 @@ class _HyleXGroundState extends State<HyleXGround> {
           child: widget);
     }
     return widget;
+  }
+
+  void _showGameDetails(Play play) {
+    SmartDialog.show(builder: (_) {
+      List<Widget> children = [
+        const Text(
+          "Match Info",
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        Text(
+          play.header.getReadablePlayId(),
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
+        const Divider(),
+        _buildGameInfoRow("Mode:", play.header.playMode.label),
+        if (play.header.playMode == PlayMode.Classic)
+          _buildGameInfoRow("Game in match:", play.header.rolesSwapped == true ? "Second game" : "First game"),
+        _buildGameInfoRow("Game Size:", "${play.header.playSize.dimension} x ${play.header.playSize.dimension}"),
+        _buildGameInfoRow("Game opener:", "${play.header.getLocalRoleForMultiPlay() == Role.Chaos ? "You": "Opponent"}"),
+        if (play.header.playMode == PlayMode.HyleX)
+          _buildGameInfoRow("Points per unordered chip:", play.getChaosPointsPerChip().toString()),
+
+        if (play.header.opponentName != null && play.header.opponentId != null)
+          const Divider(),
+
+        if (play.header.opponentName != null)
+          _buildGameInfoRow("Opponent:", play.header.opponentName!),
+        if (play.header.opponentId != null)
+          _buildGameInfoRow("Opponent Id:", toReadableId(play.header.opponentId!)),
+
+
+        const Divider(),
+
+
+        _buildGameInfoRow("Match started at:", format(play.startDate)),
+        if (play.header.lastTimestamp != null)
+          _buildGameInfoRow("Last activity at:", format(play.header.lastTimestamp!)),
+        if (play.endDate != null)
+          _buildGameInfoRow("Match finished at:", format(play.endDate!)),
+        if (play.endDate == null && !play.header.state.isFinal)
+          _buildGameInfoRow("Match finished at:", "still ongoing"),
+        if (play.header.state.toMessage().length > 20)
+          _buildGameInfoWrap("Match status:", play.header.state.toMessage())
+        else
+          _buildGameInfoRow("Match status:", play.header.state.toMessage()),
+
+      ];
+
+
+      return Container(
+        height: 500,
+        width: 330,
+        decoration: BoxDecoration(
+          color: DIALOG_BG,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: children,
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildGameInfoRow(String key, String value) {
+    return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(key,
+            style: const TextStyle(color: Colors.white, fontSize: 15)),
+          Text(value,
+            style: const TextStyle(color: Colors.white, fontSize: 15)),
+        ],
+      );
+  }
+
+
+  Widget _buildGameInfoWrap(String key, String value) {
+    return Wrap(
+      children: [
+        Text(key + "  ",
+            style: const TextStyle(color: Colors.white, fontSize: 15)),
+        Text(value,
+            style: const TextStyle(color: Colors.white, fontSize: 15)),
+      ],
+    );
   }
 
 }

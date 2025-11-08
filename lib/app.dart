@@ -15,9 +15,9 @@ var isDebug = kDebugMode;
 class HylexApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       navigatorObservers: [FlutterSmartDialog.observer],
+      debugShowCheckedModeBanner: false,
       builder: FlutterSmartDialog.init(),
       theme: ThemeData(
         useMaterial3: true,

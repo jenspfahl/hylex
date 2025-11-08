@@ -2,9 +2,12 @@
 
 
 enum PlayerType {
-  LocalUser, 
-  LocalAi, 
-  RemoteUser
+  LocalUser("You"),
+  LocalAi("Computer"),
+  RemoteUser("Remote opponent"),
+  ;
+  final String readableName;
+  const PlayerType(this.readableName);
 }
 
 enum Role {
@@ -58,11 +61,14 @@ enum Operation {
 } 
 
 enum PlayMode {
-  HyleX,    //00
-  Classic,  //01
-  unused10, //10 TODO could be with no random chip withdrawal
-  unused11, //11
+  HyleX("Hylex-Style"),    //00
+  Classic("Classic-Style"),  //01
+  unused10(""), //10 TODO could be with no random chip withdrawal
+  unused11(""); //11
   // stuck to 2 bits, don't add more
+
+  final String label;
+  const PlayMode(this.label);
 } 
 
 enum PlayOpener {

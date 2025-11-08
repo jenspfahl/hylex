@@ -98,15 +98,18 @@ class Move {
     return cursor;
   }
 
-  String toReadableStringWithChipPlaceholder() {
+  String toReadableStringWithChipPlaceholder(PlayerType? playerType) {
+    final playerTypeName = playerType == PlayerType.LocalUser
+        ? " (${playerType!.readableName})"
+        :"";
     if (isPlaced()) {
-      return "Chaos placed {chip} at ${to?.toReadableCoordinates()}";
+      return "Chaos$playerTypeName placed {chip} at ${to?.toReadableCoordinates()}";
     }
     else if (isMove()) {
-      return "Order moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
+      return "Order$playerTypeName moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
     }
     else {
-      return "Order skipped this move";
+      return "Order$playerTypeName skipped this move";
     }
   }
 

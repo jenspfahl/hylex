@@ -4,7 +4,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 const DIALOG_BG = Color(0xFF2E1B1A);
 
 
-void showAlertDialog(String text) {
+void showAlertDialog(String text, {IconData? icon = Icons.error}) {
 
 
   SmartDialog.showNotify(
@@ -19,7 +19,7 @@ void showAlertDialog(String text) {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.error, size: 22, color: Colors.white70),
+        if (icon != null) Icon(icon, size: 22, color: Colors.white70),
         Container(
           margin: const EdgeInsets.only(top: 5),
           child: Text(text, style: TextStyle(color: Colors.white70)),

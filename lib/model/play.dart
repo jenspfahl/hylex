@@ -427,6 +427,7 @@ class Play {
   Cursor _opponentCursor = Cursor();
 
   late Matrix _matrix;
+  late Matrix? _classicModeFirstMatrix;
   late Stock _stock;
   late PlayerType _chaosPlayer;
   late PlayerType _orderPlayer;
@@ -467,6 +468,11 @@ class Play {
       _currentChip = GameChip.fromKey(startKey);
     }
     _matrix = Matrix.fromJson(map['matrix']);
+    final classicModeFirstMatrixJson = map['classicModeFirstMatrix'];
+    if (classicModeFirstMatrixJson != null) {
+      _classicModeFirstMatrix = Matrix.fromJson(classicModeFirstMatrixJson);
+    }
+
     _stats = Stats.fromJson(map['stats']);
     _stock = Stock.fromJson(map['stock']);
 
@@ -576,6 +582,7 @@ class Play {
     "currentRole" : _currentRole.name,
     if (_currentChip != null) "currentChip" : _currentChip!.toKey(),
     "matrix" : _matrix.toJson(),
+    if (_classicModeFirstMatrix != null) "classicModeFirstMatrix" : _classicModeFirstMatrix!.toJson(),
     "stats" : _stats.toJson(),
     "stock" : _stock.toJson(),
     "selectionCursor" : _selectionCursor.toJson(),
@@ -682,24 +689,27 @@ class Play {
   
   Move? get currentMove => _staleMove;
 
-  int getPointsPerChip() => header.playSize.chaosPointsPerChip;
+  int getChaosPointsPerChip() => header.playSize.chaosPointsPerChip;
 
   bool shouldGameBeOver() => !hasStaleMove && (_stock.isEmpty() || _matrix.noFreeSpace());
 
   void swapGameForClassicMode() {
     _stats.classicModeFirstRoundOrderPoints = _stats.getPoints(Role.Order);
     // swap roles and clear play board but remember order points
+    _classicModeFirstMatrix = matrix.clone();
+
     _init(
       multiPlay: true,
       role: header.getLocalRoleForMultiPlay()!.opponentRole,
       chaosPlayer: orderPlayer,
       orderPlayer: chaosPlayer,
       clearJournal: false,
-      round: header.getLocalRoleForMultiPlay() == Role.Chaos ? 0 : 1 //TODO is else correct?
+      round: header.getLocalRoleForMultiPlay() == Role.Chaos ? 0 : 1 
     );
 
 
     header.playOpener = header.playOpener == PlayOpener.Invitor ? PlayOpener.Invitee : PlayOpener.Invitor;
+    
     header.rolesSwapped = true;
     header.state = PlayState.ReadyToMove;
 
@@ -767,6 +777,8 @@ class Play {
     _currentChip = null;
     _selectionCursor.clear();
     _opponentCursor.clear();
+
+    endDate = DateTime.now();
 
     return _currentRole;
   }
@@ -999,6 +1011,10 @@ class Play {
     }
 
     return null;
+  }
+
+  PlayerType getPlayerTypeOf(Role role) {
+    return role == Role.Chaos ? chaosPlayer : orderPlayer;
   }
 
 
