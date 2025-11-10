@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
@@ -222,7 +223,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             MessageService().sendCurrentPlayState(
                                 playHeader, widget.user, () => context, false);
                           },
-                          secondString: "CANCEL",
+                          secondString: translate('common.cancel'),
                           secondHandler: () {});
 
                     }
@@ -334,7 +335,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {
-    await showShowLoading("Loading game ...");
+    await showShowLoading(translate('dialogs.loadingGame'));
     final play = await StorageService().loadPlayFromHeader(header);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {

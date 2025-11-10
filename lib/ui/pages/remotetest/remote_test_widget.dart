@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -477,7 +478,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         showChoiceDialog(result, 
             firstString: "IGNORE", 
             firstHandler: () => _sendRemoteMessage(share, context),
-            secondString: "CANCEL", 
+            secondString: translate('common.cancel'),
             secondHandler: () => SmartDialog.dismiss());
         return;
       }

@@ -1,0 +1,37 @@
+{
+  "common": {
+    "ok": "Ok",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "reset": "Reset",
+    "hello": "Hello {name}!",
+    "dates": {
+      "yesterday": "Yesterday",
+      "today": "Today"
+    }
+  },
+  "startMenu": {
+    "singlePlay": "Single Play",
+    "multiPlay": "Multiplayer",
+    "newGame": "New Game",
+    "resumeGame": "Resume",
+    "newMatch": "New Match",
+    "continueMatch": "Continue Match",
+    "sendInvite": "Send Invite",
+    "scanCode": "Scan Code",
+    "more": "More",
+    "howToPlay": "How to play",
+    "achievements": "Achievements"
+  },
+  "dialogs": {
+    "loadingGame" : "Loading game ...",
+    "initGame" : "Initialising new game ...",
+    "quitTheApp" : "Do you want to close the app?",
+    "aboutDesc1" : "An Entropy clone",
+    "aboutDesc2" : "Visit {homepage} to view the code, report bugs and give stars!",
+    "overwriteGame": "Starting a new game will delete an ongoing Single Play game.",
+    "resetAchievements": "Do you really want to reset all achievements to zero?"
+  }
+}

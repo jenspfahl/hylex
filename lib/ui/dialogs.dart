@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 
 const DIALOG_BG = Color(0xFF2E1B1A);
 
@@ -54,17 +55,17 @@ void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
 
 void confirm(String text, Function() okHandler) {
   showChoiceDialog(text,
-      firstString: "OK", 
+      firstString: translate('common.ok'),
       firstHandler: okHandler,
-      secondString: "CANCEL",
+      secondString: translate('common.cancel'),
       secondHandler: () {});
 }
 
 void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler}) {
   showChoiceDialog(text,
-      firstString: "YES",
+      firstString: translate('common.yes'),
       firstHandler: yesHandler,
-      secondString: noString ?? "NO",
+      secondString: noString ?? translate('common.no'),
       secondHandler: () {
         if (noHandler != null) noHandler();
       });
@@ -255,7 +256,7 @@ void showInputDialog(
                   SmartDialog.dismiss();
                   okHandler(controller.text);
                 },
-                child: Text("OK")),
+                child: Text(translate('common.ok'))),
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
@@ -265,7 +266,7 @@ void showInputDialog(
                       cancelHandler();
                     }
                 },
-                child: Text("CANCEL")
+                child: Text(translate('common.cancel'))
             ),
 
           ],

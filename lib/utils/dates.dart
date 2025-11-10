@@ -1,3 +1,4 @@
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:intl/intl.dart';
 
 String formatToDateTime(DateTime dateTime) {
@@ -14,6 +15,9 @@ String formatToTime(DateTime dateTime) {
 String format(DateTime dateTime) {
   if (isToday(dateTime)) {
     return formatToTime(dateTime);
+  }
+  else if (isYesterday(dateTime)) {
+    return "${translate('common.dates.yesterday')} ${formatToTime(dateTime)}";
   }
   else {
     return formatToDateTime(dateTime);

@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -216,7 +217,7 @@ class StartPageState extends State<StartPage> {
         StorageService().savePlayHeader(header);
 
       },
-      fourthString: "Cancel",
+      fourthString: translate('common.cancel'),
       fourthHandler: () {},
     );
 
@@ -345,18 +346,20 @@ class StartPageState extends State<StartPage> {
             if (_user.name.isNotEmpty)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                  "Hello ${_user.name}!")
+                  translate('common.hello', args: {'name' : _user.name})
+              )
             else if (isDebug)
               Text(
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                "Hello ${_user.getReadableId()}!"),
+                  translate('common.hello', args: {'name' : _user.getReadableId()})
+              ),
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [
 
-                _buildCell("Single Play", 0,
+                _buildCell(translate('startMenu.singlePlay'), 0,
                     isMain: true,
                     icon: Icons.person,
                     clickHandler: () =>
@@ -368,14 +371,14 @@ class StartPageState extends State<StartPage> {
                 ),
 
                 _menuMode == MenuMode.SinglePlay
-                    ? _buildCell("New Game", 0,
+                    ? _buildCell(translate('startMenu.newGame'), 0,
                     icon: CupertinoIcons.game_controller,
                     clickHandler: () async {
                       if (context.mounted) {
                         final json = await PreferenceService().getString(
                             PreferenceService.DATA_CURRENT_PLAY);
                         confirmOrDo(json != null,
-                            'Starting a new game will delete an ongoing Single Play game.', () {
+                            translate('dialogs.overwriteGame'), () {
                               _selectPlayerGroundSize(context, (dimension) =>
                                   _selectSinglePlayerMode(
                                       context, (chaosPlayer, orderPlayer) =>
@@ -387,7 +390,7 @@ class StartPageState extends State<StartPage> {
                     }
                 )
                     : _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Send Invite", 3, icon: Icons.near_me,
+                    ? _buildCell(translate('startMenu.sendInvite'), 3, icon: Icons.near_me,
                     clickHandler: () async {
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (playSize) =>
@@ -399,12 +402,12 @@ class StartPageState extends State<StartPage> {
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.SinglePlay
-                    ? _buildCell("Resume", 0,
+                    ? _buildCell(translate('startMenu.resumeGame'), 0,
                     icon: Icons.not_started_outlined,
                     clickHandler: () async {
                       final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
-                        await showShowLoading("Loading game ...");
+                        await showShowLoading(translate('dialogs.loadingGame'));
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -420,7 +423,7 @@ class StartPageState extends State<StartPage> {
                 )
                     : _buildEmptyCell(),
 
-                _buildCell("Multiplayer", 2,
+                _buildCell(translate('startMenu.multiPlay'), 2,
                     isMain: true,
                     icon: Icons.group,
                     clickHandler: () =>
@@ -439,7 +442,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.Multiplayer ||
                     _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("New Match", 3,
+                    ? _buildCell(translate('startMenu.newMatch'), 3,
                     icon: Icons.sports_score,
                     clickHandler: () =>
                         setState(
@@ -451,7 +454,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.Multiplayer ||
                     _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Continue Match", 4,
+                    ? _buildCell(translate('startMenu.continueMatch'), 4,
                   icon: Icons.sports_tennis,
                   clickHandler: () {
                     Navigator.push(context,
@@ -464,7 +467,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.More
                     ? _buildCell(
-                    " How to Play", 1, icon: CupertinoIcons.question_circle_fill,
+                    translate('startMenu.howToPlay'), 1, icon: CupertinoIcons.question_circle_fill,
                     clickHandler: () => Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                           return Intro();
@@ -472,16 +475,16 @@ class StartPageState extends State<StartPage> {
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell("Got Invited", 3, icon: Icons.qr_code_scanner,
+                    ? _buildCell(translate('startMenu.scanCode'), 3, icon: Icons.qr_code_scanner,
                           clickHandler: scanNextMove,
                           longClickHandler: _showMultiPlayTestDialog
                        )
                     : _menuMode == MenuMode.More
-                    ? _buildCell("Achievements", 1, icon: Icons.leaderboard,
+                    ? _buildCell(translate('startMenu.achievements'), 1, icon: Icons.leaderboard,
                     clickHandler: () => _showAchievementDialog())
                     : _buildEmptyCell(),
 
-                _buildCell("More", 1,
+                _buildCell(translate('startMenu.more'), 1,
                     isMain: true,
                     clickHandler: () =>
                         setState(
@@ -514,7 +517,7 @@ class StartPageState extends State<StartPage> {
                   }, icon: const Icon(Icons.settings_outlined)),
 
                   IconButton(onPressed: () {
-                    ask('Quit the app?', () {
+                    ask(translate('dialogs.quitTheApp'), () {
                       SystemNavigator.pop();
                     });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
@@ -522,21 +525,24 @@ class StartPageState extends State<StartPage> {
                   IconButton(onPressed: () async {
                     final packageInfo = await PackageInfo.fromPlatform();
 
+                    final text = translate('dialogs.aboutDesc2');
+                    final splitText = text.split("{homepage}");
+
                     showAboutDialog(
                       context: context,
                       applicationName: APP_NAME,
                       applicationVersion:packageInfo.version,
                         children: [
                           const Divider(),
-                          const Text('An Entropy clone'),
+                          Text(translate('dialogs.aboutDesc1')),
                           const Text(''),
                           InkWell(
                               child: Text.rich(
                                 TextSpan(
-                                  text: 'Visit ',
+                                  text: splitText.first,
                                   children: <TextSpan>[
                                     TextSpan(text: GITHUB_HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
-                                    const TextSpan(text: ' to view the code, report bugs and give stars!'),
+                                    TextSpan(text: splitText.last),
                                   ],
                                 ),
                               ),
@@ -719,7 +725,7 @@ class StartPageState extends State<StartPage> {
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, PlaySize playSize) async {
-    await showShowLoading("Initialising game ...");
+    await showShowLoading(translate('dialogs.initGame'));
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           final header = PlayHeader.singlePlay(playSize);
@@ -737,7 +743,7 @@ class StartPageState extends State<StartPage> {
         Move? firstOpponentMove,
         Function()? loadHandler,
       ]) async {
-    await showShowLoading("Initialising game ...");
+    await showShowLoading(translate('dialogs.initGame'));
     final play = Play.newMultiPlay(header);
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -761,7 +767,7 @@ class StartPageState extends State<StartPage> {
       Move? opponentMove,
       [Function()? loadHandler]
       ) async {
-    await showShowLoading("Loading game ...");
+    await showShowLoading(translate('dialogs.loadingGame'));
 
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -857,12 +863,11 @@ class StartPageState extends State<StartPage> {
     SmartDialog.show(builder: (_) {
       final greyed = _user.achievements.getOverallGameCount() == 0;
       List<Widget> children = [
-              const Text(
-                "Achievements",
+              Text(
+                translate('startMenu.achievements'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const Divider(),
-              //if (_user.name != null) Text(_user.name!),
               _buildHOverallTotalScoreHead(_user.achievements.getOverallScore()),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -894,7 +899,7 @@ class StartPageState extends State<StartPage> {
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
                 onPressed: () {
-                  ask("Reset all stats to zero:", () {
+                  ask(translate('dialogs.resetAchievements'), () {
                     _user.achievements.clearAll();
                     StorageService().saveUser(_user);
                     SmartDialog.dismiss();
@@ -902,12 +907,12 @@ class StartPageState extends State<StartPage> {
                   });
 
                 },
-                child: const Text("RESET")),
+                child: Text(translate('common.reset'))),
             OutlinedButton(
                 style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.lightGreenAccent),
                 onPressed: () => SmartDialog.dismiss(),
-                child: const Text("CLOSE")),
+                child: Text(translate('common.close'))),
           ],
         ),
       );
@@ -1112,7 +1117,7 @@ class StartPageState extends State<StartPage> {
           await MessageService().sendInvitationRejected(playHeader, _user, () => context);
         }
       },
-      thirdString: "Cancel",
+      thirdString: translate('common.cancel'),
       thirdHandler: () {},
     );
   }

@@ -1,0 +1,37 @@
+{
+  "common" : {
+    "ok": "Ok",
+    "cancel": "Abbrechen",
+    "yes": "Ja",
+    "no": "Nein",
+    "close": "Schiessen",
+    "reset": "Zurücksetzen",
+    "hello": "Hallo {name}!",
+    "dates": {
+      "yesterday": "Gestern",
+      "today": "Heute"
+    }
+  },
+  "startMenu": {
+    "singlePlay": "Einfaches Spiel",
+    "multiPlay": "Multiplayer",
+    "newGame": "Neues Spiel",
+    "resumeGame": "Fortsetzen",
+    "newMatch": "Neues Match",
+    "continueMatch": "Match fortsetzen",
+    "sendInvite": "Einladug senden",
+    "scanCode": "Code scannen",
+    "more": "Mehr",
+    "howToPlay": "Regeln",
+    "achievements": "Statistiken"
+  },
+  "dialogs": {
+    "loadingGame" : "Lade Spiel ...",
+    "initGame" : "Initialisiere neues Spiel ...",
+    "quitTheApp" : "Willst du die App beenden?",
+    "aboutDesc1": "Ein Entropy-Klon",
+    "aboutDesc2": "Besuche {homepage}, um den Code anzusehen, Fehler zu melden und Sterne zu vergeben!",
+    "overwriteGame": "Wenn in neues Einzelspiel begonnen wird, wird das aktuelle Einzelspiel gelöscht.",
+    "resetAchievements": "Möchtest du wirklich alle Erfolge auf Null zurücksetzen?"
+  }
+}

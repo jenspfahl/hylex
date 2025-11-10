@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/matrix.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
@@ -621,7 +622,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                   predecessorPlay: gameEngine.play.header
                               );
                             },
-                            secondString: 'Cancel',
+                            secondString: translate('common.cancel'),
                             secondHandler: () {  });
                       }
                       else {
