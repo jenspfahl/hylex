@@ -32,6 +32,32 @@
     "aboutDesc1": "Ein Entropy-Klon",
     "aboutDesc2": "Besuche {homepage}, um den Code anzusehen, Fehler zu melden und Sterne zu vergeben!",
     "overwriteGame": "Wenn in neues Einzelspiel begonnen wird, wird das aktuelle Einzelspiel gelöscht.",
+
+    "whichGroundSize": "Auf welcher Spielfeldgröße möchtest du spielen?",
+    "groundSize5": "Anfängerlevel, dauert ein paar Minuten",
+    "groundSize7": "Die ursprüngliche Entropy-Größe",
+    "groundSize9": "Erweiterte Größe, falls 7 x 7 nicht ausreicht",
+    "groundSize11": "Professionelles und langes Spiel",
+    "groundSize13": "Höchster Anspruch! Extrem schwer!",
+
+    "whatRole": "Welche Rolle möchtest du übernehmen?",
+    "whatRoleOrder": "Der Computer ist Chaos und startet das Spiel.",
+    "whatRoleChaos": "Der Computer ist Order, aber du startest das Spiel.",
+    "whatRoleOrderForMultiPlay": "Dein Gegner ist Chaos und beginnt das Match.",
+    "whatRoleChaosForMultiPlay": "Dein Gegner ist Order, aber du beginnst das Match.",
+    "roleBoth": "Chaos und Order",
+    "whatRoleBoth": "Du spielst beide Rollen, vielleicht mit einem Freund am selben Gerät.",
+    "roleNone": "Keine",
+    "whatRoleNone": "Der Computer spielt allein, du schaust nur zu.",
+    "roleInviteeDecides": "Gegner entscheidet",
+    "whatRoleInviteeDecides": "Dein Gegner entscheidet, ob er Order oder Chaos ist und damit das Spiel beginnt.",
+
+    "whatKindOfMatch": "Welche Spielart möchtest du spielen?",
+    "whatKindOfMatchHylexStyle": "Sowohl Order als auch Chaos können Punkte erzielen. Der Spieler mit den meisten Punkten gewinnt. Das Match endet nach einem Spiel.",
+    "whatKindOfMatchClassicStyle": "Nur Order kann Punkte erzielen. Ein Match besteht aus zwei einzelnen Spielen. Nach dem ersten Spiel tauschen die Spieler die Rollen. Der Spieler mit den meisten Punkten gewinnt.",
+
+    "yourName": "Wie lautet dein Name? Dein Gegner wird diesen Namen sehen. Bitte wähle einen kurzen Namen",
+
     "resetAchievements": "Möchtest du wirklich alle Erfolge auf Null zurücksetzen?"
   }
 }

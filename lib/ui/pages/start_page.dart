@@ -609,22 +609,22 @@ class StartPageState extends State<StartPage> {
     }
     else {
       showChoiceDialog(
-        'Which ground size?',
+        translate('dialogs.whichGroundSize'),
         width: 300,
         firstString: "5 x 5",
-        firstDescriptionString: "Beginners level, takes a couple of minutes",
+        firstDescriptionString: translate('dialogs.groundSize5'),
         firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
         secondString: "7 x 7",
-        secondDescriptionString: "Classic Entropy size, advanced",
+        secondDescriptionString: translate('dialogs.groundSize7'),
         secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
         thirdString: "9 x 9",
-        thirdDescriptionString: "Enhanced level, if 7 x 7 is not enough",
+        thirdDescriptionString: translate('dialogs.groundSize9'),
         thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
         fourthString: "11 x 11",
-        fourthDescriptionString: "Professional and long ongoing game",
+        fourthDescriptionString: translate('dialogs.groundSize11'),
         fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
         fifthString: "13 x 13",
-        fifthDescriptionString: "Supreme level! Super hard!",
+        fifthDescriptionString: translate('dialogs.groundSize13'),
         fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
       );
     }
@@ -652,19 +652,19 @@ class StartPageState extends State<StartPage> {
   void _selectSinglePlayerMode(BuildContext context,
       Function(PlayerType, PlayerType) handleChosenPlayers) {
     showChoiceDialog(
-      'What role would you like to take on?',
+      translate('dialogs.whatRole'),
       width: 300,
-      firstString: "ORDER",
-      firstDescriptionString: "The computer is Chaos and starts the game",
+      firstString: Role.Order.name,
+      firstDescriptionString: translate('dialogs.whatRoleOrder'),
       firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
-      secondString: "CHAOS",
-      secondDescriptionString: "The computer is Order, but you start the game",
+      secondString: Role.Chaos.name,
+      secondDescriptionString: translate('dialogs.whatRoleChaos'),
       secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
-      thirdString: "BOTH",
-      thirdDescriptionString: "You play both, maybe with a friend on the same device",
+      thirdString: translate('dialogs.roleBoth'),
+      thirdDescriptionString: translate('dialogs.whatRoleBoth'),
       thirdHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalUser),
-      fourthString: "NONE",
-        fourthDescriptionString: "The computer plays alone, you only observe",
+      fourthString: translate('dialogs.roleNone'),
+        fourthDescriptionString: translate('dialogs.whatRoleNone'),
       fourthHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalAi),
     );
   }
@@ -672,17 +672,17 @@ class StartPageState extends State<StartPage> {
   void _selectInvitorMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
-      'What role would you like to take on?',
+      translate('dialogs.whatRole'),
       width: 300,
       height: 500,
-      firstString: "ORDER",
-      firstDescriptionString: "Your opponent is Chaos and start the match",
+      firstString: Role.Order.name,
+      firstDescriptionString: translate('dialogs.whatRoleOrderForMultiPlay'),
       firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
-      secondString: "CHAOS",
-      secondDescriptionString: "Your opponent is Order, but you start the match",
+      secondString: Role.Chaos.name,
+      secondDescriptionString: translate('dialogs.whatRoleChaosForMultiPlay'),
       secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
-      thirdString: "INVITEE DECIDES",
-      thirdDescriptionString: "Your opponent can decide whether he or she is Order or Chaos and who starts the match",
+      thirdString: translate('dialogs.roleInviteeDecides'),
+      thirdDescriptionString: translate('dialogs.whatRoleInviteeDecides'),
       thirdHandler: () => handlePlayOpener(PlayOpener.InviteeChooses),
     );
   }
@@ -699,20 +699,20 @@ class StartPageState extends State<StartPage> {
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
     showChoiceDialog(
-      'What kind of match do you want to play? ',
+      translate('dialogs.whatKindOfMatch'),
       width: 300,
       height: 450,
       firstString: PlayMode.HyleX.label,
-      firstDescriptionString: "Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.",
+      firstDescriptionString: translate('dialogs.whatKindOfMatchHylexStyle'),
       firstHandler: () => handlePlayerMode(PlayMode.HyleX),
       secondString: PlayMode.Classic.label,
-      secondDescriptionString: "Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.",
+      secondDescriptionString: translate('dialogs.whatKindOfMatchClassicStyle'),
       secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
   }
 
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
-    showInputDialog('What\'s your name?',
+    showInputDialog(translate('dialogs.yourName'),
             prefilledText: _user.name,
             okHandler: (name) {
               _user.name = name;

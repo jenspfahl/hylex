@@ -32,6 +32,31 @@
     "aboutDesc1" : "An Entropy clone",
     "aboutDesc2" : "Visit {homepage} to view the code, report bugs and give stars!",
     "overwriteGame": "Starting a new game will delete an ongoing Single Play game.",
+
+    "whichGroundSize": "What size playing field would you like to play on?",
+    "groundSize5": "Beginners level, takes a couple of minutes",
+    "groundSize7": "The original Entropy size",
+    "groundSize9": "Enhanced size, if 7 x 7 is not enough",
+    "groundSize11": "Professional and long ongoing game",
+    "groundSize13": "Supreme size! Super hard!",
+
+    "whatRole": "What role would you like to take on?",
+    "whatRoleOrder": "The computer is Chaos and starts the game.",
+    "whatRoleChaos": "The computer is Order, but you start the game.",
+    "whatRoleOrderForMultiPlay": "Your opponent is Chaos and starts the match.",
+    "whatRoleChaosForMultiPlay": "Your opponent is Order, but you start the match.",
+    "roleBoth": "Chaos and Order",
+    "whatRoleBoth": "You play both roles, perhaps with a friend on the same device.",
+    "roleNone": "None",
+    "whatRoleNone": "The computer plays alone, you just observe.",
+    "roleInviteeDecides": "Opponent decides",
+    "whatRoleInviteeDecides": "Your opponent decide whether they is Order or Chaos, thus starting the game.",
+
+    "whatKindOfMatch": "What kind of match do you want to play?",
+    "whatKindOfMatchHylexStyle": "Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.",
+    "whatKindOfMatchClassicStyle": "Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.",
+
+    "yourName": "What is your name? Your opponent will see this name. Please choose a short name.",
     "resetAchievements": "Do you really want to reset all achievements to zero?"
   }
 }
