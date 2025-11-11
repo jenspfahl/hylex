@@ -12,11 +12,13 @@ class PreferenceService {
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
   
   static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
+  static final PREF_SHOW_POINTS = 'pref/showPoints';
   static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
 
   static final PreferenceService _service = PreferenceService._internal();
 
   bool showCoordinates = true;
+  bool showPoints = true;
 
   factory PreferenceService() {
     return _service;
@@ -27,6 +29,11 @@ class PreferenceService {
     getBool(PREF_SHOW_COORDINATES).then((value) {
       if (value != null) {
         showCoordinates = value;
+      }
+    });
+    getBool(PREF_SHOW_POINTS).then((value) {
+      if (value != null) {
+        showPoints = value;
       }
     });
   }

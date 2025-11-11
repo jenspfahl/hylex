@@ -25,6 +25,14 @@
     "howToPlay": "How to play",
     "achievements": "Achievements"
   },
+  "sheets": {
+    "scanOrPasteMessage": "Scan your opponent's QR code. If they sent you a message with an app link, and that link doesn't open this app, you can paste it here."
+    "scanMessage": "Scan QR code",
+    "scanMessageError": "Cannot read this QR code!",
+    "pasteMessage": "Paste message",
+    "pasteMessageHere": "Paste opponent's message here. The app link will be automatically extracted.",
+    "pasteMessageError": "Cannot extract an app link out of this message!"
+  },
   "dialogs": {
     "loadingGame" : "Loading game ...",
     "initGame" : "Initialising new game ...",
@@ -59,4 +67,4 @@
     "yourName": "What is your name? Your opponent will see this name. Please choose a short name.",
     "resetAchievements": "Do you really want to reset all achievements to zero?"
   }
-}
+},

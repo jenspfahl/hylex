@@ -4,7 +4,7 @@
     "cancel": "Abbrechen",
     "yes": "Ja",
     "no": "Nein",
-    "close": "Schiessen",
+    "close": "Schließen",
     "reset": "Zurücksetzen",
     "hello": "Hallo {name}!",
     "dates": {
@@ -24,6 +24,14 @@
     "more": "Mehr",
     "howToPlay": "Regeln",
     "achievements": "Statistiken"
+  },
+  "sheets": {
+    "scanOrPasteMessage": "Scanne den QR-Code deines Gegners. Falls er dir eine Nachricht mit einem App-Link geschickt hat und dieser Link diese App nicht öffnet, kannst du ihn hier einfügen.",
+    "scanMessage": "QR-Code scannen",
+    "scanMessageError": "Dieser QR-Code konnte nicht gelesen werden!",
+    "pasteMessage": "Nachricht einfügen",
+    "pasteMessageHere": "Gegnerische Nachricht hier einfügen. Der App-Link wird automatisch extrahiert.",
+    "pasteMessageError": "Aus dieser Nachricht konnte kein App-Link extrahiert werden!"
   },
   "dialogs": {
     "loadingGame" : "Lade Spiel ...",

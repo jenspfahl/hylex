@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import 'package:flutter/services.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -714,6 +715,7 @@ class StartPageState extends State<StartPage> {
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
     showInputDialog(translate('dialogs.yourName'),
             prefilledText: _user.name,
+            maxLength: maxNameLength,
             okHandler: (name) {
               _user.name = name;
               StorageService().saveUser(_user);
@@ -1134,7 +1136,7 @@ class StartPageState extends State<StartPage> {
 
 
             return Container(
-              height: 220,
+              height: 300,
 
               child: Padding(
                   padding: const EdgeInsets.all(32),
@@ -1143,30 +1145,12 @@ class StartPageState extends State<StartPage> {
                     mainAxisSize: MainAxisSize.max,
                     spacing: 5,
                     children: [
-                      Text("Scan opponents request or move or paste it if the App Link doesn't work:"),
-                      buildOutlinedButton(
-                          context,
-                          Icons.paste,
-                          "Paste URL",
-                          () {
-                        Navigator.of(context).pop();
-
-                        showInputDialog('Paste the URL here',
-                          okHandler: (s) {
-                            final uri = extractAppLinkFromString(s);
-                            if (uri == null) {
-                              toastInfo(context, "Cannot parse this QR code");
-                            }
-                            else {
-                              handleReceivedMessage(uri);
-                            }
-                          },
-                        );
-                        }),
+                      Text(translate('sheets.scanOrPasteMessage')),
+                      Text(""),
                       buildFilledButton(
                           context,
                           Icons.qr_code_scanner,
-                          "Scan QR code",
+                          translate('sheets.scanMessage'),
                           () {
                         Navigator.of(context).pop();
 
@@ -1180,13 +1164,47 @@ class StartPageState extends State<StartPage> {
                               handleReceivedMessage(uri);
                             } catch (e) {
                               print(e);
-                              showAlertDialog("Cannot read this QR code!");
+                              showAlertDialog(
+                                  translate('sheets.scanMessageError'),
+                                  duration: Duration(seconds: 5));
                             }
                           }
                         });
 
 
                       }),
+                      buildOutlinedButton(
+                          context,
+                          Icons.paste,
+                          translate('sheets.pasteMessage'),
+                          () {
+                        Navigator.of(context).pop();
+
+                        showInputDialog(translate('sheets.pasteMessageHere'),
+                          height: 380,
+                          minLines: 3,
+                          maxLines: 3,
+                          okHandler: (s) {
+                            final uri = extractAppLinkFromString(s);
+                            if (uri == null) {
+                              showAlertDialog(
+                                  translate('sheets.pasteMessageError'),
+                                  duration: Duration(seconds: 5)
+                              );
+                            }
+                            else {
+                              handleReceivedMessage(uri);
+                            }
+                          },
+                          thirdText: translate('sheets.pasteMessage'),
+                          thirdHandler: (controller) async {
+                            final data = await Clipboard.getData("text/plain");
+                            if (data?.text != null) {
+                              controller.value = new TextEditingValue(text: data!.text!);
+                            }
+                          }
+                        );
+                        }),
                     ],
                   )
               ),

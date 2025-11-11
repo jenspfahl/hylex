@@ -5,13 +5,18 @@ import 'package:flutter_translate/flutter_translate.dart';
 const DIALOG_BG = Color(0xFF2E1B1A);
 
 
-void showAlertDialog(String text, {IconData? icon = Icons.error}) {
+void showAlertDialog(String text,
+    {
+      IconData? icon = Icons.error,
+      Duration? duration,
+    }) {
 
 
   SmartDialog.showNotify(
     msg: text,
     clickMaskDismiss: true,
     notifyType: NotifyType.error,
+    displayTime: duration,
     builder: (context) {
     return Container(
       decoration: BoxDecoration(
@@ -223,12 +228,17 @@ void showInputDialog(
       String? prefilledText,
       required Function(String) okHandler,
       Function()? cancelHandler,
+      String? thirdText,
+      Function(TextEditingController)? thirdHandler,
+      int? maxLength,
+      int? minLines,
+      int? maxLines,
     }
     ) {
   final controller = TextEditingController(text: prefilledText);
   SmartDialog.show(builder: (_) {
     return Container(
-      height: height ?? 200 + text.length.toDouble(),
+      height: height ?? 200 + text.length.toDouble() + (thirdText != null ? 50 : 0),
       width: width ?? 300,
       decoration: BoxDecoration(
         color: DIALOG_BG,
@@ -246,6 +256,9 @@ void showInputDialog(
             ),
             TextField(
               controller: controller,
+              maxLength: maxLength,
+              minLines: minLines,
+              maxLines: maxLines,
               style: TextStyle(color: Colors.lightGreenAccent),
               cursorColor: Colors.lightGreen,
             ),
@@ -268,6 +281,17 @@ void showInputDialog(
                 },
                 child: Text(translate('common.cancel'))
             ),
+            if (thirdText != null)
+              OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.lightGreenAccent),
+                  onPressed: () {
+                    if (thirdHandler != null) {
+                      thirdHandler(controller);
+                    }
+                  },
+                  child: Text(thirdText)
+              ),
 
           ],
         ),

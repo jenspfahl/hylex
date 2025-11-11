@@ -906,7 +906,7 @@ class _HyleXGroundState extends State<HyleXGround> {
               border: Border.all(color: Colors.black.withAlpha(80), width: 0.5)),
           child: Center(
             child: buildGameChip(
-              points > 0 ? points.toString() : "",
+              points > 0 && PreferenceService().showPoints ? points.toString() : "",
               chipColor: chip != null ? _getChipColor(chip, where): null,
               dimension: gameEngine.play.dimension,
               showCoordinates: PreferenceService().showCoordinates,
@@ -922,15 +922,18 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     final spot = gameEngine.play.matrix.getSpot(where);
     final chip = spot.content;
-    var pointText = spot.points > 0 ? spot.points.toString() : "";
+    var pointText = spot.orderPoints > 0 && PreferenceService().showPoints ? spot.orderPoints.toString() : "";
 
     if (_emphasiseAllChipsOfRole == Role.Chaos) {
-      if (chip != null && spot.points == 0 && gameEngine.play.header.playMode != PlayMode.Classic) {
+      if (chip != null && spot.orderPoints == 0 && gameEngine.play.header.playMode != PlayMode.Classic) {
         pointText = gameEngine.play.getChaosPointsPerChip().toString();
       }
       else {
         pointText = "";
       }
+    }
+    else if (_emphasiseAllChipsOfRole == Role.Order) {
+      pointText = spot.orderPoints > 0 ? spot.orderPoints.toString() : "";
     }
 
 
