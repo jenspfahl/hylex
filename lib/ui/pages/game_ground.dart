@@ -175,10 +175,11 @@ class _HyleXGroundState extends State<HyleXGround> {
       
                               final recentRole = gameEngine.play.opponentRole.name;
                               final currentRole = gameEngine.play.currentRole.name;
-                              var message = 'Undo last move from $recentRole?';
+                              var message = translate('dialogs.undoLastMove', args: {"recentRole" : recentRole});
 
                               if (gameEngine.play.isWithAiPlay && gameEngine.play.journal.length > 1) {
-                                message = 'Undo last move from $recentRole? This will also undo the previous move from ${currentRole}.';
+                                message = translate('dialogs.undoLastTwoMoves',
+                                    args: {"recentRole" : recentRole, "currentRole": currentRole});
                               }
 
                               ask(message, () {
@@ -249,7 +250,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.restart_alt_outlined),
                         onPressed: () => {
 
-                          ask('Restart game?', () {
+                          ask(translate('dialogs.restartGame'), () {
                                 gameEngine.stopGame();
                                 _gameOverShown = false;
                                 gameEngine.startGame();
@@ -402,10 +403,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     return gameEngine.play.isMultiplayerPlay
                         ? gameEngine.play.header.getTitle()
                         : gameEngine.play.isFullAutomaticPlay
-                          ? "Automatic Play"
+                          ? translate('gameTitle.automatic')
                           : gameEngine.play.isBothSidesSinglePlay
-                            ? "Alternate Single Play"
-                            : "Single Play against AI";
+                            ? translate('gameTitle.alternate')
+                            : translate('gameTitle.againstComputer');
   }
 
   Widget _buildJournalEvent((int, Move) e) {
@@ -608,12 +609,12 @@ class _HyleXGroundState extends State<HyleXGround> {
                 padding: const EdgeInsets.all(8.0),
                 child: buildFilledButton(context,
                     Icons.restart_alt,
-                    "Ask for a rematch",
+                    translate('submitButton.rematch'),
                         () {
 
                       if (gameEngine.play.header.successorPlayId != null) {
-                        showChoiceDialog("You already asked for a rematch with ${toReadableId(gameEngine.play.header.successorPlayId!)}.",
-                            firstString: 'Ask again',
+                        showChoiceDialog(translate('dialogs.askForRematchAgain', args: {"playId": toReadableId(gameEngine.play.header.successorPlayId!)}),
+                            firstString: translate('dialogs.askAgain'),
                             firstHandler: () {
                               globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
                                   context,
@@ -647,7 +648,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                 child: buildOutlinedButton(
                     context,
                     Icons.near_me,
-                    "Share again",
+                    translate('submitButton.shareAgain'),
                         () {
                       if (gameEngine is MultiPlayerGameEngine) {
                         (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
@@ -662,7 +663,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         return buildFilledButton(
             context,
             Icons.restart_alt,
-            "Restart",
+            translate('submitButton.restart'),
             () async {
             await gameEngine.stopGame();
             _gameOverShown = false;
@@ -675,7 +676,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         return buildFilledButton(
             context,
             Icons.swap_horiz_outlined,
-            'Swap roles and continue',
+            translate('submitButton.swapRoles'),
                 () {
               gameEngine.play.swapGameForClassicMode();
               gameEngine.savePlayState();
@@ -689,8 +690,8 @@ class _HyleXGroundState extends State<HyleXGround> {
               ? Icons.redo
               : Icons.near_me,
           gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
-              ? 'Skip move'
-              : 'Submit move',
+              ? translate('submitButton.skipMove')
+              : translate('submitButton.submitMove'),
           () {
             if (gameEngine.isBoardLocked()) {
               return;
@@ -705,7 +706,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
             final skipMove = !isDirty && gameEngine.play.currentRole == Role.Order;
             if (gameEngine.play.multiPlay && skipMove) {
-              ask('Do you really want to skip this move?', () async {
+              ask(translate('dialogs.skipMove'), () async {
                 gameEngine.play.applyStaleMove(Move.skipped());
                 gameEngine.play.commitMove();
                 gameEngine.nextPlayer();
@@ -732,7 +733,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         child: buildOutlinedButton(
             context,
             Icons.near_me,
-            "Share again",
+            translate('submitButton.shareAgain'),
             () {
             if (gameEngine is MultiPlayerGameEngine) {
               (gameEngine as MultiPlayerGameEngine).shareGameMove(false);

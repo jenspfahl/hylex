@@ -66,6 +66,29 @@
 
     "yourName": "Wie lautet dein Name? Dein Gegner wird diesen Namen sehen. Bitte wähle einen kurzen Namen",
 
-    "resetAchievements": "Möchtest du wirklich alle Erfolge auf Null zurücksetzen?"
+    "resetAchievements": "Möchtest du wirklich alle Erfolge auf Null zurücksetzen?",
+
+    "restartGame": "Möchtest du dieses Spiel neu starten? Der aktuelle Spielstand geht dabei verloren.",
+
+    "skipMove": "Willst du deinen Zug wirklich auslassen?",
+
+    "askForRematchAgain": "Du hast bereits Revanche angefordert, siehe {playId}.",
+    "askAgain": "Frag erneut",
+
+    "undoLastMove": "Möchtest du den letzten Zug von {recentRole} rückgängig machen?",
+    "undoLastTwoMoves": "Möchtest du den letzten Zug von {recentRole} rückgängig machen? Dadurch wird auch der vorherige Zug von {currentRole} rückgängig gemacht."
+  },
+  "gameTitle": {
+    "againstComputer": "Einzelspiel",
+    "alternate": "Abwechselndes Einzelspiel",
+    "automatic": "Automatisches Spiel"
+  },
+  "submitButton": {
+    "submitMove" : "Zug einreichen",
+    "skipMove" : "Zug überspringen",
+    "shareAgain" : "Erneut teilen",
+    "restart" : "Spiel neu starten",
+    "swapRoles" : "Rollen tauschen und fortfahren",
+    "rematch" : "Revanche fordern"
   }
 }

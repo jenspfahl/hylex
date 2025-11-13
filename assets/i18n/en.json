@@ -65,6 +65,29 @@
     "whatKindOfMatchClassicStyle": "Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.",
 
     "yourName": "What is your name? Your opponent will see this name. Please choose a short name.",
-    "resetAchievements": "Do you really want to reset all achievements to zero?"
+    "resetAchievements": "Do you really want to reset all achievements to zero?",
+
+    "restartGame" : "Do you want to restart this game? The current state will be lost.",
+
+    "skipMove": "Do you really want to pass your move?",
+
+    "askForRematchAgain" : "You already asked for a rematch, see {playId}.",
+    "askAgain" : "Ask again",
+
+    "undoLastMove" : "Do you want to undo the last move from {recentRole}?",
+    "undoLastTwoMoves" : "Do you want to undo the last move from {recentRole}? This will also undo the previous move from {currentRole}."
+  },
+  "gameTitle": {
+    "againstComputer": "Single Game",
+    "alternate": "Alternating Single Game",
+    "automatic": "Automatic Game"
+  },
+  "submitButton": {
+    "submitMove" : "Submit move",
+    "skipMove" : "Skip move",
+    "shareAgain" : "Share again",
+    "restart" : "Restart game",
+    "swapRoles" : "Swap roles and continue",
+    "rematch" : "Ask for a rematch"
   }
-},
+}
