@@ -25,7 +25,6 @@ class QrReaderPageState extends State<QrReaderPage> {
 
   @override
   void dispose() {
-    _shutdown();
     super.dispose();
   }
 
