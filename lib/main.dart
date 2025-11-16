@@ -17,7 +17,9 @@ void main() {
         fallbackLocale: DEFAULT_LANGUAGE,
         supportedLocales: _getSupportedLanguages(''),
     );
-
+    await SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: [SystemUiOverlay.top]);
     runApp(LocalizedApp(delegate, HylexApp()));
   });
 }
