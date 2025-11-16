@@ -7,6 +7,8 @@
     "close": "Schließen",
     "reset": "Zurücksetzen",
     "hello": "Hallo {name}!",
+    "winner" : "Gewinner",
+    "looser" : "Verlierer",
     "dates": {
       "yesterday": "Gestern",
       "today": "Heute"
@@ -90,5 +92,19 @@
     "restart" : "Spiel neu starten",
     "swapRoles" : "Rollen tauschen und fortfahren",
     "rematch" : "Revanche fordern"
+  },
+  "gameHeader" : {
+    "roundOf" : "Runde {round} von {totalRounds}",
+    "round" : "Runde {round}",
+    "rolesSwapped" : "Rollen getauscht",
+    "classicStyle" : "Klassischer Stil",
+    "currentPlayer" : "Aktueller Spieler",
+    "waitingPlayer" : "Wartender Spieler",
+    "chaosChipCount" : "Ein ungeordneter Chip zählt {count}"
+  },
+  "player" : {
+    "localUser" : "Du",
+    "localAi" : "Computer",
+    "remoteUser" : "Gegner"
   }
 }

@@ -321,9 +321,15 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 children: [
                                   _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
                                   Column(children: [
-                                    Text("Round ${gameEngine.play.currentRound} of ${gameEngine.play.maxRounds}"),
+                                    Text(translate("gameHeader.roundOf", args:
+                                      {
+                                        "round": gameEngine.play.currentRound,
+                                        "totalRounds": gameEngine.play.maxRounds
+                                      })
+                                    ),
                                     if (gameEngine.play.header.rolesSwapped != null)
-                                      Text (gameEngine.play.header.rolesSwapped! ? "Roles swapped" : "Classic Style", style: TextStyle(fontStyle: FontStyle.italic),),
+                                      Text (gameEngine.play.header.rolesSwapped! ? translate("gameHeader.rolesSwapped") : translate("gameHeader.classicStyle"),
+                                        style: TextStyle(fontStyle: FontStyle.italic),),
                                   ]),
                                   _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
                                 ],
@@ -394,7 +400,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             crossAxisCount: gameEngine.play.dimension,
           ),
           itemBuilder: builder,
-          itemCount: gameEngine.play.dimension * gameEngine.play.dimension,
+          itemCount: gameEngine.play.maxRounds,
           physics: const NeverScrollableScrollPhysics()),
     );
   }
@@ -410,7 +416,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildJournalEvent((int, Move) e) {
-    final maxRound = gameEngine.play.header.playSize.dimension * gameEngine.play.header.playSize.dimension;
+    final maxRound = gameEngine.play.maxRounds;
     final isClassic = gameEngine.play.header.playMode == PlayMode.Classic;
 
     var swapThreshold = (maxRound * 2) - 1;
@@ -428,7 +434,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final localPlayer = gameEngine.play.getPlayerTypeOf(role);
     final opponentPlayer = gameEngine.play.getPlayerTypeOf(role.opponentRole);
 
-    Widget row = _buildMoveLine(move, prefix: "Round $round: ",
+    Widget row = _buildMoveLine(move, prefix: "${translate("gameHeader.round", args: {"round" : round})}: ",
         playerType: !gameEngine.play.isBothSidesSinglePlay
             ? (isClassic
               ? (isSecondGame ? localPlayer : opponentPlayer)
@@ -440,7 +446,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (move.toRole() == Role.Order) Text("------------------------------------"),
         row,
         if (isRoleSwap) Text(""),
-        if (isRoleSwap) Text("--------- Roles swapped ---------"),
+        if (isRoleSwap) Text("--------- ${translate("gameHeader.rolesSwapped")} ---------"),
         if (isRoleSwap) Text(""),
       ]
     );
@@ -543,10 +549,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (gameEngine.play.isWithAiPlay) {
       if (winnerPlayer == PlayerType.LocalUser) {
-        return "Game over! You (${winnerRole.name}) won this game!";
+        return "Game over! You as ${winnerRole.name} won this game!";
       }
       else {
-        return "Game over! You (${winnerRole.opponentRole.name}) lost this game!";
+        return "Game over! You as ${winnerRole.opponentRole.name} lost this game!";
       }
     }
     else if (gameEngine.play.isMultiplayerPlay) {
@@ -561,10 +567,10 @@ class _HyleXGroundState extends State<HyleXGround> {
       }
 
       if (winnerRole == localRole) {
-        return "Game over! You (${localRole!.name}) won this game$cause!";
+        return "Game over! You as ${localRole!.name} won this game$cause!";
       }
       else {
-        return "Game over! You (${localRole!.name}) lost this game$cause!";
+        return "Game over! You as ${localRole!.name} lost this game$cause!";
       }
     }
     else {
@@ -576,7 +582,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   String _buildLooserText() {
     final looserRole = gameEngine.play.getLooserRole();
     final looserPlayer = gameEngine.play.getLooserPlayer();
-    return "Game over! ${looserRole.name} (${looserPlayer.readableName}) looses this game!";
+
+    return "Game over! ${looserPlayer.getName()} as ${looserRole.name} lost this game!";
   }
 
   Row _buildAiProgressText() {
@@ -826,14 +833,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     final tooltipPrefix =
       gameEngine.play.isGameOver()
         ? gameEngine.play.getWinnerRole() == role
-            ? "Winner"
-            : "Looser"
+            ? translate("common.winner")
+            : translate("common.looser")
         : isSelected
-            ? "Current player"
-            : "Waiting player";
+            ? translate("gameHeader.currentPlayer")
+            : translate("gameHeader.waitingPlayer");
 
     final secondLine = (role == Role.Chaos && gameEngine.play.header.playMode != PlayMode.Classic)
-        ? "\nOne unordered chip counts ${gameEngine.play.getChaosPointsPerChip()}"
+        ? "\n${translate("gameHeader.chaosChipCount", args: {"count" : gameEngine.play.getChaosPointsPerChip()})}"
         : "";
 
     return SuperTooltip(
@@ -842,7 +849,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       showBarrier: false,
       hideTooltipOnTap: true,
       content: Text(
-        "$tooltipPrefix: ${player.readableName}$secondLine",
+        "$tooltipPrefix: ${player.getName()}$secondLine",
         softWrap: true,
 
         style: TextStyle(

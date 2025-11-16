@@ -1,13 +1,17 @@
 
 
 
+import 'package:flutter_translate/flutter_translate.dart';
+
 enum PlayerType {
-  LocalUser("You"),
-  LocalAi("Computer"),
-  RemoteUser("Remote opponent"),
+  LocalUser("player.localUser"),
+  LocalAi("player.localAi"),
+  RemoteUser("player.remoteUser"),
   ;
-  final String readableName;
-  const PlayerType(this.readableName);
+  final String _i18nKey;
+  const PlayerType(this._i18nKey);
+
+  String getName() => translate(_i18nKey);
 }
 
 enum Role {

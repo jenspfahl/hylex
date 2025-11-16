@@ -100,7 +100,7 @@ class Move {
 
   String toReadableStringWithChipPlaceholder(PlayerType? playerType) {
     final playerTypeName = playerType == PlayerType.LocalUser
-        ? " (${playerType!.readableName})"
+        ? " (${playerType!.getName()})"
         :"";
     if (isPlaced()) {
       return "Chaos$playerTypeName placed {chip} at ${to?.toReadableCoordinates()}";

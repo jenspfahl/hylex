@@ -7,6 +7,8 @@
     "close": "Close",
     "reset": "Reset",
     "hello": "Hello {name}!",
+    "winner" : "Winner",
+    "looser" : "Looser",
     "dates": {
       "yesterday": "Yesterday",
       "today": "Today"
@@ -89,5 +91,19 @@
     "restart" : "Restart game",
     "swapRoles" : "Swap roles and continue",
     "rematch" : "Ask for a rematch"
+  },
+  "gameHeader" : {
+    "roundOf" : "Round {round} of {totalRounds}",
+    "round" : "Round {round}",
+    "rolesSwapped" : "Roles swapped",
+    "classicStyle" : "Classic Style",
+    "currentPlayer" : "Current player",
+    "waitingPlayer" : "Waiting player",
+    "chaosChipCount" : "One unordered chip counts {count}"
+  },
+  "player" : {
+    "localUser" : "You",
+    "localAi" : "Computer",
+    "remoteUser" : "Remote opponent"
   }
 }
