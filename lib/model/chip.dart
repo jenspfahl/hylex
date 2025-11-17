@@ -1,4 +1,6 @@
 
+import 'package:flutter_translate/flutter_translate.dart';
+
 class GameChip {
 
   late final int id;
@@ -31,24 +33,28 @@ class GameChip {
     return 'Chip-$name';
   }
 
-  String getChipName() {
+  String _getChipI18nKey() {
     switch(id) {
-      case 0: return "Red";
-      case 1: return "Yellow";
-      case 2: return "Green";
-      case 3: return "Cyan";
-      case 4: return "Blue";
-      case 5: return "Pink";
-      case 6: return "Grey";
-      case 7: return "Brown";
-      case 8: return "Olive";
-      case 9: return "Moss";
-      case 10: return "Teal";
-      case 11: return "Indigo";
-      case 12: return "Purple";
+      case 0: return "red";
+      case 1: return "yellow";
+      case 2: return "green";
+      case 3: return "cyan";
+      case 4: return "blue";
+      case 5: return "pink";
+      case 6: return "grey";
+      case 7: return "brown";
+      case 8: return "olive";
+      case 9: return "moss";
+      case 10: return "teal";
+      case 11: return "indigo";
+      case 12: return "purple";
       default: return "";
     }
   }
 
+
+  String getChipName() {
+    return translate("colors.${_getChipI18nKey()}");
+  }
 }
 

@@ -1,6 +1,8 @@
 
 
 
+import 'package:flutter_translate/flutter_translate.dart';
+
 import 'chip.dart';
 import 'common.dart';
 import 'coordinate.dart';
@@ -103,13 +105,27 @@ class Move {
         ? " (${playerType!.getName()})"
         :"";
     if (isPlaced()) {
-      return "Chaos$playerTypeName placed {chip} at ${to?.toReadableCoordinates()}";
+      return translate("move.placedChip",
+          args: {
+            "who" : "Chaos$playerTypeName",
+            "chip" : "{chip}",
+            "where" : to?.toReadableCoordinates(),
+          });
     }
     else if (isMove()) {
-      return "Order$playerTypeName moved {chip} from ${from?.toReadableCoordinates()} to ${to?.toReadableCoordinates()}";
+      return translate("move.movedChip",
+          args: {
+            "who" : "Order$playerTypeName",
+            "chip" : "{chip}",
+            "from" : from?.toReadableCoordinates(),
+            "to" : to?.toReadableCoordinates(),
+          });
     }
     else {
-      return "Order$playerTypeName skipped this move";
+      return translate("move.skipped",
+          args: {
+            "who" : "Order$playerTypeName"
+          });
     }
   }
 

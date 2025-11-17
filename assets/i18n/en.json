@@ -9,6 +9,7 @@
     "hello": "Hello {name}!",
     "winner" : "Winner",
     "looser" : "Looser",
+    "left" : "left",
     "dates": {
       "yesterday": "Yesterday",
       "today": "Today"
@@ -96,14 +97,48 @@
     "roundOf" : "Round {round} of {totalRounds}",
     "round" : "Round {round}",
     "rolesSwapped" : "Roles swapped",
-    "classicStyle" : "Classic Style",
     "currentPlayer" : "Current player",
     "waitingPlayer" : "Waiting player",
     "chaosChipCount" : "One unordered chip counts {count}"
+  },
+  "playMode" : {
+    "hylex" : "HyleX Style",
+    "classic": "Classic Style"
   },
   "player" : {
     "localUser" : "You",
     "localAi" : "Computer",
     "remoteUser" : "Remote opponent"
+  },
+  "move" : {
+    "placedChip" : "{who} placed {chip} at {where}",
+    "movedChip" : "{who} moved {chip} from {from} to {to}",
+    "skipped" : "{who} skipped this move"
+  },
+  "colors" : {
+    "red" : "Red",
+    "yellow" : "Yellow",
+    "green" : "Green",
+    "cyan" : "Cyan",
+    "blue" : "Blue",
+    "pink" : "Pink",
+    "grey" : "Grey",
+    "brown" : "Brown",
+    "olive" : "Olive",
+    "moss" : "Moss",
+    "teal" : "Teal",
+    "indigo" : "Indigo",
+    "purple" : "Purple"
+  },
+  "gameStates" : {
+    "gameStarted" : "Game started",
+    "gameOver" : "Game over",
+    "gameOverWinner" : "Game over! {who} has won this game!",
+    "gameOverLooser" : "Game over! {who} has lost this game!",
+    "gameOverOpponentResigned" : "Game over! You have won this game, because your opponent gave up!",
+    "gameOverYouResigned" : "Game over! You have lost this game, because you gave up!",
+    "waitingForRemoteOpponent" : "Waiting for remote opponent's ({name}) turn ...",
+    "waitingForPlayerToMove" : "Waiting for {name} to move ...",
+    "waitingForPlayerToPlace" : "Waiting for {name} to place {chip} ..."
   }
 }

@@ -220,9 +220,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                                         .toList();
 
                                     elements.add(const Text(""));
-                                    elements.add(const Text("--------- Game started ---------"));
+                                    elements.add(Text("--------- ${translate("gameStates.gameStarted")} ---------"));
                                     if (gameEngine.play.isGameOver()) {
-                                      elements.insert(0, const Text("--------- Game over ---------"));
+                                      elements.insert(0, Text("--------- ${translate("gameStates.gameOver")} ---------"));
                                       elements.insert(1, const Text(""));
                                     }
                                     return Container(
@@ -328,7 +328,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                       })
                                     ),
                                     if (gameEngine.play.header.rolesSwapped != null)
-                                      Text (gameEngine.play.header.rolesSwapped! ? translate("gameHeader.rolesSwapped") : translate("gameHeader.classicStyle"),
+                                      Text (gameEngine.play.header.rolesSwapped! ? translate("gameHeader.rolesSwapped") : translate("playMode.classic"),
                                         style: TextStyle(fontStyle: FontStyle.italic),),
                                   ]),
                                   _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
@@ -530,10 +530,11 @@ class _HyleXGroundState extends State<HyleXGround> {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.header.state == PlayState.FirstGameFinished_WaitForOpponent) {
-      return Text( "First game finished, roles will be swapped, so remote opponent becomes Chaos!");
+      return Text("First game finished, roles will be swapped, so remote opponent becomes Chaos!");
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return Text("Waiting for remote opponent (${gameEngine.play.currentRole.name}) to move...");
+      return Text(translate("gameStates.waitingForRemoteOpponent",
+          args: {"name": gameEngine.play.currentRole.name}));
     }
     else {
       return _buildDoneText();
@@ -542,35 +543,41 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   String _buildWinnerOrLooserText() {
     final winnerRole = gameEngine.play.getWinnerRole();
+    final looserRole = gameEngine.play.getLooserRole();
     final winnerPlayer = gameEngine.play.getWinnerPlayer();
+    final looserPlayer = gameEngine.play.getLooserPlayer();
 
     if (gameEngine.play.isFullAutomaticPlay || gameEngine.play.isBothSidesSinglePlay) {
-      return "Game over! ${winnerRole.name} won this game!";
+      return translate("gameStates.gameOverWinner",
+          args: { "who" : winnerRole.name});
     }
     else if (gameEngine.play.isWithAiPlay) {
       if (winnerPlayer == PlayerType.LocalUser) {
-        return "Game over! You as ${winnerRole.name} won this game!";
+        return translate("gameStates.gameOverWinner",
+            args: { "who" : "${winnerRole.name} (${winnerPlayer.getName()})"});
       }
       else {
-        return "Game over! You as ${winnerRole.opponentRole.name} lost this game!";
+        return translate("gameStates.gameOverLooser",
+            args: { "who" : "${looserRole.name} (${looserPlayer.getName()})"});
       }
     }
     else if (gameEngine.play.isMultiplayerPlay) {
       var localRole = gameEngine.play.header.getLocalRoleForMultiPlay();
 
-      var cause = "";
       if (gameEngine.play.header.state == PlayState.Resigned) {
-        cause = ", because you resigned";
+        return translate("gameStates.gameOverYouResigned");
       }
       else if (gameEngine.play.header.state == PlayState.OpponentResigned) {
-        cause = ", because the opponent resigned";
+        return translate("gameStates.gameOverOpponentResigned");
       }
 
       if (winnerRole == localRole) {
-        return "Game over! You as ${localRole!.name} won this game$cause!";
+        return translate("gameStates.gameOverWinner",
+            args: { "who" : "${localRole!.name}"});
       }
       else {
-        return "Game over! You as ${localRole!.name} lost this game$cause!";
+        return translate("gameStates.gameOverLooser",
+            args: { "who" : "${localRole!.name}"});
       }
     }
     else {
@@ -583,7 +590,8 @@ class _HyleXGroundState extends State<HyleXGround> {
     final looserRole = gameEngine.play.getLooserRole();
     final looserPlayer = gameEngine.play.getLooserPlayer();
 
-    return "Game over! ${looserPlayer.getName()} as ${looserRole.name} lost this game!";
+    return translate("gameStates.gameOverLooser",
+        args: { "who" : "${looserRole.name} (${looserPlayer.name})"});
   }
 
   Row _buildAiProgressText() {
@@ -788,10 +796,16 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Widget _buildAiProcessingText() {
     if (gameEngine.play.currentRole == Role.Order) {
-      return Text("Waiting for ${gameEngine.play.currentRole.name} to move ...");
+      return Text(translate("gameStates.waitingForPlayerToMove",
+          args: {"name": gameEngine.play.currentRole.name}));
     }
     else {
-      return _replaceWithChipIcon(null, "Waiting for ${gameEngine.play.currentRole.name} to place {chip} ...",
+      return _replaceWithChipIcon(null,
+          translate("gameStates.waitingForPlayerToPlace",
+              args: {
+                "name": gameEngine.play.currentRole.name,
+                "chip": "{chip}",
+              }),
           MainAxisAlignment.center, gameEngine.play.currentChip);
     }
   }
@@ -1141,7 +1155,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         showBarrier: false,
         hideTooltipOnTap: true,
         content: Text(
-          "$chipText ${entry.chip.getChipName()}\n${entry.amount} left",
+          "$chipText ${entry.chip.getChipName()}\n${entry.amount} ${translate("common.left")}",
           softWrap: true,
           style: TextStyle(
             color: Colors.black,
@@ -1221,7 +1235,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         const Divider(),
-        _buildGameInfoRow("Mode:", play.header.playMode.label),
+        _buildGameInfoRow("Mode:", play.header.playMode.getName()),
         if (play.header.playMode == PlayMode.Classic)
           _buildGameInfoRow("Game in match:", play.header.rolesSwapped == true ? "Second game" : "First game"),
         _buildGameInfoRow("Game Size:", "${play.header.playSize.dimension} x ${play.header.playSize.dimension}"),

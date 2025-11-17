@@ -9,6 +9,7 @@
     "hello": "Hallo {name}!",
     "winner" : "Gewinner",
     "looser" : "Verlierer",
+    "left" : "übrig",
     "dates": {
       "yesterday": "Gestern",
       "today": "Heute"
@@ -97,14 +98,48 @@
     "roundOf" : "Runde {round} von {totalRounds}",
     "round" : "Runde {round}",
     "rolesSwapped" : "Rollen getauscht",
-    "classicStyle" : "Klassischer Stil",
     "currentPlayer" : "Aktueller Spieler",
     "waitingPlayer" : "Wartender Spieler",
     "chaosChipCount" : "Ein ungeordneter Chip zählt {count}"
+  },
+  "playMode" : {
+    "hylex" : "HyleX-Stil",
+    "classic": "Klassischer Stil"
   },
   "player" : {
     "localUser" : "Du",
     "localAi" : "Computer",
     "remoteUser" : "Gegner"
+  },
+  "move" : {
+    "placedChip" : "{who} hat {chip} auf {where} gelegt",
+    "movedChip" : "{who} hat {chip} von {from} nach {to} verschoben",
+    "skipped" : "{who} hat den Zug ausgesetzt"
+  },
+  "colors" : {
+    "red" : "Rot",
+    "yellow" : "Gelb",
+    "green" : "Grün                                                                           ",
+    "cyan" : "Cyan",
+    "blue" : "Blau",
+    "pink" : "Rosa",
+    "grey" : "Grau",
+    "brown" : "Braun",
+    "olive" : "Olivgrün",
+    "moss" : "Mossgrün",
+    "teal" : "Türkis",
+    "indigo" : "Indigo",
+    "purple" : "Lila"
+  },
+  "gameStates" : {
+    "gameStarted" : "Spielbeginn",
+    "gameOver" : "Spielende",
+    "gameOverWinner" : "Game over! {who} hat das Spiel gewonnen!",
+    "gameOverLooser" : "Game over! {who} hat das Spiel verloren!",
+    "gameOverOpponentResigned" : "Game over! Du hast dieses Spiel gewonnen, weil dein Gegner aufgegeben hat!",
+    "gameOverYouResigned" : "Game over! Du hast dieses Spiel verloren, weil du aufgegeben hast!",
+    "waitingForRemoteOpponent" : "Warte auf Gegners ({name}) Zug ...",
+    "waitingForPlayerToMove" : "Warte darauf, dass {name} zieht ...",
+    "waitingForPlayerToPlace" : "Warte darauf, dass {name} {chip} ablegt..."
   }
 }

@@ -65,14 +65,16 @@ enum Operation {
 } 
 
 enum PlayMode {
-  HyleX("Hylex-Style"),    //00
-  Classic("Classic-Style"),  //01
+  HyleX("playMode.hylex"),    //00
+  Classic("playMode.classic"),  //01
   unused10(""), //10 TODO could be with no random chip withdrawal
   unused11(""); //11
   // stuck to 2 bits, don't add more
 
-  final String label;
-  const PlayMode(this.label);
+  final String _i18nKey;
+  const PlayMode(this._i18nKey);
+
+  String getName() => translate(_i18nKey);
 } 
 
 enum PlayOpener {

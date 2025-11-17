@@ -703,10 +703,10 @@ class StartPageState extends State<StartPage> {
       translate('dialogs.whatKindOfMatch'),
       width: 300,
       height: 450,
-      firstString: PlayMode.HyleX.label,
+      firstString: PlayMode.HyleX.getName(),
       firstDescriptionString: translate('dialogs.whatKindOfMatchHylexStyle'),
       firstHandler: () => handlePlayerMode(PlayMode.HyleX),
-      secondString: PlayMode.Classic.label,
+      secondString: PlayMode.Classic.getName(),
       secondDescriptionString: translate('dialogs.whatKindOfMatchClassicStyle'),
       secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
