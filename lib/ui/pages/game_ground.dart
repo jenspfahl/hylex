@@ -220,18 +220,26 @@ class _HyleXGroundState extends State<HyleXGround> {
                                         .toList();
 
                                     elements.add(const Text(""));
-                                    elements.add(Text("--------- ${translate("gameStates.gameStarted")} ---------"));
+                                    elements.add(_buildJournalLineSeparator(context, translate("gameStates.gameStarted")));
                                     if (gameEngine.play.isGameOver()) {
-                                      elements.insert(0, Text("--------- ${translate("gameStates.gameOver")} ---------"));
+                                      elements.insert(0, _buildJournalLineSeparator(context, translate("gameStates.gameOver")));
                                       elements.insert(1, const Text(""));
                                     }
                                     return Container(
                                       height: MediaQuery.sizeOf(context).height / 2,
+                                      width: MediaQuery.sizeOf(context).width,
                                       child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                                         child: SingleChildScrollView(
+                                          scrollDirection: Axis.vertical,
                                           child: Center(
-                                            child: Column(children: elements),
+                                            child: SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: Column(
+                                                  children: elements,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -374,7 +382,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                             ),
       
                             Padding(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                               child: _buildHint(context),
                             ),
                             Padding(
@@ -388,6 +396,15 @@ class _HyleXGroundState extends State<HyleXGround> {
                 )),
     );
 
+  }
+
+  Container _buildJournalLineSeparator(BuildContext context, [String? text]) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      child: Center(child: text != null
+          ? Text("--------- $text ---------")
+          : Text("------------------------------------")),
+    );
   }
 
   Widget _buildChipGrid(NullableIndexedWidgetBuilder builder) {
@@ -442,11 +459,12 @@ class _HyleXGroundState extends State<HyleXGround> {
             : null);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (move.toRole() == Role.Order) Text("------------------------------------"),
+        if (move.toRole() == Role.Order) _buildJournalLineSeparator(context),
         row,
         if (isRoleSwap) Text(""),
-        if (isRoleSwap) Text("--------- ${translate("gameHeader.rolesSwapped")} ---------"),
+        if (isRoleSwap) _buildJournalLineSeparator(context, translate("gameHeader.rolesSwapped")),
         if (isRoleSwap) Text(""),
       ]
     );
@@ -482,15 +500,15 @@ class _HyleXGroundState extends State<HyleXGround> {
       final split = text.split("{chip}");
       final first = split[0];
       final second = split[1];
-    
-      row = Row(
-        mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
+
+      row = Wrap(
+        alignment: WrapAlignment.start,
+        crossAxisAlignment: WrapCrossAlignment.center,
+       // mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
         children: [
           if (prefix != null)
             Text(prefix),
-          Text(first),
-          Text(chip.getChipName()),
-          const Text(" "),
+          Text("${first}${chip.getChipName()} "),
           CircleAvatar(
               backgroundColor: _getChipColor(chip, null),
               maxRadius: 6,
@@ -500,8 +518,8 @@ class _HyleXGroundState extends State<HyleXGround> {
       );
     }
     else {
-      row = Row(
-        mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
+      row = Wrap(alignment: WrapAlignment.start,
+       // mainAxisAlignment: mainAxisAlignment ?? MainAxisAlignment.start,
         children: [
           if (prefix != null)
             Text(prefix),
@@ -771,13 +789,13 @@ class _HyleXGroundState extends State<HyleXGround> {
     var appendix = "";
 
     if (gameEngine.play.header.state == PlayState.FirstGameFinished_ReadyToSwap) {
-      appendix = "➤ First game finished, time to swap role!";
+      appendix = "➤ ${translate("requests.swapRoles")}";
     }
     else if (gameEngine.play.currentRole == Role.Order) {
-      appendix = "➤ Now it's on Order to move a chip or skip!";
+      appendix = "➤ ${translate("requests.orderToMove")}";
     }
     else if (gameEngine.play.currentRole == Role.Chaos) {
-      appendix = "➤ Now it's on Chaos to place next chip {chip} !";
+      appendix = "➤ ${translate("requests.chaosToPlace")}";
     }
 
     return Column(
@@ -804,7 +822,6 @@ class _HyleXGroundState extends State<HyleXGround> {
           translate("gameStates.waitingForPlayerToPlace",
               args: {
                 "name": gameEngine.play.currentRole.name,
-                "chip": "{chip}",
               }),
           MainAxisAlignment.center, gameEngine.play.currentChip);
     }
@@ -1145,8 +1162,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     final entry = stockEntries.toList()[index];
     final isCurrent = gameEngine.play.currentChip == entry.chip;
     final chipText = isCurrent
-        ? (gameEngine.play.currentRole == Role.Chaos ? "Drawn chip" : "Recently placed chip")
-        : "Chip";
+        ? (gameEngine.play.currentRole == Role.Chaos
+        ? translate("gameHeader.drawnChip")
+        : translate("gameHeader.recentlyPlacedChip"))
+        : translate("gameHeader.chip") ;
     final text = gameEngine.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
     final tooltipKey = "$_stockChipToolTipKey-$index";
     return SuperTooltip(

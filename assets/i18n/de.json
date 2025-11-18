@@ -100,7 +100,10 @@
     "rolesSwapped" : "Rollen getauscht",
     "currentPlayer" : "Aktueller Spieler",
     "waitingPlayer" : "Wartender Spieler",
-    "chaosChipCount" : "Ein ungeordneter Chip zählt {count}"
+    "chaosChipCount" : "Ein ungeordneter Chip zählt {count}",
+    "drawnChip" : "Gezogener Chip",
+    "recentlyPlacedChip" : "Zuletzt abgelegter Chip",
+    "chip" : "Chip"
   },
   "playMode" : {
     "hylex" : "HyleX-Stil",
@@ -119,14 +122,14 @@
   "colors" : {
     "red" : "Rot",
     "yellow" : "Gelb",
-    "green" : "Grün                                                                           ",
+    "green" : "Grün",
     "cyan" : "Cyan",
     "blue" : "Blau",
     "pink" : "Rosa",
     "grey" : "Grau",
     "brown" : "Braun",
     "olive" : "Olivgrün",
-    "moss" : "Mossgrün",
+    "moss" : "Moosgrün",
     "teal" : "Türkis",
     "indigo" : "Indigo",
     "purple" : "Lila"
@@ -134,12 +137,17 @@
   "gameStates" : {
     "gameStarted" : "Spielbeginn",
     "gameOver" : "Spielende",
-    "gameOverWinner" : "Game over! {who} hat das Spiel gewonnen!",
-    "gameOverLooser" : "Game over! {who} hat das Spiel verloren!",
-    "gameOverOpponentResigned" : "Game over! Du hast dieses Spiel gewonnen, weil dein Gegner aufgegeben hat!",
-    "gameOverYouResigned" : "Game over! Du hast dieses Spiel verloren, weil du aufgegeben hast!",
+    "gameOverWinner" : "Spielende! {who} hat das Spiel gewonnen!",
+    "gameOverLooser" : "Spielende! {who} hat das Spiel verloren!",
+    "gameOverOpponentResigned" : "Spielende! Du hast dieses Spiel gewonnen, weil dein Gegner aufgegeben hat!",
+    "gameOverYouResigned" : "Spielende! Du hast dieses Spiel verloren, weil du aufgegeben hast!",
     "waitingForRemoteOpponent" : "Warte auf Gegners ({name}) Zug ...",
     "waitingForPlayerToMove" : "Warte darauf, dass {name} zieht ...",
     "waitingForPlayerToPlace" : "Warte darauf, dass {name} {chip} ablegt..."
+  },
+  "requests" : {
+    "swapRoles" : "Erstes Spiel des Matches beendet. Zeit, die Rollen zu tauschen!",
+    "orderToMove" : "Jetzt ist Order an der Reihe, einen Chip zu verschieben oder auszusetzen!",
+    "chaosToPlace" : "Jetzt ist Chaos an der Reihe, {chip} abzulegen!"
   }
 }

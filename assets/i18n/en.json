@@ -29,7 +29,7 @@
     "achievements": "Achievements"
   },
   "sheets": {
-    "scanOrPasteMessage": "Scan your opponent's QR code. If they sent you a message with an app link, and that link doesn't open this app, you can paste it here."
+    "scanOrPasteMessage": "Scan your opponent's QR code. If they sent you a message with an app link, and that link doesn't open this app, you can paste it here.",
     "scanMessage": "Scan QR code",
     "scanMessageError": "Cannot read this QR code!",
     "pasteMessage": "Paste message",
@@ -99,7 +99,10 @@
     "rolesSwapped" : "Roles swapped",
     "currentPlayer" : "Current player",
     "waitingPlayer" : "Waiting player",
-    "chaosChipCount" : "One unordered chip counts {count}"
+    "chaosChipCount" : "One unordered chip counts {count}",
+    "drawnChip" : "Drawn chip",
+    "recentlyPlacedChip" : "Recently placed chip",
+    "chip" : "Chip"
   },
   "playMode" : {
     "hylex" : "HyleX Style",
@@ -140,5 +143,10 @@
     "waitingForRemoteOpponent" : "Waiting for remote opponent's ({name}) turn ...",
     "waitingForPlayerToMove" : "Waiting for {name} to move ...",
     "waitingForPlayerToPlace" : "Waiting for {name} to place {chip} ..."
+  },
+  "requests" : {
+    "swapRoles" : "First game of the match finished, time to swap role!",
+    "orderToMove" : "Now it's on Order to move a chip or skip!",
+    "chaosToPlace" : "Now it's on Chaos to place {chip} !"
   }
 }

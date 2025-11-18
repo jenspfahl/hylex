@@ -108,7 +108,6 @@ class Move {
       return translate("move.placedChip",
           args: {
             "who" : "Chaos$playerTypeName",
-            "chip" : "{chip}",
             "where" : to?.toReadableCoordinates(),
           });
     }
@@ -116,7 +115,6 @@ class Move {
       return translate("move.movedChip",
           args: {
             "who" : "Order$playerTypeName",
-            "chip" : "{chip}",
             "from" : from?.toReadableCoordinates(),
             "to" : to?.toReadableCoordinates(),
           });
