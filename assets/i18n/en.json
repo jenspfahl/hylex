@@ -78,7 +78,10 @@
     "askAgain" : "Ask again",
 
     "undoLastMove" : "Do you want to undo the last move from {recentRole}?",
-    "undoLastTwoMoves" : "Do you want to undo the last move from {recentRole}? This will also undo the previous move from {currentRole}."
+    "undoLastTwoMoves" : "Do you want to undo the last move from {recentRole}? This will also undo the previous move from {currentRole}.",
+    "undoCompleted" : "Undo completed",
+
+    "wantToResign": "Do you want to give up? Then you will lose this game."
   },
   "gameTitle": {
     "againstComputer": "Single Game",
@@ -142,11 +145,37 @@
     "gameOverYouResigned" : "Game over! You have lost this game, because you gave up!",
     "waitingForRemoteOpponent" : "Waiting for remote opponent's ({name}) turn ...",
     "waitingForPlayerToMove" : "Waiting for {name} to move ...",
-    "waitingForPlayerToPlace" : "Waiting for {name} to place {chip} ..."
+    "waitingForPlayerToPlace" : "Waiting for {name} to place {chip} ...",
+    "firstGameFinishedOfTwo" : "The first game is finished, roles will be swapped, so the remote opponent becomes Chaos!",
+    "firstGameState": "Result of the first game"
   },
   "requests" : {
     "swapRoles" : "First game of the match finished, time to swap role!",
     "orderToMove" : "Now it's on Order to move a chip or skip!",
     "chaosToPlace" : "Now it's on Chaos to place {chip} !"
+  },
+  "errors": {
+    "chaosHasToPlace": "Chaos must place a chip before proceeding!",
+    "chaosAlreadyPlaced": "You have already placed a chip.",
+    "noMoreStock": "No more chips available.",
+    "onlyRemoveRecentlyPlacedChip": "You can only remove the most recently placed chip!",
+    "orderHasToSelectAChip": "Please select the chip you wish to move first.",
+    "orderMoveInvalid": "The chip can only be moved horizontally or vertically through empty spaces.",
+    "orderMoveOnOccupied": "You cannot move the selected chip to an occupied space."
+  },
+  "matchMenu" : {
+    "matchInfo": "Match Info",
+    "showFirstGame": "Show first game result",
+    "gameMode": "Mode",
+    "gameInMatch": "Game in match",
+    "gameInMatchFirst": "First game",
+    "gameInMatchSecond": "Second game",
+    "gameSize": "Game size",
+    "gameOpener": "Game opener",
+    "pointsPerUnorderedChip": "Points per unordered chip",
+    "startedAt": "Match started at",
+    "lastActivity": "Last activity at",
+    "finishedAt": "Match finished at",
+    "status": "Match state"
   }
 }

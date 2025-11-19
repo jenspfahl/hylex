@@ -79,7 +79,10 @@
     "askAgain": "Frag erneut",
 
     "undoLastMove": "Möchtest du den letzten Zug von {recentRole} rückgängig machen?",
-    "undoLastTwoMoves": "Möchtest du den letzten Zug von {recentRole} rückgängig machen? Dadurch wird auch der vorherige Zug von {currentRole} rückgängig gemacht."
+    "undoLastTwoMoves": "Möchtest du den letzten Zug von {recentRole} rückgängig machen? Dadurch wird auch der vorherige Zug von {currentRole} rückgängig gemacht.",
+    "undoCompleted" : "Letzen Zug rückgängig gemacht",
+
+    "wantToResign": "Willst du aufgeben? Dann wirst du dieses Spiel verlieren."
   },
   "gameTitle": {
     "againstComputer": "Einzelspiel",
@@ -143,11 +146,37 @@
     "gameOverYouResigned" : "Spielende! Du hast dieses Spiel verloren, weil du aufgegeben hast!",
     "waitingForRemoteOpponent" : "Warte auf Gegners ({name}) Zug ...",
     "waitingForPlayerToMove" : "Warte darauf, dass {name} zieht ...",
-    "waitingForPlayerToPlace" : "Warte darauf, dass {name} {chip} ablegt..."
+    "waitingForPlayerToPlace" : "Warte darauf, dass {name} {chip} ablegt...",
+    "firstGameFinishedOfTwo" : "Das erste Spiel ist beendet, die Rollen werden getauscht und der Gegner spielt Chaos!",
+    "firstGameState" : "Ergebnis des ersten Spiels"
   },
   "requests" : {
     "swapRoles" : "Erstes Spiel des Matches beendet. Zeit, die Rollen zu tauschen!",
     "orderToMove" : "Jetzt ist Order an der Reihe, einen Chip zu verschieben oder auszusetzen!",
     "chaosToPlace" : "Jetzt ist Chaos an der Reihe, {chip} abzulegen!"
+  },
+  "errors" : {
+    "chaosHasToPlace" : "Chaos muss einen Chip ablegen, bevor es weitergeht!",
+    "chaosAlreadyPlaced" : "Du hast bereits einen Chip abgelegt.",
+    "noMoreStock" : "Kein Chip mehr verfügbar.",
+    "onlyRemoveRecentlyPlacedChip" : "Du kannst nur den zuletzt abgelegten Chip entfernen!",
+    "orderHasToSelectAChip" : "Bitte wähle zuerst den Chip aus, den du bewegen möchtest.",
+    "orderMoveInvalid" : "Der Chip kann nur horizontal oder vertikal durch freie Felder verschoben werden.",
+    "orderMoveOnOccupied" : "Du kannst den ausgewählten Chip nicht auf ein belegtes Feld verschieben."
+  },
+  "matchMenu" : {
+    "matchInfo": "Spielinfos",
+    "showFirstGame": "Ergebnis des ersten Spiels anzeigen",
+    "gameMode": "Modus",
+    "gameInMatch": "Spiel im Match",
+    "gameInMatchFirst": "Erstes Spiel",
+    "gameInMatchSecond": "Zweites Spiel",
+    "gameSize": "Spielgröße",
+    "gameOpener": "Eröffner",
+    "pointsPerUnorderedChip": "Punkte pro nicht geordnetem Chip",
+    "startedAt": "Spielbeginn",
+    "lastActivity": "Letzte Aktivität",
+    "finishedAt": "Spielende",
+    "status": "Spielstatus"
   }
 }
