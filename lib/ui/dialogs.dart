@@ -96,6 +96,7 @@ void showChoiceDialog(
       String? fifthString,
       String? fifthDescriptionString,
       Function()? fifthHandler,
+      int? highlightButtonIndex
   }) {
   SmartDialog.show(builder: (_) {
     var calcHeight = 180 + text.length.toDouble();
@@ -142,14 +143,19 @@ void showChoiceDialog(
               text,
               style: const TextStyle(color: Colors.white),
             ),
-            _buildChoiceButton(firstHandler, firstString, firstDescriptionString),
-            _buildChoiceButton(secondHandler, secondString, secondDescriptionString),
+            _buildChoiceButton(firstHandler, firstString, firstDescriptionString,
+                highlighted: highlightButtonIndex == 0),
+            _buildChoiceButton(secondHandler, secondString, secondDescriptionString,
+                highlighted: highlightButtonIndex == 1),
             if (thirdString != null && thirdHandler != null)
-              _buildChoiceButton(thirdHandler, thirdString, thirdDescriptionString),
+              _buildChoiceButton(thirdHandler, thirdString, thirdDescriptionString,
+                  highlighted: highlightButtonIndex == 2),
             if (fourthString != null && fourthHandler != null)
-              _buildChoiceButton(fourthHandler, fourthString, fourthDescriptionString),
+              _buildChoiceButton(fourthHandler, fourthString, fourthDescriptionString,
+                  highlighted: highlightButtonIndex == 3),
             if (fifthString != null && fifthHandler != null)
-              _buildChoiceButton(fifthHandler, fifthString, fifthDescriptionString),
+              _buildChoiceButton(fifthHandler, fifthString, fifthDescriptionString,
+                  highlighted: highlightButtonIndex == 4),
           ],
         ),
       ),
@@ -157,11 +163,19 @@ void showChoiceDialog(
   });
 }
 
-OutlinedButton _buildChoiceButton(Function() handler, String title, String? description) {
+OutlinedButton _buildChoiceButton(
+    Function() handler,
+    String title,
+    String? description,
+    {
+      bool highlighted = false,
+    }) {
   if (description != null) {
     return OutlinedButton(
         style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.lightGreenAccent),
+            foregroundColor: Colors.lightGreenAccent,
+            side: highlighted ? BorderSide(width: 2.5, color: Colors.grey) : null,
+        ),
         onPressed: () {
           SmartDialog.dismiss();
           handler();

@@ -178,5 +178,24 @@
     "lastActivity": "Letzte Aktivität",
     "finishedAt": "Spielende",
     "status": "Spielstatus"
+  },
+  "matchList" : {
+    "title" : "Deine Matches",
+    "sorting" : {
+      "sortBy" : "Matches sortieren nach",
+      "sortByCurrentStatusTitle" : "Spielstatus",
+      "sortByCurrentStatusDesc" : "Sortiert und gruppiert nach dem aktuellen Status",
+      "sortByRecentlyPlayedTitle" : "Zuletzt gespielt",
+      "sortByRecentlyPlayedDesc" : "Das zuletzt gespielte Match steht oben",
+      "sortByMatchIdTitle" : "Match-ID",
+      "sortByMatchIdDesc" : "Alphabetisch sortiert nach der Match-ID, um Matches schneller zu finden"
+    },
+    "groups" : {
+      "actionNeeded" : "Aktion erforderlich",
+      "waitForOpponent" : "Warte auf Gegner",
+      "wonMatches" : "Gewonnene Matches",
+      "lostMatches" : "Verlorene Matches",
+      "rejectedMatches" : "Abgelehnte Match-Einladungen"
+    }
   }
 }

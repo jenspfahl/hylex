@@ -177,5 +177,24 @@
     "lastActivity": "Last activity at",
     "finishedAt": "Match finished at",
     "status": "Match state"
+  },
+  "matchList" : {
+    "title" : "Your Matches",
+    "sorting" : {
+      "sortBy": "Sort matches by",
+      "sortByCurrentStatusTitle": "Match status",
+      "sortByCurrentStatusDesc": "Sorted and grouped by Current Status",
+      "sortByRecentlyPlayedTitle": "Last played",
+      "sortByRecentlyPlayedDesc": "Most recently played match at the top",
+      "sortByMatchIdTitle": "Match ID",
+      "sortByMatchIdDesc": "Alphabetically sorted by Match ID for faster match finding"
+    },
+    "groups" : {
+      "actionNeeded" : "Action required",
+      "waitForOpponent" : "Wait for opponent",
+      "wonMatches" : "Matches won",
+      "lostMatches" : "Matches lost",
+      "rejectedMatches" : "Match invitations rejected"
+    }
   }
 }

@@ -61,7 +61,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Continue a match'),
+          title: Text(translate("matchList.title")),
           actions: [
             IconButton(
               icon: const Icon(Icons.qr_code_scanner),
@@ -71,17 +71,18 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             IconButton(
                 icon: const Icon(Icons.sort),
                 onPressed: () {
-                  showChoiceDialog("Sort the list by:",
+                  showChoiceDialog(translate("matchList.sorting.sortBy") + ":",
                       width: 260,
-                      firstString: _emphasise("Current Status", _sortOrder == SortOrder.BY_STATE),
-                      firstDescriptionString: "Sorted and grouped by the status ",
+                      firstString: _emphasise(translate("matchList.sorting.sortByCurrentStatusTitle"), _sortOrder == SortOrder.BY_STATE),
+                      firstDescriptionString: translate("matchList.sorting.sortByCurrentStatusDesc"),
                       firstHandler: () => _triggerSort(SortOrder.BY_STATE),
-                      secondString: _emphasise("Recently played", _sortOrder == SortOrder.BY_LATEST),
-                      secondDescriptionString: "The recently played match is on top",
+                      secondString: _emphasise(translate("matchList.sorting.sortByRecentlyPlayedTitle"), _sortOrder == SortOrder.BY_LATEST),
+                      secondDescriptionString: translate("matchList.sorting.sortByRecentlyPlayedDesc"),
                       secondHandler: () => _triggerSort(SortOrder.BY_LATEST),
-                      thirdString: _emphasise("Match ID", _sortOrder == SortOrder.BY_PLAY_ID),
-                      thirdDescriptionString: "Sort by the Match Identifier, alphabetically ascending",
+                      thirdString: _emphasise(translate("matchList.sorting.sortByMatchIdTitle"), _sortOrder == SortOrder.BY_PLAY_ID),
+                      thirdDescriptionString: translate("matchList.sorting.sortByMatchIdDesc"),
                       thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
+                    highlightButtonIndex: _sortOrder == SortOrder.BY_STATE ? 0 : _sortOrder == SortOrder.BY_LATEST ? 1: 2
                   );
                 }),
           ],
@@ -104,11 +105,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Column(
                           children: [
-                            _buildPlayGroupSection("Action needed", sorted, PlayStateGroup.TakeAction),
-                            _buildPlayGroupSection("Waiting for opponent", sorted, PlayStateGroup.AwaitOpponentAction),
-                            _buildPlayGroupSection("Won matches", sorted, PlayStateGroup.FinishedAndWon),
-                            _buildPlayGroupSection("Lost matches", sorted, PlayStateGroup.FinishedAndLost),
-                            _buildPlayGroupSection("Rejected matches", sorted, PlayStateGroup.Other),
+                            _buildPlayGroupSection(translate("matchList.groups.actionNeeded"), sorted, PlayStateGroup.TakeAction),
+                            _buildPlayGroupSection(translate("matchList.groups.waitForOpponent"), sorted, PlayStateGroup.AwaitOpponentAction),
+                            _buildPlayGroupSection(translate("matchList.groups.wonMatches"), sorted, PlayStateGroup.FinishedAndWon),
+                            _buildPlayGroupSection(translate("matchList.groups.lostMatches"), sorted, PlayStateGroup.FinishedAndLost),
+                            _buildPlayGroupSection(translate("matchList.groups.rejectedMatches"), sorted, PlayStateGroup.Other),
                           ],
                         ),
                       ),

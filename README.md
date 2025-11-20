@@ -3,11 +3,13 @@
 A Hyle (Entropy) board game clone
 
 
---- Still in development ---
+--- In beta test phase ---
 
 Single player against AI is playable.
 
-Multiplayer is playable too but not error free so far ! ---
+Multiplayer is playable too  ---
+
+Translations and improvements are ongoing.
 
 Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
