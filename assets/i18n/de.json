@@ -82,7 +82,10 @@
     "undoLastTwoMoves": "Möchtest du den letzten Zug von {recentRole} rückgängig machen? Dadurch wird auch der vorherige Zug von {currentRole} rückgängig gemacht.",
     "undoCompleted" : "Letzen Zug rückgängig gemacht",
 
-    "wantToResign": "Willst du aufgeben? Dann wirst du dieses Spiel verlieren."
+    "wantToResign": "Willst du aufgeben? Dann wirst du dieses Spiel verlieren.",
+
+    "deleteFinalMatch": "Möchtest du das Match {playId} wirklich entfernen? Dies kann nicht rückgängig gemacht werden!",
+    "deleteOngoingMatch": "Möchtest du das Match {playId} wirklich entfernen? Nach dem Entfernen kannst du es nicht mehr weiterspielen!"
   },
   "gameTitle": {
     "againstComputer": "Einzelspiel",
@@ -175,12 +178,15 @@
     "gameOpener": "Eröffner",
     "pointsPerUnorderedChip": "Punkte pro nicht geordnetem Chip",
     "startedAt": "Spielbeginn",
-    "lastActivity": "Letzte Aktivität",
+    "lastActivity": "Letzte Aktivität am",
     "finishedAt": "Spielende",
     "status": "Spielstatus"
   },
   "matchList" : {
     "title" : "Deine Matches",
+    "nothingFound": "Keine gespeicherten Spielstände vorhanden!",
+    "errorDuringLoading" : "Gespeicherte Spielstände können nicht geladen werden!",
+    "nothingToShare" : "Du musst erst auf die letzte Nachricht reagieren!",
     "sorting" : {
       "sortBy" : "Matches sortieren nach",
       "sortByCurrentStatusTitle" : "Spielstatus",
@@ -197,5 +203,11 @@
       "lostMatches" : "Verlorene Matches",
       "rejectedMatches" : "Abgelehnte Match-Einladungen"
     }
+  },
+  "messaging": {
+    "sendYourMove": "Sende deine Anfrage oder deinen Zug zu deinem Gegner.",
+    "sendYourMoveAsMessage": "Als Nachricht",
+    "sendYourMoveAsQrCode": "Als QR-Code",
+    "rememberDecision": "Merke meine Entscheidung für dieses Match."
   }
 }

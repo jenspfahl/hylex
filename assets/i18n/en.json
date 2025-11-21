@@ -81,7 +81,10 @@
     "undoLastTwoMoves" : "Do you want to undo the last move from {recentRole}? This will also undo the previous move from {currentRole}.",
     "undoCompleted" : "Undo completed",
 
-    "wantToResign": "Do you want to give up? Then you will lose this game."
+    "wantToResign": "Do you want to give up? Then you will lose this game.",
+
+    "deleteFinalMatch": "Are you sure you want to remove the match {playId}? This cannot be undone!",
+    "deleteOngoingMatch": "Are you sure you want to remove the match {playId}? After removal, you will no longer be able to play it!"
   },
   "gameTitle": {
     "againstComputer": "Single Game",
@@ -180,6 +183,9 @@
   },
   "matchList" : {
     "title" : "Your Matches",
+    "nothingFound": "No saved matches!",
+    "errorDuringLoading" : "Cannot load saved matches!",
+    "nothingToShare": "You must react to the last message first!",
     "sorting" : {
       "sortBy": "Sort matches by",
       "sortByCurrentStatusTitle": "Match status",
@@ -196,5 +202,13 @@
       "lostMatches" : "Matches lost",
       "rejectedMatches" : "Match invitations rejected"
     }
+  },
+  "messaging": {
+
+    "sendYourMove": "Send your request or move to your opponent.",
+    "sendYourMoveAsMessage": "As message",
+    "sendYourMoveAsQrCode": "As QR code",
+    "rememberDecision": "Remember my decision for this match."
+
   }
 }

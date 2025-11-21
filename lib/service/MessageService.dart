@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -272,11 +273,11 @@ class MessageService {
                     mainAxisSize: MainAxisSize.max,
                     spacing: 5,
                     children: [
-                      Text("Share your request or move with your opponent:"),
+                      Text(translate("messaging.sendYourMove")),
                       buildFilledButton(
                           context,
                           Icons.near_me,
-                          "As message",
+                          translate("messaging.sendYourMoveAsMessage"),
                               () async {
                             header.props["remember"] = remember ? "as_message" : "";
                             if (saveState) {
@@ -289,7 +290,7 @@ class MessageService {
                       buildFilledButton(
                           context,
                           Icons.qr_code_2,
-                          "As QR code",
+                          translate("messaging.sendYourMoveAsQrCode"),
                               () async {
                                 header.props["remember"] = remember ? "as_qr_code" : "";
                                 if (saveState) {
@@ -300,7 +301,7 @@ class MessageService {
 
                           }),
                       CheckboxListTile(
-                          title: Text("Remember my decision for this match"),
+                          title: Text(translate("messaging.rememberDecision")),
                           value: remember,
                           dense: true,
                           checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),

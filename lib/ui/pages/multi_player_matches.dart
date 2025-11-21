@@ -135,10 +135,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               }
               else if (snapshot.hasError) {
                 print("loading error: ${snapshot.error}");
-                return Center(child: Text("Cannot load stored matches!\n${snapshot.error}"));
+                return Center(child: Text("${translate("matchList.errorDuringLoading")}\n${snapshot.error}"));
               }
               else {
-                return Center(child: Text("No stored matches!"));
+                return Center(child: Text(translate("matchList.nothingFound")));
               }
             })
     );
@@ -255,7 +255,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
                         ],
                       ),
-                      if (playHeader.lastTimestamp != null) Text("Last move: " + format(playHeader.lastTimestamp!), style: TextStyle(color: Colors.grey[500])),
+                      if (playHeader.lastTimestamp != null) Text("${translate("matchMenu.lastActivity")} " + format(playHeader.lastTimestamp!), style: TextStyle(color: Colors.grey[500])),
                       Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -289,7 +289,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             )),
                           ),
                           IconButton(onPressed: (){
-                            ask("Are you sure to remove this match ${playHeader.getReadablePlayId()}? You wont be able to continue this match once removed.", () {
+                            ask(translate(
+                                playHeader.state.isFinal ? "dialogs.deleteFinalMatch" : "dialogs.deleteOngoingMatch",
+                                args: {"playId" : playHeader.getReadablePlayId()}), () {
                               setState(() {
                                 StorageService().deletePlayHeaderAndPlay(playHeader.playId);
                               });
@@ -313,7 +315,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           playHeader, widget.user, () => context, showAllOptions);
     }
     else {
-      showAlertDialog("Nothing to share, take action instead");
+      showAlertDialog(translate("matchMenu.nothingToShare"));
     }
   }
 
@@ -321,7 +323,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
     final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}");
     if (playHeader.playMode == PlayMode.Classic) {
-      sb.write(" (Classic Mode)");
+      sb.write(" (${PlayMode.Classic.getName()})");
     }
 
     final localRole = playHeader.getLocalRoleForMultiPlay();
@@ -330,7 +332,12 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       sb.write(" as ${localRole.name}");
     }
     if (playHeader.currentRound > 0) {
-      sb.write(", Round ${playHeader.currentRound} of ${playHeader.maxRounds}");
+      sb.write(", ");
+      sb.write(translate("gameHeader.roundOf", args:
+      {
+        "round": playHeader.currentRound,
+        "totalRounds": playHeader.maxRounds
+      }));
     }
     return sb.toString();
   }
