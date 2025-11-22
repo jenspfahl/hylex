@@ -95,7 +95,7 @@
   "submitButton": {
     "submitMove" : "Zug einreichen",
     "skipMove" : "Zug überspringen",
-    "shareAgain" : "Erneut teilen",
+    "shareAgain" : "Erneut senden",
     "restart" : "Spiel neu starten",
     "swapRoles" : "Rollen tauschen und fortfahren",
     "rematch" : "Revanche fordern"
@@ -205,7 +205,7 @@
     }
   },
   "messaging": {
-    "sendYourMove": "Sende deine Anfrage oder deinen Zug zu deinem Gegner.",
+    "sendYourMove": "Sende deine Anfrage oder deinen Zug an deinen Gegner.",
     "sendYourMoveAsMessage": "Als Nachricht",
     "sendYourMoveAsQrCode": "Als QR-Code",
     "rememberDecision": "Merke meine Entscheidung für dieses Match."

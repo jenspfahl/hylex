@@ -264,7 +264,7 @@ class MessageService {
 
 
               return Container(
-                height: 300,
+                height: 320,
 
                 child: Padding(
                   padding: const EdgeInsets.all(32),

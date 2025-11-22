@@ -94,7 +94,7 @@
   "submitButton": {
     "submitMove" : "Submit move",
     "skipMove" : "Skip move",
-    "shareAgain" : "Share again",
+    "shareAgain" : "Send again",
     "restart" : "Restart game",
     "swapRoles" : "Swap roles and continue",
     "rematch" : "Ask for a rematch"

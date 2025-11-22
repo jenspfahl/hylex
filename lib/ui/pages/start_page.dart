@@ -325,20 +325,15 @@ class StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildStartPage(context);
-  }
-
-  Widget _buildStartPage(BuildContext context) {
     return Container(
       color: Theme
           .of(context)
           .colorScheme
           .surface,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 48, 24, 12),
+        padding: const EdgeInsets.fromLTRB(24, 52, 24, 12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
           children: [
             Container(
                 child: _buildGameLogo(20)

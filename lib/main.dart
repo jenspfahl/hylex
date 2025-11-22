@@ -19,7 +19,8 @@ void main() {
     );
     await SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.manual,
-        overlays: [SystemUiOverlay.top]);
+        overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]); // bottom to show nav bar if enabled
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarColor: Colors.transparent));
     runApp(LocalizedApp(delegate, HylexApp()));
   });
 }

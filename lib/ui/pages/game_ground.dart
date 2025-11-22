@@ -1266,6 +1266,8 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (play.header.opponentId != null)
           _buildGameInfoRow("${PlayerType.RemoteUser.getName()} Id", toReadableId(play.header.opponentId!)),
 
+        if (isDebug)
+          _buildGameInfoRow("Round trip signature", play.header.commContext.roundTripSignature ?? "-"),
 
         const Divider(),
 
