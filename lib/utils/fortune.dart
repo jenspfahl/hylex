@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 
-final rnd = Random();
+final rnd = Random.secure();
 const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
 const _upperChars = 'ABCDEFGHIJKLMOPQRSTUVWXYZ';
 const _upperVocals = 'AEIJOU';

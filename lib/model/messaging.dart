@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
@@ -103,6 +104,7 @@ abstract class Message {
     writeString(writer, playId, playIdLength);
     serializeToBuffer(writer);
 
+    debugPrint("Payload as longs: ${buffer.getLongs()}");
     final signature = _createUrlSafeSignature(buffer, receivedSignature);
     return SerializedMessage(
         buffer.toBase64().toUrlSafe(),
@@ -395,8 +397,8 @@ class SerializedMessage {
 List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
   final previousSignature = previousSignatureBase64 != null
       ? Base64Codec.urlSafe().decoder.convert(previousSignatureBase64)
-      : null;
-  final signature = sha256.convert(blob + (previousSignature != null ? previousSignature : []));
+      : generateRandomString(32).codeUnits; // TODO invitor seeds the whole chain with their secret
+  final signature = sha256.convert(blob + previousSignature);
   return signature.bytes.take(6).toList();
 }
 
@@ -406,7 +408,12 @@ String? _validateSignature(List<int> blob, CommunicationContext comContext, Stri
     print("Message with signature $comparingSignature already processed");
     return "This link has already been processed.";
   }
+  if (comContext.roundTripSignature == null) {
+    print("No validation for first chain element");
+    return null;
+  }
   final signature = Base64Encoder().convert(createSignature(blob, comContext.roundTripSignature)).toUrlSafe();
+  print("received payload $blob");
   print("computed  sig $signature");
   print("comparing sig $comparingSignature");
   print("roundTrip Sig ${comContext.roundTripSignature}");
