@@ -142,6 +142,7 @@ class MessageService {
     }
     final acceptMessage = AcceptInviteMessage(
         header.playId,
+        header.playSize,
         playOpener,
         user.id,
         user.name,
@@ -175,6 +176,7 @@ class MessageService {
       }) {
     final rejectMessage = RejectInviteMessage(
         header.playId,
+        header.playSize,
         user.id);
     final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
 
@@ -199,7 +201,11 @@ class MessageService {
         bool share = true,
         bool showAllOptions = false,
       }) {
-    final moveMessage = MoveMessage(header.playId, header.currentRound, move);
+    final moveMessage = MoveMessage(
+        header.playId,
+        header.playSize,
+        header.currentRound,
+        move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext);
 
     return _saveAndShare(
@@ -221,7 +227,10 @@ class MessageService {
         bool share = true,
         bool showAllOptions = false,
       }) {
-    final resignationMessage = ResignMessage(header.playId, header.currentRound);
+    final resignationMessage = ResignMessage(
+        header.playId,
+        header.playSize,
+        header.currentRound);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext);
 
     return _saveAndShare(

@@ -124,6 +124,7 @@ void main() {
 
       final remoteAcceptMessage = AcceptInviteMessage(
           localPlay.header.playId,
+          localPlay.header.playSize,
           PlayOpener.Invitor,
           remoteUser.id,
           remoteUser.name,
@@ -161,6 +162,7 @@ void main() {
 
       final remoteAcceptMessage = AcceptInviteMessage(
           localPlay.header.playId,
+          localPlay.header.playSize,
           PlayOpener.Invitee,
           remoteUser.id,
           remoteUser.name,
@@ -201,6 +203,7 @@ void main() {
 
       final remoteAcceptMessage = AcceptInviteMessage(
           loalPlay.header.playId,
+          loalPlay.header.playSize,
           PlayOpener.Invitee,
           remoteUser.id,
           remoteUser.name,
@@ -240,6 +243,7 @@ void main() {
 
       final remoteAcceptMessage = AcceptInviteMessage(
           localPlay.header.playId,
+          localPlay.header.playSize,
           PlayOpener.Invitee,
           remoteUser.id,
           remoteUser.name,
@@ -436,7 +440,6 @@ void main() {
       expect(localPlay.getWinnerRole(), Role.Order);
       expect(localPlay.getWinnerPlayer(), PlayerType.LocalUser);
       expect(engine.isBoardLocked(), true);
-
     });
     
 

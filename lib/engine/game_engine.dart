@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/PlayStateManager.dart';
@@ -158,6 +159,8 @@ abstract class GameEngine extends ChangeNotifier {
   void _cleanUp();
 
   resignGame();
+
+  String getFullPlayAsUrl() => FullStateMessage(play, user).serialize().toUrl();
 
 
 }

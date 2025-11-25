@@ -58,7 +58,7 @@ enum Operation {
   RejectInvite, //010
   Move, //011,
   Resign, //100
-  unused101, //101
+  FullState, //101
   unused110, //110
   unused111 //111
   // stuck to 3 bits, don't add more

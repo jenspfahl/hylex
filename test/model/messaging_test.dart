@@ -1,3 +1,4 @@
+import 'package:bits/bits.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/model/coordinate.dart';
@@ -7,6 +8,71 @@ import 'package:hyle_x/utils/fortune.dart';
 import 'package:test/test.dart';
 
 void main() {
+
+  group("Test bits", () {
+
+    test('Test flags', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writer.writeBit(true);
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+
+    });
+
+    test('Test ints', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeInt(writer, 0, 5);
+      writeInt(writer, 1, 5);
+      writeInt(writer, 2, 5);
+      writeInt(writer, 3, 5);
+      writeInt(writer, 4, 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 5 * 3);
+
+      expect(readInt(reader, 5), 0);
+      expect(readInt(reader, 5), 1);
+      expect(readInt(reader, 5), 2);
+      expect(readInt(reader, 5), 3);
+      expect(readInt(reader, 5), 4);
+    });
+
+    test('Test nullable ints', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeNullableInt(writer, 0, 5);
+      writeNullableInt(writer, 1, 5);
+      writeNullableInt(writer, 2, 5);
+      writeNullableInt(writer, 3, 5);
+      writeNullableInt(writer, 4, 5);
+      writeNullableInt(writer, null, 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 6 * 3);
+
+      expect(readNullableInt(reader, 5), 0);
+      expect(readNullableInt(reader, 5), 1);
+      expect(readNullableInt(reader, 5), 2);
+      expect(readNullableInt(reader, 5), 3);
+      expect(readNullableInt(reader, 5), 4);
+      expect(readNullableInt(reader, 5), null);
+    });
+  });
+
   group("Test messaging", () {
 
     final invitorContext = CommunicationContext();
@@ -73,6 +139,7 @@ void main() {
       
       final acceptInviteMessage = AcceptInviteMessage(
         playId,
+        playSize,
         playOpenerDecision,
         inviteeUserId,
         inviteePlayerName,
@@ -110,6 +177,7 @@ void main() {
 
       final firstInvitorPlayerMoveMessage = MoveMessage(
         playId,
+        playSize,
         round,
         move,
       );
@@ -126,7 +194,6 @@ void main() {
       expect(deserializedMoveMessage.playId, playId);
       expect(deserializedMoveMessage.round, round);
       expect(deserializedMoveMessage.move, move);
-
     });
   });
 

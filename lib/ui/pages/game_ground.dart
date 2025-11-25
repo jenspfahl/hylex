@@ -150,6 +150,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                     onTap: () {
                       showAlertDialog(_getGameTitle(), icon: null);
                     },
+                    onLongPress: () {
+                      if (isDebug) {
+                        final fullPlayAsUrl = gameEngine.getFullPlayAsUrl();
+                        showAlertDialog(fullPlayAsUrl, icon: null);
+                        debugPrint(fullPlayAsUrl);
+                        debugPrint(fullPlayAsUrl.length.toString());
+                      }
+                    },
                     child: Text(
                       _getGameTitle(),
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),

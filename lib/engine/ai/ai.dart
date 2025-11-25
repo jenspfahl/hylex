@@ -67,10 +67,12 @@ AiPathConfig _getMaxDepthBasedOnWorkload(Play play) {
 
 class AiPathConfig {
   late Role startRole;
-  late int depth;
+  late int _depth;
   late Map<int, Role> specialTransitions;
 
-  AiPathConfig(this.startRole, this.depth, this.specialTransitions);
+  AiPathConfig(this.startRole, this._depth, this.specialTransitions);
+
+  int get depth => _depth;
 }
 
 

@@ -1,6 +1,5 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
@@ -12,6 +11,7 @@ import 'chip.dart';
 import 'common.dart';
 import 'coordinate.dart';
 import '../utils/fortune.dart';
+import 'messaging.dart';
 import 'move.dart';
 
 const shareBaseUrl = "https://hx.jepfa.de/d/";
@@ -20,10 +20,12 @@ final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSe
 
 const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
 const maxDimension = 13;
-const maxRound = maxDimension * 2;
+const maxRound = maxDimension * maxDimension;
 const playIdLength = 8;
 const userIdLength = 16;
 const maxNameLength = 32;
+const currentMessageVersion = 1;
+const maxMessageVersion = 16;
 
 enum Channel {
   In, Out
@@ -83,10 +85,18 @@ class CommunicationContext {
   }
 }
 
+/**
+ * Header:
+ * <operation(3)><version(4)><playId(5+8*5)><playSize(3)>
+ */
 abstract class Message {
   String playId;
+  int version = currentMessageVersion;
+  PlaySize playSize;
 
-  Message(this.playId);
+  Message(this.playId, this.playSize);
+
+  SerializedMessage serialize() => _serializeWithSignature(null);
 
   SerializedMessage serializeWithContext(CommunicationContext comContext) {
     final serializedMessage = _serializeWithSignature(comContext.predecessorMessage?.signature);
@@ -94,37 +104,42 @@ abstract class Message {
     return serializedMessage;
   }
 
+
   SerializedMessage _serializeWithSignature(String? receivedSignature) {
 
     final buffer = BitBuffer();
     final writer = buffer.writer();
 
     writeEnum(writer, Operation.values, getOperation());
-
+    writeVersion(writer, version);
     writeString(writer, playId, playIdLength);
+    writeEnum(writer, PlaySize.values, playSize);
+
     serializeToBuffer(writer);
 
-    debugPrint("Payload as longs: ${buffer.getLongs()}");
-    final signature = _createUrlSafeSignature(buffer, receivedSignature);
+    debugPrint("Payload: ${buffer.toBase64()}");
+    debugPrint("Payload size: ${buffer.getSize()}");
+    debugPrint("Payload free bits: ${buffer.getFreeBits()}");
+    final signature = createUrlSafeSignature(buffer, receivedSignature);
     return SerializedMessage(
         buffer.toBase64().toUrlSafe(),
         signature
     );
   }
 
+
   void serializeToBuffer(BitBufferWriter writer);
 
   Operation getOperation();
 
-  String _createUrlSafeSignature(BitBuffer buffer, String? previousSignatureBase64) {
-    final signature = createSignature(buffer.getLongs(), previousSignatureBase64);
-    return Base64Encoder().convert(signature).toUrlSafe();
-  }
 }
 
+/**
+ * Header + body:
+ * <playMode(2)><playOpener(2)><invitorUserId(5+16*5)><invitorUserName(5+32*5)>
+ */
 class InviteMessage extends Message {
 
-  PlaySize playSize;
   PlayMode playMode;
   PlayOpener playOpener;
   String invitorUserId;
@@ -132,12 +147,12 @@ class InviteMessage extends Message {
 
   InviteMessage(
       String playId,
-      this.playSize,
+      PlaySize playSize,
       this.playMode,
       this.playOpener,
       this.invitorUserId,
       this.invitorUserName,
-      ): super(playId);
+      ): super(playId, playSize);
 
   InviteMessage.fromHeaderAndUser(PlayHeader header, User user)  : this(
       header.playId,
@@ -150,11 +165,12 @@ class InviteMessage extends Message {
 
   factory InviteMessage.deserialize(
       BitBufferReader reader,
-      String playId) {
+      String playId,
+      PlaySize playSize) {
 
     return InviteMessage(
       playId,
-      readEnum(reader, PlaySize.values),
+      playSize,
       readEnum(reader, PlayMode.values),
       readEnum(reader, PlayOpener.values),
       readString(reader),
@@ -164,7 +180,6 @@ class InviteMessage extends Message {
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-    writeEnum(writer, PlaySize.values, playSize);
     writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlayOpener.values, playOpener);
     writeString(writer, invitorUserId, userIdLength);
@@ -175,6 +190,11 @@ class InviteMessage extends Message {
   Operation getOperation() => Operation.SendInvite;
 }
 
+
+/**
+ * Header + body:
+ * <playOpener(2)><inviteeUserId(5+16*5)><inviteeUserName(5+32*5)><initialMove()>
+ */
 class AcceptInviteMessage extends Message {
   PlayOpener playOpenerDecision;
   String inviteeUserId;
@@ -183,34 +203,36 @@ class AcceptInviteMessage extends Message {
 
   AcceptInviteMessage(
       String playId,
+      PlaySize playSize,
       this.playOpenerDecision,
       this.inviteeUserId,
       this.inviteeUserName,
       this.initialMove,
-      ): super(playId);
+      ): super(playId, playSize);
 
   factory AcceptInviteMessage.deserialize(
       BitBufferReader reader,
-      String playId) {
+      String playId,
+      PlaySize playSize) {
 
     final playOpener = readEnum(reader, PlayOpener.values);
     return AcceptInviteMessage(
       playId,
+      playSize,
       playOpener,
       readString(reader),
       readString(reader),
-      playOpener == PlayOpener.Invitee ? readMove(reader) : null,
+      playOpener == PlayOpener.Invitee ? readMove(reader, playSize.dimension) : null,
     );
   }
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
     writeString(writer, inviteeUserId, userIdLength);
     writeString(writer, inviteeUserName, maxNameLength);
     if (playOpenerDecision == PlayOpener.Invitee && initialMove != null) {
-      writeMove(writer, initialMove!);
+      writeMove(writer, initialMove!, playSize.dimension);
     }
   }
 
@@ -225,15 +247,18 @@ class RejectInviteMessage extends Message {
 
   RejectInviteMessage(
       String playId,
+      PlaySize playSize,
       this.userId,
-      ): super(playId);
+      ): super(playId, playSize);
 
   factory RejectInviteMessage.deserialize(
       BitBufferReader reader,
-      String playId) {
+      String playId,
+      PlaySize playSize) {
 
     return RejectInviteMessage(
       playId,
+      playSize,
       readString(reader),
     );
   }
@@ -254,25 +279,29 @@ class MoveMessage extends Message {
 
   MoveMessage(
       String playId,
+      PlaySize playSize,
       this.round,
       this.move,
-      ): super(playId);
+      ): super(playId, playSize);
 
   factory MoveMessage.deserialize(
       BitBufferReader reader,
-      String playId) {
+      String playId,
+      PlaySize playSize,
+      ) {
     
     return MoveMessage(
       playId,
-      readInt(reader, maxRound),
-      readMove(reader)!,
+      playSize,
+      readRound(reader, playSize.dimension),
+      readMove(reader, playSize.dimension),
     );
   }
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-    writeInt(writer, round, maxRound);
-    writeMove(writer, move);
+    writeRound(writer, round, playSize.dimension);
+    writeMove(writer, move, playSize.dimension);
   }
 
   @override
@@ -284,26 +313,69 @@ class ResignMessage extends Message {
 
   ResignMessage(
       String playId,
+      PlaySize playSize,
       this.round,
-      ): super(playId);
+      ): super(playId, playSize);
 
   factory ResignMessage.deserialize(
       BitBufferReader reader,
-      String playId) {
+      String playId,
+      PlaySize playSize) {
 
     return ResignMessage(
       playId,
-      readInt(reader, maxRound),
+      playSize,
+      readRound(reader, maxRound),
     );
   }
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-    writeInt(writer, round, maxRound);
+    writeRound(writer, round, playSize.dimension);
   }
 
   @override
   Operation getOperation() => Operation.Resign;
+}
+
+class FullStateMessage extends Message {
+  Play play;
+  User user;
+
+  FullStateMessage(
+      this.play,
+      this.user,
+      ): super(play.header.playId, play.header.playSize);
+
+  factory FullStateMessage.deserialize(
+      BitBufferReader reader, Play play, User user) {
+
+    return FullStateMessage(
+      play, user
+      // TODO readInt(reader, maxRound),
+    );
+  }
+
+  @override
+  void serializeToBuffer(BitBufferWriter writer) {
+    final header = play.header;
+
+    writeEnum(writer, PlayMode.values, header.playMode);
+    writeNullableEnum(writer, PlayOpener.values, header.playOpener);
+
+    writeString(writer, user.id, userIdLength);
+    writeString(writer, header.opponentId??"", userIdLength);
+
+    writeEnum(writer, PlayState.values, header.state);
+    writeRound(writer, header.currentRound, header.dimension);
+
+    play.journal.forEach((move) {
+      writeMove(writer, move, header.dimension);
+    });
+  }
+
+  @override
+  Operation getOperation() => Operation.FullState;
 }
 
 class SerializedMessage {
@@ -330,16 +402,26 @@ class SerializedMessage {
 
   String extractPlayId() {
 
-    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+    final buffer = _createBuffer();
     final reader = buffer.reader();
 
-    readEnum(reader, Operation.values);
+    readEnum(reader, Operation.values); // skip Operation
+    readInt(reader, maxMessageVersion); // skip version
     return readString(reader);
+  }
+
+  int extractVersion() {
+
+    final buffer = _createBuffer();
+    final reader = buffer.reader();
+
+    readEnum(reader, Operation.values); // skip Operation
+    return readInt(reader, maxMessageVersion);
   }
   
   Operation extractOperation() {
 
-    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+    final buffer = _createBuffer();
     final reader = buffer.reader();
 
     return readEnum(reader, Operation.values);
@@ -347,7 +429,7 @@ class SerializedMessage {
 
   (Message?,String?) deserialize(CommunicationContext comContext) {
 
-    final buffer = BitBuffer.fromBase64(Base64Codec().normalize(payload));
+    final buffer = _createBuffer();
 
     final errorMessage = _validateSignature(buffer.getLongs(), comContext, signature);
     if (errorMessage != null) {
@@ -358,17 +440,25 @@ class SerializedMessage {
     final reader = buffer.reader();
 
     final operation = readEnum(reader, Operation.values);
+    final version = readVersion(reader);
+    if (version != currentMessageVersion) {
+      throw Exception("Unsupported message version: $version");
+    }
     final playId = readString(reader);
+    final playSize = readEnum(reader, PlaySize.values);
 
     switch (operation) {
-      case Operation.SendInvite : return (InviteMessage.deserialize(reader, playId), null);
-      case Operation.AcceptInvite : return (AcceptInviteMessage.deserialize(reader, playId), null);
-      case Operation.RejectInvite : return (RejectInviteMessage.deserialize(reader, playId), null);
-      case Operation.Move : return (MoveMessage.deserialize(reader, playId), null);
-      case Operation.Resign : return (ResignMessage.deserialize(reader, playId), null);
+      case Operation.SendInvite : return (InviteMessage.deserialize(reader, playId, playSize), null);
+      case Operation.AcceptInvite : return (AcceptInviteMessage.deserialize(reader, playId, playSize), null);
+      case Operation.RejectInvite : return (RejectInviteMessage.deserialize(reader, playId, playSize), null);
+      case Operation.Move : return (MoveMessage.deserialize(reader, playId, playSize), null);
+      case Operation.Resign : return (ResignMessage.deserialize(reader, playId, playSize), null);
+      //TODO case Operation.FullState : return (FullStateMessage.deserialize(reader, playId, playSize), null);
       default: throw Exception("Unsupported operation: $operation");
     }
   }
+
+  BitBuffer _createBuffer() => BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
   String toUrl() {
     return "$shareBaseUrl$payload/$signature";
@@ -442,111 +532,219 @@ String normalizeString(String string, int maxLength) {
       : string.substring(0, maxLength);
 }
 
-// only positive values
-void writeInt(BitBufferWriter writer, int value, int maxValue) {
-  writer.writeInt(value, signed: false, bits: getBitsNeeded(maxValue));
+
+
+
+/**
+ * only positive values supported!
+ *
+ * bits needed:
+ * depending on maxValueExclusively (value range) --> bits:
+ *     2 (0 -   1)  --> 1
+ *     4 (0 -   3)  --> 2
+ *     8 (0 -   7)  --> 3
+ *    16 (0 -  15)  --> 4
+ *    32 (0 -  31)  --> 5
+ *    64 (0 -  63)  --> 6
+ *   128 (0 - 127)  --> 7
+ *   256 (0 - 255)  --> 8
+ *   ...
+ */
+void writeInt(BitBufferWriter writer, int value, int maxValueExclusively) {
+  if (maxValueExclusively <= 0) {
+    throw Exception("maxValueExclusively must be greater 0");
+  }
+  if (value.isNegative) {
+    throw Exception("negative values not supported by this method");
+  }
+  if (value >= maxValueExclusively) {
+    throw Exception("value $value must be lower than maxValueExclusively $maxValueExclusively");
+  }
+  writer.writeInt(value, signed: false, bits: getBitsNeeded(maxValueExclusively - 1));
 }
 
-// only positive or null values
-void writeNullableInt(BitBufferWriter writer, int? nullableValue, int maxValue) {
+int readInt(BitBufferReader reader, int maxValueExclusively) {
+  return reader.readInt(signed: false, bits: getBitsNeeded(maxValueExclusively - 1));
+}
+
+
+/**
+ * only positive or null values
+ */
+void writeNullableInt(BitBufferWriter writer, int? nullableValue, int maxValueExclusively) {
+  if (nullableValue?.isNegative == true) {
+    throw Exception("negative values not supported by this method");
+  }
   final value = nullableValue == null ? 0 : nullableValue + 1;
-  writeInt(writer, value, maxValue);
+  writeInt(writer, value, maxValueExclusively + 1);
 }
 
-// only positive values
-int readInt(BitBufferReader reader, int maxValue) {
-  return reader.readInt(signed: false, bits: getBitsNeeded(maxValue));
-}
-
-// only positive or null values
-int? readNullableInt(BitBufferReader reader, int maxValue) {
-  final value = readInt(reader, maxValue);
+int? readNullableInt(BitBufferReader reader, int maxValueExclusively) {
+  final value = readInt(reader, maxValueExclusively);
   return value == 0 ? null : value - 1;
 }
 
+/**
+ * bits needed:
+ * depending on the Emum literal amount (value range) --> bits:
+ *     2 (0 -   1)  --> 1
+ *     4 (0 -   3)  --> 2
+ *     8 (0 -   7)  --> 3
+ *    16 (0 -  15)  --> 4
+ *    32 (0 -  31)  --> 5
+ *    ...
+ */
 void writeEnum<E extends Enum>(BitBufferWriter writer, List<E> values, E value) {
-  writer.writeInt(value.index, signed: false, bits: getBitsNeeded(values.length));
+  writeInt(writer, value.index, values.length);
 }
 
 E readEnum<E extends Enum>(BitBufferReader reader, List<E> values) {
-  final index = reader.readInt(signed: false, bits: getBitsNeeded(values.length));
+  final index = readInt(reader, values.length);
   return values.firstWhere((e) => e.index == index);
 }
 
-
-void writeMove(BitBufferWriter writer, Move move) {
-  writer.writeBit(move.skipped);
-  writeChip(writer, move.isMove() ? null : move.chip);
-  writeCoordinate(writer, move.from);
-  writeCoordinate(writer, move.to);
+void writeNullableEnum<E extends Enum>(BitBufferWriter writer, List<E> values, E? value) {
+  writeNullableInt(writer, value?.index, values.length);
 }
 
-void writeCoordinate(BitBufferWriter writer, Coordinate? where) {
-  writeNullableInt(writer, where?.x, maxDimension);
-  writeNullableInt(writer, where?.y, maxDimension);
-}
-
-void writeChip(BitBufferWriter writer, GameChip? chip) {
-  writeNullableInt(writer, chip?.id, maxDimension);
-}
-
-Move? readMove(BitBufferReader reader) {
-  try {
-    final skipped = reader.readBit();
-    final chip = readChip(reader);
-
-    if (skipped) {
-      return Move.skipped();
-    }
-    final from = readCoordinate(reader);
-    final to = readCoordinate(reader);
-
-    if (chip != null && from == null && to != null) {
-      return Move.placed(chip, to);
-    }
-    else if (from != null && to != null) {
-      return Move.movedForMessaging(from, to);
-    }
-    else {
-      throw Exception("Invalid move data: $chip $from $to");
-    }
-  } catch (e) {
-    print(e);
-    throw e;
-    //TODO return null;
-  }
-}
-
-Coordinate? readCoordinate(BitBufferReader reader) {
-  final x = readNullableInt(reader, maxDimension);
-  final y = readNullableInt(reader, maxDimension);
-  if (x != null && y != null) {
-    return Coordinate(x, y);
-  }
-  else {
+E? readNullableEnum<E extends Enum>(BitBufferReader reader, List<E> values) {
+  final index = readNullableInt(reader, values.length);
+  if (index == null) {
     return null;
   }
+  return values.firstWhere((e) => e.index == index);
 }
 
-GameChip? readChip(BitBufferReader reader) {
-  final id = readNullableInt(reader, maxDimension);
-  if (id == null) {
-    return null;
-  }
+/**
+ * bits needed:
+ * 5x5: 3
+ * 7x7: 3
+ * 9x9: 4
+ * 11x11: 4
+ * 13x13: 4
+ */
+void writeChip(BitBufferWriter writer, GameChip chip, int dimension) {
+  writeInt(writer, chip.id, dimension);
+}
+
+GameChip readChip(BitBufferReader reader, int dimension) {
+  final id = readInt(reader, dimension);
   return GameChip(id);
 }
 
-int _convertCodeUnitToBase64(int codeUnit) => chars.indexOf(String.fromCharCode(codeUnit));
-int _convertBase64ToCodeUnit(int base64) => chars[base64].codeUnits.first;
 
-// max 63 chars long chars long
+/**
+ * bits needed:
+ * 5x5: 5
+ * 7x7: 6
+ * 9x9: 7
+ * 11x11: 7
+ * 13x13: 8
+ */
+void writeCoordinate(BitBufferWriter writer, Coordinate where, int dimension) {
+  final pos = (where.y * dimension) + where.x;
+  writeInt(writer, pos, dimension * dimension);
+}
+
+Coordinate readCoordinate(BitBufferReader reader, int dimension) {
+  final pos = readInt(reader, dimension * dimension);
+  final x = pos % dimension;
+  final y = pos ~/ dimension;
+  return Coordinate(x, y);
+}
+
+/**
+ * bits needed: 5-8
+ */
+void writeRound(BitBufferWriter writer, int round, int dimension) {
+  writeInt(writer, round - 1, dimension * dimension);
+}
+
+int readRound(BitBufferReader reader, int dimension) {
+  return readInt(reader, dimension * dimension) + 1;
+}
+
+/**
+ * For Chaos:
+ * <isPlaced(1)><chip(3-4)><coordinate(5-8)>
+ * For Order:
+ * <isPlaced(1)><isSkipped(1)><coordinate(5-8)><isHorizontally(1)><atAxis(3-4)>
+ */
+void writeMove(BitBufferWriter writer, Move move, int dimension) {
+  writer.writeBit(move.isPlaced());
+  if (move.isPlaced()) {
+    writeChip(writer, move.chip!, dimension);
+    writeCoordinate(writer, move.to!, dimension);
+  }
+  else {
+    writer.writeBit(move.skipped);
+    if (!move.skipped) {
+      writeCoordinate(writer, move.from!, dimension);
+      final isHorizontally = move.from!.x != move.to!.x;
+      writer.writeBit(isHorizontally);
+
+      final atAxis = isHorizontally
+          ? move.to!.x
+          : move.to!.y;
+      writeInt(writer, atAxis, dimension);
+    }
+  }
+}
+
+
+Move readMove(BitBufferReader reader, int dimension) {
+  final isPlaced = reader.readBit();
+  if (isPlaced) {
+    final chip = readChip(reader, dimension);
+    final to = readCoordinate(reader, dimension);
+    return Move.placed(chip, to);
+  }
+  else {
+    final isSkipped = reader.readBit();
+    if (isSkipped) {
+     return Move.skipped();
+    }
+    else {
+      final from = readCoordinate(reader, dimension);
+      final isHorizontally = reader.readBit();
+      final atAxis = readInt(reader, dimension);
+      return Move.movedForMessaging(from, isHorizontally ? Coordinate(atAxis, from.y) : Coordinate(from.x, atAxis));
+    }
+  }
+
+}
+
+
+/**
+ * version between 1 and 16
+ *
+ * version(4)
+ */
+void writeVersion(BitBufferWriter writer, int version) {
+  writeInt(writer, version - 1, maxMessageVersion);
+}
+
+int readVersion(BitBufferReader reader) {
+  return readInt(reader, maxMessageVersion) + 1;
+}
+
+
+/**
+ * max 32 chars long!
+ *
+ * bits needed:
+ * <length(5)><char(6)>[0-32]
+ */
 writeString(BitBufferWriter writer, String string, int maxLength) {
-  if (maxLength > 63) {
+  if (maxLength > 32) {
     throw Exception("String too long");
   }
+  if (maxLength <=0) {
+    throw Exception("String too short");
+  }
   string = normalizeString(string, maxLength);
-  // max length 32-1 to fit into 5 bits
-  writer.writeInt(string.length, signed: false, bits: 6);
+  // max length 32 - 1 to fit into 5 bits
+  writer.writeInt(string.length - 1, signed: false, bits: 5);
   string
       .codeUnits
       .map((c) => _convertCodeUnitToBase64(c))
@@ -554,7 +752,7 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
 }
 
 String readString(BitBufferReader reader) {
-  final length = reader.readInt(signed: false, bits: 6);
+  final length = reader.readInt(signed: false, bits: 5) + 1;
 
   StringBuffer sb = StringBuffer();
   while (sb.length < length) {
@@ -563,6 +761,17 @@ String readString(BitBufferReader reader) {
   }
   return sb.toString();
 }
+
+
+
+String createUrlSafeSignature(BitBuffer buffer, String? previousSignatureBase64) {
+  final signature = createSignature(buffer.getLongs(), previousSignatureBase64);
+  return Base64Encoder().convert(signature).toUrlSafe();
+}
+
+
+int _convertCodeUnitToBase64(int codeUnit) => chars.indexOf(String.fromCharCode(codeUnit));
+int _convertBase64ToCodeUnit(int base64) => chars[base64].codeUnits.first;
 
 
 extension StringExtenion on String {
