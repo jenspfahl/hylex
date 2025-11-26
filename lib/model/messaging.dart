@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
@@ -87,7 +88,7 @@ class CommunicationContext {
 
 /**
  * Header:
- * <operation(3)><version(4)><playId(5+8*5)><playSize(3)>
+ * <version(4)><operation(4)><playId(5+8*5)><playSize(3)>
  */
 abstract class Message {
   String playId;
@@ -110,8 +111,8 @@ abstract class Message {
     final buffer = BitBuffer();
     final writer = buffer.writer();
 
-    writeEnum(writer, Operation.values, getOperation());
     writeVersion(writer, version);
+    writeEnum(writer, Operation.values, getOperation());
     writeString(writer, playId, playIdLength);
     writeEnum(writer, PlaySize.values, playSize);
 
@@ -405,8 +406,13 @@ class SerializedMessage {
     final buffer = _createBuffer();
     final reader = buffer.reader();
 
+    final version = readVersion(reader);
+    if (version != currentMessageVersion) {
+      throw Exception("Unsupported message version: $version");
+    }
+
+
     readEnum(reader, Operation.values); // skip Operation
-    readInt(reader, maxMessageVersion); // skip version
     return readString(reader);
   }
 
@@ -415,14 +421,18 @@ class SerializedMessage {
     final buffer = _createBuffer();
     final reader = buffer.reader();
 
-    readEnum(reader, Operation.values); // skip Operation
-    return readInt(reader, maxMessageVersion);
+    return readVersion(reader);
   }
   
   Operation extractOperation() {
 
     final buffer = _createBuffer();
     final reader = buffer.reader();
+
+    final version = readVersion(reader);
+    if (version != currentMessageVersion) {
+      throw Exception("Unsupported message version: $version");
+    }
 
     return readEnum(reader, Operation.values);
   }
@@ -439,11 +449,11 @@ class SerializedMessage {
 
     final reader = buffer.reader();
 
-    final operation = readEnum(reader, Operation.values);
     final version = readVersion(reader);
     if (version != currentMessageVersion) {
       throw Exception("Unsupported message version: $version");
     }
+    final operation = readEnum(reader, Operation.values);
     final playId = readString(reader);
     final playSize = readEnum(reader, PlaySize.values);
 
@@ -569,19 +579,41 @@ int readInt(BitBufferReader reader, int maxValueExclusively) {
 
 
 /**
- * only positive or null values
+ * only positive on null values supported!
+ *
+ * bits needed:
+ * <isNull(1)><value(see below)>
+ *
+ * depending on maxValueExclusively (value range) --> bits:
+ *     2 (0 -   1)  --> 1
+ *     4 (0 -   3)  --> 2
+ *     8 (0 -   7)  --> 3
+ *    16 (0 -  15)  --> 4
+ *    32 (0 -  31)  --> 5
+ *    64 (0 -  63)  --> 6
+ *   128 (0 - 127)  --> 7
+ *   256 (0 - 255)  --> 8
+ *   ...
  */
 void writeNullableInt(BitBufferWriter writer, int? nullableValue, int maxValueExclusively) {
   if (nullableValue?.isNegative == true) {
     throw Exception("negative values not supported by this method");
   }
-  final value = nullableValue == null ? 0 : nullableValue + 1;
-  writeInt(writer, value, maxValueExclusively + 1);
+  final isNull = nullableValue == null;
+  writer.writeBit(isNull);
+  if (!isNull) {
+    writeInt(writer, nullableValue, maxValueExclusively);
+  }
 }
 
 int? readNullableInt(BitBufferReader reader, int maxValueExclusively) {
-  final value = readInt(reader, maxValueExclusively);
-  return value == 0 ? null : value - 1;
+  final isNull = reader.readBit();
+  if (isNull) {
+    return null;
+  }
+  else {
+    return readInt(reader, maxValueExclusively);
+  }
 }
 
 /**
@@ -603,6 +635,18 @@ E readEnum<E extends Enum>(BitBufferReader reader, List<E> values) {
   return values.firstWhere((e) => e.index == index);
 }
 
+/**
+ * bits needed:
+ * <isNull(1)><value(see below)>
+
+ * depending on the Emum literal amount (value range) --> bits:
+ *     2 (0 -   1)  --> 1
+ *     4 (0 -   3)  --> 2
+ *     8 (0 -   7)  --> 3
+ *    16 (0 -  15)  --> 4
+ *    32 (0 -  31)  --> 5
+ *    ...
+ */
 void writeNullableEnum<E extends Enum>(BitBufferWriter writer, List<E> values, E? value) {
   writeNullableInt(writer, value?.index, values.length);
 }
@@ -655,6 +699,11 @@ Coordinate readCoordinate(BitBufferReader reader, int dimension) {
 
 /**
  * bits needed: 5-8
+ * 5x5: 5
+ * 7x7: 6
+ * 9x9: 7
+ * 11x11: 7
+ * 13x13: 8
  */
 void writeRound(BitBufferWriter writer, int round, int dimension) {
   writeInt(writer, round - 1, dimension * dimension);
@@ -667,7 +716,9 @@ int readRound(BitBufferReader reader, int dimension) {
 /**
  * For Chaos:
  * <isPlaced(1)><chip(3-4)><coordinate(5-8)>
- * For Order:
+ * For Order - skipped:
+ * <isPlaced(1)><isSkipped(1)>
+ * For Order - moved:
  * <isPlaced(1)><isSkipped(1)><coordinate(5-8)><isHorizontally(1)><atAxis(3-4)>
  */
 void writeMove(BitBufferWriter writer, Move move, int dimension) {
@@ -736,15 +787,15 @@ int readVersion(BitBufferReader reader) {
  * <length(5)><char(6)>[0-32]
  */
 writeString(BitBufferWriter writer, String string, int maxLength) {
-  if (maxLength > 32) {
-    throw Exception("String too long");
+  if (maxLength > 63) {
+    throw Exception("max length too long");
   }
-  if (maxLength <=0) {
-    throw Exception("String too short");
+  if (maxLength <= 0) {
+    throw Exception("max length too short");
   }
   string = normalizeString(string, maxLength);
-  // max length 32 - 1 to fit into 5 bits
-  writer.writeInt(string.length - 1, signed: false, bits: 5);
+
+  writer.writeInt(string.length, signed: false, bits: 6);
   string
       .codeUnits
       .map((c) => _convertCodeUnitToBase64(c))
@@ -752,8 +803,10 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
 }
 
 String readString(BitBufferReader reader) {
-  final length = reader.readInt(signed: false, bits: 5) + 1;
-
+  final length = reader.readInt(signed: false, bits: 6);
+  if (length == 0) {
+    return "";
+  }
   StringBuffer sb = StringBuffer();
   while (sb.length < length) {
     final codeUnit = _convertBase64ToCodeUnit(reader.readInt(signed: false, bits: 6));

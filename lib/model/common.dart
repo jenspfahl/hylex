@@ -53,15 +53,23 @@ enum Actor {
 
 
 enum Operation {
-  SendInvite,  //000
-  AcceptInvite, //001
-  RejectInvite, //010
-  Move, //011,
-  Resign, //100
-  FullState, //101
-  unused110, //110
-  unused111 //111
-  // stuck to 3 bits, don't add more
+  SendInvite,  //0000
+  AcceptInvite, //0001
+  RejectInvite, //0010
+  Move, //0011,
+  Resign, //0100
+  FullState, //0101
+  unused0110, //0110
+  unused0111, //0111
+  unused1000, //1000
+  unused1001, //1001
+  unused1010, //1010
+  unused1011, //1011
+  unused1100, //1100
+  unused1101, //1101
+  unused1110, //1110
+  unused1111, //1111
+  // stuck to 4 bits, don't add more
 } 
 
 enum PlayMode {

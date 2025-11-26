@@ -62,7 +62,7 @@ void main() {
       print(" free: ${buffer.getFreeBits()}");
       final reader = buffer.reader();
 
-      expect(buffer.getSize(), 6 * 3);
+      expect(buffer.getSize(), 5 * 4 + 1);
 
       expect(readNullableInt(reader, 5), 0);
       expect(readNullableInt(reader, 5), 1);
@@ -71,6 +71,143 @@ void main() {
       expect(readNullableInt(reader, 5), 4);
       expect(readNullableInt(reader, 5), null);
     });
+
+    test('Test enums', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeEnum(writer, Operation.values, Operation.Move);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 4);
+
+      expect(readEnum(reader, Operation.values), Operation.Move);
+    });
+
+    test('Test nullable enums', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeNullableEnum(writer, Operation.values, null as Operation?);
+      writeNullableEnum(writer, Operation.values, Operation.Move);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 5 + 1);
+
+      expect(readNullableEnum(reader, Operation.values), null);
+      expect(readNullableEnum(reader, Operation.values), Operation.Move);
+    });
+
+    test('Test version', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeVersion(writer, 1);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 4);
+
+      expect(readVersion(reader), 1);
+    });
+
+    test('Test round', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeRound(writer, 25, 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 5);
+
+      expect(readRound(reader, 5), 25);
+    });
+
+    test('Test chip', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeChip(writer, GameChip(3), 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 3);
+
+      expect(readChip(reader, 5), GameChip(3));
+    });
+
+    test('Test coordinate', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeCoordinate(writer, Coordinate(4,1), 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 1 * 5);
+
+      expect(readCoordinate(reader, 5), Coordinate(4,1));
+    });
+
+    test('Test move', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeMove(writer, Move.skipped(), 5);
+      writeMove(writer, Move.placed(GameChip(3), Coordinate(4, 1)), 5);
+      writeMove(writer, Move.movedForMessaging(Coordinate(4, 1), Coordinate(0, 1)), 5);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 2 + 9 + 11);
+
+      expect(readMove(reader, 5), Move.skipped());
+      expect(readMove(reader, 5), Move.placed(GameChip(3), Coordinate(4, 1)));
+      expect(readMove(reader, 5), Move.movedForMessaging(Coordinate(4, 1), Coordinate(0, 1)));
+    });
+
+    test('Test Strings', () {
+      final buffer = BitBuffer();
+
+      final writer = buffer.writer();
+      writeString(writer, "", maxNameLength);
+      writeString(writer, "aBcDeFgHiJkLmNoPqRsTuVwXyZ-_/345xxx", maxNameLength);
+
+      print(" b64: ${buffer.toBase64()}");
+      print(" size: ${buffer.getSize()}");
+      print(" free: ${buffer.getFreeBits()}");
+      final reader = buffer.reader();
+
+      expect(buffer.getSize(), 6 + 6 + 6 * maxNameLength);
+
+      expect(readString(reader), "");
+      expect(readString(reader), "aBcDeFgHiJkLmNoPqRsTuVwXyZ-  345");
+    });
+
   });
 
   group("Test messaging", () {
