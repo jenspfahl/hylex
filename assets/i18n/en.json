@@ -210,5 +210,23 @@
     "sendYourMoveAsQrCode": "As QR code",
     "rememberDecision": "Remember my decision for this match."
 
+  },
+  "playStates": {
+    "initialised": "New game",
+    "remoteOpponentInvited": "Invitation sent",
+    "invitationPending": "Invitation awaiting response",
+    "remoteOpponentAccepted_ReadyToMove": "Invitation accepted by opponent, please make your first move",
+    "invitationAccepted_ReadyToMove": "Invitation accepted, please make the first move",
+    "invitationAccepted_WaitForOpponent": "Invitation accepted, wait for the opponent's first move",
+    "invitationRejected": "Invitation rejected",
+    "readyToMove": "It is your turn!",
+    "waitForOpponent": "Awaiting for opponent's move",
+    "firstGameFinished_ReadyToSwap": "First game finished: It is your turn to start the second game!",
+    "firstGameFinished_WaitForOpponent": "First game finished: Wait for the opponent's first move for the second game",
+    "lost": "Match lost",
+    "won": "Match won",
+    "resigned": "You gave up :(",
+    "opponentResigned": "Opponent gave up, you win",
+    "closed": "Match ended"
   }
 }

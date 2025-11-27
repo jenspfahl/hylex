@@ -329,7 +329,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     final localRole = playHeader.getLocalRoleForMultiPlay();
 
     if (localRole != null) {
-      sb.write(" as ${localRole.name}");
+      sb.write(", ${localRole.name}");
     }
     if (playHeader.currentRound > 0) {
       sb.write(", ");

@@ -3,6 +3,7 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/stats.dart';
 import 'package:hyle_x/model/stock.dart';
@@ -137,22 +138,22 @@ enum PlayState {
 
   String toMessage() {
     switch (this) {
-      case PlayState.Initialised: return "New game";
-      case PlayState.RemoteOpponentInvited: return "Invitation sent out";
-      case PlayState.InvitationPending: return "Open invitation needs response";
-      case PlayState.RemoteOpponentAccepted_ReadyToMove: return "Sent invitation accepted, please do your first move";
-      case PlayState.InvitationAccepted_ReadyToMove: return "Invitation accepted, please do the first move";
-      case PlayState.InvitationAccepted_WaitForOpponent: return "Invitation accepted, wait for invitor's first move";
-      case PlayState.InvitationRejected: return "Invitation rejected";
-      case PlayState.ReadyToMove: return "Your turn!";
-      case PlayState.WaitForOpponent: return "Awaiting opponent's move";
-      case PlayState.FirstGameFinished_ReadyToSwap: return "First game finished: Your turn to initiate second game!";
-      case PlayState.FirstGameFinished_WaitForOpponent: return "First game finished: Awaiting opponent's first move for second game";
-      case PlayState.Lost: return "Match lost";
-      case PlayState.Won: return "Match won";
-      case PlayState.Resigned: return "You resigned :(";
-      case PlayState.OpponentResigned: return "Opponent resigned, you win";
-      case PlayState.Closed: return "Match finished";
+      case PlayState.Initialised: return translate("playStates.initialised");
+      case PlayState.RemoteOpponentInvited: return translate("playStates.remoteOpponentInvited");
+      case PlayState.InvitationPending: return translate("playStates.invitationPending");
+      case PlayState.RemoteOpponentAccepted_ReadyToMove: return translate("playStates.remoteOpponentAccepted_ReadyToMove");
+      case PlayState.InvitationAccepted_ReadyToMove: return translate("playStates.invitationAccepted_ReadyToMove");
+      case PlayState.InvitationAccepted_WaitForOpponent: return translate("playStates.invitationAccepted_WaitForOpponent");
+      case PlayState.InvitationRejected: return translate("playStates.invitationRejected");
+      case PlayState.ReadyToMove: return translate("playStates.readyToMove");
+      case PlayState.WaitForOpponent: return translate("playStates.waitForOpponent");
+      case PlayState.FirstGameFinished_ReadyToSwap: return translate("playStates.firstGameFinished_ReadyToSwap");
+      case PlayState.FirstGameFinished_WaitForOpponent: return translate("playStates.firstGameFinished_WaitForOpponent");
+      case PlayState.Lost: return translate("playStates.lost");
+      case PlayState.Won: return translate("playStates.won");
+      case PlayState.Resigned: return translate("playStates.resigned");
+      case PlayState.OpponentResigned: return translate("playStates.opponentResigned");
+      case PlayState.Closed: return translate("playStates.closed");
     }
   }
 

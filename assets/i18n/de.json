@@ -209,5 +209,24 @@
     "sendYourMoveAsMessage": "Als Nachricht",
     "sendYourMoveAsQrCode": "Als QR-Code",
     "rememberDecision": "Merke meine Entscheidung für dieses Match."
+  },
+  "playStates": {
+    "initialised": "Neues Spiel",
+    "remoteOpponentInvited": "Einladung gesendet",
+    "invitationPending": "Einladung wartet auf Antwort",
+    "remoteOpponentAccepted_ReadyToMove": "Einladung wurde vom Gegner angenommen, bitte führe deinen ersten Zug aus",
+    "invitationAccepted_ReadyToMove": "Einladung angenommen, bitte führe den ersten Zug aus",
+    "invitationAccepted_WaitForOpponent": "Einladung angenommen, warte auf den ersten Zug des Gegners",
+    "invitationRejected": "Einladung abgelehnt",
+    "readyToMove": "Du bist am Zug!",
+    "waitForOpponent": "Warte auf den Zug des Gegners",
+    "firstGameFinished_ReadyToSwap": "Erstes Spiel beendet: Du bist am Zug, um das zweite Spiel zu starten!",
+    "firstGameFinished_WaitForOpponent": "Erstes Spiel beendet: Warte auf den ersten Zug des Gegners für das zweite Spiel",
+    "lost": "Spiel verloren",
+    "won": "Spiel gewonnen",
+    "resigned": "Du hast aufgegeben :(",
+    "opponentResigned": "Gegner hat aufgegeben, du gewinnst",
+    "closed": "Spiel beendet"
+
   }
 }
