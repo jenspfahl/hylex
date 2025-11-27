@@ -59,6 +59,8 @@ enum PlayStateGroup {
  *          Invitee: ReadyToMove
  *          Invitee: WaitForOpponent
  *           ...
+ *
+ * more details in README.MD
  */
 enum PlayState {
   
@@ -339,7 +341,11 @@ class PlayHeader {
 
   String getTitle() {
     if (opponentName != null) {
-      return "${getReadablePlayId()} against '${opponentName}'";
+      return translate("gameTitle.playAgainstOpponent",
+        args: {
+          "playId" : getReadablePlayId(),
+          "opponent" : opponentName
+        });
     }
     else {
       return getReadablePlayId();

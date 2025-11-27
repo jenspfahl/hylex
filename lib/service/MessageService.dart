@@ -112,7 +112,7 @@ class MessageService {
         bool showAllOptions = false,
       }) {
     final inviteMessage = InviteMessage.fromHeaderAndUser(header, user);
-    final serializedMessage = inviteMessage.serializeWithContext(header.commContext);
+    final serializedMessage = inviteMessage.serializeWithContext(header.commContext, user.userSeed);
 
     return _saveAndShare(
         serializedMessage, 
@@ -148,7 +148,7 @@ class MessageService {
         user.name,
         initialMove
     );
-    final serializedMessage = acceptMessage.serializeWithContext(header.commContext);
+    final serializedMessage = acceptMessage.serializeWithContext(header.commContext, user.userSeed);
 
     var localUserRole = header.actor.getActorRoleFor(playOpener);
     var remoteUserRole = localUserRole?.opponentRole;
@@ -178,7 +178,7 @@ class MessageService {
         header.playId,
         header.playSize,
         user.id);
-    final serializedMessage = rejectMessage.serializeWithContext(header.commContext);
+    final serializedMessage = rejectMessage.serializeWithContext(header.commContext, user.userSeed);
 
     return _saveAndShare(
         serializedMessage,
@@ -206,7 +206,7 @@ class MessageService {
         header.playSize,
         header.currentRound,
         move);
-    final serializedMessage = moveMessage.serializeWithContext(header.commContext);
+    final serializedMessage = moveMessage.serializeWithContext(header.commContext, user.userSeed);
 
     return _saveAndShare(
         serializedMessage,
@@ -231,7 +231,7 @@ class MessageService {
         header.playId,
         header.playSize,
         header.currentRound);
-    final serializedMessage = resignationMessage.serializeWithContext(header.commContext);
+    final serializedMessage = resignationMessage.serializeWithContext(header.commContext, user.userSeed);
 
     return _saveAndShare(
         serializedMessage,

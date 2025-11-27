@@ -160,7 +160,7 @@ abstract class GameEngine extends ChangeNotifier {
 
   resignGame();
 
-  String getFullPlayAsUrl() => FullStateMessage(play, user).serialize().toUrl();
+  String getFullPlayAsUrl() => FullStateMessage(play, user).serialize(user.userSeed).toUrl();
 
 
 }

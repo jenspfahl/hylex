@@ -19,11 +19,13 @@ const shareBaseUrl = "https://hx.jepfa.de/d/";
 final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSensitive: false);
 
 
-const chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
+const allowedChars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
+final allowedCharsRegExp = RegExp("[a-z0-9 -]", caseSensitive: false);
 const maxDimension = 13;
 const maxRound = maxDimension * maxDimension;
 const playIdLength = 8;
 const userIdLength = 16;
+const userSeedLength = 64;
 const maxNameLength = 32;
 const currentMessageVersion = 1;
 const maxMessageVersion = 16;
@@ -97,16 +99,21 @@ abstract class Message {
 
   Message(this.playId, this.playSize);
 
-  SerializedMessage serialize() => _serializeWithSignature(null);
+  SerializedMessage serialize(String userSeed) => _serializeWithSignature(userSeed: userSeed);
 
-  SerializedMessage serializeWithContext(CommunicationContext comContext) {
-    final serializedMessage = _serializeWithSignature(comContext.predecessorMessage?.signature);
+  SerializedMessage serializeWithContext(CommunicationContext comContext, String userSeed) {
+    final serializedMessage = _serializeWithSignature(
+        receivedSignature: comContext.predecessorMessage?.signature, userSeed: userSeed);
     comContext.registerSentMessage(serializedMessage);
     return serializedMessage;
   }
 
 
-  SerializedMessage _serializeWithSignature(String? receivedSignature) {
+  SerializedMessage _serializeWithSignature(
+      {
+        String? receivedSignature,
+        String? userSeed
+      }) {
 
     final buffer = BitBuffer();
     final writer = buffer.writer();
@@ -121,7 +128,10 @@ abstract class Message {
     debugPrint("Payload: ${buffer.toBase64()}");
     debugPrint("Payload size: ${buffer.getSize()}");
     debugPrint("Payload free bits: ${buffer.getFreeBits()}");
-    final signature = createUrlSafeSignature(buffer, receivedSignature);
+    final signature = createUrlSafeSignature(
+        buffer,
+        userSeed: userSeed,
+        previousSignatureBase64: receivedSignature);
     return SerializedMessage(
         buffer.toBase64().toUrlSafe(),
         signature
@@ -441,7 +451,10 @@ class SerializedMessage {
 
     final buffer = _createBuffer();
 
-    final errorMessage = _validateSignature(buffer.getLongs(), comContext, signature);
+    final errorMessage = _validateSignature(
+        buffer.getLongs(),
+        comContext,
+        comparingSignature: signature);
     if (errorMessage != null) {
       return (null, errorMessage);
     }
@@ -494,16 +507,27 @@ class SerializedMessage {
 }
 
 
-List<int> createSignature(List<int> blob, String? previousSignatureBase64) {
+List<int> createSignature(
+    List<int> blob,
+    {
+      String? userSeed,
+      String? previousSignatureBase64,
+    }) {
   final previousSignature = previousSignatureBase64 != null
       ? Base64Codec.urlSafe().decoder.convert(previousSignatureBase64)
-      : generateRandomString(32).codeUnits; // TODO invitor seeds the whole chain with their secret
+      : (userSeed??"").codeUnits;
   final signature = sha256.convert(blob + previousSignature);
   return signature.bytes.take(6).toList();
 }
 
 
-String? _validateSignature(List<int> blob, CommunicationContext comContext, String comparingSignature) {
+String? _validateSignature(
+    List<int> blob,
+    CommunicationContext comContext,
+    {
+        required String comparingSignature,
+        String? userSeed
+    }) {
   if (comContext.predecessorMessage?.signature == comparingSignature) {
     print("Message with signature $comparingSignature already processed");
     return "This link has already been processed.";
@@ -512,7 +536,12 @@ String? _validateSignature(List<int> blob, CommunicationContext comContext, Stri
     print("No validation for first chain element");
     return null;
   }
-  final signature = Base64Encoder().convert(createSignature(blob, comContext.roundTripSignature)).toUrlSafe();
+  final signature = Base64Encoder().convert(
+      createSignature(
+          blob,
+          userSeed: userSeed,
+          previousSignatureBase64: comContext.roundTripSignature))
+      .toUrlSafe();
   print("received payload $blob");
   print("computed  sig $signature");
   print("comparing sig $comparingSignature");
@@ -817,14 +846,22 @@ String readString(BitBufferReader reader) {
 
 
 
-String createUrlSafeSignature(BitBuffer buffer, String? previousSignatureBase64) {
-  final signature = createSignature(buffer.getLongs(), previousSignatureBase64);
+String createUrlSafeSignature(
+    BitBuffer buffer,
+    {
+      String? userSeed,
+      String? previousSignatureBase64
+    }) {
+  final signature = createSignature(
+      buffer.getLongs(),
+      userSeed: userSeed,
+      previousSignatureBase64: previousSignatureBase64);
   return Base64Encoder().convert(signature).toUrlSafe();
 }
 
 
-int _convertCodeUnitToBase64(int codeUnit) => chars.indexOf(String.fromCharCode(codeUnit));
-int _convertBase64ToCodeUnit(int base64) => chars[base64].codeUnits.first;
+int _convertCodeUnitToBase64(int codeUnit) => allowedChars.indexOf(String.fromCharCode(codeUnit));
+int _convertBase64ToCodeUnit(int base64) => allowedChars[base64].codeUnits.first;
 
 
 extension StringExtenion on String {

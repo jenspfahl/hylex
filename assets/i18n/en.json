@@ -89,7 +89,8 @@
   "gameTitle": {
     "againstComputer": "Single Game",
     "alternate": "Alternating Single Game",
-    "automatic": "Automatic Game"
+    "automatic": "Automatic Game",
+    "playAgainstOpponent": "{playId} against {opponent}"
   },
   "submitButton": {
     "submitMove" : "Submit move",
@@ -164,7 +165,8 @@
     "onlyRemoveRecentlyPlacedChip": "You can only remove the most recently placed chip!",
     "orderHasToSelectAChip": "Please select the chip you wish to move first.",
     "orderMoveInvalid": "The chip can only be moved horizontally or vertically through empty spaces.",
-    "orderMoveOnOccupied": "You cannot move the selected chip to an occupied space."
+    "orderMoveOnOccupied": "You cannot move the selected chip to an occupied space.",
+    "illegalCharsForUserName": "Your name may only consist of Latin letters, numbers, spaces or hyphens!"
   },
   "matchMenu" : {
     "matchInfo": "Match Info",
@@ -204,7 +206,6 @@
     }
   },
   "messaging": {
-
     "sendYourMove": "Send your request or move to your opponent.",
     "sendYourMoveAsMessage": "As message",
     "sendYourMoveAsQrCode": "As QR code",

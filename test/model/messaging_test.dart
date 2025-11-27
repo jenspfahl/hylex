@@ -241,7 +241,7 @@ void main() {
       );
 
       final serializedInvitationMessage = _send(
-          invitationMessage.serializeWithContext(invitorContext));
+          invitationMessage.serializeWithContext(invitorContext, "seed"));
 
 
       // receive invite
@@ -283,7 +283,7 @@ void main() {
         move,
       );
 
-      final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(inviteeContext));
+      final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(inviteeContext, "seed"));
 
 
       // receive accept invite
@@ -319,7 +319,7 @@ void main() {
         move,
       );
 
-      final serializedMoveMessage = _send(firstInvitorPlayerMoveMessage.serializeWithContext(invitorContext));
+      final serializedMoveMessage = _send(firstInvitorPlayerMoveMessage.serializeWithContext(invitorContext, "seed"));
 
       final deserializedMoveMessage = serializedMoveMessage.deserialize(inviteeContext).$1 as MoveMessage;
 

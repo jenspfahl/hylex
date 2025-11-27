@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import 'package:hyle_x/model/messaging.dart';
 
 const DIALOG_BG = Color(0xFF2E1B1A);
 
@@ -251,65 +252,79 @@ void showInputDialog(
     ) {
   final controller = TextEditingController(text: prefilledText);
   SmartDialog.show(builder: (_) {
-    return Container(
-      height: height ?? 200 + text.length.toDouble() + (thirdText != null ? 50 : 0),
-      width: width ?? 300,
-      decoration: BoxDecoration(
-        color: DIALOG_BG,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.all(18.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              text,
-              style: const TextStyle(color: Colors.white),
-            ),
-            TextField(
-              controller: controller,
-              maxLength: maxLength,
-              minLines: minLines,
-              maxLines: maxLines,
-              style: TextStyle(color: Colors.lightGreenAccent),
-              cursorColor: Colors.lightGreen,
-            ),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () {
-                  SmartDialog.dismiss();
-                  okHandler(controller.text);
-                },
-                child: Text(translate('common.ok'))),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () {
-                  SmartDialog.dismiss();
-                  if (cancelHandler != null) {
-                      cancelHandler();
-                    }
-                },
-                child: Text(translate('common.cancel'))
-            ),
-            if (thirdText != null)
-              OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.lightGreenAccent),
-                  onPressed: () {
-                    if (thirdHandler != null) {
-                      thirdHandler(controller);
-                    }
-                  },
-                  child: Text(thirdText)
-              ),
 
-          ],
-        ),
-      ),
+    bool valid = true;
+    
+    return StatefulBuilder(
+        builder: (BuildContext context, setState) {
+
+          return Container(
+            height: height ?? 200 + text.length.toDouble() + (thirdText != null ? 50 : 0),
+            width: width ?? 300,
+            decoration: BoxDecoration(
+              color: DIALOG_BG,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    text,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  TextField(
+                    controller: controller,
+                    maxLength: maxLength,
+                    minLines: minLines,
+                    maxLines: maxLines,
+                    decoration: InputDecoration(
+                      errorText: valid ? null : translate("errors.illegalCharsForUserName"),
+                    ),
+                    style: TextStyle(color: Colors.lightGreenAccent),
+                    onChanged: (v) {
+                      setState(() => valid = allowedCharsRegExp.hasMatch(v));
+                    },
+                    cursorColor: Colors.lightGreen,
+                  ),
+                  OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.lightGreenAccent),
+                      onPressed: () {
+                        SmartDialog.dismiss();
+                        okHandler(controller.text);
+                      },
+                      child: Text(translate('common.ok'))),
+                  OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.lightGreenAccent),
+                      onPressed: () {
+                        SmartDialog.dismiss();
+                        if (cancelHandler != null) {
+                          cancelHandler();
+                        }
+                      },
+                      child: Text(translate('common.cancel'))
+                  ),
+                  if (thirdText != null)
+                    OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.lightGreenAccent),
+                        onPressed: () {
+                          if (thirdHandler != null) {
+                            thirdHandler(controller);
+                          }
+                        },
+                        child: Text(thirdText)
+                    ),
+
+                ],
+              ),
+            ),
+          );
+        }
     );
   });
 }
