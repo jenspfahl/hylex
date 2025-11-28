@@ -302,7 +302,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                       PopupMenuButton<int>(
                         onSelected: (item) {
                           if (item == 0) {
-                            _showGameDetails(gameEngine.play);
+                            _showGameDetails(gameEngine.play, gameEngine.user);
                           }
                           else if (gameEngine.play.classicModeFirstMatrix != null) {
                             _showFirstGameOfClassicMode(
@@ -613,7 +613,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final looserPlayer = gameEngine.play.getLooserPlayer();
 
     return translate("gameStates.gameOverLooser",
-        args: { "who" : "${looserRole.name} (${looserPlayer.name})"});
+        args: { "who" : "${looserRole.name} (${looserPlayer.getName()})"});
   }
 
   Row _buildAiProgressText() {
@@ -1244,7 +1244,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     return widget;
   }
 
-  void _showGameDetails(Play play) {
+  void _showGameDetails(Play play, User user) {
     SmartDialog.show(builder: (_) {
       List<Widget> children = [
         Text(
@@ -1276,6 +1276,8 @@ class _HyleXGroundState extends State<HyleXGround> {
 
         if (isDebug)
           _buildGameInfoRow("Round trip signature", play.header.commContext.roundTripSignature ?? "-"),
+        if (isDebug)
+          _buildGameInfoRow("User seed", user.userSeed),
 
         const Divider(),
 

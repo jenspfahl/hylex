@@ -20,7 +20,7 @@ final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSe
 
 
 const allowedChars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
-final allowedCharsRegExp = RegExp("[a-z0-9 -]", caseSensitive: false);
+final allowedCharsRegExp = RegExp(r'^[a-z0-9 -]+$', caseSensitive: false);
 const maxDimension = 13;
 const maxRound = maxDimension * maxDimension;
 const playIdLength = 8;
