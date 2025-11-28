@@ -711,6 +711,8 @@ class StartPageState extends State<StartPage> {
     showInputDialog(translate('dialogs.yourName'),
             prefilledText: _user.name,
             maxLength: maxNameLength,
+            validationMessage: translate("errors.illegalCharsForUserName"),
+            validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
             okHandler: (name) {
               _user.name = name;
               StorageService().saveUser(_user);

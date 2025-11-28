@@ -98,6 +98,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     await StorageService().saveUser(user);
                     setState(() {});
                   },
+                  validationMessage: translate("errors.illegalCharsForUserName"),
+                  validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
                 );
               }
             ),

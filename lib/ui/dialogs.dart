@@ -248,6 +248,8 @@ void showInputDialog(
       int? maxLength,
       int? minLines,
       int? maxLines,
+      String? validationMessage,
+      bool Function(String)? validationHandler,
     }
     ) {
   final controller = TextEditingController(text: prefilledText);
@@ -281,20 +283,25 @@ void showInputDialog(
                     minLines: minLines,
                     maxLines: maxLines,
                     decoration: InputDecoration(
-                      errorText: valid ? null : translate("errors.illegalCharsForUserName"),
+                      errorText: valid ? null : validationMessage,
+                      errorMaxLines: 3,
                     ),
                     style: TextStyle(color: Colors.lightGreenAccent),
                     onChanged: (v) {
-                      setState(() => valid = allowedCharsRegExp.hasMatch(v));
+                      if (validationHandler != null) {
+                        setState(() => valid = validationHandler(v));
+                      }
                     },
                     cursorColor: Colors.lightGreen,
                   ),
                   OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.lightGreenAccent),
+                          foregroundColor: valid ? Colors.lightGreenAccent : Colors.grey),
                       onPressed: () {
-                        SmartDialog.dismiss();
-                        okHandler(controller.text);
+                        if (valid) {
+                          SmartDialog.dismiss();
+                          okHandler(controller.text);
+                        }
                       },
                       child: Text(translate('common.ok'))),
                   OutlinedButton(
