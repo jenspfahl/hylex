@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,8 @@ class QrReaderPageState extends State<QrReaderPage> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
   bool? _flashStatus;
+
+  StreamSubscription<Barcode>? _subscription;
   
   @override
   void initState() {
@@ -41,11 +44,9 @@ class QrReaderPageState extends State<QrReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      onPopInvokedWithResult: (b, d) async {
         await _shutdown();
-        Navigator.pop(context);
-        return true;
       },
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -86,6 +87,7 @@ class QrReaderPageState extends State<QrReaderPage> {
       await controller?.toggleFlash();
     }
     await controller?.stopCamera();
+    await _subscription?.cancel();
   }
 
   Widget _buildQrView(BuildContext context) {
@@ -103,8 +105,8 @@ class QrReaderPageState extends State<QrReaderPage> {
       this.controller = controller;
     });
 
-    controller.scannedDataStream.listen((scanData) {
-      _shutdown();
+    _subscription = controller.scannedDataStream.listen((scanData) async {
+      await _shutdown();
       Navigator.of(context).pop(scanData.code);
     });
   }
