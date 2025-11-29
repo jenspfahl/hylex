@@ -258,7 +258,7 @@ class PlayHeader {
     playMode = inviteMessage.playMode;
     playOpener = inviteMessage.playOpener;
     opponentId = inviteMessage.invitorUserId;
-    opponentName = inviteMessage.invitorUserName;
+    opponentName = inviteMessage.invitorUserName.isNotEmpty ? inviteMessage.invitorUserName : null;
     if (playMode == PlayMode.Classic) {
       rolesSwapped = false;
     }

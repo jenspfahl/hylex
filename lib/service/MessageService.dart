@@ -343,7 +343,7 @@ class MessageService {
     
       return Container(
         width: 280,
-        height: 330,
+        height: 350,
         decoration: BoxDecoration(
           color: DIALOG_BG,
           borderRadius: BorderRadius.circular(10),
@@ -355,7 +355,9 @@ class MessageService {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("[${playHeader.getReadablePlayId()}]", style: TextStyle(color: Colors.white)),
-              Text("Let your opponent scan this!", style: TextStyle(color: Colors.white)),
+              Text(playHeader.opponentName != null
+                  ? translate("messaging.scanQrCodeFromOpponentWithName", args: {"name" : playHeader.opponentName})
+                  : translate("messaging.scanQrCodeFromOpponent"), style: TextStyle(color: Colors.white)),
               QrImageView(
                 data: message.toUrl(),
                 version: QrVersions.auto,

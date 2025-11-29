@@ -210,7 +210,9 @@
     "sendYourMove": "Sende deine Anfrage oder deinen Zug an deinen Gegner.",
     "sendYourMoveAsMessage": "Als Nachricht",
     "sendYourMoveAsQrCode": "Als QR-Code",
-    "rememberDecision": "Merke meine Entscheidung für dieses Match."
+    "rememberDecision": "Merke meine Entscheidung für dieses Match.",
+    "scanQrCodeFromOpponent": "Lass deinen Gegner diesen QR-Code scannen.",
+    "scanQrCodeFromOpponentWithName": "Lass deinen Gegner {name} diesen QR-Code scannen."
   },
   "playStates": {
     "initialised": "Neues Spiel",
