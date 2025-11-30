@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
-import 'package:flutter/services.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -79,7 +78,7 @@ class StartPageState extends State<StartPage> {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       _readAndParseSharedText(value);
     }, onError: (err) {
-      toastInfo(context, "Cannot read URL from shared text: $err");
+      toastInfo(context, "${translate("errors.cannotExtractUrl")}: $err");
     });
 
     // Get the media sharing coming from outside the app while the app is closed.
@@ -96,7 +95,7 @@ class StartPageState extends State<StartPage> {
 
       final uri = extractAppLinkFromString(message.path);
       if (uri == null) {
-        toastInfo(context, "Cannot read URL from shared text.");
+        toastInfo(context, translate("errors.cannotExtractUrl"));
       }
       else {
         handleReceivedMessage(uri);
@@ -111,7 +110,7 @@ class StartPageState extends State<StartPage> {
     }
     else {
       debugPrint("invalid uri: $uri");
-      showAlertDialog("I cannot interpret this uri : $uri");
+      showAlertDialog("${translate("errors.cannotParseUrl")}: $uri");
     }
   }
 
@@ -124,8 +123,8 @@ class StartPageState extends State<StartPage> {
       debugPrint("received: [$playId] ${extractOperation.name}");
       if (extractOperation == Operation.SendInvite) {
         if (header != null) {
-          showAlertDialog("You already reacted to this invite. See ${header
-              .getReadablePlayId()}");
+          showAlertDialog(translate("messaging.alreadyReactedToInvite",
+              args: { "playId" : header.getReadablePlayId() }));
           //TODO add button to jump to this match entry
         }
         else {
@@ -140,13 +139,12 @@ class StartPageState extends State<StartPage> {
         }
       }
       else if (header == null) {
-        showAlertDialog("Match ${toReadableId(serializedMessage
-            .extractPlayId())} is not present! Did you delete it?");
+        showAlertDialog(translate("messaging.matchMotFound",
+            args: { "playId" : toReadableId(playId) }));
       }
       else if (header.state.isFinal) {
-        showAlertDialog("Match ${toReadableId(
-            serializedMessage.extractPlayId())} is already finished (${header
-            .state.toMessage()}).");
+        showAlertDialog(translate("messaging.matchAlreadyFinished",
+            args: { "playId" : header.getReadablePlayId() }));
       }
       else {
         final (message, error) = serializedMessage.deserialize(
@@ -175,20 +173,26 @@ class StartPageState extends State<StartPage> {
       debugPrintStack();
       debugPrint(e.toString());
 
-      showAlertDialog("Cannot handle this message!");
+      showAlertDialog("Cannot handle this message!\n" + e.toString());
     }
 
   }
 
   void _handleReceiveInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) {
 
+    var opponentName = receivedInviteMessage.invitorUserName;
+    var playMode = receivedInviteMessage.playMode;
     var dimension = receivedInviteMessage.playSize.dimension;
 
     showChoiceDialog(
-        "${receivedInviteMessage
-            .invitorUserName} invited you to a ${receivedInviteMessage.playMode.name.toLowerCase()} $dimension x $dimension match.",
+      translate("messaging.invitationMessage",
+      args: {
+        "opponent": opponentName.isEmpty ? "?" : opponentName,
+        "playMode": playMode.getName(),
+        "dimension": dimension,
+      }),
       width: 300,
-      firstString: "Accept",
+      firstString: translate("common.accept"),
       firstHandler: () {
         // first ask for your name
         if (_user.name.isEmpty) {
@@ -201,7 +205,7 @@ class StartPageState extends State<StartPage> {
 
 
       },
-      secondString: "Reject",
+      secondString: translate("common.decline"),
       secondHandler: () {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
@@ -209,7 +213,7 @@ class StartPageState extends State<StartPage> {
             PlayState.InvitationRejected);
         MessageService().sendInvitationRejected(header, _user, () => context);
       },
-      thirdString: "Reply later",
+      thirdString: translate("common.replyLater"),
       thirdHandler: () {
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
@@ -268,12 +272,14 @@ class StartPageState extends State<StartPage> {
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, message.initialMove, () {
-            showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+            showAlertDialog(translate("messaging.matchAccepted",
+                args: { "playId" : header.getReadablePlayId() }));
           });
         }
         else {
           _startMultiPlayerGame(context, header, message.initialMove, () {
-            showAlertDialog("Match ${header.getReadablePlayId()} has been accepted.");
+            showAlertDialog(translate("messaging.matchAccepted",
+                args: { "playId" : header.getReadablePlayId() }));
           });
         }
       });
@@ -287,8 +293,8 @@ class StartPageState extends State<StartPage> {
       showAlertDialog(error);
     }
     else {
-      showAlertDialog("Match ${header.getReadablePlayId()} has been rejected.");
-    }
+      showAlertDialog(translate("messaging.matchDeclined",
+          args: { "playId" : header.getReadablePlayId() }));    }
   }
 
   void _handleMove(PlayHeader header, MoveMessage message) {
@@ -313,9 +319,11 @@ class StartPageState extends State<StartPage> {
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, null, () {
-            showAlertDialog(
-                "Your opponent '${header.opponentName}' gave up match ${header
-                    .getReadablePlayId()}, you win!");
+            showAlertDialog(translate("messaging.opponentResigned",
+                args: {
+                  "opponent" : header.opponentName ?? "?",
+                  "playId" : header.getReadablePlayId(),
+                }));
           });
         }
       });
@@ -413,7 +421,7 @@ class StartPageState extends State<StartPage> {
                             ));
                       }
                       else {
-                        showAlertDialog('No ongoing single play to resume.');
+                        showAlertDialog(translate("errors.nothingToResume"));
                       }
                     }
                 )
@@ -686,9 +694,9 @@ class StartPageState extends State<StartPage> {
   void _selectInviteeMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
-      'Who shall start? The one who starts is Chaos.',
-      firstString: "ME", firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
-      secondString: "THE OTHER", secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
+      translate("dialogs.whoToStart"),
+      firstString: translate("dialogs.whoToStartMe"), firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
+      secondString: translate("dialogs.whoToStartTheOther"), secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
     );
   }
 
@@ -1088,12 +1096,20 @@ class StartPageState extends State<StartPage> {
   }
 
   void handleReplyToInvitation(PlayHeader playHeader) {
+
+    var opponentName = playHeader.opponentName;
+    var playMode = playHeader.playMode;
     var dimension = playHeader.playSize.dimension;
 
     showChoiceDialog(
-      "${playHeader.opponentName} invited you to a ${playHeader.playMode.name.toLowerCase()} $dimension x $dimension match.",
+        translate("messaging.invitationMessage",
+            args: {
+              "opponent": opponentName?? "?",
+              "playMode": playMode.getName(),
+              "dimension": dimension,
+            }),
       width: 300,
-      firstString: "Accept",
+      firstString: translate('common.accept'),
       firstHandler: () {
         // first ask for your name
         if (_user.name.isEmpty) {
@@ -1106,7 +1122,7 @@ class StartPageState extends State<StartPage> {
 
 
       },
-      secondString: "Reject",
+      secondString: translate('common.decline'),
       secondHandler: () async {
         final error = await PlayStateManager().doAndHandleRejectInvite(playHeader);
         if (error != null) {
@@ -1223,7 +1239,7 @@ class StartPageState extends State<StartPage> {
       status = await Permission.camera.request();
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Camera permission is required to scan QR codes')),
+          SnackBar(content: Text(translate("errors.cameraPermissionNeeded"))),
         );
       }
     }

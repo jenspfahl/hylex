@@ -10,6 +10,9 @@
     "winner" : "Gewinner",
     "looser" : "Verlierer",
     "left" : "übrig",
+    "annehmen": "Annehmen",
+    "ablehnen": "Ablehnen",
+    "später antworten": "Später antworten",
     "dates": {
       "yesterday": "Gestern",
       "today": "Heute"
@@ -66,6 +69,10 @@
     "whatKindOfMatch": "Welche Spielart möchtest du spielen?",
     "whatKindOfMatchHylexStyle": "Sowohl Order als auch Chaos können Punkte erzielen. Der Spieler mit den meisten Punkten gewinnt. Das Match endet nach einem Spiel.",
     "whatKindOfMatchClassicStyle": "Nur Order kann Punkte erzielen. Ein Match besteht aus zwei einzelnen Spielen. Nach dem ersten Spiel tauschen die Spieler die Rollen. Der Spieler mit den meisten Punkten gewinnt.",
+
+    "whoToStart": "Wer soll anfangen? Der, der angängt, ist Chaos.",
+    "whoToStartMe": "Ich",
+    "whoToStartTheOther": "Mein Gegner",
 
     "yourName": "Wie lautet dein Name? Dein Gegner wird diesen Namen sehen. Bitte wähle einen kurzen Namen.",
 
@@ -167,7 +174,14 @@
     "orderHasToSelectAChip" : "Bitte wähle zuerst den Chip aus, den du bewegen möchtest.",
     "orderMoveInvalid" : "Der Chip kann nur horizontal oder vertikal durch freie Felder verschoben werden.",
     "orderMoveOnOccupied" : "Du kannst den ausgewählten Chip nicht auf ein belegtes Feld verschieben.",
-    "illegalCharsForUserName": "Der Name darf nur aus lateinischen Buchstaben, Ziffern, Leerzeichen oder Bindestrichen bestehen!"
+    "illegalCharsForUserName": "Der Name darf nur aus lateinischen Buchstaben, Ziffern, Leerzeichen oder Bindestrichen bestehen!",
+    "cannotExtractUrl": "Es kann kein HyleX App-Link aus dem geteilten Text extrahiert werden",
+    "cannotParseUrl": "Der angegebene HyleX App-Link konnte nicht gelesen werden.",
+    "alreadyReactedToInvite": "Du hast bereits auf diese Einladung reagiert. Siehe {playId}.",
+    "matchMotFound": "Spiel {playId} wurde nicht gefunden oder bereits entfernt.",
+    "matchAlreadyFinished": "Spiel {playId} ist bereits beendet.",
+    "nothingToResume": "Kein laufendes Einzelspiel, das fortgesetzt werden könnte",
+    "cameraPermissionNeeded": "Kamera-Berechtigung erforderlich, um QR-Codes scannen zu können!"
   },
   "matchMenu" : {
     "matchInfo": "Spielinfos",
@@ -212,7 +226,13 @@
     "sendYourMoveAsQrCode": "Als QR-Code",
     "rememberDecision": "Merke meine Entscheidung für dieses Match.",
     "scanQrCodeFromOpponent": "Lass deinen Gegner diesen QR-Code scannen.",
-    "scanQrCodeFromOpponentWithName": "Lass deinen Gegner {name} diesen QR-Code scannen."
+    "scanQrCodeFromOpponentWithName": "Lass deinen Gegner {name} diesen QR-Code scannen.",
+    "opponentNeedsToReact": "Dein Gegner muss zuerst auf deine letzte Nachricht reagieren.",
+    "shareAgain": "Sende sie erneut",
+    "invitationMessage" : "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen.",
+    "matchAccepted": "Das Match {playId} wurde angenommen :)",
+    "matchDeclined": "Das Match {playId} wurde abgelehnt :(",
+    "opponentResigned": "Dein Gegner {opponent} hat das Match {playId} aufgegeben, du gewinnst!"
   },
   "playStates": {
     "initialised": "Neues Spiel",
@@ -222,6 +242,8 @@
     "invitationAccepted_ReadyToMove": "Einladung angenommen, bitte führe den ersten Zug aus",
     "invitationAccepted_WaitForOpponent": "Einladung angenommen, warte auf den ersten Zug des Gegners",
     "invitationRejected": "Einladung abgelehnt",
+    "invitationRejectedByYou": "Du hast die Einladung abgelehnt",
+    "invitationRejectedByOpponent": "Dein potentieller Gegner hat deine Einladung abgelehnt",
     "readyToMove": "Du bist am Zug!",
     "waitForOpponent": "Warte auf den Zug des Gegners",
     "firstGameFinished_ReadyToSwap": "Erstes Spiel beendet: Du bist am Zug, um das zweite Spiel zu starten!",

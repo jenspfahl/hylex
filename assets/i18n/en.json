@@ -10,6 +10,9 @@
     "winner" : "Winner",
     "looser" : "Looser",
     "left" : "left",
+    "accept": "Accept",
+    "decline": "Decline",
+    "replyLater": "Replay later",
     "dates": {
       "yesterday": "Yesterday",
       "today": "Today"
@@ -42,7 +45,7 @@
     "quitTheApp" : "Do you want to close the app?",
     "aboutDesc1" : "An Entropy clone",
     "aboutDesc2" : "Visit {homepage} to view the code, report bugs and give stars!",
-    "overwriteGame": "Starting a new game will delete an ongoing Single Play game.",
+    "overwriteGame": "Starting a new game will delete an ongoing single game.",
 
     "whichGroundSize": "What size playing field would you like to play on?",
     "groundSize5": "Beginners level, takes a couple of minutes",
@@ -66,6 +69,10 @@
     "whatKindOfMatch": "What kind of match do you want to play?",
     "whatKindOfMatchHylexStyle": "Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.",
     "whatKindOfMatchClassicStyle": "Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.",
+
+    "whoToStart": "Who should start? Whoever starts is Chaos.",
+    "whoToStartMe": "Me",
+    "whoToStartTheOther": "My opponent",
 
     "yourName": "What is your name? Your opponent will see this name. Please choose a short name.",
     "resetAchievements": "Do you really want to reset all achievements to zero?",
@@ -166,7 +173,14 @@
     "orderHasToSelectAChip": "Please select the chip you wish to move first.",
     "orderMoveInvalid": "The chip can only be moved horizontally or vertically through empty spaces.",
     "orderMoveOnOccupied": "You cannot move the selected chip to an occupied space.",
-    "illegalCharsForUserName": "Your name may only consist of Latin letters, numbers, spaces or hyphens!"
+    "illegalCharsForUserName": "Your name may only consist of Latin letters, numbers, spaces or hyphens!",
+    "cannotExtractUrl": "Cannot extract a HyleX App-Link from shared text",
+    "cannotParseUrl": "Cannot parse the given HyleX App-Link",
+    "alreadyReactedToInvite": "You already reacted to this invite. See {playId}.",
+    "matchMotFound": "Game {playId} was not found or has already been removed.",
+    "matchAlreadyFinished": "Game {playId} has already finished.",
+    "nothingToResume": "No ongoing single game that could be continued.",
+    "cameraPermissionNeeded": "Camera permission is required to scan QR codes!"
   },
   "matchMenu" : {
     "matchInfo": "Match Info",
@@ -200,9 +214,9 @@
     "groups" : {
       "actionNeeded" : "Action required",
       "waitForOpponent" : "Wait for opponent",
-      "wonMatches" : "Matches won",
-      "lostMatches" : "Matches lost",
-      "rejectedMatches" : "Match invitations rejected"
+      "wonMatches" : "Won matches",
+      "lostMatches" : "Lost matches",
+      "rejectedMatches" : "Declined match invitations"
     }
   },
   "messaging": {
@@ -211,7 +225,13 @@
     "sendYourMoveAsQrCode": "As QR code",
     "rememberDecision": "Remember my decision for this match.",
     "scanQrCodeFromOpponent": "Let your opponent scan this QR code.",
-    "scanQrCodeFromOpponentWithName": "Let your opponent {name} scan this QR code."
+    "scanQrCodeFromOpponentWithName": "Let your opponent {name} scan this QR code.",
+    "opponentNeedsToReact": "Your opponent must respond to your last message first.",
+    "shareAgain": "Send message again",
+    "invitationMessage" : "{opponent} has invited you to a {playMode} {dimension} x {dimension} match.",
+    "matchAccepted": "The match {playId} has been accepted :)",
+    "matchDeclined": "The match {playId} has been declined :(",
+    "opponentResigned": "Your opponent {opponent} has resigned from the match {playId}, you win!"
   },
   "playStates": {
     "initialised": "New game",
@@ -220,7 +240,9 @@
     "remoteOpponentAccepted_ReadyToMove": "Invitation accepted by opponent, please make your first move",
     "invitationAccepted_ReadyToMove": "Invitation accepted, please make the first move",
     "invitationAccepted_WaitForOpponent": "Invitation accepted, wait for the opponent's first move",
-    "invitationRejected": "Invitation rejected",
+    "invitationRejected": "Invitation declined",
+    "invitationRejectedByYou": "You declined the invitation",
+    "invitationRejectedByOpponent": "Your potential opponent declined your invitation"
     "readyToMove": "It is your turn!",
     "waitForOpponent": "Awaiting for opponent's move",
     "firstGameFinished_ReadyToSwap": "First game finished: It is your turn to start the second game!",

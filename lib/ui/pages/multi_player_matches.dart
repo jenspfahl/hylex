@@ -214,12 +214,13 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           && lastMessage.channel == Channel.In
                           && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
                       showAlertDialog(opponentRejected
-                          ? "Opponent rejected your invitation"
-                          : "You rejected opponent's invitation.");
+                          ? translate("playStates.invitationRejectedByOpponent")
+                          : translate("playStates.invitationRejectedByYou"));
                     }
                     else if (playHeader.isStateShareable()) {
-                      showChoiceDialog("Your opponent needs to react to your last message.",
-                          firstString: "SHARE IT AGAIN",
+                      showChoiceDialog(translate("messaging.opponentNeedsToReact"),
+                          width: 270,
+                          firstString: translate("messaging.shareAgain"),
                           firstHandler: () {
                             MessageService().sendCurrentPlayState(
                                 playHeader, widget.user, () => context, false);
@@ -387,7 +388,6 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         return list.sortedBy((e) => e.getReadablePlayId());
       case SortOrder.BY_STATE:
         return list.sortedBy((e) => "${(e.state.group.index * 100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
-        return list.sortedBy((e) => ((e.state.group.index * 100) + e.state.index).toString());
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
     }
