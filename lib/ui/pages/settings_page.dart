@@ -129,9 +129,14 @@ class _SettingsPageState extends State<SettingsPage> {
               title: Text("Restore from a file"),
               description: Text("Usually after re-installation of the app, you can import a previously created backup file"),
               onPressed: (_) {
-                BackupRestoreService().restore(
-                        (b) => toastInfo(context, b ? "Done!" : "Error!"),
-                        (message) => toastLost(context, message));
+                ask("Restoring from a file will overwrite all current data! Are you sure to do this:",
+                    icon: Icons.warning,
+                    () {
+                      BackupRestoreService().restore(
+                              (b) => toastInfo(context, b ? "Done!" : "Error!"),
+                              (message) => toastLost(context, message));
+                    });
+
               },
             ),
 

@@ -837,17 +837,24 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
  * <length(32)><char(16)>[0-*]
  */
 writeNullableObject(BitBufferWriter writer, Object? obj) {
-  final objJson = jsonEncode(obj);
-  writer.writeString(objJson??"");
+  if (obj == null) {
+    writer.writeString("");
+  }
+  else {
+    final objJson = jsonEncode(obj);
+    writer.writeString(objJson);
+  }
 }
 
-Object? readNullableObject(BitBufferReader reader) {
+Object? readNullableObject(BitBufferReader reader, Object Function(dynamic) mapToObj) {
   final string = reader.readString();
   if (string.isEmpty) {
     return null;
   }
   else {
-    return jsonDecode(string);
+    final map = jsonDecode(string);
+    debugPrint(map.toString());
+    return mapToObj(map);
   }
 }
 

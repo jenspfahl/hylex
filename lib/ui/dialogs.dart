@@ -67,8 +67,9 @@ void confirm(String text, Function() okHandler) {
       secondHandler: () {});
 }
 
-void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler}) {
+void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler, IconData? icon}) {
   showChoiceDialog(text,
+      icon: icon,
       firstString: translate('common.yes'),
       firstHandler: yesHandler,
       secondString: noString ?? translate('common.no'),
@@ -80,6 +81,7 @@ void ask(String text, Function() yesHandler, {String? noString, Function()? noHa
 void showChoiceDialog(
     String text,
     {
+      IconData? icon,
       double? height,
       double? width,
       required String firstString,
@@ -140,6 +142,7 @@ void showChoiceDialog(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            if (icon != null) Icon(icon, color: Colors.white),
             Text(
               text,
               style: const TextStyle(color: Colors.white),
