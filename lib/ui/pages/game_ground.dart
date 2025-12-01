@@ -792,14 +792,17 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     var appendix = "";
 
-    if (gameEngine.play.header.state == PlayState.FirstGameFinished_ReadyToSwap) {
-      appendix = "➤ ${translate("requests.swapRoles")}";
-    }
-    else if (gameEngine.play.currentRole == Role.Order) {
-      appendix = "➤ ${translate("requests.orderToMove")}";
-    }
-    else if (gameEngine.play.currentRole == Role.Chaos) {
-      appendix = "➤ ${translate("requests.chaosToPlace")}";
+    if (PreferenceService().showHints) {
+      if (gameEngine.play.header.state ==
+          PlayState.FirstGameFinished_ReadyToSwap) {
+        appendix = "➤ ${translate("requests.swapRoles")}";
+      }
+      else if (gameEngine.play.currentRole == Role.Order) {
+        appendix = "➤ ${translate("requests.orderToMove")}";
+      }
+      else if (gameEngine.play.currentRole == Role.Chaos) {
+        appendix = "➤ ${translate("requests.chaosToPlace")}";
+      }
     }
 
     return Column(
@@ -1082,7 +1085,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   void _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != null && !gameEngine.play.matrix.isFree(cursor.end!)) {
-      toastInfo(context, translate("errors.chaosAlreadyPlaced"));
+      if (PreferenceService().showChipErrors) {
+        toastInfo(context, translate("errors.chaosAlreadyPlaced"));
+      }
     }
     else {
       final currentChip = gameEngine.play.currentChip!;
@@ -1097,7 +1102,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   void _handleOccupiedFieldForChaos(Coordinate coordinate, BuildContext context) {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != coordinate) {
-      toastInfo(context, translate("errors.onlyRemoveRecentlyPlacedChip"));
+      if (PreferenceService().showChipErrors) {
+        toastInfo(context, translate("errors.onlyRemoveRecentlyPlacedChip"));
+      }
     }
     else {
       gameEngine.play.undoStaleMove();
@@ -1108,7 +1115,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (!selectionCursor.hasStart) {
-      toastInfo(context, translate("errors.orderHasToSelectAChip"));
+      if (PreferenceService().showChipErrors) {
+        toastInfo(context, translate("errors.orderHasToSelectAChip"));
+      }
     }
     else if (/*!cursor.hasEnd && */selectionCursor.start == coordinate) {
       // clear start cursor if not target is selected
@@ -1116,7 +1125,9 @@ class _HyleXGroundState extends State<HyleXGround> {
       selectionCursor.clear();
     }
     else if (!selectionCursor.trace.contains(coordinate) && selectionCursor.start != coordinate) {
-      toastInfo(context, translate("errors.orderMoveInvalid"));
+      if (PreferenceService().showChipErrors) {
+        toastInfo(context, translate("errors.orderMoveInvalid"));
+      }
     }
     else if (selectionCursor.hasStart) {
       if (selectionCursor.hasEnd) {
@@ -1144,8 +1155,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   void _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (selectionCursor.start != null && selectionCursor.start != coordinate && selectionCursor.end != null) {
-      toastInfo(context, translate("errors.orderMoveOnOccupied"));
-
+      if (PreferenceService().showChipErrors) {
+        toastInfo(context, translate("errors.orderMoveOnOccupied"));
+      }
     }
     else if (selectionCursor.start == coordinate) {
       selectionCursor.clear();

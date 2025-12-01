@@ -12,13 +12,17 @@ class PreferenceService {
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
   
   static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
+  static final PREF_SHOW_HINTS = 'pref/showHints';
   static final PREF_SHOW_POINTS = 'pref/showPoints';
+  static final PREF_SHOW_CHIP_ERRORS = 'pref/showPChipErrors';
   static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
 
   static final PreferenceService _service = PreferenceService._internal();
 
   bool showCoordinates = true;
+  bool showHints = true;
   bool showPoints = true;
+  bool showChipErrors = true;
 
   factory PreferenceService() {
     return _service;
@@ -26,16 +30,10 @@ class PreferenceService {
 
   PreferenceService._internal() {
     // load cache
-    getBool(PREF_SHOW_COORDINATES).then((value) {
-      if (value != null) {
-        showCoordinates = value;
-      }
-    });
-    getBool(PREF_SHOW_POINTS).then((value) {
-      if (value != null) {
-        showPoints = value;
-      }
-    });
+    _loadCachedBoolPref(PREF_SHOW_COORDINATES, (v) => showCoordinates = v);
+    _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
+    _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);
+    _loadCachedBoolPref(PREF_SHOW_CHIP_ERRORS, (v) => showChipErrors = v);
   }
 
   Future<String?> getString(String key) async {
@@ -85,5 +83,12 @@ class PreferenceService {
     return prefs.remove(key);
   }
 
+  _loadCachedBoolPref(String key, Function(bool) setter) {
+    getBool(key).then((value) {
+      if (value != null) {
+        setter(value);
+      }
+    });
+  }
 }
 

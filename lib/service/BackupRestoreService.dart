@@ -1,0 +1,155 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:bits/buffer.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hyle_x/model/common.dart';
+import 'package:hyle_x/model/messaging.dart';
+import 'package:hyle_x/service/StorageService.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import '../model/play.dart';
+import '../model/user.dart';
+import '../ui/pages/multi_player_matches.dart';
+import 'PreferenceService.dart';
+
+
+class BackupRestoreService {
+  static final BackupRestoreService _service = BackupRestoreService._internal();
+
+  static const extension = "backup";
+
+  factory BackupRestoreService() {
+    return _service;
+  }
+
+  BackupRestoreService._internal();
+
+  Future<void> backup(Function(String?) successHandler, Function(String) errorHandler) async {
+    try {
+
+      final destPath = await FilePicker.platform.getDirectoryPath();
+      if (destPath != null) {
+
+        var status = await Permission.storage.status;
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+          if (!status.isGranted) {
+            errorHandler('Please give permission');
+            return;
+          }
+
+        }
+
+
+        final saveIn = Directory(destPath);
+        final basePath = "${saveIn.path}/hylex";
+
+        int? version;
+        while(await File(_getFullPath(basePath, version)).exists()) {
+          if (version == null) {
+            version = 1;
+          }
+          else {
+            version++;
+          }
+          if (version > 100000) {
+            errorHandler('Cannot create backup file!');
+            return;
+          }
+        }
+
+        final dstFile = await File(_getFullPath(basePath, version));
+
+
+
+        final user = await StorageService().loadUser();
+        final currentSinglePlay = await StorageService().loadCurrentSinglePlay();
+        final allPlayHeaders = await StorageService().loadAllPlayHeaders();
+
+        final bitBuffer = BitBuffer();
+        final writer = bitBuffer.writer();
+        writeNullableObject(writer, user);
+        writeNullableObject(writer, currentSinglePlay);
+        writer.writeInt(allPlayHeaders.length);
+
+        allPlayHeaders.forEach((header) async {
+          writeNullableObject(writer, header);
+          final play = await StorageService().loadPlayFromHeader(header);
+          writeNullableObject(writer, play);
+        });
+
+        final data = bitBuffer.toBase64Compressed();
+        
+        debugPrint("Start writing user ... :" + data);
+        await dstFile.writeAsString(data);
+
+        successHandler(dstFile.path);
+      } else {
+        errorHandler("missing selection");
+      }
+    } on Exception catch (e) {
+      errorHandler("Cannot export database! " + e.toString());
+      print(e);
+    }
+
+  }
+
+  Future<void> restore(Function(bool) successHandler, Function(String) errorHandler) async {
+
+    try {
+      final result = await FilePicker.platform.pickFiles();
+
+      if (result != null) {
+        try {
+          final source = File(result.files.single.path!);
+          debugPrint("file to take from: ${source.path}");
+
+          final data = await source.readAsString();
+          final bitBuffer = BitBuffer.fromBase64Compressed(data);
+          final reader = bitBuffer.reader();
+          final user = readNullableObject(reader) as User?;
+          final currentSinglePlay = readNullableObject(reader) as Play?;
+
+          debugPrint("Restored: $user");
+          debugPrint("Restored: $currentSinglePlay");
+
+          final playHeaders = reader.readInt();
+
+          debugPrint("Restored: $playHeaders");
+
+          for (int i = 0; i < playHeaders; i++) {
+            final header = readNullableObject(reader) as PlayHeader?;
+            final play = readNullableObject(reader) as Play?;
+            debugPrint("Restored $i: $header");
+            debugPrint("Restored $i: $play");
+          }
+
+
+
+        } catch (e, trace) {
+          print(e);
+          debugPrintStack(stackTrace: trace);
+          debugPrint("corrupt file detected, ignore it!");
+
+          errorHandler("This is not a HyleX backup file!");
+          return;
+        }
+
+
+        successHandler(true);
+      } else {
+        successHandler(false);
+      }
+    } catch (e) {
+      errorHandler("Cannot import backup file!");
+      print(e);
+    }
+  }
+
+
+  String _getFullPath(String basePath, int? version) =>
+      version != null ? "$basePath ($version).$extension" : "$basePath.$extension";
+}
+

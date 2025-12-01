@@ -10,9 +10,9 @@
     "winner" : "Gewinner",
     "looser" : "Verlierer",
     "left" : "übrig",
-    "annehmen": "Annehmen",
-    "ablehnen": "Ablehnen",
-    "später antworten": "Später antworten",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "replayLater": "Später antworten",
     "dates": {
       "yesterday": "Gestern",
       "today": "Heute"

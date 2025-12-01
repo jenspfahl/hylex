@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import 'package:hyle_x/service/BackupRestoreService.dart';
 import 'package:hyle_x/service/StorageService.dart';
+import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 import '../../app.dart';
@@ -45,26 +47,28 @@ class _SettingsPageState extends State<SettingsPage> {
 
       ),
       sections: [
-        /*SettingsSection(
-          title: Text('Common'),
+        SettingsSection(
+          title: Text('Common', style: TextStyle(color: Colors.brown[800])),
           tiles: [
-            SettingsTile.switchTile(
-              title: const Text('Dark theme'),
-              initialValue: false,
-              onToggle: (bool value) {
-                _preferenceService.setBool(PreferenceService.PREF_DARK_MODE, value)
-                    .then((_) {
-                  setState(() {
-                    _darkMode = value;
-                    _preferenceService.darkTheme = _darkMode;
-                    debugPrint('dartheme=$_darkMode');
-                    AppBuilder.of(context)?.rebuild();
-                  });
-                });
-              },
+            SettingsTile(
+                title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
+                description: const Text("Your name is shown in messages for opponents"),
+                onPressed: (value) async {
+                  showInputDialog(translate('dialogs.yourName'),
+                    prefilledText: user.name,
+                    maxLength: maxNameLength,
+                    okHandler: (name) async {
+                      user.name = name;
+                      await StorageService().saveUser(user);
+                      setState(() {});
+                    },
+                    validationMessage: translate("errors.illegalCharsForUserName"),
+                    validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
+                  );
+                }
             ),
           ],
-        ),*/
+        ),
         SettingsSection(
           title: Text('Game Settings', style: TextStyle(color: Colors.brown[800])),
           tiles: [
@@ -86,28 +90,55 @@ class _SettingsPageState extends State<SettingsPage> {
                 setState(() => PreferenceService().showPoints = value);
               },
             ),
+            SettingsTile.switchTile(
+              title: const Text('Show hints'),
+              description: const Text("Show hints to help what to do"),
+              initialValue: PreferenceService().showHints,
+              onToggle: (bool value) {
+                PreferenceService().setBool(PreferenceService.PREF_SHOW_HINTS, value);
+                setState(() => PreferenceService().showHints = value);
+              },
+            ),
+            SettingsTile.switchTile(
+              title: const Text('Show errors'),
+              description: const Text("Show errors when movng chips wrongly"),
+              initialValue: PreferenceService().showChipErrors,
+              onToggle: (bool value) {
+                PreferenceService().setBool(PreferenceService.PREF_SHOW_CHIP_ERRORS, value);
+                setState(() => PreferenceService().showChipErrors = value);
+              },
+            ),
+
+          ],
+        ),
+        SettingsSection(
+          title: Text('Backup / Restore', style: TextStyle(color: Colors.brown[800])),
+          tiles: [
             SettingsTile(
-              title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
-              description: const Text("Your name is shown in messages for opponents"),
-              onPressed: (value) async {
-                showInputDialog(translate('dialogs.yourName'),
-                  prefilledText: user.name,
-                  maxLength: maxNameLength,
-                  okHandler: (name) async {
-                    user.name = name;
-                    await StorageService().saveUser(user);
-                    setState(() {});
-                  },
-                  validationMessage: translate("errors.illegalCharsForUserName"),
-                  validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
-                );
-              }
+              leading: Icon(Icons.download, color: Colors.brown[800]),
+              title: Text("Backup all into a file"),
+              description: Text("Save your user identity, all ongoing and finished matches and all achievements"),
+              onPressed: (_) {
+                BackupRestoreService().backup(
+                        (message) => toastInfo(context, message ?? "Done!"),
+                        (message) => toastLost(context, message));
+              },
+            ),
+            SettingsTile(
+              leading: Icon(Icons.upload_file, color: Colors.brown[800]),
+              title: Text("Restore from a file"),
+              description: Text("Usually after re-installation of the app, you can import a previously created backup file"),
+              onPressed: (_) {
+                BackupRestoreService().restore(
+                        (b) => toastInfo(context, b ? "Done!" : "Error!"),
+                        (message) => toastLost(context, message));
+              },
             ),
 
             const CustomSettingsTile(child: SizedBox(height: 36)),
+
           ],
         ),
-
       ],
     );
   }

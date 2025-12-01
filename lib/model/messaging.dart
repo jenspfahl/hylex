@@ -831,6 +831,27 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
       .forEach((bits) => writer.writeInt(bits, signed: false, bits: 6));
 }
 
+
+/***
+ * bits needed:
+ * <length(32)><char(16)>[0-*]
+ */
+writeNullableObject(BitBufferWriter writer, Object? obj) {
+  final objJson = jsonEncode(obj);
+  writer.writeString(objJson??"");
+}
+
+Object? readNullableObject(BitBufferReader reader) {
+  final string = reader.readString();
+  if (string.isEmpty) {
+    return null;
+  }
+  else {
+    return jsonDecode(string);
+  }
+}
+
+
 String readString(BitBufferReader reader) {
   final length = reader.readInt(signed: false, bits: 6);
   if (length == 0) {
