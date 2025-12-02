@@ -183,14 +183,15 @@ class StartPageState extends State<StartPage> {
     var opponentName = receivedInviteMessage.invitorUserName;
     var playMode = receivedInviteMessage.playMode;
     var dimension = receivedInviteMessage.playSize.dimension;
+    var playOpener = receivedInviteMessage.playOpener;
 
     showChoiceDialog(
-      translate("messaging.invitationMessage",
-      args: {
-        "opponent": opponentName.isEmpty ? "?" : opponentName,
-        "playMode": playMode.getName(),
-        "dimension": dimension,
-      }),
+      translate("messaging.invitationMessage_${playOpener.name}",
+        args: {
+          "opponent": opponentName.isEmpty ? "?" : opponentName,
+          "playMode": playMode.getName(),
+          "dimension": dimension,
+        }),
       width: 300,
       firstString: translate("common.accept"),
       firstHandler: () {
