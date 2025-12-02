@@ -123,7 +123,7 @@ class StartPageState extends State<StartPage> {
       debugPrint("received: [$playId] ${extractOperation.name}");
       if (extractOperation == Operation.SendInvite) {
         if (header != null) {
-          showAlertDialog(translate("messaging.alreadyReactedToInvite",
+          showAlertDialog(translate("errors.alreadyReactedToInvite",
               args: { "playId" : header.getReadablePlayId() }));
           //TODO add button to jump to this match entry
         }
@@ -139,11 +139,11 @@ class StartPageState extends State<StartPage> {
         }
       }
       else if (header == null) {
-        showAlertDialog(translate("messaging.matchMotFound",
+        showAlertDialog(translate("errors.matchMotFound",
             args: { "playId" : toReadableId(playId) }));
       }
       else if (header.state.isFinal) {
-        showAlertDialog(translate("messaging.matchAlreadyFinished",
+        showAlertDialog(translate("errors.matchAlreadyFinished",
             args: { "playId" : header.getReadablePlayId() }));
       }
       else {

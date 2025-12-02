@@ -117,7 +117,9 @@ class MessageService {
     return _saveAndShare(
         serializedMessage, 
         header,
-        'I (${user.name}) want to invite you to a $APP_NAME match. Click the link to open it: ',
+        user.name.isEmpty
+            ? translate("messaging.inviteMessageWithoutName", args: {"dimension" : header.dimension})
+            : translate("messaging.inviteMessage", args: {"name" : user.name, "dimension" : header.dimension}),
         contextProvider,
         saveState, 
         share,
@@ -156,7 +158,8 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
-        "I am accepting your match request. I am ${localUserRole?.name}, you are ${remoteUserRole?.name}.",
+        translate("messaging.acceptInvitation",
+            args: {"role" : localUserRole?.name, "opponentRole" : remoteUserRole?.name}),
         contextProvider,
         saveState,
         share,
@@ -183,7 +186,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
-        'I want to kindly reject your match request.',
+        translate("messaging.rejectInvitation"),
         contextProvider,
         saveState,
         share,
@@ -211,7 +214,9 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
-        "This is my next move for round ${header.currentRound} as ${header.getLocalRoleForMultiPlay()?.name}.",        contextProvider,
+        translate("messaging.nextMove",
+          args: {"role" : header.getLocalRoleForMultiPlay()?.name, "round" : header.currentRound}),
+        contextProvider,
         saveState,
         share,
         showAllOptions,
@@ -236,7 +241,8 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
-        "Uff, I am giving up in round ${header.currentRound}.",
+        translate("messaging.resign",
+          args: {"round" : header.currentRound}),
         contextProvider,
         saveState,
         share,

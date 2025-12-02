@@ -231,7 +231,13 @@
     "invitationMessage" : "{opponent} has invited you to a {playMode} {dimension} x {dimension} match.",
     "matchAccepted": "The match {playId} has been accepted :)",
     "matchDeclined": "The match {playId} has been declined :(",
-    "opponentResigned": "Your opponent {opponent} has resigned from the match {playId}, you win!"
+    "opponentResigned": "Your opponent {opponent} has resigned from the match {playId}, you win!",
+    "inviteMessage": "I ({name}) would like to invite you to a HyleX match. Click the link to reply to my invitation in the app (HyleX app required).",
+    "inviteMessageWithoutName": "I would like to invite you to a HyleX match ({dimension}x{dimension}). Click the link to reply to my invitation in the app (HyleX app required).",
+    "acceptInvitation": "I accept your invitation. I will play {role}, you will play {opponentRole}.",
+    "rejectInvitation": "I'm sorry, I have to decline your invitation. Maybe another time.",
+    "nextMove": "This is my move for round {round} as {role}.",
+    "resign": "Ugh, quite hard! I give up in round {round}."
   },
   "playStates": {
     "initialised": "New game",

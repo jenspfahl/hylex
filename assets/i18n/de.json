@@ -12,7 +12,7 @@
     "left" : "übrig",
     "accept": "Annehmen",
     "decline": "Ablehnen",
-    "replayLater": "Später antworten",
+    "replyLater": "Später antworten",
     "dates": {
       "yesterday": "Gestern",
       "today": "Heute"
@@ -232,7 +232,13 @@
     "invitationMessage" : "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen.",
     "matchAccepted": "Das Match {playId} wurde angenommen :)",
     "matchDeclined": "Das Match {playId} wurde abgelehnt :(",
-    "opponentResigned": "Dein Gegner {opponent} hat das Match {playId} aufgegeben, du gewinnst!"
+    "opponentResigned": "Dein Gegner {opponent} hat das Match {playId} aufgegeben, du gewinnst!",
+    "inviteMessage": "Ich ({name}) möchte dich zu einem HyleX-Match ({dimension}x{dimension}) einladen. Klicke auf den Link, um meine Einladung in der App zu beantworten (HyleX-App erforderlich).",
+    "inviteMessageWithoutName": "Ich möchte dich zu einem HyleX-Match einladen. Klicke auf den Link, um meine Einladung in der App zu beantworten (HyleX-App erforderlich).",
+    "acceptInvitation": "Ich nehme deine Einladung an. Ich spiele {role}, du spielst {opponentRole}.",
+    "rejectInvitation": "Es tut mir leid, ich muss die Einladung leider ablehnen. Vielleicht ein anderes Mal.",
+    "nextMove": "Das ist mein Zug in Runde {round} als {role}.",
+    "resign": "Puh, ganz schön schwierig! Ich gebe in Runde {round} auf."
   },
   "playStates": {
     "initialised": "Neues Spiel",
