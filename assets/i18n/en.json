@@ -5,6 +5,7 @@
     "yes": "Yes",
     "no": "No",
     "close": "Close",
+    "done": "Done",
     "reset": "Reset",
     "hello": "Hello {name}!",
     "winner" : "Winner",
@@ -173,7 +174,7 @@
     "orderHasToSelectAChip": "Please select the chip you wish to move first.",
     "orderMoveInvalid": "The chip can only be moved horizontally or vertically through empty spaces.",
     "orderMoveOnOccupied": "You cannot move the selected chip to an occupied space.",
-    "illegalCharsForUserName": "Your name may only consist of Latin letters, numbers, spaces or hyphens!",
+    "illegalCharsForUserName": "Your name may only consist of Latin letters, numbers, spaces and hyphens!",
     "cannotExtractUrl": "Cannot extract a HyleX App-Link from shared text",
     "cannotParseUrl": "Cannot parse the given HyleX App-Link",
     "alreadyReactedToInvite": "You already reacted to this invite. See {playId}.",
@@ -250,7 +251,7 @@
     "invitationAccepted_WaitForOpponent": "Invitation accepted, wait for the opponent's first move",
     "invitationRejected": "Invitation declined",
     "invitationRejectedByYou": "You declined the invitation",
-    "invitationRejectedByOpponent": "Your potential opponent declined your invitation"
+    "invitationRejectedByOpponent": "Your potential opponent declined your invitation",
     "readyToMove": "It is your turn!",
     "waitForOpponent": "Awaiting for opponent's move",
     "firstGameFinished_ReadyToSwap": "First game finished: It is your turn to start the second game!",
@@ -260,5 +261,32 @@
     "resigned": "You gave up :(",
     "opponentResigned": "Opponent gave up, you win",
     "closed": "Match ended"
+  },
+  "intro": {
+    "page1Title": "The eternal fight between Chaos and Order",
+    "page1Part1": "One player creates Chaos .. ",
+    "page1Part2": " ..  the other counteracts as Order.",
+
+    "page2Title": "The role of Chaos",
+    "page2Part1": "Chaos randomly draws chips from the stock and places them as chaotically as possible.",
+
+    "page3Title": "The Role of Order",
+    "page3Part1": "Order tries to arrange the chips placed by Chaos into a horizontal or vertical symmetrical arrangement, so-called palindromes.",
+
+    "page4Title": "The role of Order",
+    "page4Part1": "Order may slide any placed chip horizontally or vertically through empty cells. Order may also skip its current turn.",
+
+    "page5Title": "End of the game",
+    "page5Part1": "Chaos receives points for each chip outside of a Palindrome  ..",
+    "page5Part2": " ..  which is 20 points per chip in this example, so a total of 40.",
+
+    "page6Title": "End of the game",
+    "page6Part1": "Order receives points for each chip that is part of a palindrome...",
+    "page6Part2": "... which results in 6 points, since there are two palindromes (green-green and red-green-green-red).",
+
+    "page7Title": "End of the game",
+    "page7Part1": "The game is over when all chips have been placed ..",
+    "page7Part2": ".. and the player with the most points wins."
+
   }
 }

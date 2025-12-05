@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
@@ -58,15 +59,15 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       },
       pages: [
         PageViewModel(
-          title: "The eternal fight between Chaos and Order",
+          title: translate("intro.page1Title"),
           bodyWidget: Align(
             child: Column(
               children: [
-                Text("One player causes Chaos .. ", style: bodyStyle),
+                Text(translate("intro.page1Part1"), style: bodyStyle),
                 Align(alignment: Alignment.centerLeft,
                     child: buildRoleIndicator(Role.Chaos, isSelected: false)),
-                Text(""),
-                Text(" ..  the other counteracts as Order.", style: bodyStyle),
+                const Text(""),
+                Text(translate("intro.page1Part2"), style: bodyStyle),
                 Align(alignment: Alignment.centerRight,
                     child: buildRoleIndicator(Role.Order, isSelected: false)),
 
@@ -77,7 +78,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "The role of Chaos",
+          title: translate("intro.page2Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -86,8 +87,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               
               return Column(
                   children: [
-                    Text("Chaos randomly draws chips from the stock and places them as chaotic as possible.", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page2Part1"), style: bodyStyle),
+                    const Text(""),
                     _buildCellRow(
                         second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
                     ),
@@ -110,7 +111,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "The role of Order",
+          title: translate("intro.page3Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -119,8 +120,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text("Order wants to bring the placed chips into a horizontal or vertical symmetric order, called Palindromes.", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page3Part1"), style: bodyStyle),
+                    const Text(""),
                     _buildCellRow(),
                     _buildCellRow(
                       second: _buildGameChip(chipVisibleFrom: 6, chipColor: getColorFromIdx(3)),
@@ -144,7 +145,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "The role of Order",
+          title: translate("intro.page4Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -154,8 +155,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text("Order may slide any placed chip horizontally or vertically through empty cells. Order may also skip its current turn.", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page4Part1"), style: bodyStyle),
+                    const Text(""),
                     _buildCellRow(
                       first: _buildGameChip(
                         backgroundColor: chipBackgroundColor,
@@ -217,7 +218,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "Who wins?",
+          title: translate("intro.page5Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -226,8 +227,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text("Chaos collects points for each chip outside of a Palindrome  ..", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page5Part1"), style: bodyStyle),
+                    const Text(""),
                     _buildCellRow(
                       second: _buildGameChip(
                           text: "20",
@@ -254,8 +255,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                     Visibility(
                         visible: animatedPageController.value.toInt() > 3,
                         child: Column(children: [
-                          Text(""),
-                          Text(" ..  which is 20 points per chip in this example, so total 40.", style: bodyStyle),
+                          const Text(""),
+                          Text(translate("intro.page5Part2"), style: bodyStyle),
                           Align(alignment: Alignment.centerLeft,
                               child: buildRoleIndicator(Role.Chaos, points: 40, isSelected: false)),
                         ],)
@@ -268,7 +269,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "Who wins?",
+          title: translate("intro.page6Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -278,8 +279,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Whereas Order collects points for each chip which is part of a Palindrome ..", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page6Part1"), style: bodyStyle),
+                    const Text(""),
                     _buildCellRow(
                       second: _buildGameChip(
                         chipColor: getColorFromIdx(3),
@@ -312,8 +313,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                     Visibility(
                         visible: animatedPageController.value.toInt() >= 4,
                         child: Column(children: [
-                          Text(""),
-                          Text(" ..  which makes 6 points, because of two Palindromes (green-green and red-green-green-red).", style: bodyStyle),
+                          const Text(""),
+                          Text(translate("intro.page6Part2"), style: bodyStyle),
                           Align(alignment: Alignment.centerRight,
                               child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
                         ],)
@@ -326,7 +327,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: "Who wins?",
+          title: translate("intro.page7Title"),
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -336,8 +337,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("The game is over when all chips are placed ..", style: bodyStyle),
-                    Text(""),
+                    Text(translate("intro.page7Part1"), style: bodyStyle),
+                    const Text(""),
                     Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -486,8 +487,8 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                     Visibility(
                         visible: animatedPageController.value.toInt() > 4,
                         child: Column(children: [
-                          Text(""),
-                          Text(".. and the player with the most points win.", style: bodyStyle),
+                          const Text(""),
+                          Text(translate("intro.page7Part2"), style: bodyStyle),
                           Row(children: [
                             Align(alignment: Alignment.centerLeft,
                                 child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
@@ -511,9 +512,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       showSkipButton: true,
       showBackButton: true,
       back: const Icon(Icons.arrow_back),
-      skip: const Text('Close', style: TextStyle(fontWeight: FontWeight.w600)),
+      skip: Text(translate("common.close"), style: TextStyle(fontWeight: FontWeight.w600)),
       next: const Icon(Icons.arrow_forward),
-      done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
+      done: Text(translate("common.done"), style: TextStyle(fontWeight: FontWeight.w600)),
       curve: Curves.fastLinearToSlowEaseIn,
     //  controlsMargin: const EdgeInsets.all(16),
       controlsPadding: const EdgeInsets.symmetric(vertical: 16),

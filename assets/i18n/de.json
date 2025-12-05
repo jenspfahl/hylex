@@ -5,6 +5,7 @@
     "yes": "Ja",
     "no": "Nein",
     "close": "Schließen",
+    "done": "Fertig",
     "reset": "Zurücksetzen",
     "hello": "Hallo {name}!",
     "winner" : "Gewinner",
@@ -114,10 +115,10 @@
     "rolesSwapped" : "Rollen getauscht",
     "currentPlayer" : "Aktueller Spieler",
     "waitingPlayer" : "Wartender Spieler",
-    "chaosChipCount" : "Ein ungeordneter Chip zählt {count}",
-    "drawnChip" : "Gezogener Chip",
-    "recentlyPlacedChip" : "Zuletzt abgelegter Chip",
-    "chip" : "Chip"
+    "chaosChipCount" : "Ein ungeordneter Spielstein zählt {count}",
+    "drawnChip" : "Gezogener Spielstein",
+    "recentlyPlacedChip" : "Zuletzt abgelegter Spielstein",
+    "chip" : "Spielstein"
   },
   "playMode" : {
     "hylex" : "HyleX-Stil",
@@ -163,18 +164,18 @@
   },
   "requests" : {
     "swapRoles" : "Erstes Spiel des Matches beendet. Zeit, die Rollen zu tauschen!",
-    "orderToMove" : "Jetzt ist Order an der Reihe, einen Chip zu verschieben oder auszusetzen!",
+    "orderToMove" : "Jetzt ist Order an der Reihe, einen Spielstein zu verschieben oder auszusetzen!",
     "chaosToPlace" : "Jetzt ist Chaos an der Reihe, {chip} abzulegen!"
   },
   "errors" : {
-    "chaosHasToPlace" : "Chaos muss einen Chip ablegen, bevor es weitergeht!",
-    "chaosAlreadyPlaced" : "Du hast bereits einen Chip abgelegt.",
-    "noMoreStock" : "Kein Chip mehr verfügbar.",
-    "onlyRemoveRecentlyPlacedChip" : "Du kannst nur den zuletzt abgelegten Chip entfernen!",
-    "orderHasToSelectAChip" : "Bitte wähle zuerst den Chip aus, den du bewegen möchtest.",
-    "orderMoveInvalid" : "Der Chip kann nur horizontal oder vertikal durch freie Felder verschoben werden.",
-    "orderMoveOnOccupied" : "Du kannst den ausgewählten Chip nicht auf ein belegtes Feld verschieben.",
-    "illegalCharsForUserName": "Der Name darf nur aus lateinischen Buchstaben, Ziffern, Leerzeichen oder Bindestrichen bestehen!",
+    "chaosHasToPlace" : "Chaos muss einen Spielstein ablegen, bevor es weitergeht!",
+    "chaosAlreadyPlaced" : "Du hast bereits einen Spielstein abgelegt.",
+    "noMoreStock" : "Kein Spielstein mehr verfügbar.",
+    "onlyRemoveRecentlyPlacedChip" : "Du kannst nur den zuletzt abgelegten Spielstein entfernen!",
+    "orderHasToSelectAChip" : "Bitte wähle zuerst den Spielstein aus, den du bewegen möchtest.",
+    "orderMoveInvalid" : "Der Spielstein kann nur horizontal oder vertikal durch freie Felder verschoben werden.",
+    "orderMoveOnOccupied" : "Du kannst den ausgewählten Spielstein nicht auf ein belegtes Feld verschieben.",
+    "illegalCharsForUserName": "Der Name darf nur aus lateinischen Buchstaben, Ziffern, Leerzeichen und Bindestrichen bestehen!",
     "cannotExtractUrl": "Es kann kein HyleX App-Link aus dem geteilten Text extrahiert werden",
     "cannotParseUrl": "Der angegebene HyleX App-Link konnte nicht gelesen werden.",
     "alreadyReactedToInvite": "Du hast bereits auf diese Einladung reagiert. Siehe {playId}.",
@@ -192,7 +193,7 @@
     "gameInMatchSecond": "Zweites Spiel",
     "gameSize": "Spielgröße",
     "gameOpener": "Eröffner",
-    "pointsPerUnorderedChip": "Punkte pro nicht geordnetem Chip",
+    "pointsPerUnorderedChip": "Punkte pro nicht geordnetem Spielstein",
     "startedAt": "Spielbeginn",
     "lastActivity": "Letzte Aktivität am",
     "finishedAt": "Spielende",
@@ -261,6 +262,32 @@
     "resigned": "Du hast aufgegeben :(",
     "opponentResigned": "Gegner hat aufgegeben, du gewinnst",
     "closed": "Spiel beendet"
+  },
 
+  "intro": {
+    "page1Title": "Der ewige Kampf zwischen Chaos und Ordnung",
+    "page1Part1": "Ein Spieler verursacht Chaos (Chaos) ...",
+    "page1Part2": "... der andere bringt es in Ordnung (Order).",
+
+    "page2Title": "Die Rolle von Chaos",
+    "page2Part1": "Chaos zieht zufällig Spielsteine aus dem Vorrat und platziert sie so chaotisch wie möglich.",
+
+    "page3Title": "Die Rolle von Order",
+    "page3Part1": "Order versucht, die von Chaos gesetzten Spielsteine in eine horizontale oder vertikale symmetrische Anordnung, sogenannte Palindrome, zu bringen.",
+
+    "page4Title": "Die Rolle von Order",
+    "page4Part1": "Order kann jeden gesetzten Spielstein horizontal oder vertikal durch leere Felder verschieben. Order kann auch den aktuellen Zug aussetzen.",
+
+    "page5Title": "Spielende",
+    "page5Part1": "Chaos erhält Punkte für jeden Spielstein außerhalb eines Palindroms ...",
+    "page5Part2": "... das sind in diesem Beispiel 20 Punkte pro Spielstein, also insgesamt 40.",
+
+    "page6Title": "Spielende",
+    "page6Part1": "Order erhält Punkte für jeden Spielstein, der Teil eines Palindroms ist...",
+    "page6Part2": "... was 6 Punkte ergibt, da es zwei Palindrome sind (grün-grün und rot-grün-grün-rot).",
+
+    "page7Title": "Spielende",
+    "page7Part1": "Das Spiel ist beendet, wenn alle Spielsteine gesetzt wurden ...",
+    "page7Part2": "... und der Spieler mit den meisten Punkten gewinnt."
   }
 }

@@ -36,14 +36,13 @@ class BackupRestoreService {
       final destPath = await FilePicker.platform.getDirectoryPath();
       if (destPath != null) {
 
-        var status = await Permission.storage.status;
-        if (!status.isGranted) {
-          status = await Permission.storage.request();
-          if (!status.isGranted) {
+        var storagePermission = await Permission.manageExternalStorage.request(); // after Android 10
+        if (!storagePermission.isGranted) {
+          storagePermission = await Permission.storage.request(); // before Android 10
+          if (!storagePermission.isGranted) {
             errorHandler('Please give permission');
             return;
           }
-
         }
 
 
