@@ -4,10 +4,11 @@ import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/model/move.dart';
+import 'package:hyle_x/model/user.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:test/test.dart';
 
-void main() {
+Future<void> main() async {
 
   group("Test bits", () {
 
@@ -210,14 +211,20 @@ void main() {
 
   });
 
+  final invitorUser = User("");
+  final inviteeUser = User("");
+
+  await invitorUser.generateIds();
+  await inviteeUser.generateIds();
+
   group("Test messaging", () {
 
     final invitorContext = CommunicationContext();
-    final invitorUserId = generateRandomString(userIdLength);
+    final invitorUserId = invitorUser.id;
     final invitorUserName = "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz";
 
     final inviteeContext = CommunicationContext();
-    final inviteeUserId = generateRandomString(userIdLength);
+    final inviteeUserId = inviteeUser.id;
     final inviteePlayerName = "Remote opponent name";
     
     final playId = generateRandomString(playIdLength);

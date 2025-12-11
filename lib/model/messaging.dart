@@ -24,8 +24,10 @@ final allowedCharsRegExp = RegExp(r'^[a-z0-9 -]*$', caseSensitive: false);
 const maxDimension = 13;
 const maxRound = maxDimension * maxDimension;
 const playIdLength = 8;
-const userIdLength = 16;
-const userSeedLength = 24;
+const userPubicKey = 44; //Ed25519 uses 32 byte keys, which has a length of 44 as Base64 encoded
+const userPrivateKey = 44; //Ed25519 uses 32 byte keys, which has a length of 44 as Base64 encoded
+const userIdLength = userPubicKey;
+const userSeedLength = userPrivateKey;
 const maxNameLength = 32;
 const currentMessageVersion = 1;
 const maxMessageVersion = 16;
@@ -184,7 +186,7 @@ class InviteMessage extends Message {
       playSize,
       readEnum(reader, PlayMode.values),
       readEnum(reader, PlayOpener.values),
-      readString(reader),
+      readBase64String(reader, userIdLength),
       readString(reader),
     );
   }
@@ -193,7 +195,7 @@ class InviteMessage extends Message {
   void serializeToBuffer(BitBufferWriter writer) {
     writeEnum(writer, PlayMode.values, playMode);
     writeEnum(writer, PlayOpener.values, playOpener);
-    writeString(writer, invitorUserId, userIdLength);
+    writeBase64String(writer, invitorUserId, userIdLength);
     writeString(writer, invitorUserName, maxNameLength);
   }
 
@@ -231,7 +233,7 @@ class AcceptInviteMessage extends Message {
       playId,
       playSize,
       playOpener,
-      readString(reader),
+      readBase64String(reader, userIdLength),
       readString(reader),
       playOpener == PlayOpener.Invitee ? readMove(reader, playSize.dimension) : null,
     );
@@ -240,7 +242,7 @@ class AcceptInviteMessage extends Message {
   @override
   void serializeToBuffer(BitBufferWriter writer) {
     writeEnum(writer, PlayOpener.values, playOpenerDecision);
-    writeString(writer, inviteeUserId, userIdLength);
+    writeBase64String(writer, inviteeUserId, userIdLength);
     writeString(writer, inviteeUserName, maxNameLength);
     if (playOpenerDecision == PlayOpener.Invitee && initialMove != null) {
       writeMove(writer, initialMove!, playSize.dimension);
@@ -270,13 +272,13 @@ class RejectInviteMessage extends Message {
     return RejectInviteMessage(
       playId,
       playSize,
-      readString(reader),
+      readBase64String(reader, userIdLength),
     );
   }
 
   @override
   void serializeToBuffer(BitBufferWriter writer) {
-    writeString(writer, userId, userIdLength);
+    writeBase64String(writer, userId, userIdLength);
   }
 
   @override
@@ -374,8 +376,8 @@ class FullStateMessage extends Message {
     writeEnum(writer, PlayMode.values, header.playMode);
     writeNullableEnum(writer, PlayOpener.values, header.playOpener);
 
-    writeString(writer, user.id, userIdLength);
-    writeString(writer, header.opponentId??"", userIdLength);
+    writeBase64String(writer, user.id, userIdLength);
+    writeBase64String(writer, header.opponentId??"", userIdLength);
 
     writeEnum(writer, PlayState.values, header.state);
     writeRound(writer, header.currentRound, header.dimension);
@@ -810,7 +812,7 @@ int readVersion(BitBufferReader reader) {
 
 
 /**
- * max 32 chars long!
+ * max 63 chars long!
  *
  * bits needed:
  * <length(5)><char(6)>[0-32]
@@ -829,6 +831,16 @@ writeString(BitBufferWriter writer, String string, int maxLength) {
       .codeUnits
       .map((c) => _convertCodeUnitToBase64(c))
       .forEach((bits) => writer.writeInt(bits, signed: false, bits: 6));
+}
+
+/**
+ * max 63 chars long!
+ *
+ * bits needed:
+ * <length(5)><char(6)>[0-32]
+ */
+writeBase64String(BitBufferWriter writer, String string, int maxLength) {
+  writeString(writer, string.replaceAll('=', ""), maxLength);
 }
 
 
@@ -872,7 +884,10 @@ String readString(BitBufferReader reader) {
   return sb.toString();
 }
 
-
+String readBase64String(BitBufferReader reader, int length) {
+  final string = readString(reader);
+  return string.replaceAll(" ", "_").padRight(length, "=");
+}
 
 String createUrlSafeSignature(
     BitBuffer buffer,

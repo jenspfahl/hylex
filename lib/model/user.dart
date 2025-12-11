@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import '../utils/crypto.dart';
 import '../utils/fortune.dart';
 import 'achievements.dart';
 import 'messaging.dart';
@@ -11,9 +14,23 @@ class User {
   late String userSeed;
 
   User([String? id]) {
-    this.id = id ?? generateRandomString(userIdLength);
-    this.userSeed= generateRandomString(userSeedLength);
+    if (id != null) {
+      this.id = id;
+    }
+    else {
+      generateIds();
+    }
+
     achievements = Achievements();
+  }
+
+  generateIds() async {
+    final keyPair = await generateKeyPair();
+    final privateKeyBase64 = Base64Codec.urlSafe().encode(await keyPair.extractPrivateKeyBytes());
+    final publicKeyBase64 = Base64Codec.urlSafe().encode((await keyPair.extractPublicKey()).bytes);
+
+    this.id = publicKeyBase64;
+    this.userSeed = privateKeyBase64;
   }
 
   User.fromJson(Map<String, dynamic> map) {
