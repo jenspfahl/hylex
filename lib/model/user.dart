@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
+
 import '../utils/crypto.dart';
 import '../utils/fortune.dart';
 import 'achievements.dart';
@@ -7,24 +9,18 @@ import 'messaging.dart';
 
 
 class User {
-  late String id;
+  String id = "";
   String name = "";
   late Achievements achievements;
 
-  late String userSeed;
+  String userSeed = "";
 
-  User([String? id]) {
-    if (id != null) {
-      this.id = id;
-    }
-    else {
-      generateIds();
-    }
-
+  User() {
+    generateKeys();
     achievements = Achievements();
   }
 
-  generateIds() async {
+  generateKeys() async {
     final keyPair = await generateKeyPair();
     final privateKeyBase64 = Base64Codec.urlSafe().encode(await keyPair.extractPrivateKeyBytes());
     final publicKeyBase64 = Base64Codec.urlSafe().encode((await keyPair.extractPublicKey()).bytes);
@@ -32,6 +28,24 @@ class User {
     this.id = publicKeyBase64;
     this.userSeed = privateKeyBase64;
   }
+
+  Future<void> awaitKeys() async {
+    var value = 0;
+    return Future.doWhile(() async {
+      value++;
+      if (value > 500) { // 5 seconds waiting time
+        print("Cannot determine Keys, generate random ID without signing capabilities");
+        id = generateRandomString(userIdLength);
+        return false;
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+      debugPrint("id l: ${id.length}");
+      debugPrint("seed l: ${userSeed.length}");
+      return id.length != userPubicKey || userSeed.length != userPrivateKey;
+    } );
+  }
+
+  bool hasSigningCapability() => userSeed.length == userPrivateKey;
 
   User.fromJson(Map<String, dynamic> map) {
     id = map['id'];
@@ -49,4 +63,6 @@ class User {
 
   String getReadableId() {
     return toReadableId(id);
-  }}
+  }
+
+}

@@ -211,11 +211,11 @@ Future<void> main() async {
 
   });
 
-  final invitorUser = User("");
-  final inviteeUser = User("");
+  final invitorUser = User();
+  final inviteeUser = User();
 
-  await invitorUser.generateIds();
-  await inviteeUser.generateIds();
+  await invitorUser.awaitKeys();
+  await inviteeUser.awaitKeys();
 
   group("Test messaging", () {
 

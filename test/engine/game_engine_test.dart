@@ -12,13 +12,14 @@ import 'package:hyle_x/service/PlayStateManager.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/utils/fortune.dart';
 
-void main() {
+Future<void> main() async {
   StorageService.enableMocking = true;
   MessageService.enableMocking = true;
-  
-  group("Test game engine single play", () {
 
-    final user = User(generateRandomString(userIdLength));
+  final user = User();
+  await user.awaitKeys();
+
+  group("Test game engine single play", () {
 
     test('without AI', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
@@ -83,10 +84,13 @@ void main() {
     });
   });
 
-  group("Test game engine multi play, invitor perspective", () {
 
-    final localUser = User(generateRandomString(userIdLength));
-    final remoteUser = User(generateRandomString(userIdLength));
+  final localUser = User();
+  final remoteUser = User();
+  await localUser.awaitKeys();
+  await remoteUser.awaitKeys();
+
+  group("Test game engine multi play, invitor perspective", () {
 
     test('invitee rejected', () async {
 
@@ -287,11 +291,9 @@ void main() {
 
   });
 
-  group("Test game engine multi play, invitee perspective", () {
+  final localPlayId = "local_id";
 
-    final localPlayId = "local_id";
-    final localUser = User(generateRandomString(userIdLength));
-    final remoteUser = User(generateRandomString(userIdLength));
+  group("Test game engine multi play, invitee perspective", () {
 
     test('invitor starts', () async {
 

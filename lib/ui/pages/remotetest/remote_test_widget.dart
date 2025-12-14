@@ -53,7 +53,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   void initState() {
     super.initState();
 
-    remoteUser = User("RemoteTestUser");
+    remoteUser = User();
     remoteUser.name = "Remote Test User";
     
     final localPlayHeader = widget.playHeader;

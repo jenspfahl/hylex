@@ -20,7 +20,6 @@ void main() {
 
   group("Test crypto", () {
 
-    final user = User();
 
     test('test gen key pair', () async {
 
