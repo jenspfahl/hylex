@@ -181,6 +181,7 @@
     "matchMotFound": "Game {playId} was not found or has already been removed.",
     "matchAlreadyFinished": "Game {playId} has already finished.",
     "nothingToResume": "No ongoing single game that could be continued.",
+    "cannotReactToOwnInvitation": "This invitation was made by you, you cannot reply to it!",
     "cameraPermissionNeeded": "Camera permission is required to scan QR codes!"
   },
   "matchMenu" : {

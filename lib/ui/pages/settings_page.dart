@@ -7,6 +7,7 @@ import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 import '../../app.dart';
+import '../../main.dart';
 import '../../model/messaging.dart';
 import '../../model/user.dart';
 import '../../service/PreferenceService.dart';
@@ -19,6 +20,14 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
+  late LocalizationDelegate localizationDelegate;
+
+  @override
+  void initState() {
+    super.initState();
+    localizationDelegate = LocalizedApp.of(context).delegate;
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +59,21 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsSection(
           title: Text('Common', style: TextStyle(color: Colors.brown[800])),
           tiles: [
+            if (isDebug) SettingsTile(
+              title: Text("Language"),
+              description: Text(localizationDelegate.currentLocale.languageCode),
+              onPressed: (context) {
+                showInputDialog("Choose a language. Allowed values: $SUPPORTED_LANGUAGES",
+                    okHandler: (value) => setState(() {
+                      localizationDelegate.changeLocale(Locale(value));
+                    }),
+                  validationMessage: "This language is not supported!",
+                  validationHandler: (v) => SUPPORTED_LANGUAGES.contains(v),
+                );
+
+              },
+            ),
+
             SettingsTile(
                 title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
                 description: const Text("Your name is shown in messages for opponents"),
@@ -108,7 +132,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 setState(() => PreferenceService().showChipErrors = value);
               },
             ),
-
           ],
         ),
         SettingsSection(
@@ -147,6 +170,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ],
     );
   }
+
 
   Future<User>_loadAllPrefs() async {
     return await StorageService().loadUser() ?? User();

@@ -131,7 +131,13 @@ class StartPageState extends State<StartPage> {
           final comContext = CommunicationContext();
           final (message, error) = serializedMessage.deserialize(comContext);
           if (message != null) {
-            _handleReceiveInvite(message as InviteMessage, comContext);
+            final inviteMessage = message as InviteMessage;
+            if (inviteMessage.invitorUserId == _user.id) {
+              showAlertDialog(translate("errors.cannotReactToOwnInvitation"));
+            }
+            else {
+              _handleReceiveInvite(inviteMessage, comContext);
+            }
           }
           else if (error != null) {
             showAlertDialog(error);
@@ -348,16 +354,20 @@ class StartPageState extends State<StartPage> {
                 child: _buildGameLogo(20)
             ),
 
-            if (_user.name.isNotEmpty)
-              Text(
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                  translate('common.hello', args: {'name' : _user.name})
-              )
-            else if (isDebug)
-              Text(
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-                  translate('common.hello', args: {'name' : _user.getReadableId()})
-              ),
+            if (isDebug)
+              GestureDetector(
+                onLongPress: () {
+                  if (_user.hasSigningCapability()) {
+                    showAlertDialog("User Public Key: ${_user.id}");
+                  }
+                  else {
+                    showAlertDialog("User ID: ${_user.id}");
+                  }
+                },
+                  child: _buildHello())
+            else
+              _buildHello(),
+
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -610,7 +620,10 @@ class StartPageState extends State<StartPage> {
       Function(PlaySize) handleChosenDimension) {
     if (isDebug) {
       showInputDialog("Which ground size? Allowed values: 2,3,4,5,7,9,11,13",
-          okHandler: (value) => handleChosenDimension(PlaySize.fromDimension(int.parse(value))));
+        okHandler: (value) => handleChosenDimension(PlaySize.fromDimension(int.parse(value))),
+        validationMessage: "This language is not supported!",
+        validationHandler: (v) => PlaySize.values.map((s) => s.dimension.toString()).contains(v),
+      );
     }
     else {
       showChoiceDialog(
@@ -1099,11 +1112,12 @@ class StartPageState extends State<StartPage> {
   void handleReplyToInvitation(PlayHeader playHeader) {
 
     var opponentName = playHeader.opponentName;
+    var playOpener = playHeader.playOpener;
     var playMode = playHeader.playMode;
     var dimension = playHeader.playSize.dimension;
 
     showChoiceDialog(
-        translate("messaging.invitationMessage",
+        translate("messaging.invitationMessage_${playOpener!.name}",
             args: {
               "opponent": opponentName?? "?",
               "playMode": playMode.getName(),
@@ -1244,6 +1258,21 @@ class StartPageState extends State<StartPage> {
         );
       }
     }
+  }
+
+  Widget _buildHello() {
+    if (_user.name.isNotEmpty)
+      return Text(
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
+          translate('common.hello', args: {'name' : _user.name})
+      );
+    else if (isDebug)
+      return Text(
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
+          translate('common.hello', args: {'name' : _user.getReadableId()})
+      );
+      else
+        return Container();
   }
 
 }

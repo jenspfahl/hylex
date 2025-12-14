@@ -182,6 +182,7 @@
     "matchMotFound": "Spiel {playId} wurde nicht gefunden oder bereits entfernt.",
     "matchAlreadyFinished": "Spiel {playId} ist bereits beendet.",
     "nothingToResume": "Kein laufendes Einzelspiel, das fortgesetzt werden könnte",
+    "cannotReactToOwnInvitation": "Diese Einladung wurde von dir selber erstellt, du kannst nicht darauf antworten!",
     "cameraPermissionNeeded": "Kamera-Berechtigung erforderlich, um QR-Codes scannen zu können!"
   },
   "matchMenu" : {
