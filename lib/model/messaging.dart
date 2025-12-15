@@ -596,7 +596,7 @@ void writeInt(BitBufferWriter writer, int value, int maxValueExclusively) {
     throw Exception("maxValueExclusively must be greater 0");
   }
   if (value.isNegative) {
-    throw Exception("negative values not supported by this method");
+    throw Exception("negative values not supported by this method: writeInt");
   }
   if (value >= maxValueExclusively) {
     throw Exception("value $value must be lower than maxValueExclusively $maxValueExclusively");
@@ -628,7 +628,7 @@ int readInt(BitBufferReader reader, int maxValueExclusively) {
  */
 void writeNullableInt(BitBufferWriter writer, int? nullableValue, int maxValueExclusively) {
   if (nullableValue?.isNegative == true) {
-    throw Exception("negative values not supported by this method");
+    throw Exception("negative values not supported by this method: writeNullableInt");
   }
   final isNull = nullableValue == null;
   writer.writeBit(isNull);
@@ -737,7 +737,7 @@ Coordinate readCoordinate(BitBufferReader reader, int dimension) {
  * 13x13: 8
  */
 void writeRound(BitBufferWriter writer, int round, int dimension) {
-  writeInt(writer, round - 1, dimension * dimension);
+  writeInt(writer, max(round - 1, 0), dimension * dimension);
 }
 
 int readRound(BitBufferReader reader, int dimension) {

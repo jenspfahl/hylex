@@ -6,6 +6,7 @@ import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/dialogs.dart';
+import 'package:hyle_x/utils/fortune.dart';
 
 import '../../../model/common.dart';
 import '../../../model/messaging.dart';
@@ -18,11 +19,16 @@ import '../../../service/MessageService.dart';
 class RemoteTestWidget extends StatefulWidget {
 
   PlayHeader? playHeader;
+  User localUser;
   Function(SerializedMessage)? messageHandler;
   BuildContext rootContext;
 
   RemoteTestWidget({
-    super.key, this.playHeader, this.messageHandler, required this.rootContext
+    super.key,
+    this.playHeader,
+    required this.localUser,
+    this.messageHandler,
+    required this.rootContext
   });
 
   @override
@@ -53,7 +59,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   void initState() {
     super.initState();
 
-    remoteUser = User();
+    remoteUser = User.forTesting("Remote Test Public Key");
     remoteUser.name = "Remote Test User";
     
     final localPlayHeader = widget.playHeader;
@@ -103,8 +109,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     String subHeader = [playOpener, playMode, playSize].toString();
     if (widget.playHeader != null) {
       header += " for ${widget.playHeader!.getReadablePlayId()}";
-      subHeader = widget.playHeader.toString();
-      subHeader += " ${widget.playHeader!.getLocalRoleForMultiPlay()}";
+      subHeader = " against ${widget.playHeader?.opponentName} (${widget.playHeader?.opponentId})";
+      subHeader += "(${widget.playHeader!.getLocalRoleForMultiPlay()?.opponentRole})";
     }
     List<Widget> children = [
       const Text(""),
@@ -493,7 +499,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
 
   Future<void> _sendRemoteMessage(bool share, BuildContext context) async {
     final remoteHeader = widget.playHeader != null
-        ? createRemoteFromLocalHistory(widget.playHeader!)
+        ? createRemoteFromLocalHistory(widget.playHeader!, widget.localUser)
         : PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
 
     debugPrint("Remote header:\n$remoteHeader");
@@ -550,8 +556,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     
   }
 
-  PlayHeader createRemoteFromLocalHistory(PlayHeader localPlayHeader) {
-
+  PlayHeader createRemoteFromLocalHistory(PlayHeader localPlayHeader, User localUser) {
+    
     final playHeader = PlayHeader.internal(
         localPlayHeader.playId,
         localPlayHeader.playSize,
@@ -560,8 +566,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         localPlayHeader.currentRound,
         localPlayHeader.actor.opponentActor(),
         playOpener,
-        remoteUser.id,
-        remoteUser.name);
+        localUser.id,
+        localUser.name);
 
     final lastLocalMessage = localPlayHeader.commContext.messageHistory.lastOrNull?.serializedMessage;
     playHeader.commContext.predecessorMessage = lastLocalMessage;

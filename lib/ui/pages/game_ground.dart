@@ -277,7 +277,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                     Visibility(
                       visible: gameEngine.play.isMultiplayerPlay && gameEngine.play.waitForOpponent,
                       child: GestureDetector(
-                        onLongPress: () => _showMultiPlayTestDialog(gameEngine.play.header),
+                        onLongPress: () => _showMultiPlayTestDialog(gameEngine.play.header, gameEngine.user),
                         child: IconButton(
                           icon: const Icon(Icons.qr_code_scanner),
                           onPressed: () {
@@ -287,7 +287,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                       ),
                     ),
                     Visibility(
-                      visible: gameEngine.play.isMultiplayerPlay && !gameEngine.play.waitForOpponent &&!gameEngine.play.isGameOver(),
+                      visible: gameEngine.play.isMultiplayerPlay
+                          && !gameEngine.play.waitForOpponent
+                          && !gameEngine.play.isGameOver()
+                          && gameEngine.play.currentRound > 1, // cannot give up in round 1
                       child: IconButton(
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
                         onPressed: () {
@@ -479,13 +482,14 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
 
-  _showMultiPlayTestDialog(PlayHeader playHeader) {
+  _showMultiPlayTestDialog(PlayHeader playHeader, User user) {
     if (isDebug) {
       SmartDialog.show(
           builder: (_) {
             return RemoteTestWidget(
               rootContext: context,
               playHeader: playHeader,
+              localUser: user,
               messageHandler: (message) {
                 globalStartPageKey.currentState?.handleReceivedMessage(
                     message.toUri());

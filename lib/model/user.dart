@@ -20,8 +20,13 @@ class User {
     achievements = Achievements();
   }
 
-  generateKeys() async {
-    final keyPair = await generateKeyPair();
+  User.forTesting(String idSeed) {
+    generateKeys(idSeed);
+    achievements = Achievements();
+  }
+
+  generateKeys([String? seed]) async {
+    final keyPair = await generateKeyPair(seed);
     final privateKeyBase64 = Base64Codec.urlSafe().encode(await keyPair.extractPrivateKeyBytes());
     final publicKeyBase64 = Base64Codec.urlSafe().encode((await keyPair.extractPublicKey()).bytes);
 

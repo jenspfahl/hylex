@@ -1,8 +1,10 @@
 import 'package:cryptography/cryptography.dart';
 
-Future<SimpleKeyPair> generateKeyPair() async {
+Future<SimpleKeyPair> generateKeyPair([String? seed]) async {
   final algorithm = Ed25519();
-  return algorithm.newKeyPair();
+  return seed != null
+      ? algorithm.newKeyPairFromSeed(seed.padRight(32, "=").codeUnits)
+      : algorithm.newKeyPair();
 }
 
 Future<Signature> sign(List<int> message, KeyPair keyPair) async {

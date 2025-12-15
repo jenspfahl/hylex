@@ -56,6 +56,8 @@ class PlayStateManager {
       try {
         header.state = PlayState.RemoteOpponentAccepted_ReadyToMove;
         header.playOpener = message.playOpenerDecision;
+        header.opponentId = message.inviteeUserId;
+        header.opponentName = message.inviteeUserName;
         await StorageService().savePlayHeader(header);
         return null;
       } on Exception catch (e) {
@@ -65,13 +67,16 @@ class PlayStateManager {
     }
   }
 
-  Future<String?> doAndHandleRejectInvite(PlayHeader header) async {
+  Future<String?> doAndHandleRejectInvite(PlayHeader header, [RejectInviteMessage? message]) async {
     if (header.state == PlayState.InvitationRejected) {
       return "Match ${header.getReadablePlayId()} already rejected.";
     }
     else {
       try {
         header.state = PlayState.InvitationRejected;
+        if (message != null) {
+          header.opponentId = message.userId;
+        }
         await StorageService().savePlayHeader(header);
         return null;
       } on Exception catch (e) {

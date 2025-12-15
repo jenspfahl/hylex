@@ -162,7 +162,7 @@ class StartPageState extends State<StartPage> {
           _handleInviteAccepted(header, message as AcceptInviteMessage);
         }
         else if (extractOperation == Operation.RejectInvite) {
-          _handleInviteRejected(header);
+          _handleInviteRejected(header, message as RejectInviteMessage);
         }
         else if (extractOperation == Operation.Move) {
           _handleMove(header, message as MoveMessage);
@@ -294,8 +294,8 @@ class StartPageState extends State<StartPage> {
   }
 
 
-  Future<void> _handleInviteRejected(PlayHeader header) async {
-    final error = await PlayStateManager().doAndHandleRejectInvite(header);
+  Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
+    final error = await PlayStateManager().doAndHandleRejectInvite(header, message);
     if (error != null) {
       showAlertDialog(error);
     }
@@ -1103,6 +1103,7 @@ class StartPageState extends State<StartPage> {
           builder: (_) {
             return RemoteTestWidget(
               rootContext: context,
+              localUser: _user,
               messageHandler: (message) => _handleMessage(message),
             );
           });

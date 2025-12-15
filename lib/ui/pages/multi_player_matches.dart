@@ -235,7 +235,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     }
 
                   },
-                  onLongPress: () => _showMultiPlayTestDialog(playHeader),
+                  onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
                   child: Column(
                     children: [
                       Row(
@@ -360,13 +360,14 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     });
   }
 
-  _showMultiPlayTestDialog(PlayHeader playHeader) {
+  _showMultiPlayTestDialog(PlayHeader playHeader, User user) {
     if (isDebug) {
       SmartDialog.show(
           builder: (_) {
             return RemoteTestWidget(
               rootContext: context,
               playHeader: playHeader,
+              localUser: user,
               messageHandler: (message) {
                 globalStartPageKey.currentState?.handleReceivedMessage(
                     message.toUri());

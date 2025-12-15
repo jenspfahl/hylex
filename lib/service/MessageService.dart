@@ -349,7 +349,7 @@ class MessageService {
     
       return Container(
         width: 280,
-        height: 350,
+        height: 370,
         decoration: BoxDecoration(
           color: DIALOG_BG,
           borderRadius: BorderRadius.circular(10),
