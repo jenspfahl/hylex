@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
@@ -17,7 +19,7 @@ void showAlertDialog(String text,
     msg: text,
     clickMaskDismiss: true,
     notifyType: NotifyType.error,
-    displayTime: duration,
+    displayTime: duration ?? Duration(milliseconds: max(text.length * 200, 3000)),
     builder: (context) {
     return Container(
       decoration: BoxDecoration(

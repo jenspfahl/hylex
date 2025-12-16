@@ -203,11 +203,12 @@ class MessageService {
         bool saveState = true,
         bool share = true,
         bool showAllOptions = false,
-      }) {
+      }) async {
+    final round = await _getRoundForState(header);
     final moveMessage = MoveMessage(
         header.playId,
         header.playSize,
-        header.currentRound,
+        round,
         move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext, user.userSeed);
 
@@ -215,7 +216,7 @@ class MessageService {
         serializedMessage,
         header,
         translate("messaging.nextMove",
-          args: {"role" : header.getLocalRoleForMultiPlay()?.name, "round" : header.currentRound}),
+          args: {"role" : header.getLocalRoleForMultiPlay()?.name, "round" : round}),
         contextProvider,
         saveState,
         share,
@@ -231,18 +232,20 @@ class MessageService {
         bool saveState = true,
         bool share = true,
         bool showAllOptions = false,
-      }) {
+      }) async {
+    final round = await _getRoundForState(header);
+
     final resignationMessage = ResignMessage(
         header.playId,
         header.playSize,
-        header.currentRound);
+        round);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext, user.userSeed);
 
     return _saveAndShare(
         serializedMessage,
         header,
         translate("messaging.resign",
-          args: {"round" : header.currentRound}),
+          args: {"round" : round}),
         contextProvider,
         saveState,
         share,
@@ -409,6 +412,19 @@ class MessageService {
       _share(header, shareMessage, serializedMessage, contextProvider(), saveState, showAllOptions);
     }
     return serializedMessage;
+  }
+
+  Future<int> _getRoundForState(PlayHeader header) async {
+    final play = await StorageService().loadPlayFromHeader(header);
+    if (play == null) {
+      return 0;
+    }
+    final currentRole = play.currentRole;
+    final currentRound = header.currentRound;
+    // transition from Order to Chaos increased the round
+    return currentRole == Role.Chaos && currentRound > 1
+        ? currentRound - 1
+        : currentRound;
   }
 
 }
