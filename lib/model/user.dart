@@ -41,6 +41,7 @@ class User {
       if (value > 500) { // 5 seconds waiting time
         print("Cannot determine Keys, generate random ID without signing capabilities");
         id = generateRandomString(userIdLength);
+        userSeed = generateRandomString(fallbackUserSeedLength);
         return false;
       }
       await Future.delayed(const Duration(milliseconds: 100));

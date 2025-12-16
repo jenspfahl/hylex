@@ -129,7 +129,7 @@ class StartPageState extends State<StartPage> {
         }
         else {
           final comContext = CommunicationContext();
-          final (message, error) = serializedMessage.deserialize(comContext);
+          final (message, error) = await serializedMessage.deserialize(comContext, null);
           if (message != null) {
             final inviteMessage = message as InviteMessage;
             if (inviteMessage.invitorUserId == _user.id) {
@@ -153,8 +153,8 @@ class StartPageState extends State<StartPage> {
             args: { "playId" : header.getReadablePlayId() }));
       }
       else {
-        final (message, error) = serializedMessage.deserialize(
-            header.commContext);
+        final (message, error) = await serializedMessage.deserialize(
+            header.commContext, header.opponentId);
         if (error != null) {
           showAlertDialog(error);
         }

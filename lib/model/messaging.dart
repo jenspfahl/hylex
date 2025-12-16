@@ -4,19 +4,20 @@ import 'dart:math';
 
 import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/user.dart';
+import 'package:hyle_x/utils/crypto.dart';
 
 import 'chip.dart';
 import 'common.dart';
 import 'coordinate.dart';
-import '../utils/fortune.dart';
 import 'messaging.dart';
 import 'move.dart';
 
 const shareBaseUrl = "https://hx.jepfa.de/d/";
-final deepLinkRegExp = RegExp("${shareBaseUrl}[a-z0-9\-_]+/[a-z0-9\-_]+", caseSensitive: false);
+final deepLinkRegExp = RegExp("${shareBaseUrl}([a-z0-9\-_]+)/([a-z0-9\-_]+)(/[a-z0-9\-_]+)?", caseSensitive: false);
 
 
 const allowedChars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
@@ -24,6 +25,7 @@ final allowedCharsRegExp = RegExp(r'^[a-z0-9 -]*$', caseSensitive: false);
 const maxDimension = 13;
 const maxRound = maxDimension * maxDimension;
 const playIdLength = 8;
+const fallbackUserSeedLength = 32;
 const userPubicKey = 44; //Ed25519 uses 32 byte keys, which has a length of 44 as Base64 encoded
 const userPrivateKey = 44; //Ed25519 uses 32 byte keys, which has a length of 44 as Base64 encoded
 const userIdLength = userPubicKey;
@@ -394,15 +396,20 @@ class FullStateMessage extends Message {
 class SerializedMessage {
   String payload;
   String signature;
+  String? auth;
 
-  SerializedMessage(this.payload, this.signature);
+  SerializedMessage(this.payload, this.signature, [this.auth]);
 
+  // use extractAppLinkFromString(uri) to ensure correct URI !
   static SerializedMessage? fromString(String uri) {
     return fromUrl(Uri.parse(uri));
   }
 
   static SerializedMessage? fromUrl(Uri uri) {
-    if (uri.pathSegments.length == 3) {
+    if (uri.pathSegments.length == 4) {
+      return SerializedMessage(uri.pathSegments[1], uri.pathSegments[2], uri.pathSegments[3]);
+    }
+    else if (uri.pathSegments.length == 3) {
       return SerializedMessage(uri.pathSegments[1], uri.pathSegments[2]);
     }
     else if (uri.pathSegments.length == 2) {
@@ -411,6 +418,19 @@ class SerializedMessage {
     else {
       return null;
     }
+  }
+
+  Future<SerializedMessage> signMessage(String publicKeyBase64, String privateKeyBase64) async {
+    final message = payload + signature;
+    final publicKey = Base64Codec.urlSafe().decode(publicKeyBase64);
+    final privateKey = Base64Codec.urlSafe().decode(privateKeyBase64);
+    final keyPair = SimpleKeyPairData(
+        privateKey,
+        publicKey: SimplePublicKey(publicKey, type: KeyPairType.ed25519),
+        type: KeyPairType.ed25519);
+    final authSig = await sign(message.codeUnits, keyPair);
+    final authSigBase64 = Base64Codec.urlSafe().encode(authSig.bytes);
+    return SerializedMessage(payload, signature, authSigBase64);
   }
 
   String extractPlayId() {
@@ -449,7 +469,10 @@ class SerializedMessage {
     return readEnum(reader, Operation.values);
   }
 
-  (Message?,String?) deserialize(CommunicationContext comContext) {
+  Future<(Message?, String?)> deserialize(
+      CommunicationContext comContext,
+      String? remotePublicKey,
+      ) async {
 
     final buffer = _createBuffer();
 
@@ -472,21 +495,51 @@ class SerializedMessage {
     final playId = readString(reader);
     final playSize = readEnum(reader, PlaySize.values);
 
-    switch (operation) {
-      case Operation.SendInvite : return (InviteMessage.deserialize(reader, playId, playSize), null);
-      case Operation.AcceptInvite : return (AcceptInviteMessage.deserialize(reader, playId, playSize), null);
-      case Operation.RejectInvite : return (RejectInviteMessage.deserialize(reader, playId, playSize), null);
-      case Operation.Move : return (MoveMessage.deserialize(reader, playId, playSize), null);
-      case Operation.Resign : return (ResignMessage.deserialize(reader, playId, playSize), null);
-      //TODO case Operation.FullState : return (FullStateMessage.deserialize(reader, playId, playSize), null);
-      default: throw Exception("Unsupported operation: $operation");
+    var messageAndError = switch (operation) {
+      Operation.SendInvite => (InviteMessage.deserialize(reader, playId, playSize), null),
+      Operation.AcceptInvite => (AcceptInviteMessage.deserialize(reader, playId, playSize), null),
+      Operation.RejectInvite => (RejectInviteMessage.deserialize(reader, playId, playSize), null),
+      Operation.Move => (MoveMessage.deserialize(reader, playId, playSize), null),
+      Operation.Resign => (ResignMessage.deserialize(reader, playId, playSize), null),
+      //TODO Operation.FullState => (FullStateMessage.deserialize(reader, playId, playSize), null),
+      _ => throw Exception("Unsupported operation: $operation"),
+    };
+
+    var publicKey = remotePublicKey;
+    if (publicKey == null) {
+      final message = messageAndError.$1;
+      if (message is AcceptInviteMessage) {
+        publicKey = message.inviteeUserId;
+      }
+      else if (message is RejectInviteMessage) {
+        publicKey = message.userId;
+      }
     }
+
+    if (publicKey != null && auth != null) {
+      final authValid = await _verifyAuth(
+          (payload + signature).codeUnits,
+          auth!,
+          publicKey);
+      if (!authValid) {
+        print("remote pk: $publicKey");
+        print("auth sig : $auth");
+        return (null, "Invalid auth signature");
+      }
+    }
+
+    return messageAndError;
   }
 
   BitBuffer _createBuffer() => BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
   String toUrl() {
-    return "$shareBaseUrl$payload/$signature";
+    if (auth != null) {
+      return "$shareBaseUrl$payload/$signature/$auth";
+    }
+    else {
+      return "$shareBaseUrl$payload/$signature";
+    }
   }
 
   @override
@@ -522,6 +575,16 @@ List<int> createSignature(
   return signature.bytes.take(6).toList();
 }
 
+Future<bool> _verifyAuth(List<int> blob, String sig, String publicKey) async {
+  final sigBytes = Base64Codec.urlSafe().decode(sig);
+  final publicKeyBytes = Base64Codec.urlSafe().decode(publicKey);
+  return verify(blob, Signature(
+      sigBytes,
+      publicKey: SimplePublicKey(
+          publicKeyBytes,
+          type: KeyPairType.ed25519))
+  );
+}
 
 String? _validateSignature(
     List<int> blob,
@@ -906,6 +969,17 @@ String createUrlSafeSignature(
 int _convertCodeUnitToBase64(int codeUnit) => allowedChars.indexOf(String.fromCharCode(codeUnit));
 int _convertBase64ToCodeUnit(int base64) => allowedChars[base64].codeUnits.first;
 
+
+Uri? extractAppLinkFromString(String s) {
+  final link = deepLinkRegExp.stringMatch(s);
+  if (link == null) {
+    print("No app link found in $s");
+    return null;
+  }
+  final uri = Uri.parse(link);
+  debugPrint("Extracted app link: $uri");
+  return uri;
+}
 
 extension StringExtenion on String {
   String toUrlSafe() {

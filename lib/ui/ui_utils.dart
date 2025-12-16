@@ -89,17 +89,6 @@ Future<Duration> _calcMessageDuration(int messageLength, bool isError) async {
   return Duration(milliseconds: (messageLength * (isError ? 100 : 80)).toInt());
 }
 
-Uri? extractAppLinkFromString(String s) {
-  final link = deepLinkRegExp.stringMatch(s);
-  if (link == null) {
-    print("No app link found in $s");
-    return null;
-  }
-  final uri = Uri.parse(link);
-  debugPrint("Extracted app link: $uri");
-  return uri;
-}
-
 Color getColorFromIdx(int i) {
   /**
    *    rgb

@@ -232,7 +232,7 @@ Future<void> main() async {
     final playMode = PlayMode.HyleX;
     final playOpener = PlayOpener.Invitor;
 
-    test('Test send invitation', () {
+    test('Test send invitation', () async {
 
       print("----- send invitation --------");
 
@@ -248,12 +248,12 @@ Future<void> main() async {
       );
 
       final serializedInvitationMessage = _send(
-          invitationMessage.serializeWithContext(invitorContext, "seed"));
+          invitationMessage.serializeWithContext(invitorContext, invitorUser.userSeed));
 
 
       // receive invite
-      final deserializedInviteMessage = serializedInvitationMessage
-          .deserialize(inviteeContext)
+      final deserializedInviteMessage = (await serializedInvitationMessage
+          .deserialize(inviteeContext, null))
           .$1 as InviteMessage;
       print("playId: ${deserializedInviteMessage.playId}");
       print("playSize: ${deserializedInviteMessage.playSize}");
@@ -273,7 +273,7 @@ Future<void> main() async {
     });
     
     
-    test('Test accept invitation', () {
+    test('Test accept invitation', () async {
 
       print("----- accept invite --------");
 
@@ -294,7 +294,7 @@ Future<void> main() async {
 
 
       // receive accept invite
-      final deserializedAcceptInviteMessage = serializedAcceptInviteMessage.deserialize(invitorContext).$1 as AcceptInviteMessage;
+      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, null)).$1 as AcceptInviteMessage;
 
       print("playId: ${deserializedAcceptInviteMessage.playId}");
       print("playOpener: ${deserializedAcceptInviteMessage.playOpenerDecision}");
@@ -311,7 +311,7 @@ Future<void> main() async {
 
     });
 
-    test('Test first invitor move', () {
+    test('Test first invitor move', () async {
 
       print("----- first invitor move --------");
 
@@ -328,7 +328,7 @@ Future<void> main() async {
 
       final serializedMoveMessage = _send(firstInvitorPlayerMoveMessage.serializeWithContext(invitorContext, "seed"));
 
-      final deserializedMoveMessage = serializedMoveMessage.deserialize(inviteeContext).$1 as MoveMessage;
+      final deserializedMoveMessage = (await serializedMoveMessage.deserialize(inviteeContext, null)).$1 as MoveMessage;
 
       print("playId: ${deserializedMoveMessage.playId}");
       print("round: ${deserializedMoveMessage.round}");
@@ -341,6 +341,115 @@ Future<void> main() async {
     });
   });
 
+  group("Test messaging with signing", () {
+
+    final invitorContext = CommunicationContext();
+    final invitorUserId = invitorUser.id;
+    final invitorUserName = "Test.name,1234567890 abcdefghijklmnopqrstuvwxyz";
+
+    final inviteeContext = CommunicationContext();
+    final inviteeUserId = inviteeUser.id;
+    final inviteePlayerName = "Remote opponent name";
+
+    final playId = generateRandomString(playIdLength);
+    final playSize = PlaySize.Size7x7;
+    final playMode = PlayMode.HyleX;
+    final playOpener = PlayOpener.Invitor;
+
+    test('Test send invitation', () async {
+
+      print("----- send signed invitation --------");
+
+
+      // send invite
+      final invitationMessage = InviteMessage(
+          playId,
+          playSize,
+          playMode,
+          playOpener,
+          invitorUserId,
+          invitorUserName
+      );
+
+      var serializedInvitationMessage = _send(
+          invitationMessage.serializeWithContext(invitorContext, invitorUser.userSeed));
+
+      serializedInvitationMessage = await serializedInvitationMessage
+          .signMessage(invitorUserId, invitorUser.userSeed);
+
+      print("auth sig: ${serializedInvitationMessage.auth}");
+
+      // receive invite
+      final deserializedInviteMessage = (await serializedInvitationMessage
+          .deserialize(inviteeContext, invitorUserId))
+          .$1 as InviteMessage;
+
+      expect(deserializedInviteMessage.playId, playId);
+      expect(deserializedInviteMessage.playSize, playSize);
+      expect(deserializedInviteMessage.playMode, playMode);
+      expect(deserializedInviteMessage.playOpener, playOpener);
+      expect(deserializedInviteMessage.invitorUserId, invitorUserId);
+      expect(deserializedInviteMessage.invitorUserName,
+          normalizeString(invitorUserName, maxNameLength));
+
+    });
+
+    test('Test accept invitation', () async {
+
+      print("----- accept signed invite --------");
+
+      // accept and respond to invite
+      final playOpenerDecision = PlayOpener.Invitee;
+      final move = Move.placed(GameChip(1), Coordinate(3, 5));
+
+      final acceptInviteMessage = AcceptInviteMessage(
+        playId,
+        playSize,
+        playOpenerDecision,
+        inviteeUserId,
+        inviteePlayerName,
+        move,
+      );
+
+      var serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(inviteeContext, "seed"));
+
+      serializedAcceptInviteMessage = await serializedAcceptInviteMessage
+          .signMessage(inviteeUserId, inviteeUser.userSeed);
+
+      print("auth sig: ${serializedAcceptInviteMessage.auth}");
+
+      // receive accept invite
+      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, inviteeUserId)).$1 as AcceptInviteMessage;
+
+      expect(deserializedAcceptInviteMessage.playId, playId);
+      expect(deserializedAcceptInviteMessage.playOpenerDecision, playOpenerDecision);
+      expect(deserializedAcceptInviteMessage.inviteeUserId, inviteeUserId);
+      expect(deserializedAcceptInviteMessage.inviteeUserName, inviteePlayerName);
+      expect(deserializedAcceptInviteMessage.initialMove, move);
+
+
+    });
+
+  });
+
+  group("Test utils", () {
+    test('Test URL extract', () {
+      expect(extractAppLinkFromString("https://hx.jepfa.de"), null);
+      expect(extractAppLinkFromString("https://hx.jepfa.de/d/"), null);
+      expect(extractAppLinkFromString("https://hx.jepfa.de/e/abc/def"), null);
+      expect(extractAppLinkFromString("https://hx.jepfa.de/d/abc/def"), Uri.parse("https://hx.jepfa.de/d/abc/def"));
+      expect(extractAppLinkFromString("https://hx.jepfa.de/d/abc/def/"), Uri.parse("https://hx.jepfa.de/d/abc/def"));
+      expect(extractAppLinkFromString("bla bla https://hx.jepfa.de/d/abc/def/ bla bla"), Uri.parse("https://hx.jepfa.de/d/abc/def"));
+      expect(extractAppLinkFromString("bla bla https://hx.jepfa.de/d/abc/def/xyz bla bla"), Uri.parse("https://hx.jepfa.de/d/abc/def/xyz"));
+      expect(extractAppLinkFromString("bla bla https://hx.jepfa.de/d/abc/def/xyz/ bla bla"), Uri.parse("https://hx.jepfa.de/d/abc/def/xyz"));
+    });
+
+    test('Test SerializedMessage from URL', () {
+      expect(SerializedMessage.fromString("https://hx.jepfa.de"), null);
+      expect(SerializedMessage.fromString("https://hx.jepfa.de/d/payload/chainSignature"), SerializedMessage("payload", "chainSignature"));
+      expect(SerializedMessage.fromString("https://hx.jepfa.de/d/payload/chainSignature/authSigh"), SerializedMessage("payload", "chainSignature", "authSig"));
+     });
+  });
 }
 
 
