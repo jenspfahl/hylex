@@ -2,6 +2,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 
+enum SignMessages{Never, OnDemand, Always}
+
 class PreferenceService {
 
   static final DATA_CURRENT_USER = 'data/user/current';
@@ -16,13 +18,16 @@ class PreferenceService {
   static final PREF_SHOW_POINTS = 'pref/showPoints';
   static final PREF_SHOW_CHIP_ERRORS = 'pref/showPChipErrors';
   static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
+  static final PREF_SIGN_ALL_MESSAGES = 'pref/signAllMessages';
 
   static final PreferenceService _service = PreferenceService._internal();
+  
 
   bool showCoordinates = true;
   bool showHints = true;
   bool showPoints = true;
   bool showChipErrors = true;
+  SignMessages signMessages = SignMessages.Never;
 
   factory PreferenceService() {
     return _service;
@@ -34,6 +39,11 @@ class PreferenceService {
     _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
     _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);
     _loadCachedBoolPref(PREF_SHOW_CHIP_ERRORS, (v) => showChipErrors = v);
+    getBool(PREF_SIGN_ALL_MESSAGES).then((value) {
+      if (value != null) {
+        signMessages = SignMessages.values.firstWhere((e) => e.index == value);
+      }
+    });
   }
 
   Future<String?> getString(String key) async {

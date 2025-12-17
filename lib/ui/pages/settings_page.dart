@@ -125,12 +125,44 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             SettingsTile.switchTile(
               title: const Text('Show errors'),
-              description: const Text("Show errors when movng chips wrongly"),
+              description: const Text("Show errors when moving chips wrongly"),
               initialValue: PreferenceService().showChipErrors,
               onToggle: (bool value) {
                 PreferenceService().setBool(PreferenceService.PREF_SHOW_CHIP_ERRORS, value);
                 setState(() => PreferenceService().showChipErrors = value);
               },
+            ),
+            SettingsTile(
+              enabled: user.hasSigningCapability(),
+              title: const Text('Sign messages'),
+              description: const Text("Cryptographically sign messages you send in multi player matches."),
+              onPressed: (_) {
+                showChoiceDialog("Sign messages with your public key, if you want to ensure, your messages are not tampered and to prove, they are originated from you. This might be important if you share your moves with the public.",
+                    width: 320,
+                    height: 490,
+                    highlightButtonIndex: PreferenceService().signMessages.index,
+                    firstString: "Never",
+                    firstDescriptionString: "No signature is added and you are not bothered about this.",
+                    firstHandler: () {
+                      PreferenceService().signMessages = SignMessages.Never;
+                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    }, 
+                    secondString: "On demand",
+                    secondDescriptionString: "You can decide for each single match independently.",
+                    secondHandler: () {
+                      PreferenceService().signMessages = SignMessages.OnDemand;
+                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    },
+                    thirdString: "Always",
+                    thirdDescriptionString: "A signature is added to all messages automatically without asking you.",
+                    thirdHandler: () {
+                      PreferenceService().signMessages = SignMessages.Always;
+                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    },
+
+                );
+              },
+
             ),
           ],
         ),
@@ -163,6 +195,20 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
 
+            SettingsTile(
+              enabled: user.hasSigningCapability(),
+              leading: Icon(Icons.key, color: Colors.brown[800]),
+              title: Text("Export your public key"),
+              description: Text("If you sign your message, it could be necessary to export your public key directly. It is also part of the backup file."),
+              onPressed: (_) {
+                showChoiceDialog("TODO choose format",
+                    firstString: 'JWT',
+                    firstHandler: () {  },
+                    secondString: 'PEM',
+                    secondHandler: () {  });
+
+              },
+            ),
             const CustomSettingsTile(child: SizedBox(height: 36)),
 
           ],

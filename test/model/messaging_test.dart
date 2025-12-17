@@ -371,10 +371,10 @@ Future<void> main() async {
           invitorUserName
       );
 
-      var serializedInvitationMessage = _send(
+      final serializedInvitationMessage = _send(
           invitationMessage.serializeWithContext(invitorContext, invitorUser.userSeed));
 
-      serializedInvitationMessage = await serializedInvitationMessage
+      await serializedInvitationMessage
           .signMessage(invitorUserId, invitorUser.userSeed);
 
       print("auth sig: ${serializedInvitationMessage.auth}");
@@ -411,9 +411,9 @@ Future<void> main() async {
         move,
       );
 
-      var serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(inviteeContext, "seed"));
+      final serializedAcceptInviteMessage = _send(acceptInviteMessage.serializeWithContext(inviteeContext, "seed"));
 
-      serializedAcceptInviteMessage = await serializedAcceptInviteMessage
+      await serializedAcceptInviteMessage
           .signMessage(inviteeUserId, inviteeUser.userSeed);
 
       print("auth sig: ${serializedAcceptInviteMessage.auth}");

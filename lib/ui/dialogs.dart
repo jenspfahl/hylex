@@ -149,24 +149,28 @@ void showChoiceDialog(
               text,
               style: const TextStyle(color: Colors.white),
             ),
-            _buildChoiceButton(firstHandler, firstString, firstDescriptionString,
+            _buildChoiceButton(firstHandler, _emphasise(firstString, highlightButtonIndex == 0), firstDescriptionString,
                 highlighted: highlightButtonIndex == 0),
-            _buildChoiceButton(secondHandler, secondString, secondDescriptionString,
+            _buildChoiceButton(secondHandler, _emphasise(secondString, highlightButtonIndex == 1), secondDescriptionString,
                 highlighted: highlightButtonIndex == 1),
             if (thirdString != null && thirdHandler != null)
-              _buildChoiceButton(thirdHandler, thirdString, thirdDescriptionString,
+              _buildChoiceButton(thirdHandler, _emphasise(thirdString, highlightButtonIndex == 2), thirdDescriptionString,
                   highlighted: highlightButtonIndex == 2),
             if (fourthString != null && fourthHandler != null)
-              _buildChoiceButton(fourthHandler, fourthString, fourthDescriptionString,
+              _buildChoiceButton(fourthHandler, _emphasise(fourthString, highlightButtonIndex == 3), fourthDescriptionString,
                   highlighted: highlightButtonIndex == 3),
             if (fifthString != null && fifthHandler != null)
-              _buildChoiceButton(fifthHandler, fifthString, fifthDescriptionString,
+              _buildChoiceButton(fifthHandler, _emphasise(fifthString, highlightButtonIndex == 4), fifthDescriptionString,
                   highlighted: highlightButtonIndex == 4),
           ],
         ),
       ),
     );
   });
+}
+
+_emphasise(String text, bool doIt) {
+  return doIt ? "✓ $text" : text;
 }
 
 OutlinedButton _buildChoiceButton(
@@ -191,7 +195,7 @@ OutlinedButton _buildChoiceButton(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
-              child: Text(title.toUpperCase()),
+              child: Text(title.toUpperCase(), style: TextStyle(fontWeight: highlighted ? FontWeight.bold : null)),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
@@ -205,12 +209,14 @@ OutlinedButton _buildChoiceButton(
   else {
     return OutlinedButton(
         style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.lightGreenAccent),
+          foregroundColor: Colors.lightGreenAccent,
+          side: highlighted ? BorderSide(width: 2.5, color: Colors.grey) : null,
+        ),
         onPressed: () {
           SmartDialog.dismiss();
           handler();
         },
-        child: Text(title.toUpperCase()));
+        child: Text(title.toUpperCase(), style: TextStyle(fontWeight: highlighted ? FontWeight.bold : null)));
   }
 }
 
@@ -246,6 +252,7 @@ void showInputDialog(
       double? height,
       double? width,
       String? prefilledText,
+      bool requiresInput = false, // TODO implemet this
       required Function(String) okHandler,
       Function()? cancelHandler,
       String? thirdText,
@@ -339,5 +346,6 @@ void showInputDialog(
         }
     );
   });
+
 }
 

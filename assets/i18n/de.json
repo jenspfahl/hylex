@@ -227,6 +227,7 @@
     "sendYourMoveAsMessage": "Als Nachricht",
     "sendYourMoveAsQrCode": "Als QR-Code",
     "rememberDecision": "Merke meine Entscheidung für dieses Match.",
+    "signMessages": "Signiere meine Nachrichten für dieses Match.",
     "scanQrCodeFromOpponent": "Lass deinen Gegner diesen QR-Code scannen.",
     "scanQrCodeFromOpponentWithName": "Lass deinen Gegner {name} diesen QR-Code scannen.",
     "opponentNeedsToReact": "Dein Gegner muss zuerst auf deine letzte Nachricht reagieren.",

@@ -4,6 +4,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/common.dart';
+import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -117,6 +118,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage, 
         header,
+        user,
         user.name.isEmpty
             ? translate("messaging.inviteMessageWithoutName", args: {"dimension" : header.dimension})
             : translate("messaging.inviteMessage", args: {"name" : user.name, "dimension" : header.dimension}),
@@ -158,6 +160,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
+        user,
         translate("messaging.acceptInvitation",
             args: {"role" : localUserRole?.name, "opponentRole" : remoteUserRole?.name}),
         contextProvider,
@@ -186,6 +189,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
+        user,
         translate("messaging.rejectInvitation"),
         contextProvider,
         saveState,
@@ -215,6 +219,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
+        user,
         translate("messaging.nextMove",
           args: {"role" : header.getLocalRoleForMultiPlay()?.name, "round" : round}),
         contextProvider,
@@ -244,6 +249,7 @@ class MessageService {
     return _saveAndShare(
         serializedMessage,
         header,
+        user,
         translate("messaging.resign",
           args: {"round" : round}),
         contextProvider,
@@ -255,18 +261,19 @@ class MessageService {
 
   void _share(
       PlayHeader header,
-      String shareMessage,
-      SerializedMessage message,
+      User user,
+      SerializedMessage serializedMessage,
+      String text,
       BuildContext context,
       bool saveState,
       bool showAllOptions,
       ) {
 
     if (!showAllOptions && header.props["remember"] == "as_message") {
-      _shareAsMessage(context, shareMessage);
+      _shareAsMessage(context, serializedMessage, text, header, user);
     }
     else if (!showAllOptions && header.props["remember"] == "as_qr_code") {
-      _shareAsQrCode(context, message, header);
+      _shareAsQrCode(context, serializedMessage, header, user);
     }
     else {
     
@@ -276,13 +283,14 @@ class MessageService {
         builder: (BuildContext context) {
 
           bool remember = false;
+          bool signMessages = header.props["signMessages"] == true;
 
           return StatefulBuilder(
             builder: (BuildContext context, setState) {
 
 
               return Container(
-                height: 320,
+                height: 350,
 
                 child: Padding(
                   padding: const EdgeInsets.all(32),
@@ -298,12 +306,13 @@ class MessageService {
                           translate("messaging.sendYourMoveAsMessage"),
                               () async {
                             header.props["remember"] = remember ? "as_message" : "";
+                            header.props["signMessages"] = signMessages;
                             if (saveState) {
                               await StorageService().savePlayHeader(header);
                             }
 
                             Navigator.of(context).pop();
-                            _shareAsMessage(context, shareMessage);
+                            _shareAsMessage(context, serializedMessage, text, header, user);
                           }),
                       buildFilledButton(
                           context,
@@ -311,11 +320,13 @@ class MessageService {
                           translate("messaging.sendYourMoveAsQrCode"),
                               () async {
                                 header.props["remember"] = remember ? "as_qr_code" : "";
+                                header.props["signMessages"] = signMessages;
+
                                 if (saveState) {
                                   await StorageService().savePlayHeader(header);
                                 }
                                 Navigator.of(context).pop();
-                                _shareAsQrCode(context, message, header);
+                                _shareAsQrCode(context, serializedMessage, header, user);
 
                           }),
                       CheckboxListTile(
@@ -329,8 +340,20 @@ class MessageService {
                                 remember = value;
                               }
                             });
-                          })
-
+                          }),
+                      if (PreferenceService().signMessages == SignMessages.OnDemand)
+                        CheckboxListTile(
+                            title: Text(translate("messaging.signMessages")),
+                            value: signMessages,
+                            dense: true,
+                            checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value != null) {
+                                  signMessages = value;
+                                }
+                              });
+                            })
                     ],
                   )
                 ),
@@ -345,56 +368,80 @@ class MessageService {
     }
 
   }
-
-  void _shareAsQrCode(BuildContext context, SerializedMessage message, PlayHeader playHeader) {
-
-    SmartDialog.show(builder: (_) {
-    
-      return Container(
-        width: 280,
-        height: 370,
-        decoration: BoxDecoration(
-          color: DIALOG_BG,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("[${playHeader.getReadablePlayId()}]", style: TextStyle(color: Colors.white)),
-              Text(playHeader.opponentName != null
-                  ? translate("messaging.scanQrCodeFromOpponentWithName", args: {"name" : playHeader.opponentName})
-                  : translate("messaging.scanQrCodeFromOpponent"), style: TextStyle(color: Colors.white)),
-              QrImageView(
-                data: message.toUrl(),
-                version: QrVersions.auto,
-                backgroundColor: Colors.white,
-                size: 250.0,
-              )
-            ],
-          ),
-        ),
-      );
-    });
+  
+  Future<void> _signMessageIfNeeded(SerializedMessage serializedMessage, PlayHeader header, User user) async {
+    if (PreferenceService().signMessages == SignMessages.Never) {
+      return;
+    }
+    if (PreferenceService().signMessages == SignMessages.Always
+        || header.props["signMessages"] == true) {
+      await serializedMessage.signMessage(user.id, user.userSeed);
+    }
   }
 
-  void _shareAsMessage(BuildContext context, String shareMessage) {
-    SharePlus.instance.share(
-        ShareParams(text: shareMessage, subject: '$APP_NAME interaction'));
+  void _shareAsQrCode(BuildContext context, SerializedMessage message, PlayHeader playHeader, User user) {
+
+    _signMessageIfNeeded(message, playHeader, user).then((_) {
+      SmartDialog.show(builder: (_) {
+        return Container(
+          width: 280,
+          height: 370,
+          decoration: BoxDecoration(
+            color: DIALOG_BG,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("[${playHeader.getReadablePlayId()}]", style: TextStyle(color: Colors.white)),
+                Text(playHeader.opponentName != null
+                    ? translate("messaging.scanQrCodeFromOpponentWithName", args: {"name" : playHeader.opponentName})
+                    : translate("messaging.scanQrCodeFromOpponent"), style: TextStyle(color: Colors.white)),
+                QrImageView(
+                  data: message.toUrl(),
+                  version: QrVersions.auto,
+                  backgroundColor: Colors.white,
+                  size: 250.0,
+                )
+              ],
+            ),
+          ),
+        );
+      });
+    });
+    
+  }
+
+  void _shareAsMessage(BuildContext context, 
+      SerializedMessage serializedMessage, 
+      String text,
+      PlayHeader playHeader, 
+      User user) {
+
+    _signMessageIfNeeded(serializedMessage, playHeader, user).then((_) {
+      final shareMessage = '[${playHeader.getReadablePlayId()}] $text\n${serializedMessage.toUrl()}';
+
+      SharePlus.instance.share(
+          ShareParams(text: shareMessage, subject: '$APP_NAME interaction'));
+    });
+    
   }
 
 
   Future<SerializedMessage> _saveAndShare(
       SerializedMessage serializedMessage,
       PlayHeader header,
-      String message,
+      User user,
+      String text,
       BuildContext Function()? contextProvider,
       bool saveState,
       bool share,
       bool showAllOptions,
       ) async {
+    
     if (enableMocking) {
       print("send ${serializedMessage.toUrl()}");
       return serializedMessage;
@@ -405,11 +452,10 @@ class MessageService {
     }
 
     final playId = serializedMessage.extractPlayId();
-    final shareMessage = '[${toReadableId(playId)}] $message\n${serializedMessage.toUrl()}';
-    debugPrint("sending: [${toReadableId(playId)}] $message");
+    debugPrint("sending: [${toReadableId(playId)}] $text");
     debugPrint(" >>>>>>> ${serializedMessage.toUrl()}");
     if (share && contextProvider != null) {
-      _share(header, shareMessage, serializedMessage, contextProvider(), saveState, showAllOptions);
+      _share(header, user, serializedMessage, text, contextProvider(), saveState, showAllOptions);
     }
     return serializedMessage;
   }

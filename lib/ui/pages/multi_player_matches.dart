@@ -73,13 +73,13 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 onPressed: () {
                   showChoiceDialog(translate("matchList.sorting.sortBy") + ":",
                       width: 260,
-                      firstString: _emphasise(translate("matchList.sorting.sortByCurrentStatusTitle"), _sortOrder == SortOrder.BY_STATE),
+                      firstString: translate("matchList.sorting.sortByCurrentStatusTitle"),
                       firstDescriptionString: translate("matchList.sorting.sortByCurrentStatusDesc"),
                       firstHandler: () => _triggerSort(SortOrder.BY_STATE),
-                      secondString: _emphasise(translate("matchList.sorting.sortByRecentlyPlayedTitle"), _sortOrder == SortOrder.BY_LATEST),
+                      secondString: translate("matchList.sorting.sortByRecentlyPlayedTitle"),
                       secondDescriptionString: translate("matchList.sorting.sortByRecentlyPlayedDesc"),
                       secondHandler: () => _triggerSort(SortOrder.BY_LATEST),
-                      thirdString: _emphasise(translate("matchList.sorting.sortByMatchIdTitle"), _sortOrder == SortOrder.BY_PLAY_ID),
+                      thirdString: translate("matchList.sorting.sortByMatchIdTitle"),
                       thirdDescriptionString: translate("matchList.sorting.sortByMatchIdDesc"),
                       thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
                     highlightButtonIndex: _sortOrder == SortOrder.BY_STATE ? 0 : _sortOrder == SortOrder.BY_LATEST ? 1: 2
@@ -408,8 +408,5 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     PreferenceService().setInt(PreferenceService.PREF_MATCH_SORT_ORDER, sortOrder.index);
   }
 
-  _emphasise(String text, bool doIt) {
-    return doIt ? "✓ $text" : text;
-  }
 
 }

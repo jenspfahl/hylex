@@ -420,7 +420,7 @@ class SerializedMessage {
     }
   }
 
-  Future<SerializedMessage> signMessage(String publicKeyBase64, String privateKeyBase64) async {
+  signMessage(String publicKeyBase64, String privateKeyBase64) async {
     final message = payload + signature;
     final publicKey = Base64Codec.urlSafe().decode(publicKeyBase64);
     final privateKey = Base64Codec.urlSafe().decode(privateKeyBase64);
@@ -430,7 +430,7 @@ class SerializedMessage {
         type: KeyPairType.ed25519);
     final authSig = await sign(message.codeUnits, keyPair);
     final authSigBase64 = Base64Codec.urlSafe().encode(authSig.bytes);
-    return SerializedMessage(payload, signature, authSigBase64);
+    auth = authSigBase64;
   }
 
   String extractPlayId() {
