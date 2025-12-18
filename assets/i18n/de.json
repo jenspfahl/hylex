@@ -160,7 +160,8 @@
     "waitingForPlayerToMove" : "Warte darauf, dass {name} zieht ...",
     "waitingForPlayerToPlace" : "Warte darauf, dass {name} {chip} ablegt...",
     "firstGameFinishedOfTwo" : "Das erste Spiel ist beendet, die Rollen werden getauscht und der Gegner spielt Chaos!",
-    "firstGameState" : "Ergebnis des ersten Spiels"
+    "firstGameState" : "Ergebnis des ersten Spiels",
+    "gamePaused": "Spiel wurde pausiert"
   },
   "requests" : {
     "swapRoles" : "Erstes Spiel des Matches beendet. Zeit, die Rollen zu tauschen!",

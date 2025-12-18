@@ -178,6 +178,7 @@ class SinglePlayerGameEngine extends GameEngine {
       ) : super(play, user, contextProvider, handleGameOver);
 
   void startGame() {
+    play.automaticPlayPaused = false;
     _thinkOrWait();
   }
 
@@ -202,6 +203,7 @@ class SinglePlayerGameEngine extends GameEngine {
   
   _cleanUp() {
     _killAiAgents();
+    aiLoad = null;
   }
 
   @override

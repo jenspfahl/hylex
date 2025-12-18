@@ -4,6 +4,7 @@ import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/service/BackupRestoreService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
+import 'package:hyle_x/utils/fortune.dart';
 import 'package:settings_ui/settings_ui.dart';
 
 import '../../app.dart';
@@ -74,23 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
 
-            SettingsTile(
-                title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
-                description: const Text("Your name is shown in messages for opponents"),
-                onPressed: (value) async {
-                  showInputDialog(translate('dialogs.yourName'),
-                    prefilledText: user.name,
-                    maxLength: maxNameLength,
-                    okHandler: (name) async {
-                      user.name = name;
-                      await StorageService().saveUser(user);
-                      setState(() {});
-                    },
-                    validationMessage: translate("errors.illegalCharsForUserName"),
-                    validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
-                  );
-                }
-            ),
           ],
         ),
         SettingsSection(
@@ -132,33 +116,61 @@ class _SettingsPageState extends State<SettingsPage> {
                 setState(() => PreferenceService().showChipErrors = value);
               },
             ),
+          ],
+        ),
+
+        SettingsSection(
+          title: Text('Multiplayer matches', style: TextStyle(color: Colors.brown[800])),
+          tiles: [
+
+            SettingsTile(
+                title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
+                description: const Text("Your name is shown in messages for opponents"),
+                onPressed: (value) async {
+                  showInputDialog(translate('dialogs.yourName'),
+                    prefilledText: user.name,
+                    maxLength: maxNameLength,
+                    okHandler: (name) async {
+                      user.name = name;
+                      await StorageService().saveUser(user);
+                      setState(() {});
+                    },
+                    validationMessage: translate("errors.illegalCharsForUserName"),
+                    validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
+                  );
+                }
+            ),
+
             SettingsTile(
               enabled: user.hasSigningCapability(),
-              title: const Text('Sign messages'),
+              title: Text('Sign messages: ${PreferenceService().signMessages.name}'),
               description: const Text("Cryptographically sign messages you send in multi player matches."),
               onPressed: (_) {
                 showChoiceDialog("Sign messages with your public key, if you want to ensure, your messages are not tampered and to prove, they are originated from you. This might be important if you share your moves with the public.",
-                    width: 320,
-                    height: 490,
-                    highlightButtonIndex: PreferenceService().signMessages.index,
-                    firstString: "Never",
-                    firstDescriptionString: "No signature is added and you are not bothered about this.",
-                    firstHandler: () {
-                      PreferenceService().signMessages = SignMessages.Never;
-                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
-                    }, 
-                    secondString: "On demand",
-                    secondDescriptionString: "You can decide for each single match independently.",
-                    secondHandler: () {
-                      PreferenceService().signMessages = SignMessages.OnDemand;
-                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
-                    },
-                    thirdString: "Always",
-                    thirdDescriptionString: "A signature is added to all messages automatically without asking you.",
-                    thirdHandler: () {
-                      PreferenceService().signMessages = SignMessages.Always;
-                      PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
-                    },
+                  width: 320,
+                  height: 490,
+                  highlightButtonIndex: PreferenceService().signMessages.index,
+                  firstString: "Never",
+                  firstDescriptionString: "No signature is added and you are not bothered about this.",
+                  firstHandler: () {
+                    PreferenceService().signMessages = SignMessages.Never;
+                    PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    setState(() {});
+                  },
+                  secondString: "On demand",
+                  secondDescriptionString: "You can decide for each single match independently.",
+                  secondHandler: () {
+                    PreferenceService().signMessages = SignMessages.OnDemand;
+                    PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    setState(() {});
+                  },
+                  thirdString: "Always",
+                  thirdDescriptionString: "A signature is added to all messages automatically without asking you.",
+                  thirdHandler: () {
+                    PreferenceService().signMessages = SignMessages.Always;
+                    PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
+                    setState(() {});
+                  },
 
                 );
               },
@@ -166,6 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
+
         SettingsSection(
           title: Text('Backup / Restore', style: TextStyle(color: Colors.brown[800])),
           tiles: [
@@ -198,17 +211,31 @@ class _SettingsPageState extends State<SettingsPage> {
             SettingsTile(
               enabled: user.hasSigningCapability(),
               leading: Icon(Icons.key, color: Colors.brown[800]),
-              title: Text("Export your public key"),
-              description: Text("If you sign your message, it could be necessary to export your public key directly. It is also part of the backup file."),
+              title: Text("Share your public key"),
+              description: Text("If you sign your message, it could be necessary to share your public key with others."),
               onPressed: (_) {
-                showChoiceDialog("TODO choose format",
-                    firstString: 'JWT',
+                showChoiceDialog("Choose a way how to share your public key:",
+                    firstString: 'As message',
                     firstHandler: () {  },
-                    secondString: 'PEM',
-                    secondHandler: () {  });
+                    secondString: 'As JWK file',
+                    secondHandler: () {  },
+                    thirdString: 'As PEM file',
+                    thirdHandler: () {  },
+                    fourthString: "Close",
+                    fourthHandler: () {}
+                );
 
               },
             ),
+          ],
+        ),
+
+        SettingsSection(
+          tiles: [
+            CustomSettingsTile(child:
+              Padding(padding: EdgeInsets.all(32),
+                child: Text("Your User-Id: ${toReadableId(user.id)}"))),
+
             const CustomSettingsTile(child: SizedBox(height: 36)),
 
           ],

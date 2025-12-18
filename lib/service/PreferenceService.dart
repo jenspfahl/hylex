@@ -39,7 +39,7 @@ class PreferenceService {
     _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
     _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);
     _loadCachedBoolPref(PREF_SHOW_CHIP_ERRORS, (v) => showChipErrors = v);
-    getBool(PREF_SIGN_ALL_MESSAGES).then((value) {
+    getInt(PREF_SIGN_ALL_MESSAGES).then((value) {
       if (value != null) {
         signMessages = SignMessages.values.firstWhere((e) => e.index == value);
       }

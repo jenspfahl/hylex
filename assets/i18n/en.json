@@ -159,7 +159,8 @@
     "waitingForPlayerToMove" : "Waiting for {name} to move ...",
     "waitingForPlayerToPlace" : "Waiting for {name} to place {chip} ...",
     "firstGameFinishedOfTwo" : "The first game is finished, roles will be swapped, so the remote opponent becomes Chaos!",
-    "firstGameState": "Result of the first game"
+    "firstGameState": "Result of the first game",
+    "gamePaused": "Game paused"
   },
   "requests" : {
     "swapRoles" : "First game of the match finished, time to swap role!",

@@ -94,7 +94,9 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     gameEngine.addListener(_gameListener);
 
-    gameEngine.startGame();
+    if (!gameEngine.play.automaticPlayPaused) {
+      gameEngine.startGame();
+    }
     
     if (widget.opponentMoveToApply != null) {
       gameEngine.opponentMoveReceived(widget.opponentMoveToApply!);
@@ -199,6 +201,23 @@ class _HyleXGroundState extends State<HyleXGround> {
                             }
                           });
       
+                        },
+                      ),
+                    ),
+                    Visibility(
+                      visible: gameEngine.play.isFullAutomaticPlay,
+                      child: IconButton(
+                        icon: Icon(gameEngine.play.automaticPlayPaused ? Icons.not_started : Icons.pause),
+                        onPressed: () async {
+                          gameEngine.play.automaticPlayPaused = !gameEngine.play.automaticPlayPaused;
+                          if (gameEngine.play.automaticPlayPaused) {
+                            await gameEngine.pauseGame();
+                          }
+                          else {
+                            gameEngine.startGame();
+                          }
+                          setState(() {
+                          });
                         },
                       ),
                     ),
@@ -620,7 +639,10 @@ class _HyleXGroundState extends State<HyleXGround> {
         args: { "who" : "${looserRole.name} (${looserPlayer.getName()})"});
   }
 
-  Row _buildAiProgressText() {
+  Widget _buildAiProgressText() {
+    if (gameEngine.play.automaticPlayPaused) {
+      return Text(translate("gameStates.gamePaused")); 
+    }
     final text = _buildAiProcessingText();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

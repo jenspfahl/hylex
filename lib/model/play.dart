@@ -223,7 +223,6 @@ class PlayHeader {
   DateTime? lastTimestamp;
   String? successorPlayId;
 
-
   PlayHeader.singlePlay(
       this.playSize) {
     playId = generateRandomString(playIdLength);
@@ -444,7 +443,9 @@ class Play {
 
   DateTime startDate = DateTime.timestamp();
   DateTime? endDate;
- 
+
+  bool automaticPlayPaused = false;
+
 
   final List<Move> _journal = [];
   Move? _staleMove;
@@ -499,6 +500,8 @@ class Play {
     if (staleMoveKey != null) {
       _staleMove = Move.fromJson(staleMoveKey);
     }
+
+    automaticPlayPaused = map['automaticPlayPaused'] ?? false;
 
     final List<dynamic> journalList = map['journal']!;
     _journal.addAll(journalList.map((value) {
@@ -600,6 +603,9 @@ class Play {
     if (endDate != null) "endDate" : endDate!.toIso8601String(),
     if (_staleMove != null) "staleMove" : _staleMove!.toJson(),
     'journal' : _journal.map((j) => j.toJson()).toList(),
+
+    "automaticPlayPaused" : automaticPlayPaused,
+
   };
 
 
