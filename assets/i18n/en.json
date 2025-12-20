@@ -32,6 +32,17 @@
     "howToPlay": "How to play",
     "achievements": "Achievements"
   },
+  "achievements": {
+    "all" : "All",
+    "single" : "Single",
+    "multi" : "Multiplay",
+    "overall" : "Overall",
+    "totalCount" : "Total Count",
+    "totalScore" : "Total Score",
+    "high" : "High",
+    "won" : "Won",
+    "lost" : "Lost"
+  },
   "sheets": {
     "scanOrPasteMessage": "Scan your opponent's QR code. If they sent you a message with an app link, and that link doesn't open this app, you can paste it here.",
     "scanMessage": "Scan QR code",

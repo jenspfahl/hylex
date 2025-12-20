@@ -17,8 +17,10 @@ import 'package:hyle_x/utils/fortune.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:listen_sharing_intent/listen_sharing_intent.dart';
+import 'package:tri_switcher/tri_switcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../model/achievements.dart';
 import '../../model/common.dart';
 import '../../model/messaging.dart';
 import '../../model/move.dart';
@@ -887,22 +889,64 @@ class StartPageState extends State<StartPage> {
 
   _showAchievementDialog() {
     SmartDialog.show(builder: (_) {
-      final greyed = _user.achievements.getOverallGameCount() == 0;
-      List<Widget> children = [
-              Text(
-                translate('startMenu.achievements'),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+
+      var filterScope = Scope.All;
+
+      return StatefulBuilder(
+          builder: (BuildContext context, setState) {
+            final greyed = _user.achievements.getOverallGameCount(filterScope) == 0;
+
+            var filterText = switch(filterScope) {
+              Scope.All => translate("achievements.all"),
+              Scope.Single => translate("achievements.single"),
+              Scope.Multi => translate("achievements.multi"),
+            };
+
+            List<Widget> children = [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "${translate('startMenu.achievements')} - $filterText",
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  TriSwitcher(
+                      initialPosition: switch(filterScope) {
+                        Scope.All => SwitchPosition.left,
+                        Scope.Single => SwitchPosition.center,
+                        Scope.Multi => SwitchPosition.right,
+                      },
+                      firstStateBackgroundColor: Colors.brown,
+                      secondStateBackgroundColor: Colors.brown.shade200,
+                      thirdStateBackgroundColor: Colors.brown.shade200,
+                      firstStateToggleColor: Colors.brown.shade900,
+                      secondStateToggleColor: Colors.red,
+                      thirdStateToggleColor: Colors.green,
+                      borderRadius: BorderRadius.circular(20),
+                      icons: const [
+                        Icon(Icons.filter_alt_outlined, color: Colors.brown),
+                        Icon(Icons.person, color: Colors.white),
+                        Icon(Icons.group, color: Colors.white),
+                      ],
+                      onChanged: (SwitchPosition position) {
+                        setState(() => filterScope = switch(position) {
+                          SwitchPosition.left => Scope.All,
+                          SwitchPosition.center => Scope.Single,
+                          SwitchPosition.right => Scope.Multi,
+                        });
+                      }),
+                ],
               ),
               const Divider(),
-              _buildHOverallTotalScoreHead(_user.achievements.getOverallScore()),
+              _buildHOverallTotalScoreHead(_user.achievements.getOverallScore(filterScope)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildWonLostTotalHead(greyed, prefix: "Overall ", dense: false),
+                  _buildWonLostTotalHead(greyed, prefix: translate('achievements.overall') + " ", dense: false),
                   _buildWonLostTotalCounts(greyed,
-                    _user.achievements.getOverallWonCount(),
-                    _user.achievements.getOverallLostCount(),
-                    _user.achievements.getOverallGameCount(),
+                    _user.achievements.getOverallWonCount(filterScope),
+                    _user.achievements.getOverallLostCount(filterScope),
+                    _user.achievements.getOverallGameCount(filterScope),
                     dense: false,
                   ),
                 ],
@@ -910,62 +954,64 @@ class StartPageState extends State<StartPage> {
 
             ];
 
-      children.addAll(_buildStatsForDimension(5));
-      children.addAll(_buildStatsForDimension(7));
-      children.addAll(_buildStatsForDimension(9));
-      children.addAll(_buildStatsForDimension(11));
-      children.addAll(_buildStatsForDimension(13));
+            children.addAll(_buildStatsForDimension(5, filterScope));
+            children.addAll(_buildStatsForDimension(7, filterScope));
+            children.addAll(_buildStatsForDimension(9, filterScope));
+            children.addAll(_buildStatsForDimension(11, filterScope));
+            children.addAll(_buildStatsForDimension(13, filterScope));
 
-      children.add(const Divider());
-      children.add(
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () {
-                  ask(translate('dialogs.resetAchievements'), () {
-                    _user.achievements.clearAll();
-                    StorageService().saveUser(_user);
-                    SmartDialog.dismiss();
-                    _showAchievementDialog();
-                  });
+            children.add(const Divider());
+            children.add(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.lightGreenAccent),
+                      onPressed: () {
+                        ask(translate('dialogs.resetAchievements'), () {
+                          _user.achievements.clearAll();
+                          StorageService().saveUser(_user);
+                          SmartDialog.dismiss();
+                          _showAchievementDialog();
+                        });
 
-                },
-                child: Text(translate('common.reset'))),
-            OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.lightGreenAccent),
-                onPressed: () => SmartDialog.dismiss(),
-                child: Text(translate('common.close'))),
-          ],
-        ),
-      );
+                      },
+                      child: Text(translate('common.reset'))),
+                  OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.lightGreenAccent),
+                      onPressed: () => SmartDialog.dismiss(),
+                      child: Text(translate('common.close'))),
+                ],
+              ),
+            );
 
-      return Container(
-        height: 600,
-        width: 350,
-        decoration: BoxDecoration(
-          color: DIALOG_BG,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        alignment: Alignment.center,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: children,
-          ),
-        ),
-      );
+            return Container(
+              height: 600,
+              width: 350,
+              decoration: BoxDecoration(
+                color: DIALOG_BG,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: children,
+                ),
+              ),
+            );
+          });
+
     });
   }
 
-  List<Widget> _buildStatsForDimension(int dimension) {
+  List<Widget> _buildStatsForDimension(int dimension, Scope scope) {
     final greyed =
-        _user.achievements.getTotalGameCount(Role.Order, dimension) == 0
-        && _user.achievements.getTotalGameCount(Role.Chaos, dimension) == 0;
+        _user.achievements.getTotalGameCount(Role.Order, dimension, scope) == 0
+        && _user.achievements.getTotalGameCount(Role.Chaos, dimension, scope) == 0;
     return [
       const Divider(),
       Row(
@@ -983,12 +1029,12 @@ class StartPageState extends State<StartPage> {
         children: [
           _buildHighAndTotalScoreHead(greyed),
           _buildHighAndTotalScore(greyed,
-              _user.achievements.getHighScore(Role.Chaos, dimension),
-              _user.achievements.getTotalScore(Role.Chaos, dimension)
+              _user.achievements.getHighScore(Role.Chaos, dimension, scope),
+              _user.achievements.getTotalScore(Role.Chaos, dimension, scope)
           ),
           _buildHighAndTotalScore(greyed,
-              _user.achievements.getHighScore(Role.Order, dimension),
-              _user.achievements.getTotalScore(Role.Order, dimension)
+              _user.achievements.getHighScore(Role.Order, dimension, scope),
+              _user.achievements.getTotalScore(Role.Order, dimension, scope)
           ),
         ],
       ),
@@ -997,14 +1043,14 @@ class StartPageState extends State<StartPage> {
         children: [
           _buildWonLostTotalHead(greyed),
           _buildWonLostTotalCounts(greyed,
-              _user.achievements.getWonGamesCount(Role.Chaos, dimension),
-              _user.achievements.getLostGamesCount(Role.Chaos, dimension),
-              _user.achievements.getTotalGameCount(Role.Chaos, dimension),
+              _user.achievements.getWonGamesCount(Role.Chaos, dimension, scope),
+              _user.achievements.getLostGamesCount(Role.Chaos, dimension, scope),
+              _user.achievements.getTotalGameCount(Role.Chaos, dimension, scope),
           ),
           _buildWonLostTotalCounts(greyed,
-              _user.achievements.getWonGamesCount(Role.Order, dimension),
-              _user.achievements.getLostGamesCount(Role.Order, dimension),
-              _user.achievements.getTotalGameCount(Role.Order, dimension),
+              _user.achievements.getWonGamesCount(Role.Order, dimension, scope),
+              _user.achievements.getLostGamesCount(Role.Order, dimension, scope),
+              _user.achievements.getTotalGameCount(Role.Order, dimension, scope),
           ),
 
         ],
@@ -1021,8 +1067,8 @@ class StartPageState extends State<StartPage> {
           color: Colors.white,
         ),
         children: <TextSpan>[
-          const TextSpan(text: 'Overall '),
-          const TextSpan(text: "Total Score", style: TextStyle(color: Colors.cyanAccent)),
+          TextSpan(text: translate('achievements.overall') + ' '),
+          TextSpan(text: translate('achievements.totalScore'), style: TextStyle(color: Colors.cyanAccent)),
           const TextSpan(text: ': '),
           TextSpan(text: total.toString(), style: const TextStyle(color: Colors.cyanAccent)),
         ],
@@ -1038,9 +1084,9 @@ class StartPageState extends State<StartPage> {
           color: greyed ? Colors.grey : Colors.white,
         ),
         children: <TextSpan>[
-          TextSpan(text: "High", style: TextStyle(color: greyed ? Colors.grey : Colors.yellowAccent)),
+          TextSpan(text: translate('achievements.high'), style: TextStyle(color: greyed ? Colors.grey : Colors.yellowAccent)),
           const TextSpan(text: '/'),
-          TextSpan(text: "Total Score", style: TextStyle(color: greyed ? Colors.grey : Colors.cyanAccent)),
+          TextSpan(text: translate('achievements.totalScore'), style: TextStyle(color: greyed ? Colors.grey : Colors.cyanAccent)),
           const TextSpan(text: ': '),
         ],
       ),
@@ -1073,11 +1119,11 @@ class StartPageState extends State<StartPage> {
         children: <TextSpan>[
           if (prefix != null)
             TextSpan(text: prefix),
-          TextSpan(text: "Won", style: TextStyle(color: greyed ? Colors.grey : Colors.lightGreenAccent)),
+          TextSpan(text: translate('achievements.won'), style: TextStyle(color: greyed ? Colors.grey : Colors.lightGreenAccent)),
           const TextSpan(text: '/'),
-          TextSpan(text: "Lost", style: TextStyle(color: greyed ? Colors.grey : Colors.redAccent)),
+          TextSpan(text: translate('achievements.lost'), style: TextStyle(color: greyed ? Colors.grey : Colors.redAccent)),
           const TextSpan(text:'/'),
-          TextSpan(text: "Total Count", style: TextStyle(color: greyed ? Colors.grey : Colors.lightBlueAccent)),
+          TextSpan(text: translate('achievements.totalCount'), style: TextStyle(color: greyed ? Colors.grey : Colors.lightBlueAccent)),
           const TextSpan(text: ': '),
         ],
       ),

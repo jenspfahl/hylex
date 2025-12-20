@@ -92,7 +92,7 @@ class PlayStateManager {
       final play = await StorageService().loadPlayFromHeader(header);
       if (play != null) {
         var role = header.getLocalRoleForMultiPlay()!;
-        user.achievements.incLostGame(role, header.dimension);
+        user.achievements.incLostGame(role, header.dimension, play.multiPlay);
         StorageService().saveUser(user);
       }
       await StorageService().savePlayHeader(header);
@@ -111,11 +111,11 @@ class PlayStateManager {
       if (play != null) {
         play.finishGame();
         var role = header.getLocalRoleForMultiPlay()!;
-        user.achievements.incWonGame(role, header.dimension);
+        user.achievements.incWonGame(role, header.dimension, play.multiPlay);
         user.achievements.registerPointsForScores(
             role,
             header.dimension,
-            play.stats.getPoints(role));
+            play.stats.getPoints(role), play.multiPlay);
         await StorageService().saveUser(user);
       }
       await StorageService().savePlayHeader(header);

@@ -83,23 +83,23 @@ abstract class GameEngine extends ChangeNotifier {
       if (winner == Role.Order) {
         if (play.orderPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Won;
-          user.achievements.incWonGame(Role.Order, play.dimension);
-          user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner));
+          user.achievements.incWonGame(Role.Order, play.dimension, play.multiPlay);
+          user.achievements.registerPointsForScores(Role.Order, play.dimension, play.stats.getPoints(winner), play.multiPlay);
         }
         else if (play.chaosPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Lost;
-          user.achievements.incLostGame(Role.Chaos, play.dimension);
+          user.achievements.incLostGame(Role.Chaos, play.dimension, play.multiPlay);
         }
       }
       else if (winner == Role.Chaos) {
         if (play.chaosPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Won;
-          user.achievements.incWonGame(Role.Chaos, play.dimension);
-          user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner));
+          user.achievements.incWonGame(Role.Chaos, play.dimension, play.multiPlay);
+          user.achievements.registerPointsForScores(Role.Chaos, play.dimension, play.stats.getPoints(winner), play.multiPlay);
         }
         else if (play.orderPlayer == PlayerType.LocalUser) {
           play.header.state = PlayState.Lost;
-          user.achievements.incLostGame(Role.Order, play.dimension);
+          user.achievements.incLostGame(Role.Order, play.dimension, play.multiPlay);
         }
       }
       StorageService().saveUser(user);

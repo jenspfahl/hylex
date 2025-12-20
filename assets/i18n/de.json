@@ -21,7 +21,7 @@
   },
   "startMenu": {
     "singlePlay": "Einfaches Spiel",
-    "multiPlay": "Multiplayer",
+    "multiPlay": "Mehrspieler",
     "newGame": "Neues Spiel",
     "resumeGame": "Fortsetzen",
     "newMatch": "Neues Match",
@@ -31,6 +31,17 @@
     "more": "Mehr",
     "howToPlay": "Regeln",
     "achievements": "Statistiken"
+  },
+  "achievements": {
+    "all" : "Alle",
+    "single" : "Einzel",
+    "multi" : "Mehrspieler",
+    "overall" : "Gesamt",
+    "totalCount" : "Anzahl",
+    "totalScore" : "Punkte",
+    "high" : "Höchste",
+    "won" : "Gewonnen",
+    "lost" : "Verloren"
   },
   "sheets": {
     "scanOrPasteMessage": "Scanne den QR-Code deines Gegners. Falls er dir eine Nachricht mit einem App-Link geschickt hat und dieser Link diese App nicht öffnet, kannst du ihn hier einfügen.",

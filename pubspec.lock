@@ -1066,6 +1066,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  tri_switcher:
+    dependency: "direct main"
+    description:
+      name: tri_switcher
+      sha256: "322c4d62ee14804ebc9b5d368a6f042d07431c996513dbfa034b45b05ca0e8b0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   typed_data:
     dependency: transitive
     description:
