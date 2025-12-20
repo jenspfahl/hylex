@@ -36,43 +36,63 @@ class Achievements {
 
   loadStatsFromJson(String prefix, Map<String, dynamic> map, Stats stats) {
 
-    final Map<String, dynamic> wonOrderGamesMap = map[prefix + 'wonOrderGames']!;
-    stats.wonOrderGames.addAll(wonOrderGamesMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
-    final Map<String, dynamic> wonChaosGamesMap = map[prefix + 'wonChaosGames']!;
-    stats.wonChaosGames.addAll(wonChaosGamesMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
+    final Map<String, dynamic>? wonOrderGamesMap = map[prefix + 'wonOrderGames'];
+    if (wonOrderGamesMap != null) {
+      stats.wonOrderGames.addAll(wonOrderGamesMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
+
+    final Map<String, dynamic>? wonChaosGamesMap = map[prefix + 'wonChaosGames'];
+    if (wonChaosGamesMap != null) {
+      stats.wonChaosGames.addAll(wonChaosGamesMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
 
 
-    final Map<String, dynamic> lostOrderGamesMap = map[prefix + 'lostOrderGames']!;
-    stats.lostOrderGames.addAll(lostOrderGamesMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
-    final Map<String, dynamic> lostChaosGamesMap = map[prefix + 'lostChaosGames']!;
-    stats.lostChaosGames.addAll(lostChaosGamesMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
+    final Map<String, dynamic>? lostOrderGamesMap = map[prefix + 'lostOrderGames'];
+    if (lostOrderGamesMap != null) {
+      stats.lostOrderGames.addAll(lostOrderGamesMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
+
+    final Map<String, dynamic>? lostChaosGamesMap = map[prefix + 'lostChaosGames'];
+    if (lostChaosGamesMap != null) {
+      stats.lostChaosGames.addAll(lostChaosGamesMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
 
 
-    final Map<String, dynamic> highScoresForOrderMap = map[prefix + 'highScoresForOrder']!;
-    stats.highScoresForOrder.addAll(highScoresForOrderMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
-    final Map<String, dynamic> highScoresForChaosMap = map[prefix + 'highScoresForChaos']!;
-    stats.highScoresForChaos.addAll(highScoresForChaosMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
+    final Map<String, dynamic>? highScoresForOrderMap = map[prefix + 'highScoresForOrder'];
+    if (highScoresForOrderMap != null) {
+      stats.highScoresForOrder.addAll(highScoresForOrderMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
 
-    final Map<String, dynamic> totalPointsForOrderMap = map[prefix + 'totalPointsForOrder']!;
-    stats.totalPointsForOrder.addAll(totalPointsForOrderMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
-    final Map<String, dynamic> totalPointsForChaosMap = map[prefix + 'totalPointsForChaos']!;
-    stats.totalPointsForChaos.addAll(totalPointsForChaosMap.map((key, value) {
-      return MapEntry(int.parse(key), value);
-    }));
+    final Map<String, dynamic>? highScoresForChaosMap = map[prefix + 'highScoresForChaos'];
+    if (highScoresForChaosMap != null) {
+      stats.highScoresForChaos.addAll(highScoresForChaosMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
+
+    final Map<String, dynamic>? totalPointsForOrderMap = map[prefix + 'totalPointsForOrder'];
+    if (totalPointsForOrderMap != null) {
+      stats.totalPointsForOrder.addAll(totalPointsForOrderMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
+
+    final Map<String, dynamic>? totalPointsForChaosMap = map[prefix + 'totalPointsForChaos'];
+    if (totalPointsForChaosMap != null) {
+      stats.totalPointsForChaos.addAll(totalPointsForChaosMap.map((key, value) {
+        return MapEntry(int.parse(key), value);
+      }));
+    }
   }
 
   Map<String, dynamic> toJson() {
