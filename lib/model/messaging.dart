@@ -6,6 +6,7 @@ import 'package:bits/bits.dart';
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/user.dart';
 import 'package:hyle_x/utils/crypto.dart';
@@ -119,8 +120,8 @@ abstract class Message {
         String? userSeed
       }) {
 
-    final buffer = BitBuffer();
-    final writer = buffer.writer();
+    final payloadBuffer = BitBuffer();
+    final writer = payloadBuffer.writer();
 
     writeVersion(writer, version);
     writeEnum(writer, Operation.values, getOperation());
@@ -129,15 +130,15 @@ abstract class Message {
 
     serializeToBuffer(writer);
 
-    debugPrint("Payload: ${buffer.toBase64()}");
-    debugPrint("Payload size: ${buffer.getSize()}");
-    debugPrint("Payload free bits: ${buffer.getFreeBits()}");
+    debugPrint("Payload: ${payloadBuffer.toBase64()}");
+    debugPrint("Payload size: ${payloadBuffer.getSize()}");
+    debugPrint("Payload free bits: ${payloadBuffer.getFreeBits()}");
     final signature = createUrlSafeSignature(
-        buffer,
+        payloadBuffer,
         userSeed: userSeed,
         previousSignatureBase64: receivedSignature);
     return SerializedMessage(
-        buffer.toBase64().toUrlSafe(),
+        payloadBuffer.toBase64().toUrlSafe(),
         signature
     );
   }
@@ -435,7 +436,7 @@ class SerializedMessage {
 
   String extractPlayId() {
 
-    final buffer = _createBuffer();
+    final buffer = _createBufferFromPayload();
     final reader = buffer.reader();
 
     final version = readVersion(reader);
@@ -450,7 +451,7 @@ class SerializedMessage {
 
   int extractVersion() {
 
-    final buffer = _createBuffer();
+    final buffer = _createBufferFromPayload();
     final reader = buffer.reader();
 
     return readVersion(reader);
@@ -458,7 +459,7 @@ class SerializedMessage {
   
   Operation extractOperation() {
 
-    final buffer = _createBuffer();
+    final buffer = _createBufferFromPayload();
     final reader = buffer.reader();
 
     final version = readVersion(reader);
@@ -474,18 +475,18 @@ class SerializedMessage {
       String? remotePublicKey,
       ) async {
 
-    final buffer = _createBuffer();
+    final payloadBuffer = _createBufferFromPayload();
 
     final errorMessage = _validateSignature(
-        buffer.getLongs(),
+        payloadBuffer,
         comContext,
-        comparingSignature: signature);
+        comparingSignatureBase64: signature);
     if (errorMessage != null) {
       return (null, errorMessage);
     }
     comContext.registerReceivedMessage(this);
 
-    final reader = buffer.reader();
+    final reader = payloadBuffer.reader();
 
     final version = readVersion(reader);
     if (version != currentMessageVersion) {
@@ -531,7 +532,7 @@ class SerializedMessage {
     return messageAndError;
   }
 
-  BitBuffer _createBuffer() => BitBuffer.fromBase64(Base64Codec().normalize(payload));
+  BitBuffer _createBufferFromPayload() => BitBuffer.fromBase64(Base64Codec().normalize(payload));
 
   String toUrl() {
     if (auth != null) {
@@ -587,42 +588,47 @@ Future<bool> _verifyAuth(List<int> blob, String sig, String publicKey) async {
 }
 
 String? _validateSignature(
-    List<int> blob,
+    BitBuffer payloadBuffer,
     CommunicationContext comContext,
     {
-        required String comparingSignature,
+        required String comparingSignatureBase64,
         String? userSeed
     }) {
-  if (comContext.predecessorMessage?.signature == comparingSignature) {
-    print("Message with signature $comparingSignature already processed");
+  if (comContext.predecessorMessage?.signature == comparingSignatureBase64) {
+    print("Message with signature $comparingSignatureBase64 already processed");
     return "This link has already been processed.";
   }
   if (comContext.roundTripSignature == null) {
     print("No validation for first chain element");
     return null;
   }
-  final signature = Base64Encoder().convert(
-      createSignature(
-          blob,
+  final calculatedSignatureBase64 =
+      createUrlSafeSignature(
+          payloadBuffer,
           userSeed: userSeed,
-          previousSignatureBase64: comContext.roundTripSignature))
-      .toUrlSafe();
-  print("received payload $blob");
-  print("computed  sig $signature");
-  print("comparing sig $comparingSignature");
+          previousSignatureBase64: comContext.roundTripSignature);
+  print("received payload ${payloadBuffer.toBase64()}");
+  print("computed  sig $calculatedSignatureBase64");
+  print("comparing sig $comparingSignatureBase64");
   print("roundTrip Sig ${comContext.roundTripSignature}");
-  if (signature != comparingSignature) {
-    print("signature mismatch $signature != $comparingSignature");
+  if (calculatedSignatureBase64 != comparingSignatureBase64) {
+    print("signature mismatch $calculatedSignatureBase64 != $comparingSignatureBase64");
     final alreadyProcessed = comContext.messageHistory
-        .where((m) => m.serializedMessage.signature == comparingSignature)
+        .where((m) => m.serializedMessage.signature == comparingSignatureBase64)
         .firstOrNull;
+    var additionalInfo = "";
+    if (isDebug) {
+      additionalInfo += "\n calc: $calculatedSignatureBase64 \n comp:$comparingSignatureBase64";
+      additionalInfo += "\n rnd sig: ${comContext.roundTripSignature} \n pre sig: ${comContext.predecessorMessage?.signature}";
+      additionalInfo += "\n curr payload: ${payloadBuffer.toBase64()} \n prev payload: ${comContext.predecessorMessage?.payload}";
+    }
     if (alreadyProcessed != null) {
       if (alreadyProcessed.channel == Channel.Out) {
-        return "This link was intended for your opponent, not for you!";
+        return "This link was intended for your opponent, not for you!$additionalInfo";
       }
-      return "This link with signature $comparingSignature already processed by you";
+      return "This link with was already processed by you!$additionalInfo";
     }
-    return "This link is not the latest of the current match.";
+    return "This link is not the latest of the current match.$additionalInfo";
   }
   else {
     return null;

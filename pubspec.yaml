@@ -58,6 +58,7 @@ dependencies:
   file_picker: ^10.3.7
   cryptography: ^2.9.0
   jwk: ^0.2.4
+  pem: ^2.0.6
 
 
   collection: any

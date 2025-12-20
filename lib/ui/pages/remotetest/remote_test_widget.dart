@@ -111,6 +111,10 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       header += " for ${widget.playHeader!.getReadablePlayId()}";
       subHeader = " against ${widget.playHeader?.opponentName} (${widget.playHeader?.opponentId})";
       subHeader += "(${widget.playHeader!.getLocalRoleForMultiPlay()?.opponentRole})";
+      subHeader += "\n";
+      subHeader += "prev payload : ${widget.playHeader!.commContext.predecessorMessage?.payload}\n";
+      subHeader += "prev signature: ${widget.playHeader!.commContext.predecessorMessage?.signature}\n";
+      subHeader += "sent signature: ${widget.playHeader!.commContext.roundTripSignature}\n";
     }
     List<Widget> children = [
       const Text(""),

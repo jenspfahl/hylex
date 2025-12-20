@@ -59,10 +59,14 @@ class _HyleXGroundState extends State<HyleXGround> {
   final _orderChipTooltip = "orderChipTooltip";
   final _stockChipToolTipKey = "stockChipToolTip";
 
+  bool _changeAutoPlayLock = false;
+
 
   @override
   void initState() {
     super.initState();
+
+    _changeAutoPlayLock = false;
 
     SmartDialog.dismiss(); // dismiss loading dialog
 
@@ -205,18 +209,28 @@ class _HyleXGroundState extends State<HyleXGround> {
                       ),
                     ),
                     Visibility(
-                      visible: gameEngine.play.isFullAutomaticPlay,
+                      visible: gameEngine.play.isFullAutomaticPlay && !gameEngine.play.isGameOver(),
                       child: IconButton(
                         icon: Icon(gameEngine.play.automaticPlayPaused ? Icons.not_started : Icons.pause),
                         onPressed: () async {
-                          gameEngine.play.automaticPlayPaused = !gameEngine.play.automaticPlayPaused;
+                          if (_changeAutoPlayLock) {
+                            // this doesn't help if a user clicks very often in a row on this button
+                            debugPrint("Locked!");
+                            return;
+                          }
+                          _changeAutoPlayLock = true;
                           if (gameEngine.play.automaticPlayPaused) {
-                            await gameEngine.pauseGame();
+                            gameEngine.startGame();
+                            gameEngine.play.automaticPlayPaused = false;
                           }
                           else {
-                            gameEngine.startGame();
+                            await gameEngine.pauseGame();
+                            gameEngine.play.automaticPlayPaused = true;
                           }
                           setState(() {
+                          });
+                          Future.delayed(Duration(milliseconds: 900), () {
+                            _changeAutoPlayLock = false;
                           });
                         },
                       ),
@@ -285,9 +299,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.restart_alt_outlined),
                         onPressed: () => {
 
-                          ask(translate('dialogs.restartGame'), () {
-                                gameEngine.stopGame();
+                          ask(translate('dialogs.restartGame'), () async {
+                                await gameEngine.stopGame();
                                 _gameOverShown = false;
+                                _changeAutoPlayLock = false;
                                 gameEngine.startGame();
                           })
                         },
@@ -730,6 +745,7 @@ class _HyleXGroundState extends State<HyleXGround> {
             () async {
             await gameEngine.stopGame();
             _gameOverShown = false;
+            _changeAutoPlayLock = false;
             gameEngine.startGame();
           });
       }

@@ -157,8 +157,12 @@ class StartPageState extends State<StartPage> {
             header.commContext, header.opponentId);
         if (error != null) {
           showAlertDialog(error);
+          return;
         }
-        else if (extractOperation == Operation.AcceptInvite) {
+        // save registered incoming signature
+        await StorageService().savePlayHeader(header);
+
+        if (extractOperation == Operation.AcceptInvite) {
           _handleInviteAccepted(header, message as AcceptInviteMessage);
         }
         else if (extractOperation == Operation.RejectInvite) {
@@ -672,6 +676,7 @@ class StartPageState extends State<StartPage> {
     showChoiceDialog(
       translate('dialogs.whatRole'),
       width: 300,
+      height: 550,
       firstString: Role.Order.name,
       firstDescriptionString: translate('dialogs.whatRoleOrder'),
       firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),

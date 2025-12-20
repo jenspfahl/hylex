@@ -1,11 +1,17 @@
 
+import 'dart:convert';
+
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/service/BackupRestoreService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:hyle_x/utils/fortune.dart';
+import 'package:jwk/jwk.dart';
+import 'package:pem/pem.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app.dart';
 import '../../main.dart';
@@ -215,12 +221,22 @@ class _SettingsPageState extends State<SettingsPage> {
               description: Text("If you sign your message, it could be necessary to share your public key with others."),
               onPressed: (_) {
                 showChoiceDialog("Choose a way how to share your public key:",
-                    firstString: 'As message',
-                    firstHandler: () {  },
-                    secondString: 'As JWK file',
-                    secondHandler: () {  },
-                    thirdString: 'As PEM file',
-                    thirdHandler: () {  },
+                    firstString: 'As JWK format',
+                    firstHandler: () {
+                      final publicKeyData = Base64Codec.urlSafe().decoder.convert(user.id);
+                      final publicKey = SimplePublicKey(publicKeyData, type: KeyPairType.ed25519);
+                      final jwk = Jwk.fromPublicKey(publicKey);
+                      final json = jwk.toJson();
+                      SharePlus.instance.share(
+                          ShareParams(text: json.toString(), subject: 'Public Key JWK from ${toReadableId(user.id)}'));
+                    },
+                    secondString: 'As PEM format',
+                    secondHandler: () {
+                      final publicKey = Base64Codec.urlSafe().decoder.convert(user.id);
+                      final pemBlock = PemCodec(PemLabel.publicKey).encode(publicKey);
+                      SharePlus.instance.share(
+                          ShareParams(text: pemBlock, subject: 'Public Key PEM from ${toReadableId(user.id)}'));
+                    },
                     fourthString: "Close",
                     fourthHandler: () {}
                 );
