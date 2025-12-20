@@ -76,7 +76,12 @@ class _HyleXGroundState extends State<HyleXGround> {
           widget.play,
           widget.user,
           () => context,
-          _handleGameOver
+              () {
+            if (!_gameOverShown) {
+              (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
+              _gameOverShown = true;
+            }
+          }
       );
     }
     else {
@@ -84,7 +89,12 @@ class _HyleXGroundState extends State<HyleXGround> {
           widget.play,
           widget.user,
           () => context,
-          _handleGameOver
+              () {
+            if (!_gameOverShown) {
+              _showGameOver(context);
+              _gameOverShown = true;
+            }
+          }
       );
     }
 
@@ -108,13 +118,6 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     if (widget.loadHandler != null) {
       widget.loadHandler!();
-    }
-  }
-
-  _handleGameOver() {
-    if (!gameEngine.play.isMultiplayerPlay && !_gameOverShown) {
-      _showGameOver(context);
-      _gameOverShown = true;
     }
   }
 
@@ -499,7 +502,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     Widget row = _buildMoveLine(move, prefix: "${translate("gameHeader.round", args: {"round" : round})}: ",
         playerType: !gameEngine.play.isBothSidesSinglePlay
             ? (isClassic
-              ? (isSecondGame ? localPlayer : opponentPlayer)
+              ? (gameEngine.play.header.rolesSwapped == true
+                ? (isSecondGame ? localPlayer : opponentPlayer)
+                : (isSecondGame ? opponentPlayer : localPlayer))
               : localPlayer)
             : null);
 
@@ -633,11 +638,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
       if (winnerRole == localRole) {
         return translate("gameStates.gameOverWinner",
-            args: { "who" : "${localRole!.name}"});
+            args: { "who" : "${localRole!.name} (${winnerPlayer.getName()})"});
       }
       else {
         return translate("gameStates.gameOverLooser",
-            args: { "who" : "${localRole!.name}"});
+            args: { "who" : "${localRole!.name} (${looserPlayer.getName()})"});
       }
     }
     else {

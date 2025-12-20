@@ -247,7 +247,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           ),
                           Text(
                               " " + playHeader.getTitle(),
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                            softWrap: true,
+                          ),
                         ],
                       ),
                       Row(
