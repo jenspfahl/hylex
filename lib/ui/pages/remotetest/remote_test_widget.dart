@@ -1,4 +1,5 @@
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_translate/flutter_translate.dart';
@@ -6,6 +7,7 @@ import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/dialogs.dart';
+import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:hyle_x/utils/fortune.dart';
 
 import '../../../model/common.dart';
@@ -54,6 +56,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
   Coordinate to = Coordinate(0, 0);
   GameChip? chip;
   bool skip = false;
+  bool _showMessages = false;
 
   @override
   void initState() {
@@ -127,6 +130,14 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
         subHeader,
         style: const TextStyle(color: Colors.grey, fontSize: 14),
       ),
+      const Divider(),
+      if (!_showMessages)
+        buildOutlinedButton(context, null, "Show Messages", () {
+          setState(() {
+            _showMessages = true;
+          });
+        })
+      else if (widget.playHeader != null) _buildMessagedList(widget.playHeader!),
       const Divider(),
       _buildChoseParam(
           "Operation",
@@ -577,6 +588,46 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
     playHeader.commContext.predecessorMessage = lastLocalMessage;
 
     return playHeader;
+  }
+
+  Widget _buildMessagedList(PlayHeader playHeader) {
+    final style = TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: 12);
+
+    List<Widget> messageLines = [];
+
+    messageLines.add(buildOutlinedButton(context, null, "Remove latest", () {
+
+      final messageHistory = playHeader.commContext.messageHistory;
+
+      if (messageHistory.isNotEmpty) {
+        setState(() {
+          var lastMessage = messageHistory.removeLast();
+          if (lastMessage.channel == Channel.In) {
+            final nextIn = messageHistory.reversed.firstWhereOrNull((e) => e.channel == Channel.In);
+            playHeader.commContext.predecessorMessage = nextIn?.serializedMessage;
+          }
+          else if (lastMessage.channel == Channel.Out) {
+            final nextOut = messageHistory.reversed.firstWhereOrNull((e) => e.channel == Channel.Out);
+            playHeader.commContext.roundTripSignature = nextOut?.serializedMessage.signature;
+          }
+
+        });
+      }
+    }));
+
+    messageLines.addAll(playHeader.commContext
+        .messageHistory
+        .map((e) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(e.channel.name, style: style),
+              Text(e.serializedMessage.extractOperation().name, style: style),
+              Text(e.serializedMessage.signature, style: style),
+        ])));
+
+
+    return SingleChildScrollView(scrollDirection: Axis.vertical, child: Column(children: messageLines));
+
   }
 
 }

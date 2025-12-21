@@ -7,7 +7,7 @@ import 'common.dart';
 enum Scope {All, Single, Multi}
 
 
-class Stats {
+class _Data {
   final Map<int, int> wonOrderGames = HashMap(); // dimension, count
   final Map<int, int> wonChaosGames = HashMap(); // dimension, count
   final Map<int, int> lostOrderGames = HashMap(); // dimension, count
@@ -20,32 +20,32 @@ class Stats {
 
 class Achievements {
 
-  final Stats allStats = Stats();
-  final Stats singleStats = Stats();
-  final Stats multiStats = Stats();
+  final _Data allData = _Data();
+  final _Data singleData = _Data();
+  final _Data multiData = _Data();
 
 
   Achievements();
 
   Achievements.fromJson(Map<String, dynamic> map) {
-    loadStatsFromJson("", map, allStats);
-    loadStatsFromJson("single_", map, singleStats);
-    loadStatsFromJson("multi_", map, multiStats);
+    loadDataFromJson("", map, allData);
+    loadDataFromJson("single_", map, singleData);
+    loadDataFromJson("multi_", map, multiData);
 
   }
 
-  loadStatsFromJson(String prefix, Map<String, dynamic> map, Stats stats) {
+  loadDataFromJson(String prefix, Map<String, dynamic> map, _Data data) {
 
     final Map<String, dynamic>? wonOrderGamesMap = map[prefix + 'wonOrderGames'];
     if (wonOrderGamesMap != null) {
-      stats.wonOrderGames.addAll(wonOrderGamesMap.map((key, value) {
+      data.wonOrderGames.addAll(wonOrderGamesMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
 
     final Map<String, dynamic>? wonChaosGamesMap = map[prefix + 'wonChaosGames'];
     if (wonChaosGamesMap != null) {
-      stats.wonChaosGames.addAll(wonChaosGamesMap.map((key, value) {
+      data.wonChaosGames.addAll(wonChaosGamesMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
@@ -53,14 +53,14 @@ class Achievements {
 
     final Map<String, dynamic>? lostOrderGamesMap = map[prefix + 'lostOrderGames'];
     if (lostOrderGamesMap != null) {
-      stats.lostOrderGames.addAll(lostOrderGamesMap.map((key, value) {
+      data.lostOrderGames.addAll(lostOrderGamesMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
 
     final Map<String, dynamic>? lostChaosGamesMap = map[prefix + 'lostChaosGames'];
     if (lostChaosGamesMap != null) {
-      stats.lostChaosGames.addAll(lostChaosGamesMap.map((key, value) {
+      data.lostChaosGames.addAll(lostChaosGamesMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
@@ -68,72 +68,72 @@ class Achievements {
 
     final Map<String, dynamic>? highScoresForOrderMap = map[prefix + 'highScoresForOrder'];
     if (highScoresForOrderMap != null) {
-      stats.highScoresForOrder.addAll(highScoresForOrderMap.map((key, value) {
+      data.highScoresForOrder.addAll(highScoresForOrderMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
 
     final Map<String, dynamic>? highScoresForChaosMap = map[prefix + 'highScoresForChaos'];
     if (highScoresForChaosMap != null) {
-      stats.highScoresForChaos.addAll(highScoresForChaosMap.map((key, value) {
+      data.highScoresForChaos.addAll(highScoresForChaosMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
 
     final Map<String, dynamic>? totalPointsForOrderMap = map[prefix + 'totalPointsForOrder'];
     if (totalPointsForOrderMap != null) {
-      stats.totalPointsForOrder.addAll(totalPointsForOrderMap.map((key, value) {
+      data.totalPointsForOrder.addAll(totalPointsForOrderMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
 
     final Map<String, dynamic>? totalPointsForChaosMap = map[prefix + 'totalPointsForChaos'];
     if (totalPointsForChaosMap != null) {
-      stats.totalPointsForChaos.addAll(totalPointsForChaosMap.map((key, value) {
+      data.totalPointsForChaos.addAll(totalPointsForChaosMap.map((key, value) {
         return MapEntry(int.parse(key), value);
       }));
     }
   }
 
   Map<String, dynamic> toJson() {
-    final map = saveStatsToJson("", allStats);
-    map.addAll(saveStatsToJson("single_", singleStats));
-    map.addAll(saveStatsToJson("multi_", multiStats));
+    final map = saveDataToJson("", allData);
+    map.addAll(saveDataToJson("single_", singleData));
+    map.addAll(saveDataToJson("multi_", multiData));
     return map;
   }
 
-  Map<String, dynamic> saveStatsToJson(String prefix, Stats stats) => {
-    prefix + 'wonOrderGames' : stats.wonOrderGames.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'wonChaosGames' : stats.wonChaosGames.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'lostOrderGames' : stats.lostOrderGames.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'lostChaosGames' : stats.lostChaosGames.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'highScoresForOrder' : stats.highScoresForOrder.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'highScoresForChaos' : stats.highScoresForChaos.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'totalPointsForOrder' : stats.totalPointsForOrder.map((key, value) => MapEntry(key.toString(), value)),
-    prefix + 'totalPointsForChaos' : stats.totalPointsForChaos.map((key, value) => MapEntry(key.toString(), value)),
+  Map<String, dynamic> saveDataToJson(String prefix, _Data data) => {
+    prefix + 'wonOrderGames' : data.wonOrderGames.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'wonChaosGames' : data.wonChaosGames.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'lostOrderGames' : data.lostOrderGames.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'lostChaosGames' : data.lostChaosGames.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'highScoresForOrder' : data.highScoresForOrder.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'highScoresForChaos' : data.highScoresForChaos.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'totalPointsForOrder' : data.totalPointsForOrder.map((key, value) => MapEntry(key.toString(), value)),
+    prefix + 'totalPointsForChaos' : data.totalPointsForChaos.map((key, value) => MapEntry(key.toString(), value)),
   };
 
-  Stats _getStatsForScope(Scope scope) => switch (scope) {
-      Scope.All => allStats,
-      Scope.Single => singleStats,
-      Scope.Multi => multiStats,
+  _Data _getDataForScope(Scope scope) => switch (scope) {
+      Scope.All => allData,
+      Scope.Single => singleData,
+      Scope.Multi => multiData,
     };
 
   int getWonGamesCount(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      return _getStatsForScope(scope).wonOrderGames[dimension] ?? 0;
+      return _getDataForScope(scope).wonOrderGames[dimension] ?? 0;
     }
     else { // if (role == Role.Chaos) {
-      return _getStatsForScope(scope).wonChaosGames[dimension] ?? 0;
+      return _getDataForScope(scope).wonChaosGames[dimension] ?? 0;
     }
   }
 
   int getLostGamesCount(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      return _getStatsForScope(scope).lostOrderGames[dimension] ?? 0;
+      return _getDataForScope(scope).lostOrderGames[dimension] ?? 0;
     }
     else { // if (role == Role.Chaos) {
-      return _getStatsForScope(scope).lostChaosGames[dimension] ?? 0;
+      return _getDataForScope(scope).lostChaosGames[dimension] ?? 0;
     }
   }
 
@@ -141,43 +141,43 @@ class Achievements {
       getWonGamesCount(role, dimension, scope) + getLostGamesCount(role, dimension, scope);
 
   num getOverallGameCount(Scope scope) {
-    return _getStatsForScope(scope).wonOrderGames.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).wonChaosGames.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).lostOrderGames.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).lostChaosGames.values.fold(0, (v, e) => v + e);
+    return _getDataForScope(scope).wonOrderGames.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).wonChaosGames.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).lostOrderGames.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).lostChaosGames.values.fold(0, (v, e) => v + e);
   }
 
   num getOverallWonCount(Scope scope) {
-    return _getStatsForScope(scope).wonOrderGames.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).wonChaosGames.values.fold(0, (v, e) => v + e);
+    return _getDataForScope(scope).wonOrderGames.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).wonChaosGames.values.fold(0, (v, e) => v + e);
   }
 
   num getOverallLostCount(Scope scope) {
-    return _getStatsForScope(scope).lostOrderGames.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).lostChaosGames.values.fold(0, (v, e) => v + e);
+    return _getDataForScope(scope).lostOrderGames.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).lostChaosGames.values.fold(0, (v, e) => v + e);
   }
 
   int getHighScore(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      return _getStatsForScope(scope).highScoresForOrder[dimension] ?? 0;
+      return _getDataForScope(scope).highScoresForOrder[dimension] ?? 0;
     }
     else { // if (role == Role.Chaos) {
-      return _getStatsForScope(scope).highScoresForChaos[dimension] ?? 0;
+      return _getDataForScope(scope).highScoresForChaos[dimension] ?? 0;
     }
   }
 
   int getTotalScore(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      return _getStatsForScope(scope).totalPointsForOrder[dimension] ?? 0;
+      return _getDataForScope(scope).totalPointsForOrder[dimension] ?? 0;
     }
     else { // if (role == Role.Chaos) {
-      return _getStatsForScope(scope).totalPointsForChaos[dimension] ?? 0;
+      return _getDataForScope(scope).totalPointsForChaos[dimension] ?? 0;
     }
   }
 
   num getOverallScore(Scope scope) {
-    return _getStatsForScope(scope).totalPointsForOrder.values.fold(0, (v, e) => v + e) +
-        _getStatsForScope(scope).totalPointsForChaos.values.fold(0, (v, e) => v + e);
+    return _getDataForScope(scope).totalPointsForOrder.values.fold(0, (v, e) => v + e) +
+        _getDataForScope(scope).totalPointsForChaos.values.fold(0, (v, e) => v + e);
   }
 
   incWonGame(Role role, int dimension, bool isMultiPlay) {
@@ -187,10 +187,10 @@ class Achievements {
 
   _incWonGame(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      _getStatsForScope(scope).wonOrderGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
+      _getDataForScope(scope).wonOrderGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
     }
     if (role == Role.Chaos) {
-      _getStatsForScope(scope).wonChaosGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
+      _getDataForScope(scope).wonChaosGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
     }
   }
 
@@ -201,10 +201,10 @@ class Achievements {
 
   _incLostGame(Role role, int dimension, Scope scope) {
     if (role == Role.Order) {
-      _getStatsForScope(scope).lostOrderGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
+      _getDataForScope(scope).lostOrderGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
     }
     if (role == Role.Chaos) {
-      _getStatsForScope(scope).lostChaosGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
+      _getDataForScope(scope).lostChaosGames.update(dimension, (old) => old + 1, ifAbsent: () => 1);
     }
   }
 
@@ -215,12 +215,12 @@ class Achievements {
 
   _registerPointsForScores(Role role, int dimension, int points, Scope scope) {
     if (role == Role.Order) {
-      _getStatsForScope(scope).totalPointsForOrder.update(dimension, (old) => old + points, ifAbsent: () => points);
-      _getStatsForScope(scope).highScoresForOrder.update(dimension, (old) => max(old, points), ifAbsent: () => points);
+      _getDataForScope(scope).totalPointsForOrder.update(dimension, (old) => old + points, ifAbsent: () => points);
+      _getDataForScope(scope).highScoresForOrder.update(dimension, (old) => max(old, points), ifAbsent: () => points);
     }
     if (role == Role.Chaos) {
-      _getStatsForScope(scope).totalPointsForChaos.update(dimension, (old) => old + points, ifAbsent: () => points);
-      _getStatsForScope(scope).highScoresForChaos.update(dimension, (old) => max(old, points), ifAbsent: () => points);
+      _getDataForScope(scope).totalPointsForChaos.update(dimension, (old) => old + points, ifAbsent: () => points);
+      _getDataForScope(scope).highScoresForChaos.update(dimension, (old) => max(old, points), ifAbsent: () => points);
     }
   }
 
@@ -229,14 +229,14 @@ class Achievements {
   }
 
   _clearAll(Scope scope) {
-    _getStatsForScope(scope).wonOrderGames.clear();
-    _getStatsForScope(scope).wonChaosGames.clear();
-    _getStatsForScope(scope).lostOrderGames.clear();
-    _getStatsForScope(scope).lostChaosGames.clear();
-    _getStatsForScope(scope).highScoresForOrder.clear();
-    _getStatsForScope(scope).highScoresForChaos.clear();
-    _getStatsForScope(scope).totalPointsForOrder.clear();
-    _getStatsForScope(scope).totalPointsForChaos.clear();
+    _getDataForScope(scope).wonOrderGames.clear();
+    _getDataForScope(scope).wonChaosGames.clear();
+    _getDataForScope(scope).lostOrderGames.clear();
+    _getDataForScope(scope).lostChaosGames.clear();
+    _getDataForScope(scope).highScoresForOrder.clear();
+    _getDataForScope(scope).highScoresForChaos.clear();
+    _getDataForScope(scope).totalPointsForOrder.clear();
+    _getDataForScope(scope).totalPointsForChaos.clear();
   }
 
 }
