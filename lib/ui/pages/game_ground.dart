@@ -21,6 +21,7 @@ import 'package:super_tooltip/super_tooltip.dart';
 import '../../engine/game_engine.dart';
 import '../../model/chip.dart';
 import '../../model/common.dart';
+import '../../service/MessageService.dart';
 import '../chip_extension.dart';
 import '../../model/coordinate.dart';
 import '../../model/move.dart';
@@ -344,18 +345,23 @@ class _HyleXGroundState extends State<HyleXGround> {
                           if (item == 0) {
                             _showGameDetails(gameEngine.play, gameEngine.user);
                           }
-                          else if (gameEngine.play.classicModeFirstMatrix != null) {
+                          else if (item == 1 && gameEngine.play.classicModeFirstMatrix != null) {
                             _showFirstGameOfClassicMode(
                                 gameEngine.play.classicModeFirstMatrix!,
                                 gameEngine.play.header.getLocalRoleForMultiPlay()!.opponentRole,
                                 gameEngine.play.stats.classicModeFirstRoundOrderPoints!);
                           }
+                          else if (item == 2 && gameEngine.play.header.isStateShareable()) {
+                            MessageService().sendCurrentPlayState(
+                                gameEngine.play.header, widget.user, () => context, true);                          }
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem<int>(value: 0, child: Text(translate('matchMenu.matchInfo'))),
                           if (gameEngine.play.header.rolesSwapped == true 
                               && gameEngine.play.classicModeFirstMatrix != null)
                             PopupMenuItem<int>(value: 1, child: Text(translate('matchMenu.showFirstGame'))),
+                          if (gameEngine.play.header.isStateShareable() && gameEngine.play.header.props["remember"]  != null)
+                            PopupMenuItem<int>(value: 2, child: Text(translate("matchMenu.showSendOptions"))),
                         ],
                       ),
                   ],
@@ -1333,10 +1339,6 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (play.header.opponentId != null)
           _buildGameInfoRow("${PlayerType.RemoteUser.getName()} Id", toReadableId(play.header.opponentId!)),
 
-        if (isDebug)
-          _buildGameInfoRow("Round trip signature", play.header.commContext.roundTripSignature ?? "-"),
-        if (isDebug)
-          _buildGameInfoRow("User seed", user.userSeed),
 
         const Divider(),
 

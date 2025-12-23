@@ -245,19 +245,19 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             backgroundColor: playHeader.state.toColor(),
                             maxRadius: 6,
                           ),
-                          Text(
-                              " " + playHeader.getTitle(),
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                            softWrap: true,
+                          Expanded(
+                            child: Text(
+                                " " + playHeader.getTitle(),
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                              overflow: TextOverflow.ellipsis
+                            ),
                           ),
                         ],
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
-                        ],
-                      ),
+                      Text(_getHeaderSubLine(playHeader),
+                          style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
+                      Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
+
                       if (playHeader.lastTimestamp != null) Text("${translate("matchMenu.lastActivity")} " + format(playHeader.lastTimestamp!), style: TextStyle(color: Colors.grey[500])),
                       Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
@@ -322,25 +322,38 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     }
   }
 
-  String _getHeaderBodyLine(PlayHeader playHeader) {
+  String _getHeaderSubLine(PlayHeader playHeader) {
 
     final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}");
-    if (playHeader.playMode == PlayMode.Classic) {
-      sb.write(" (${PlayMode.Classic.getName()})");
-    }
 
     final localRole = playHeader.getLocalRoleForMultiPlay();
 
     if (localRole != null) {
-      sb.write(", ${localRole.name}");
+      sb.write(" ${translate(("common.as"))} ${localRole.name}");
     }
+
+    return sb.toString();
+  }
+
+  String _getHeaderBodyLine(PlayHeader playHeader) {
+
+    final sb = StringBuffer();
+
+    if (playHeader.playMode == PlayMode.Classic) {
+      sb.write("${PlayMode.Classic.getName()}, ");
+    }
+
     if (playHeader.currentRound > 0) {
-      sb.write(", ");
       sb.write(translate("gameHeader.roundOf", args:
       {
         "round": playHeader.currentRound,
         "totalRounds": playHeader.maxRounds
       }));
+    }
+    if (playHeader.playMode == PlayMode.Classic) {
+      sb.write(" (${playHeader.rolesSwapped == true
+          ? translate("matchMenu.gameInMatchSecond")
+          : translate("matchMenu.gameInMatchFirst")})");
     }
     return sb.toString();
   }
