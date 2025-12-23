@@ -612,6 +612,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           }
 
         });
+
+        StorageService().savePlayHeader(playHeader);
       }
     }));
 

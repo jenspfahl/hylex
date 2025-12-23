@@ -70,7 +70,9 @@ class MessageService {
       case PlayState.Won:
       case PlayState.FirstGameFinished_WaitForOpponent:
       case PlayState.WaitForOpponent: {
-        if (playHeader.actor == Actor.Invitee && playHeader.currentRound == 1) {
+        if (playHeader.rolesSwapped != true // don't do this if roles swapped
+            && playHeader.actor == Actor.Invitee
+            && playHeader.currentRound == 1) {
           StorageService().loadPlayFromHeader(playHeader).then((play) {
             final lastMove = play?.lastMoveFromJournal;
             sendInvitationAccepted(playHeader, user, lastMove, contextProvider, showAllOptions: showAllOptions);

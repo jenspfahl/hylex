@@ -138,7 +138,7 @@ class StartPageState extends State<StartPage> {
               showAlertDialog(translate("errors.cannotReactToOwnInvitation"));
             }
             else {
-              _handleReceiveInvite(inviteMessage, comContext);
+              _handleReceiveInvite(serializedMessage, inviteMessage, comContext);
             }
           }
           else if (error != null) {
@@ -161,20 +161,18 @@ class StartPageState extends State<StartPage> {
           showAlertDialog(error);
           return;
         }
-        // save registered incoming signature
-        await StorageService().savePlayHeader(header);
 
         if (extractOperation == Operation.AcceptInvite) {
-          _handleInviteAccepted(header, message as AcceptInviteMessage);
+          _handleInviteAccepted(serializedMessage, header, message as AcceptInviteMessage);
         }
         else if (extractOperation == Operation.RejectInvite) {
-          _handleInviteRejected(header, message as RejectInviteMessage);
+          _handleInviteRejected(serializedMessage, header, message as RejectInviteMessage);
         }
         else if (extractOperation == Operation.Move) {
-          _handleMove(header, message as MoveMessage);
+          _handleMove(serializedMessage, header, message as MoveMessage);
         }
         else if (extractOperation == Operation.Resign) {
-          _handleResign(header, message as ResignMessage);
+          _handleResign(serializedMessage, header, message as ResignMessage);
         }
         else {
           showAlertDialog("Unknown operation for $extractOperation for ${header
@@ -190,7 +188,10 @@ class StartPageState extends State<StartPage> {
 
   }
 
-  void _handleReceiveInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) {
+  void _handleReceiveInvite(
+      SerializedMessage serializedMessage,
+      InviteMessage receivedInviteMessage,
+      CommunicationContext comContext) {
 
     var opponentName = receivedInviteMessage.invitorUserName;
     var playMode = receivedInviteMessage.playMode;
@@ -210,16 +211,18 @@ class StartPageState extends State<StartPage> {
         // first ask for your name
         if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInvite(receivedInviteMessage, comContext));
+              _handleAcceptInvite(serializedMessage, receivedInviteMessage, comContext));
         }
         else {
-          _handleAcceptInvite(receivedInviteMessage, comContext);
+          _handleAcceptInvite(serializedMessage, receivedInviteMessage, comContext);
         }
 
 
       },
       secondString: translate("common.decline"),
       secondHandler: () {
+        comContext.registerReceivedMessage(serializedMessage);
+
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
             comContext,
@@ -228,6 +231,8 @@ class StartPageState extends State<StartPage> {
       },
       thirdString: translate("common.replyLater"),
       thirdHandler: () {
+        comContext.registerReceivedMessage(serializedMessage);
+
         final header = PlayHeader.multiPlayInvitee(
             receivedInviteMessage,
             comContext,
@@ -241,7 +246,12 @@ class StartPageState extends State<StartPage> {
 
   }
 
-  Future<void> _handleAcceptInvite(InviteMessage receivedInviteMessage, CommunicationContext comContext) async {
+  Future<void> _handleAcceptInvite(
+      SerializedMessage serializedMessage,
+      InviteMessage receivedInviteMessage,
+      CommunicationContext comContext) async {
+
+    comContext.registerReceivedMessage(serializedMessage);
 
     final header = PlayHeader.multiPlayInvitee(
         receivedInviteMessage,
@@ -275,13 +285,19 @@ class StartPageState extends State<StartPage> {
 
 
 
-  Future<void> _handleInviteAccepted(PlayHeader header, AcceptInviteMessage message) async {
+  Future<void> _handleInviteAccepted(
+      SerializedMessage serializedMessage,
+      PlayHeader header,
+      AcceptInviteMessage message) async {
     final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(header, message);
 
     if (errorMessage != null) {
       showAlertDialog(errorMessage);
     }
     else {
+      header.commContext.registerReceivedMessage(serializedMessage);
+      await StorageService().savePlayHeader(header);
+
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, message.initialMove, () {
@@ -300,17 +316,29 @@ class StartPageState extends State<StartPage> {
   }
 
 
-  Future<void> _handleInviteRejected(PlayHeader header, RejectInviteMessage message) async {
+  Future<void> _handleInviteRejected(
+      SerializedMessage serializedMessage,
+      PlayHeader header,
+      RejectInviteMessage message) async {
     final error = await PlayStateManager().doAndHandleRejectInvite(header, message);
     if (error != null) {
       showAlertDialog(error);
     }
     else {
+      header.commContext.registerReceivedMessage(serializedMessage);
+      await StorageService().savePlayHeader(header);
+
       showAlertDialog(translate("messaging.matchDeclined",
           args: { "playId" : header.getReadablePlayId() }));    }
   }
 
-  void _handleMove(PlayHeader header, MoveMessage message) {
+  Future<void> _handleMove(
+      SerializedMessage serializedMessage,
+      PlayHeader header,
+      MoveMessage message) async {
+
+    header.commContext.registerReceivedMessage(serializedMessage);
+    await StorageService().savePlayHeader(header);
 
     StorageService().loadPlayFromHeader(header).then((play) {
       if (play != null) {
@@ -322,13 +350,19 @@ class StartPageState extends State<StartPage> {
     });
   }
 
-  Future<void> _handleResign(PlayHeader header, ResignMessage message) async {
+  Future<void> _handleResign(
+      SerializedMessage serializedMessage,
+      PlayHeader header,
+      ResignMessage message) async {
 
     final error = await PlayStateManager().handleResignedByRemote(header, _user);
     if (error != null) {
       showAlertDialog(error);
     }
     else {
+      header.commContext.registerReceivedMessage(serializedMessage);
+      await StorageService().savePlayHeader(header);
+
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, null, () {

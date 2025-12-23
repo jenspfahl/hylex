@@ -255,6 +255,9 @@ Future<void> main() async {
       final deserializedInviteMessage = (await serializedInvitationMessage
           .deserialize(inviteeContext, null))
           .$1 as InviteMessage;
+
+      inviteeContext.registerReceivedMessage(serializedInvitationMessage);
+
       print("playId: ${deserializedInviteMessage.playId}");
       print("playSize: ${deserializedInviteMessage.playSize}");
       print("playMode: ${deserializedInviteMessage.playMode}");
@@ -296,6 +299,8 @@ Future<void> main() async {
       // receive accept invite
       final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, null)).$1 as AcceptInviteMessage;
 
+      invitorContext.registerReceivedMessage(serializedAcceptInviteMessage);
+
       print("playId: ${deserializedAcceptInviteMessage.playId}");
       print("playOpener: ${deserializedAcceptInviteMessage.playOpenerDecision}");
       print("inviteeUserId: ${deserializedAcceptInviteMessage.inviteeUserId}");
@@ -329,6 +334,8 @@ Future<void> main() async {
       final serializedMoveMessage = _send(firstInvitorPlayerMoveMessage.serializeWithContext(invitorContext, "seed"));
 
       final deserializedMoveMessage = (await serializedMoveMessage.deserialize(inviteeContext, null)).$1 as MoveMessage;
+
+      inviteeContext.registerReceivedMessage(serializedMoveMessage);
 
       print("playId: ${deserializedMoveMessage.playId}");
       print("round: ${deserializedMoveMessage.round}");
@@ -384,6 +391,8 @@ Future<void> main() async {
           .deserialize(inviteeContext, invitorUserId))
           .$1 as InviteMessage;
 
+      inviteeContext.registerReceivedMessage(serializedInvitationMessage);
+
       expect(deserializedInviteMessage.playId, playId);
       expect(deserializedInviteMessage.playSize, playSize);
       expect(deserializedInviteMessage.playMode, playMode);
@@ -420,6 +429,8 @@ Future<void> main() async {
 
       // receive accept invite
       final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, inviteeUserId)).$1 as AcceptInviteMessage;
+
+      invitorContext.registerReceivedMessage(serializedAcceptInviteMessage);
 
       expect(deserializedAcceptInviteMessage.playId, playId);
       expect(deserializedAcceptInviteMessage.playOpenerDecision, playOpenerDecision);

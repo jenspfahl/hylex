@@ -484,7 +484,6 @@ class SerializedMessage {
     if (errorMessage != null) {
       return (null, errorMessage);
     }
-    comContext.registerReceivedMessage(this);
 
     final reader = payloadBuffer.reader();
 
