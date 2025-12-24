@@ -488,10 +488,12 @@ class StartPageState extends State<StartPage> {
                                 ? MenuMode.None
                                 : MenuMode.Multiplayer),
                     longClickHandler: () {
-                      setState(() {
-                        isDebug = !isDebug;
-                      });
-                      showAlertDialog("Debug mode set to $isDebug");
+                      if (isDebug) {
+                          setState(() {
+                            isDebug = !isDebug;
+                          });
+                          showAlertDialog("Debug mode set to $isDebug");
+                      }
                     }
                 ),
 

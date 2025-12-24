@@ -29,10 +29,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
   late LocalizationDelegate localizationDelegate;
 
+  late int _debugEnableCounter;
+
   @override
   void initState() {
     super.initState();
     localizationDelegate = LocalizedApp.of(context).delegate;
+    _debugEnableCounter = 0;
 
   }
 
@@ -249,8 +252,27 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsSection(
           tiles: [
             CustomSettingsTile(child:
-              Padding(padding: EdgeInsets.all(32),
-                child: Text("Your User-Id: ${toReadableId(user.id)}"))),
+              GestureDetector(
+                onDoubleTap: () {
+                  if (isDebug) {
+                    showAlertDialog("Debug mode activated");
+                  }
+                  else {
+                    // count to 10 to enable test debug mode
+                    _debugEnableCounter++;
+                    debugPrint("debug counter: $_debugEnableCounter");
+                    if (_debugEnableCounter >= 4) {
+                      setState(() {
+                        isDebug = true;
+                        _debugEnableCounter = 0;
+                      });
+                      showAlertDialog("Debug mode activated");
+                    }
+                  }
+                },
+                child: Padding(padding: EdgeInsets.all(32),
+                  child: Text("Your User-Id: ${toReadableId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
+              )),
 
             const CustomSettingsTile(child: SizedBox(height: 36)),
 
