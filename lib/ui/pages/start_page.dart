@@ -533,7 +533,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.MultiplayerNew
                     ? _buildCell(translate('startMenu.scanCode'), 3, icon: Icons.qr_code_scanner,
-                          clickHandler: scanNextMove,
+                          clickHandler: () => scanNextMove(forceShowAllOptions: false),
                           longClickHandler: _showMultiPlayTestDialog
                        )
                     : _menuMode == MenuMode.More
@@ -1240,98 +1240,140 @@ class StartPageState extends State<StartPage> {
     );
   }
 
-  void scanNextMove() {
-    showModalBottomSheet(
-      context: context,
+  void scanNextMove({
+    PlayHeader? header = null,
+    required bool forceShowAllOptions,
+  }) {
 
-      builder: (BuildContext context) {
-        _requestCameraPermission();
+    if (!forceShowAllOptions && header?.props[HeaderProps.rememberMessageReading] == "from_message") {
+      _readFromMessage();
+    }
+    else if (!forceShowAllOptions && header?.props[HeaderProps.rememberMessageReading] == "from_qr_code") {
+      _readFromQrCode(context);
+    }
+    else {
+      showModalBottomSheet(
+        context: context,
 
-        return StatefulBuilder(
-          builder: (BuildContext context, setState) {
+        builder: (BuildContext context) {
+          _requestCameraPermission();
 
+          bool remember = false;
 
-            return Container(
-              height: 300,
+          return StatefulBuilder(
+            builder: (BuildContext context, setState) {
+              return Container(
+                height: 350,
 
-              child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    mainAxisSize: MainAxisSize.max,
-                    spacing: 5,
-                    children: [
-                      Text(translate('sheets.scanOrPasteMessage')),
-                      Text(""),
-                      buildFilledButton(
-                          context,
-                          Icons.qr_code_scanner,
-                          translate('sheets.scanMessage'),
-                          () {
-                        Navigator.of(context).pop();
+                child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisSize: MainAxisSize.max,
+                      spacing: 5,
+                      children: [
+                        Text(translate('sheets.scanOrPasteMessage')),
+                        Text(""),
+                        buildFilledButton(
+                            context,
+                            Icons.qr_code_scanner,
+                            translate('sheets.scanMessage'),
+                                () {
 
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                              return QrReaderPage();
-                            })).then((result) {
-                          if (result != null) {
-                            try {
-                              final uri = Uri.parse(result);
-                              handleReceivedMessage(uri);
-                            } catch (e) {
-                              print(e);
-                              showAlertDialog(
-                                  translate('sheets.scanMessageError'),
-                                  duration: Duration(seconds: 5));
-                            }
-                          }
-                        });
+                                  if (header != null) {
+                                    header.props[HeaderProps.rememberMessageReading] = remember ? "from_qr_code" : "";
+                                    StorageService().savePlayHeader(header);
+                                  }
 
+                                  Navigator.of(context).pop();
+                              _readFromQrCode(context);
+                            }),
+                        buildOutlinedButton(
+                            context,
+                            Icons.paste,
+                            translate('sheets.pasteMessage'),
+                                () {
+                                  if (header != null) {
+                                    header.props[HeaderProps.rememberMessageReading] = remember ? "from_message" : "";
+                                    StorageService().savePlayHeader(header);
+                                  }
+                                  Navigator.of(context).pop();
+                                  _readFromMessage();
+                            }),
+                        if (header != null) CheckboxListTile(
+                            title: Text(translate(
+                                "messaging.rememberDecision")),
+                            value: remember,
+                            dense: true,
+                            checkboxShape: RoundedRectangleBorder(
+                                borderRadius: BorderRadiusGeometry.all(
+                                    Radius.elliptical(10, 20))),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value != null) {
+                                  remember = value;
+                                }
+                              });
+                            }),
+                      ],
+                    )
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
 
-                      }),
-                      buildOutlinedButton(
-                          context,
-                          Icons.paste,
-                          translate('sheets.pasteMessage'),
-                          () {
-                        Navigator.of(context).pop();
+  }
 
-                        showInputDialog(translate('sheets.pasteMessageHere'),
-                          height: 380,
-                          minLines: 3,
-                          maxLines: 3,
-                          okHandler: (s) {
-                            final uri = extractAppLinkFromString(s);
-                            if (uri == null) {
-                              showAlertDialog(
-                                  translate('sheets.pasteMessageError'),
-                                  duration: Duration(seconds: 5)
-                              );
-                            }
-                            else {
-                              handleReceivedMessage(uri);
-                            }
-                          },
-                          thirdText: translate('sheets.pasteMessage'),
-                          thirdHandler: (controller) async {
-                            final data = await Clipboard.getData("text/plain");
-                            if (data?.text != null) {
-                              controller.value = new TextEditingValue(text: data!.text!);
-                            }
-                          }
-                        );
-                        }),
-                    ],
-                  )
-              ),
+  void _readFromMessage() {
+    showInputDialog(
+        translate('sheets.pasteMessageHere'),
+        height: 380,
+        minLines: 3,
+        maxLines: 3,
+        okHandler: (s) {
+          final uri = extractAppLinkFromString(s);
+          if (uri == null) {
+            showAlertDialog(
+                translate('sheets.pasteMessageError'),
+                duration: Duration(seconds: 5)
             );
-          },
-        );
-
-
-      },
+          }
+          else {
+            handleReceivedMessage(uri);
+          }
+        },
+        thirdText: translate('sheets.pasteMessage'),
+        thirdHandler: (controller) async {
+          final data = await Clipboard.getData(
+              "text/plain");
+          if (data?.text != null) {
+            controller.value =
+            new TextEditingValue(text: data!.text!);
+          }
+        }
     );
+  }
 
+  void _readFromQrCode(BuildContext context) {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) {
+          return QrReaderPage();
+        })).then((result) {
+      if (result != null) {
+        try {
+          final uri = Uri.parse(result);
+          handleReceivedMessage(uri);
+        } catch (e) {
+          print(e);
+          showAlertDialog(
+              translate('sheets.scanMessageError'),
+              duration: Duration(seconds: 5));
+        }
+      }
+    });
   }
 
 

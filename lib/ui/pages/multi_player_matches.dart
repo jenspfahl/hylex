@@ -66,7 +66,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             IconButton(
               icon: const Icon(Icons.qr_code_scanner),
               onPressed: () {
-                globalStartPageKey.currentState?.scanNextMove();
+                globalStartPageKey.currentState?.scanNextMove(forceShowAllOptions: false);
               }),
             IconButton(
                 icon: const Icon(Icons.sort),

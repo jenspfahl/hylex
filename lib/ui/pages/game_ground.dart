@@ -319,7 +319,10 @@ class _HyleXGroundState extends State<HyleXGround> {
                         child: IconButton(
                           icon: const Icon(Icons.qr_code_scanner),
                           onPressed: () {
-                            globalStartPageKey.currentState?.scanNextMove();
+                            globalStartPageKey.currentState?.scanNextMove(forceShowAllOptions: false, header: gameEngine.play.header);
+                          },
+                          onLongPress: () {
+                            globalStartPageKey.currentState?.scanNextMove(forceShowAllOptions: true, header: gameEngine.play.header);
                           },
                         ),
                       ),
@@ -353,15 +356,23 @@ class _HyleXGroundState extends State<HyleXGround> {
                           }
                           else if (item == 2 && gameEngine.play.header.isStateShareable()) {
                             MessageService().sendCurrentPlayState(
-                                gameEngine.play.header, widget.user, () => context, true);                          }
+                                gameEngine.play.header, widget.user, () => context, true);
+                          }
+                          else if (item == 3) {
+                            globalStartPageKey.currentState?.scanNextMove(
+                                forceShowAllOptions: true,
+                                header: gameEngine.play.header);
+                          }
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem<int>(value: 0, child: Text(translate('matchMenu.matchInfo'))),
                           if (gameEngine.play.header.rolesSwapped == true 
                               && gameEngine.play.classicModeFirstMatrix != null)
                             PopupMenuItem<int>(value: 1, child: Text(translate('matchMenu.showFirstGame'))),
-                          if (gameEngine.play.header.isStateShareable() && gameEngine.play.header.props["remember"]  != null)
+                          if (gameEngine.play.header.isStateShareable() && gameEngine.play.header.props[HeaderProps.rememberMessageSending] != null)
                             PopupMenuItem<int>(value: 2, child: Text(translate("matchMenu.showSendOptions"))),
+                          if (gameEngine.play.header.props[HeaderProps.rememberMessageReading] != null)
+                            PopupMenuItem<int>(value: 3, child: Text(translate("matchMenu.showReadingOptions"))),
                         ],
                       ),
                   ],

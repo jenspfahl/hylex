@@ -200,6 +200,12 @@ enum PlayState {
   }
 }
 
+enum HeaderProps {
+  rememberMessageSending,
+  rememberMessageReading,
+  signMessages
+}
+
 /**
  * This contains header information of each play.
  */
@@ -212,7 +218,7 @@ class PlayHeader {
   PlayState _state = PlayState.Initialised;
   int currentRound = 0;
   bool? rolesSwapped = null; // only true if PlayMode.CLASSIC and the second game goes on
-  Map<String, dynamic> props = HashMap();
+  Map<HeaderProps, dynamic> props = HashMap();
 
   // multi player attributes
   late Actor actor;
@@ -312,7 +318,15 @@ class PlayHeader {
     if (propList != null) {
       propList.forEach((e) {
         final keyValue = e as Map<String, dynamic>;
-        props.addAll(keyValue);
+        keyValue.forEach((keyName, value) {
+          final key = HeaderProps.values.firstWhereOrNull((p) => p.name == keyName);
+          if (key != null) {
+            props[key] = value;
+          }
+          else {
+            print("Cannot map $key");
+          }
+        });
       });
     }
 
@@ -368,7 +382,7 @@ class PlayHeader {
     if (commContext.predecessorMessage != null) "predecessorMessagePayload" : commContext.predecessorMessage!.payload,
     if (commContext.predecessorMessage != null) "predecessorMessageSignature" : commContext.predecessorMessage!.signature,
     "messageHistory" : commContext.messageHistory.map((m) => m.toJson()).toList(),
-    "props" : props.entries.map((e) => {e.key: e.value}).toList(),
+    "props" : props.entries.map((e) => {e.key.name: e.value}).toList(),
 
     if (opponentId != null) "opponentId" : opponentId,
     if (opponentName != null) "opponentName" : opponentName,

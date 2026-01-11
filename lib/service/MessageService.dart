@@ -271,10 +271,10 @@ class MessageService {
       bool showAllOptions,
       ) {
 
-    if (!showAllOptions && header.props["remember"] == "as_message") {
+    if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_message") {
       _shareAsMessage(context, serializedMessage, text, header, user);
     }
-    else if (!showAllOptions && header.props["remember"] == "as_qr_code") {
+    else if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_qr_code") {
       _shareAsQrCode(context, serializedMessage, header, user);
     }
     else {
@@ -285,7 +285,7 @@ class MessageService {
         builder: (BuildContext context) {
 
           bool remember = false;
-          bool signMessages = header.props["signMessages"] == true;
+          bool signMessages = header.props[HeaderProps.signMessages] == true;
 
           return StatefulBuilder(
             builder: (BuildContext context, setState) {
@@ -307,8 +307,8 @@ class MessageService {
                           Icons.near_me,
                           translate("messaging.sendYourMoveAsMessage"),
                               () async {
-                            header.props["remember"] = remember ? "as_message" : "";
-                            header.props["signMessages"] = signMessages;
+                            header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
+                            header.props[HeaderProps.signMessages] = signMessages;
                             if (saveState) {
                               await StorageService().savePlayHeader(header);
                             }
@@ -321,8 +321,8 @@ class MessageService {
                           Icons.qr_code_2,
                           translate("messaging.sendYourMoveAsQrCode"),
                               () async {
-                                header.props["remember"] = remember ? "as_qr_code" : "";
-                                header.props["signMessages"] = signMessages;
+                                header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
+                                header.props[HeaderProps.signMessages] = signMessages;
 
                                 if (saveState) {
                                   await StorageService().savePlayHeader(header);
@@ -376,7 +376,7 @@ class MessageService {
       return;
     }
     if (PreferenceService().signMessages == SignMessages.Always
-        || header.props["signMessages"] == true) {
+        || header.props[HeaderProps.signMessages] == true) {
       await serializedMessage.signMessage(user.id, user.userSeed);
     }
   }

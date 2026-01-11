@@ -66,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
       ),
       sections: [
-        SettingsSection(
+        if (isDebug) SettingsSection(
           title: Text('Common', style: TextStyle(color: Colors.brown[800])),
           tiles: [
             if (isDebug) SettingsTile(
