@@ -1,17 +1,22 @@
 
 
 
-import 'package:flutter_translate/flutter_translate.dart';
+
+import '../l10n/app_localizations.dart';
 
 enum PlayerType {
-  LocalUser("player.localUser"),
-  LocalAi("player.localAi"),
-  RemoteUser("player.remoteUser"),
+  LocalUser,
+  LocalAi,
+  RemoteUser,
   ;
-  final String _i18nKey;
-  const PlayerType(this._i18nKey);
 
-  String getName() => translate(_i18nKey);
+  String getName(AppLocalizations l10n) {
+    return switch(this) {
+      PlayerType.LocalUser => l10n.player_localUser,
+      PlayerType.LocalAi => l10n.player_localAi,
+      PlayerType.RemoteUser => l10n.player_remoteUser
+    };
+  }
 }
 
 enum Role {
@@ -73,16 +78,18 @@ enum Operation {
 } 
 
 enum PlayMode {
-  HyleX("playMode.hylex"),    //00
-  Classic("playMode.classic"),  //01
-  unused10(""), //10 TODO could be with no random chip withdrawal
-  unused11(""); //11
+  HyleX,    //00
+  Classic,  //01
+  unused10, //10 TODO could be with no random chip withdrawal
+  unused11; //11
   // stuck to 2 bits, don't add more
 
-  final String _i18nKey;
-  const PlayMode(this._i18nKey);
-
-  String getName() => translate(_i18nKey);
+  String getName(AppLocalizations l10n) => switch (this) {
+    PlayMode.HyleX => l10n.playMode_hylex,
+    PlayMode.Classic => l10n.playMode_classic,
+    PlayMode.unused10 => throw UnimplementedError(),
+    PlayMode.unused11 => throw UnimplementedError(),
+  };
 } 
 
 enum PlayOpener {

@@ -1,8 +1,7 @@
 
 
 
-import 'package:flutter_translate/flutter_translate.dart';
-
+import '../l10n/app_localizations.dart';
 import 'chip.dart';
 import 'common.dart';
 import 'coordinate.dart';
@@ -100,30 +99,18 @@ class Move {
     return cursor;
   }
 
-  String toReadableStringWithChipPlaceholder(PlayerType? playerType) {
+  String toReadableStringWithChipPlaceholder(PlayerType? playerType, AppLocalizations l10n) {
     final playerTypeName = playerType == PlayerType.LocalUser
-        ? " (${playerType!.getName()})"
+        ? " (${playerType!.getName(l10n)})"
         :"";
     if (isPlaced()) {
-      return translate("move.placedChip",
-          args: {
-            "who" : "Chaos$playerTypeName",
-            "where" : to?.toReadableCoordinates(),
-          });
+      return l10n.move_placedChip("{chip}", to!.toReadableCoordinates(), "Chaos$playerTypeName"); // "{chip}" needed to split it later
     }
     else if (isMove()) {
-      return translate("move.movedChip",
-          args: {
-            "who" : "Order$playerTypeName",
-            "from" : from?.toReadableCoordinates(),
-            "to" : to?.toReadableCoordinates(),
-          });
+      return l10n.move_movedChip("{chip}", from!.toReadableCoordinates(), to!.toReadableCoordinates(), "Order$playerTypeName"); // "{chip}" needed to split it later
     }
     else {
-      return translate("move.skipped",
-          args: {
-            "who" : "Order$playerTypeName"
-          });
+      return l10n.move_skipped("Order$playerTypeName");
     }
   }
 

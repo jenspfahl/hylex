@@ -10,6 +10,7 @@ import 'package:hyle_x/ui/dialogs.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:hyle_x/utils/fortune.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../model/common.dart';
 import '../../../model/messaging.dart';
 import '../../../model/move.dart';
@@ -433,6 +434,8 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       GameChip? Function() getValue, 
       Function(GameChip) setValue, 
 ) {
+    final l10n = AppLocalizations.of(context)!;
+
     final chipCount = widget.playHeader?.dimension ?? 0;
     final allChips = <GameChip>[];
     for (int i=0; i < chipCount; i++) {
@@ -475,7 +478,7 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
           items: allChips.map((chip) {
             return DropdownMenuItem<GameChip>(
                 value: chip,
-                child: Text(chip.getChipName(),
+                child: Text(chip.getChipName(l10n),
                   style: TextStyle(
                       decoration: legalChips.contains(chip) == true ? TextDecoration.none : TextDecoration.lineThrough,
                       color: getValue() == chip ? Colors.lightGreenAccent : Colors.white,

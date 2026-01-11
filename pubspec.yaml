@@ -34,7 +34,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   material_design_icons_flutter: ^7.0.7296
-  flutter_translate: ^4.1.0
+  flutter_local_notifications: ^18.0.1
+  flutter_timezone: ^5.0.1
   shared_preferences: ^2.5.3
   flutter_fgbg: ^0.7.1
   cupertino_icons: ^1.0.8
@@ -96,6 +97,9 @@ flutter_launcher_icons:
 # The following section is specific to Flutter packages.
 flutter:
 
+  generate: true
+
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -135,5 +139,4 @@ flutter:
   assets:
     - assets/ic_launcher_foreground.png
     - assets/ic_launcher_mono.png
-    - assets/i18n/de.json
-    - assets/i18n/en.json
+

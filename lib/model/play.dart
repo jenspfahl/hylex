@@ -3,7 +3,6 @@ import 'dart:isolate';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/stats.dart';
 import 'package:hyle_x/model/stock.dart';
@@ -11,6 +10,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 import '../engine/ai/ai.dart';
 import '../engine/ai/strategy.dart';
+import '../l10n/app_localizations.dart';
 import '../ui/ui_utils.dart';
 import 'common.dart';
 import 'coordinate.dart';
@@ -138,24 +138,24 @@ enum PlayState {
     }
   }
 
-  String toMessage() {
+  String toMessage(AppLocalizations l10n) {
     switch (this) {
-      case PlayState.Initialised: return translate("playStates.initialised");
-      case PlayState.RemoteOpponentInvited: return translate("playStates.remoteOpponentInvited");
-      case PlayState.InvitationPending: return translate("playStates.invitationPending");
-      case PlayState.RemoteOpponentAccepted_ReadyToMove: return translate("playStates.remoteOpponentAccepted_ReadyToMove");
-      case PlayState.InvitationAccepted_ReadyToMove: return translate("playStates.invitationAccepted_ReadyToMove");
-      case PlayState.InvitationAccepted_WaitForOpponent: return translate("playStates.invitationAccepted_WaitForOpponent");
-      case PlayState.InvitationRejected: return translate("playStates.invitationRejected");
-      case PlayState.ReadyToMove: return translate("playStates.readyToMove");
-      case PlayState.WaitForOpponent: return translate("playStates.waitForOpponent");
-      case PlayState.FirstGameFinished_ReadyToSwap: return translate("playStates.firstGameFinished_ReadyToSwap");
-      case PlayState.FirstGameFinished_WaitForOpponent: return translate("playStates.firstGameFinished_WaitForOpponent");
-      case PlayState.Lost: return translate("playStates.lost");
-      case PlayState.Won: return translate("playStates.won");
-      case PlayState.Resigned: return translate("playStates.resigned");
-      case PlayState.OpponentResigned: return translate("playStates.opponentResigned");
-      case PlayState.Closed: return translate("playStates.closed");
+      case PlayState.Initialised: return l10n.playState_initialised;
+      case PlayState.RemoteOpponentInvited: return l10n.playState_remoteOpponentInvited;
+      case PlayState.InvitationPending: return l10n.playState_invitationPending;
+      case PlayState.RemoteOpponentAccepted_ReadyToMove: return l10n.playState_remoteOpponentAccepted_ReadyToMove;
+      case PlayState.InvitationAccepted_ReadyToMove: return l10n.playState_invitationAccepted_ReadyToMove;
+      case PlayState.InvitationAccepted_WaitForOpponent: return l10n.playState_invitationAccepted_WaitForOpponent;
+      case PlayState.InvitationRejected: return l10n.playState_invitationRejected;
+      case PlayState.ReadyToMove: return l10n.playState_readyToMove;
+      case PlayState.WaitForOpponent: return l10n.playState_waitForOpponent;
+      case PlayState.FirstGameFinished_ReadyToSwap: return l10n.playState_firstGameFinished_ReadyToSwap;
+      case PlayState.FirstGameFinished_WaitForOpponent: return l10n.playState_firstGameFinished_WaitForOpponent;
+      case PlayState.Lost: return l10n.playState_lost;
+      case PlayState.Won: return l10n.playState_won;
+      case PlayState.Resigned: return l10n.playState_resigned;
+      case PlayState.OpponentResigned: return l10n.playState_opponentResigned;
+      case PlayState.Closed: return l10n.playState_closed;
     }
   }
 
@@ -352,13 +352,9 @@ class PlayHeader {
     _touch();
   }
 
-  String getTitle() {
+  String getTitle(AppLocalizations l10n) {
     if (opponentName != null) {
-      return translate("gameTitle.playAgainstOpponent",
-        args: {
-          "playId" : getReadablePlayId(),
-          "opponent" : opponentName
-        });
+      return l10n.gameTitle_playAgainstOpponent(opponentName!, getReadablePlayId());
     }
     else {
       return getReadablePlayId();

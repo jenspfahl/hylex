@@ -19,6 +19,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:super_tooltip/super_tooltip.dart';
 
 import '../../engine/game_engine.dart';
+import '../../l10n/app_localizations.dart';
 import '../../model/chip.dart';
 import '../../model/common.dart';
 import '../../service/MessageService.dart';
@@ -558,11 +559,14 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
   Widget _buildMoveLine(Move move, {String? prefix, PlayerType? playerType}) {
-    var eventLineString = move.toReadableStringWithChipPlaceholder(playerType);
+    final l10n = AppLocalizations.of(context)!;
+    final eventLineString = move.toReadableStringWithChipPlaceholder(playerType, l10n);
     return _replaceWithChipIcon(prefix, eventLineString, move.chip);
   }
 
   Widget _replaceWithChipIcon(String? prefix, String text, GameChip? chip) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (text.contains("{chip}") && chip != null) {
       final split = text.split("{chip}");
       final first = split[0];
@@ -574,7 +578,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         children: [
           if (prefix != null)
             Text(prefix),
-          Text("${first}${chip.getChipName()} "),
+          Text("${first}${chip.getChipName(l10n)} "),
           CircleAvatar(
               backgroundColor: _getChipColor(chip, null),
               maxRadius: 6,
@@ -624,6 +628,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   String _buildWinnerOrLooserText() {
+    final l10n = AppLocalizations.of(context)!;
+
     final winnerRole = gameEngine.play.getWinnerRole();
     final looserRole = gameEngine.play.getLooserRole();
     final winnerPlayer = gameEngine.play.getWinnerPlayer();
@@ -636,11 +642,11 @@ class _HyleXGroundState extends State<HyleXGround> {
     else if (gameEngine.play.isWithAiPlay) {
       if (winnerPlayer == PlayerType.LocalUser) {
         return translate("gameStates.gameOverWinner",
-            args: { "who" : "${winnerRole.name} (${winnerPlayer.getName()})"});
+            args: { "who" : "${winnerRole.name} (${winnerPlayer.getName(l10n)})"});
       }
       else {
         return translate("gameStates.gameOverLooser",
-            args: { "who" : "${looserRole.name} (${looserPlayer.getName()})"});
+            args: { "who" : "${looserRole.name} (${looserPlayer.getName(l10n)})"});
       }
     }
     else if (gameEngine.play.isMultiplayerPlay) {
@@ -655,11 +661,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
       if (winnerRole == localRole) {
         return translate("gameStates.gameOverWinner",
-            args: { "who" : "${localRole!.name} (${winnerPlayer.getName()})"});
+            args: { "who" : "${localRole!.name} (${winnerPlayer.getName(l10n)})"});
       }
       else {
         return translate("gameStates.gameOverLooser",
-            args: { "who" : "${localRole!.name} (${looserPlayer.getName()})"});
+            args: { "who" : "${localRole!.name} (${looserPlayer.getName(l10n)})"});
       }
     }
     else {
@@ -669,11 +675,13 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   String _buildLooserText() {
+    final l10n = AppLocalizations.of(context)!;
+
     final looserRole = gameEngine.play.getLooserRole();
     final looserPlayer = gameEngine.play.getLooserPlayer();
 
     return translate("gameStates.gameOverLooser",
-        args: { "who" : "${looserRole.name} (${looserPlayer.getName()})"});
+        args: { "who" : "${looserRole.name} (${looserPlayer.getName(l10n)})"});
   }
 
   Widget _buildAiProgressText() {
@@ -911,6 +919,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildRoleIndicator(Role role, PlayerType player, bool isLeftElseRight) {
+    final l10n = AppLocalizations.of(context)!;
+
     final isSelected = gameEngine.play.currentRole == role;
     final color = gameEngine.play.isGameOver()
         ? gameEngine.play.getWinnerRole() == role
@@ -950,7 +960,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       showBarrier: false,
       hideTooltipOnTap: true,
       content: Text(
-        "$tooltipPrefix: ${player.getName()}$secondLine",
+        "$tooltipPrefix: ${player.getName(l10n)}$secondLine",
         softWrap: true,
 
         style: TextStyle(
@@ -1233,6 +1243,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildChipStock(BuildContext context, int index) {
+    final l10n = AppLocalizations.of(context)!;
+
     final stockEntries = gameEngine.play.stock.getStockEntries();
     if (stockEntries.length <= index) {
       return const Text("?");
@@ -1252,7 +1264,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         showBarrier: false,
         hideTooltipOnTap: true,
         content: Text(
-          "$chipText ${entry.chip.getChipName()}\n${entry.amount} ${translate("common.left")}",
+          "$chipText ${entry.chip.getChipName(l10n)}\n${entry.amount} ${translate("common.left")}",
           softWrap: true,
           style: TextStyle(
             color: Colors.black,
@@ -1321,6 +1333,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _showGameDetails(Play play, User user) {
+    final l10n = AppLocalizations.of(context)!;
+
     SmartDialog.show(builder: (_) {
       List<Widget> children = [
         Text(
@@ -1338,7 +1352,7 @@ class _HyleXGroundState extends State<HyleXGround> {
               ? translate("matchMenu.gameInMatchSecond")
               : translate("matchMenu.gameInMatchFirst")),
         _buildGameInfoRow(translate("matchMenu.gameSize"), "${play.header.playSize.dimension} x ${play.header.playSize.dimension}"),
-        _buildGameInfoRow(translate("matchMenu.gameOpener"), "${play.header.getLocalRoleForMultiPlay() == Role.Chaos ? PlayerType.LocalUser.getName(): PlayerType.RemoteUser.getName()}"),
+        _buildGameInfoRow(translate("matchMenu.gameOpener"), "${play.header.getLocalRoleForMultiPlay() == Role.Chaos ? PlayerType.LocalUser.getName(l10n): PlayerType.RemoteUser.getName()}"),
         if (play.header.playMode == PlayMode.HyleX)
           _buildGameInfoRow(translate("matchMenu.pointsPerUnorderedChip"), play.getChaosPointsPerChip().toString()),
 
@@ -1346,9 +1360,9 @@ class _HyleXGroundState extends State<HyleXGround> {
           const Divider(),
 
         if (play.header.opponentName != null)
-          _buildGameInfoRow(PlayerType.RemoteUser.getName(), play.header.opponentName!),
+          _buildGameInfoRow(PlayerType.RemoteUser.getName(l10n), play.header.opponentName!),
         if (play.header.opponentId != null)
-          _buildGameInfoRow("${PlayerType.RemoteUser.getName()} Id", toReadableId(play.header.opponentId!)),
+          _buildGameInfoRow("${PlayerType.RemoteUser.getName(l10n)} Id", toReadableId(play.header.opponentId!)),
 
 
         const Divider(),
