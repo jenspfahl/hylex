@@ -9,12 +9,6 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get ok => 'Ok';
-
-  @override
-  String get cancel => 'Abbrechen';
-
-  @override
   String get yes => 'Ja';
 
   @override
@@ -211,13 +205,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get dialog_whatRoleInviteeDecides => 'Dein Gegner entscheidet, ob er Order oder Chaos ist und damit das Spiel beginnt.';
 
   @override
-  String get dialog_whatKindOfMatch => 'What kind of match do you want to play?';
+  String get dialog_whatKindOfMatch => 'Welche Spielart möchtest du spielen?';
 
   @override
-  String get dialog_whatKindOfMatchHylexStyle => 'Both Order and Chaos can score points. The player with the most points wins. The match ends after one game.';
+  String get dialog_whatKindOfMatchHylexStyle => 'Sowohl Order als auch Chaos können Punkte erzielen. Der Spieler mit den meisten Punkten gewinnt. Das Match endet nach einem Spiel.';
 
   @override
-  String get dialog_whatKindOfMatchClassicStyle => 'Only Order can score points. A match consists of two games. After the first game, the players swap roles. The player with the most points wins.';
+  String get dialog_whatKindOfMatchClassicStyle => 'Nur Order kann Punkte erzielen. Ein Match besteht aus zwei einzelnen Spielen. Nach dem ersten Spiel tauschen die Spieler die Rollen. Der Spieler mit den meisten Punkten gewinnt.';
 
   @override
   String get dialog_whoToStart => 'Wer soll anfangen? Der, der angängt, ist Chaos.';

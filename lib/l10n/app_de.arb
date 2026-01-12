@@ -1,6 +1,4 @@
 {
-  "ok": "Ok",
-  "cancel": "Abbrechen",
   "yes": "Ja",
   "no": "Nein",
   "close": "Schließen",
@@ -72,9 +70,9 @@
   "dialog_roleInviteeDecides": "Gegner entscheidet",
   "dialog_whatRoleInviteeDecides": "Dein Gegner entscheidet, ob er Order oder Chaos ist und damit das Spiel beginnt.",
 
-  "whatKindOfMatch": "Welche Spielart möchtest du spielen?",
-  "whatKindOfMatchHylexStyle": "Sowohl Order als auch Chaos können Punkte erzielen. Der Spieler mit den meisten Punkten gewinnt. Das Match endet nach einem Spiel.",
-  "whatKindOfMatchClassicStyle": "Nur Order kann Punkte erzielen. Ein Match besteht aus zwei einzelnen Spielen. Nach dem ersten Spiel tauschen die Spieler die Rollen. Der Spieler mit den meisten Punkten gewinnt.",
+  "dialog_whatKindOfMatch": "Welche Spielart möchtest du spielen?",
+  "dialog_whatKindOfMatchHylexStyle": "Sowohl Order als auch Chaos können Punkte erzielen. Der Spieler mit den meisten Punkten gewinnt. Das Match endet nach einem Spiel.",
+  "dialog_whatKindOfMatchClassicStyle": "Nur Order kann Punkte erzielen. Ein Match besteht aus zwei einzelnen Spielen. Nach dem ersten Spiel tauschen die Spieler die Rollen. Der Spieler mit den meisten Punkten gewinnt.",
 
   "dialog_whoToStart": "Wer soll anfangen? Der, der angängt, ist Chaos.",
   "dialog_whoToStartMe": "Ich",

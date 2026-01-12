@@ -1,26 +1,28 @@
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:intl/intl.dart';
 
-String formatToDateTime(DateTime dateTime) {
-  final DateFormat dateFormatter = DateFormat.yMd();
-  final DateFormat timeFormatter = DateFormat('H:mm');
+import '../l10n/app_localizations.dart';
+
+String formatToDateTime(DateTime dateTime, String languageCode) {
+
+  final DateFormat dateFormatter = DateFormat.yMd(languageCode);
+  final DateFormat timeFormatter = DateFormat('H:mm', languageCode);
   return dateFormatter.format(dateTime) + " " + timeFormatter.format(dateTime);
 }
 
-String formatToTime(DateTime dateTime) {
-  final DateFormat formatter = DateFormat('H:mm');
+String formatToTime(DateTime dateTime, String languageCode) {
+  final DateFormat formatter = DateFormat('H:mm', languageCode);
   return formatter.format(dateTime);
 }
 
-String format(DateTime dateTime) {
+String format(DateTime dateTime, AppLocalizations l10n, String languageCode) {
   if (isToday(dateTime)) {
-    return formatToTime(dateTime);
+    return formatToTime(dateTime, languageCode);
   }
   else if (isYesterday(dateTime)) {
-    return "${translate('common.dates.yesterday')} ${formatToTime(dateTime)}";
+    return "${l10n.yesterday} ${formatToTime(dateTime, languageCode)}";
   }
   else {
-    return formatToDateTime(dateTime);
+    return formatToDateTime(dateTime, languageCode);
   }
 }
 

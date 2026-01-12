@@ -2,8 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/model/messaging.dart';
+
+import '../l10n/app_localizations.dart';
 
 const DIALOG_BG = Color(0xFF2E1B1A);
 
@@ -39,9 +40,9 @@ void showAlertDialog(String text,
   Future.delayed(Duration(seconds: text.length * 50)).then((_) => SmartDialog.dismiss());
 }
 
-void confirmOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
+void confirmOrDo(bool confirmCondition, MaterialLocalizations l10n, String confirmText, Function() doHandler) {
   if (confirmCondition) {
-    confirm(confirmText, () {
+    confirm(confirmText, l10n, () {
       doHandler();
     });
   }
@@ -50,9 +51,9 @@ void confirmOrDo(bool confirmCondition, String confirmText, Function() doHandler
   }
 }
 
-void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
+void askOrDo(bool confirmCondition, String confirmText, AppLocalizations l10n, Function() doHandler) {
   if (confirmCondition) {
-    ask(confirmText, () {
+    ask(confirmText, l10n, () {
       doHandler();
     });
   }
@@ -61,20 +62,20 @@ void askOrDo(bool confirmCondition, String confirmText, Function() doHandler) {
   }
 }
 
-void confirm(String text, Function() okHandler) {
+void confirm(String text, MaterialLocalizations l10n, Function() okHandler) {
   showChoiceDialog(text,
-      firstString: translate('common.ok'),
+      firstString: l10n.okButtonLabel,
       firstHandler: okHandler,
-      secondString: translate('common.cancel'),
+      secondString: l10n.cancelButtonLabel,
       secondHandler: () {});
 }
 
-void ask(String text, Function() yesHandler, {String? noString, Function()? noHandler, IconData? icon}) {
+void ask(String text, AppLocalizations l10n, Function() yesHandler, {String? noString, Function()? noHandler, IconData? icon}) {
   showChoiceDialog(text,
       icon: icon,
-      firstString: translate('common.yes'),
+      firstString: l10n.yes,
       firstHandler: yesHandler,
-      secondString: noString ?? translate('common.no'),
+      secondString: noString ?? l10n.no,
       secondHandler: () {
         if (noHandler != null) noHandler();
       });
@@ -248,11 +249,12 @@ showShowLoading(String text) async {
 
 void showInputDialog(
     String text,
+    MaterialLocalizations l10n,
     {
       double? height,
       double? width,
       String? prefilledText,
-      bool requiresInput = false, // TODO implemet this
+      bool requiresInput = false, // TODO implement this
       required Function(String) okHandler,
       Function()? cancelHandler,
       String? thirdText,
@@ -315,7 +317,7 @@ void showInputDialog(
                           okHandler(controller.text);
                         }
                       },
-                      child: Text(translate('common.ok'))),
+                      child: Text(l10n.okButtonLabel)),
                   OutlinedButton(
                       style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.lightGreenAccent),
@@ -325,7 +327,7 @@ void showInputDialog(
                           cancelHandler();
                         }
                       },
-                      child: Text(translate('common.cancel'))
+                      child: Text(l10n.cancelButtonLabel)
                   ),
                   if (thirdText != null)
                     OutlinedButton(

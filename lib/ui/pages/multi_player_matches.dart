@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
@@ -13,6 +11,7 @@ import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../model/common.dart';
 import '../../model/messaging.dart';
 import '../../model/play.dart';
@@ -59,9 +58,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
         appBar: AppBar(
-          title: Text(translate("matchList.title")),
+          title: Text(l10n.matchList_title),
           actions: [
             IconButton(
               icon: const Icon(Icons.qr_code_scanner),
@@ -71,16 +72,16 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             IconButton(
                 icon: const Icon(Icons.sort),
                 onPressed: () {
-                  showChoiceDialog(translate("matchList.sorting.sortBy") + ":",
+                  showChoiceDialog(l10n.matchList_sortBy + ":",
                       width: 260,
-                      firstString: translate("matchList.sorting.sortByCurrentStatusTitle"),
-                      firstDescriptionString: translate("matchList.sorting.sortByCurrentStatusDesc"),
+                      firstString: l10n.matchList_sortByCurrentStatusTitle,
+                      firstDescriptionString: l10n.matchList_sortByCurrentStatusDesc,
                       firstHandler: () => _triggerSort(SortOrder.BY_STATE),
-                      secondString: translate("matchList.sorting.sortByRecentlyPlayedTitle"),
-                      secondDescriptionString: translate("matchList.sorting.sortByRecentlyPlayedDesc"),
+                      secondString: l10n.matchList_sortByRecentlyPlayedTitle,
+                      secondDescriptionString: l10n.matchList_sortByRecentlyPlayedDesc,
                       secondHandler: () => _triggerSort(SortOrder.BY_LATEST),
-                      thirdString: translate("matchList.sorting.sortByMatchIdTitle"),
-                      thirdDescriptionString: translate("matchList.sorting.sortByMatchIdDesc"),
+                      thirdString: l10n.matchList_sortByMatchIdTitle,
+                      thirdDescriptionString: l10n.matchList_sortByMatchIdDesc,
                       thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
                     highlightButtonIndex: _sortOrder == SortOrder.BY_STATE ? 0 : _sortOrder == SortOrder.BY_LATEST ? 1: 2
                   );
@@ -105,11 +106,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Column(
                           children: [
-                            _buildPlayGroupSection(translate("matchList.groups.actionNeeded"), sorted, PlayStateGroup.TakeAction),
-                            _buildPlayGroupSection(translate("matchList.groups.waitForOpponent"), sorted, PlayStateGroup.AwaitOpponentAction),
-                            _buildPlayGroupSection(translate("matchList.groups.wonMatches"), sorted, PlayStateGroup.FinishedAndWon),
-                            _buildPlayGroupSection(translate("matchList.groups.lostMatches"), sorted, PlayStateGroup.FinishedAndLost),
-                            _buildPlayGroupSection(translate("matchList.groups.rejectedMatches"), sorted, PlayStateGroup.Other),
+                            _buildPlayGroupSection(l10n.matchListGroup_actionNeeded, sorted, PlayStateGroup.TakeAction),
+                            _buildPlayGroupSection(l10n.matchListGroup_waitForOpponent, sorted, PlayStateGroup.AwaitOpponentAction),
+                            _buildPlayGroupSection(l10n.matchListGroup_wonMatches, sorted, PlayStateGroup.FinishedAndWon),
+                            _buildPlayGroupSection(l10n.matchListGroup_lostMatches, sorted, PlayStateGroup.FinishedAndLost),
+                            _buildPlayGroupSection(l10n.matchListGroup_rejectedMatches, sorted, PlayStateGroup.Other),
                           ],
                         ),
                       ),
@@ -135,10 +136,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               }
               else if (snapshot.hasError) {
                 print("loading error: ${snapshot.error}");
-                return Center(child: Text("${translate("matchList.errorDuringLoading")}\n${snapshot.error}"));
+                return Center(child: Text("${l10n.matchList_errorDuringLoading}\n${snapshot.error}"));
               }
               else {
-                return Center(child: Text(translate("matchList.nothingFound")));
+                return Center(child: Text(l10n.matchList_nothingFound));
               }
             })
     );
@@ -191,6 +192,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   Widget _buildPlayLine(PlayHeader playHeader) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = Localizations.localeOf(context);
+    final languageCode = currentLocale.languageCode;
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
       child: Container(
@@ -214,18 +219,18 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           && lastMessage.channel == Channel.In
                           && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
                       showAlertDialog(opponentRejected
-                          ? translate("playStates.invitationRejectedByOpponent")
-                          : translate("playStates.invitationRejectedByYou"));
+                          ? l10n.playState_invitationRejectedByOpponent
+                          : l10n.playState_invitationRejectedByYou);
                     }
                     else if (playHeader.isStateShareable()) {
-                      showChoiceDialog(translate("messaging.opponentNeedsToReact"),
+                      showChoiceDialog(l10n.messaging_opponentNeedsToReact,
                           width: 270,
-                          firstString: translate("messaging.shareAgain"),
+                          firstString: l10n.messaging_shareAgain,
                           firstHandler: () {
                             MessageService().sendCurrentPlayState(
                                 playHeader, widget.user, () => context, false);
                           },
-                          secondString: translate('common.cancel'),
+                          secondString: MaterialLocalizations.of(context).cancelButtonLabel,
                           secondHandler: () {});
 
                     }
@@ -247,7 +252,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           ),
                           Expanded(
                             child: Text(
-                                " " + playHeader.getTitle(),
+                                " " + playHeader.getTitle(l10n),
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                               overflow: TextOverflow.ellipsis
                             ),
@@ -258,8 +263,8 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
                       Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
 
-                      if (playHeader.lastTimestamp != null) Text("${translate("matchMenu.lastActivity")} " + format(playHeader.lastTimestamp!), style: TextStyle(color: Colors.grey[500])),
-                      Text("${playHeader.state.toMessage()}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
+                      Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -292,9 +297,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                             )),
                           ),
                           IconButton(onPressed: (){
-                            ask(translate(
-                                playHeader.state.isFinal ? "dialogs.deleteFinalMatch" : "dialogs.deleteOngoingMatch",
-                                args: {"playId" : playHeader.getReadablePlayId()}), () {
+                            ask(
+                                playHeader.state.isFinal
+                                    ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
+                                    : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
+                                l10n, () {
                               setState(() {
                                 StorageService().deletePlayHeaderAndPlay(playHeader.playId);
                               });
@@ -310,6 +317,8 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
   void _shareCurrentAction(PlayHeader playHeader, bool showAllOptions) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (playHeader.state == PlayState.InvitationPending) {
       globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
     }
@@ -318,18 +327,19 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           playHeader, widget.user, () => context, showAllOptions);
     }
     else {
-      showAlertDialog(translate("matchMenu.nothingToShare"));
+      showAlertDialog(l10n.matchList_nothingToShare);
     }
   }
 
   String _getHeaderSubLine(PlayHeader playHeader) {
+    final l10n = AppLocalizations.of(context)!;
 
     final sb = StringBuffer("${playHeader.dimension} x ${playHeader.dimension}");
 
     final localRole = playHeader.getLocalRoleForMultiPlay();
 
     if (localRole != null) {
-      sb.write(" ${translate(("common.as"))} ${localRole.name}");
+      sb.write(" ${l10n.as} ${localRole.name}");
     }
 
     return sb.toString();
@@ -337,29 +347,28 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   String _getHeaderBodyLine(PlayHeader playHeader) {
 
+    final l10n = AppLocalizations.of(context)!;
     final sb = StringBuffer();
 
     if (playHeader.playMode == PlayMode.Classic) {
-      sb.write("${PlayMode.Classic.getName()}, ");
+      sb.write("${PlayMode.Classic.getName(l10n)}, ");
     }
 
     if (playHeader.currentRound > 0) {
-      sb.write(translate("gameHeader.roundOf", args:
-      {
-        "round": playHeader.currentRound,
-        "totalRounds": playHeader.maxRounds
-      }));
+      sb.write(l10n.gameHeader_roundOf(playHeader.currentRound, playHeader.maxRounds));
     }
     if (playHeader.playMode == PlayMode.Classic) {
       sb.write(" (${playHeader.rolesSwapped == true
-          ? translate("matchMenu.gameInMatchSecond")
-          : translate("matchMenu.gameInMatchFirst")})");
+          ? l10n.matchMenu_gameInMatchSecond
+          : l10n.matchMenu_gameInMatchFirst})");
     }
     return sb.toString();
   }
 
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {
-    await showShowLoading(translate('dialogs.loadingGame'));
+    final l10n = AppLocalizations.of(context)!;
+
+    await showShowLoading(l10n.dialog_loadingGame);
     final play = await StorageService().loadPlayFromHeader(header);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {

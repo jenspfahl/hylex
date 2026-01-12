@@ -2,13 +2,11 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/coordinate.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/dialogs.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
-import 'package:hyle_x/utils/fortune.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../model/common.dart';
@@ -500,9 +498,9 @@ class _RemoteTestWidgetState extends State<RemoteTestWidget> {
       final result = localPlay!.validateMove(_createMove());
       if (result != null) {
         showChoiceDialog(result, 
-            firstString: "IGNORE", 
+            firstString: "Ignore",
             firstHandler: () => _sendRemoteMessage(share, context),
-            secondString: translate('common.cancel'),
+            secondString: 'Cancel',
             secondHandler: () => SmartDialog.dismiss());
         return;
       }

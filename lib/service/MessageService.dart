@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
@@ -9,6 +8,7 @@ import 'package:hyle_x/service/StorageService.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_localizations.dart';
 import '../model/messaging.dart';
 import '../model/move.dart';
 import '../model/play.dart';
@@ -114,6 +114,9 @@ class MessageService {
         bool share = true,
         bool showAllOptions = false,
       }) {
+
+    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
+
     final inviteMessage = InviteMessage.fromHeaderAndUser(header, user);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext, user.userSeed);
 
@@ -122,8 +125,8 @@ class MessageService {
         header,
         user,
         user.name.isEmpty
-            ? translate("messaging.inviteMessageWithoutName", args: {"dimension" : header.dimension})
-            : translate("messaging.inviteMessage", args: {"name" : user.name, "dimension" : header.dimension}),
+            ? l10n?.messaging_inviteMessageWithoutName(header.dimension)??".."
+            : l10n?.messaging_inviteMessage(header.dimension, user.name)??"..",
         contextProvider,
         saveState, 
         share,
@@ -154,17 +157,19 @@ class MessageService {
         user.name,
         initialMove
     );
+
+    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
+
     final serializedMessage = acceptMessage.serializeWithContext(header.commContext, user.userSeed);
 
-    var localUserRole = header.actor.getActorRoleFor(playOpener);
-    var remoteUserRole = localUserRole?.opponentRole;
+    final localUserRole = header.actor.getActorRoleFor(playOpener);
+    final remoteUserRole = localUserRole?.opponentRole;
     
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        translate("messaging.acceptInvitation",
-            args: {"role" : localUserRole?.name, "opponentRole" : remoteUserRole?.name}),
+        l10n?.messaging_acceptInvitation(remoteUserRole?.name??"?", localUserRole?.name??"?") ?? "..",
         contextProvider,
         saveState,
         share,
@@ -188,11 +193,13 @@ class MessageService {
         user.id);
     final serializedMessage = rejectMessage.serializeWithContext(header.commContext, user.userSeed);
 
+    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
+
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        translate("messaging.rejectInvitation"),
+        l10n?.messaging_rejectInvitation ?? "..",
         contextProvider,
         saveState,
         share,
@@ -218,12 +225,13 @@ class MessageService {
         move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext, user.userSeed);
 
+    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
+
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        translate("messaging.nextMove",
-          args: {"role" : header.getLocalRoleForMultiPlay()?.name, "round" : round}),
+        l10n?.messaging_nextMove(header.getLocalRoleForMultiPlay()?.name??"?", round) ?? "..",
         contextProvider,
         saveState,
         share,
@@ -248,12 +256,13 @@ class MessageService {
         round);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext, user.userSeed);
 
+    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
+
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        translate("messaging.resign",
-          args: {"round" : round}),
+        l10n?.messaging_resign(round) ?? "..",
         contextProvider,
         saveState,
         share,
@@ -270,6 +279,8 @@ class MessageService {
       bool saveState,
       bool showAllOptions,
       ) {
+
+    final l10n = AppLocalizations.of(context)!;
 
     if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_message") {
       _shareAsMessage(context, serializedMessage, text, header, user);
@@ -301,11 +312,11 @@ class MessageService {
                     mainAxisSize: MainAxisSize.max,
                     spacing: 5,
                     children: [
-                      Text(translate("messaging.sendYourMove")),
+                      Text(l10n.messaging_sendYourMove),
                       buildFilledButton(
                           context,
                           Icons.near_me,
-                          translate("messaging.sendYourMoveAsMessage"),
+                          l10n.messaging_sendYourMoveAsMessage,
                               () async {
                             header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
                             header.props[HeaderProps.signMessages] = signMessages;
@@ -319,7 +330,7 @@ class MessageService {
                       buildFilledButton(
                           context,
                           Icons.qr_code_2,
-                          translate("messaging.sendYourMoveAsQrCode"),
+                          l10n.messaging_sendYourMoveAsQrCode,
                               () async {
                                 header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
                                 header.props[HeaderProps.signMessages] = signMessages;
@@ -332,7 +343,7 @@ class MessageService {
 
                           }),
                       CheckboxListTile(
-                          title: Text(translate("messaging.rememberDecision")),
+                          title: Text(l10n.messaging_rememberDecision),
                           value: remember,
                           dense: true,
                           checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
@@ -345,7 +356,7 @@ class MessageService {
                           }),
                       if (PreferenceService().signMessages == SignMessages.OnDemand)
                         CheckboxListTile(
-                            title: Text(translate("messaging.signMessages")),
+                            title: Text(l10n.messaging_signMessages),
                             value: signMessages,
                             dense: true,
                             checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
@@ -383,6 +394,8 @@ class MessageService {
 
   void _shareAsQrCode(BuildContext context, SerializedMessage message, PlayHeader playHeader, User user) {
 
+    final l10n = AppLocalizations.of(context)!;
+
     _signMessageIfNeeded(message, playHeader, user).then((_) {
       SmartDialog.show(builder: (_) {
         return Container(
@@ -400,8 +413,8 @@ class MessageService {
               children: [
                 Text("[${playHeader.getReadablePlayId()}]", style: TextStyle(color: Colors.white)),
                 Text(playHeader.opponentName != null
-                    ? translate("messaging.scanQrCodeFromOpponentWithName", args: {"name" : playHeader.opponentName})
-                    : translate("messaging.scanQrCodeFromOpponent"), style: TextStyle(color: Colors.white)),
+                    ? l10n.messaging_scanQrCodeFromOpponentWithName(playHeader.opponentName??"?")
+                    : l10n.messaging_scanQrCodeFromOpponent, style: TextStyle(color: Colors.white)),
                 QrImageView(
                   data: message.toUrl(),
                   version: QrVersions.auto,

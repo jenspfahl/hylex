@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/service/BackupRestoreService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
@@ -14,7 +13,7 @@ import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../app.dart';
-import '../../main.dart';
+import '../../l10n/app_localizations.dart';
 import '../../model/messaging.dart';
 import '../../model/user.dart';
 import '../../service/PreferenceService.dart';
@@ -27,14 +26,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
-  late LocalizationDelegate localizationDelegate;
 
   late int _debugEnableCounter;
 
   @override
   void initState() {
     super.initState();
-    localizationDelegate = LocalizedApp.of(context).delegate;
     _debugEnableCounter = 0;
 
   }
@@ -57,6 +54,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSettingsList(User user)  {
 
+    final l10n = AppLocalizations.of(context)!;
+    final supportedLanguages = AppLocalizations
+        .supportedLocales.map((locale) => locale.languageCode)
+        .toList();
+    final currentLocale = Localizations.localeOf(context);
+
     return SettingsList(
       lightTheme: SettingsThemeData(
           settingsListBackground: Theme
@@ -71,14 +74,17 @@ class _SettingsPageState extends State<SettingsPage> {
           tiles: [
             if (isDebug) SettingsTile(
               title: Text("Language"),
-              description: Text(localizationDelegate.currentLocale.languageCode),
+              description: Text(currentLocale.languageCode),
               onPressed: (context) {
-                showInputDialog("Choose a language. Allowed values: $SUPPORTED_LANGUAGES",
+                showInputDialog("Choose a language. Allowed values: $supportedLanguages",
+                    MaterialLocalizations.of(context),
                     okHandler: (value) => setState(() {
-                      localizationDelegate.changeLocale(Locale(value));
+                      if (supportedLanguages.contains(value)) {
+                        PreferenceService().debugLocale = Locale(value);
+                      }
                     }),
                   validationMessage: "This language is not supported!",
-                  validationHandler: (v) => SUPPORTED_LANGUAGES.contains(v),
+                  validationHandler: (v) => supportedLanguages.contains(v),
                 );
 
               },
@@ -136,7 +142,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
                 description: const Text("Your name is shown in messages for opponents"),
                 onPressed: (value) async {
-                  showInputDialog(translate('dialogs.yourName'),
+                  showInputDialog(
+                    l10n.dialog_yourName,
+                    MaterialLocalizations.of(context),
                     prefilledText: user.name,
                     maxLength: maxNameLength,
                     okHandler: (name) async {
@@ -144,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       await StorageService().saveUser(user);
                       setState(() {});
                     },
-                    validationMessage: translate("errors.illegalCharsForUserName"),
+                    validationMessage: l10n.error_illegalCharsForUserName,
                     validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
                   );
                 }
@@ -207,6 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
               description: Text("Usually after re-installation of the app, you can import a previously created backup file"),
               onPressed: (_) {
                 ask("Restoring from a file will overwrite all current data! Are you sure to do this:",
+                    AppLocalizations.of(context)!,
                     icon: Icons.warning,
                     () {
                       BackupRestoreService().restore(

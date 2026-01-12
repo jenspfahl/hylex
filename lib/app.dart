@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_translate/flutter_translate.dart';
+
+import 'l10n/app_localizations.dart';
 
 
 const String APP_NAME = 'HyleX';
@@ -17,19 +19,18 @@ var isDebug = kDebugMode;
 class HylexApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var localizationDelegate = LocalizedApp.of(context).delegate;
 
     return MaterialApp(
       navigatorObservers: [FlutterSmartDialog.observer],
       debugShowCheckedModeBanner: false,
       builder: FlutterSmartDialog.init(),
       localizationsDelegates: [
+        AppLocalizations.delegate, // use  flutter gen-l10n if you add new languages
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
-        localizationDelegate
       ],
-      supportedLocales: localizationDelegate.supportedLocales,
-      locale: localizationDelegate.currentLocale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: PreferenceService().debugLocale,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,

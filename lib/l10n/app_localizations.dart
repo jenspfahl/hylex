@@ -95,18 +95,6 @@ abstract class AppLocalizations {
     Locale('en')
   ];
 
-  /// No description provided for @ok.
-  ///
-  /// In en, this message translates to:
-  /// **'Ok'**
-  String get ok;
-
-  /// No description provided for @cancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancel;
-
   /// No description provided for @yes.
   ///
   /// In en, this message translates to:

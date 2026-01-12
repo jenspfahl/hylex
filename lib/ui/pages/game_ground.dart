@@ -6,7 +6,6 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:flutter_fgbg/flutter_fgbg.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/matrix.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
@@ -15,7 +14,6 @@ import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:hyle_x/utils/dates.dart';
 import 'package:hyle_x/utils/fortune.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:super_tooltip/super_tooltip.dart';
 
 import '../../engine/game_engine.dart';
@@ -54,7 +52,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   GameChip? _emphasiseAllChipsOf;
   Role? _emphasiseAllChipsOfRole;
   bool _gameOverShown = false;
-  
+
   late StreamSubscription<FGBGType> fgbgSubscription;
 
   final _chaosChipTooltip = "chaosChipTooltip";
@@ -62,6 +60,8 @@ class _HyleXGroundState extends State<HyleXGround> {
   final _stockChipToolTipKey = "stockChipToolTip";
 
   bool _changeAutoPlayLock = false;
+
+  get l10n => AppLocalizations.of(context)!;
 
 
   @override
@@ -113,7 +113,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (!gameEngine.play.automaticPlayPaused) {
       gameEngine.startGame();
     }
-    
+
     if (widget.opponentMoveToApply != null) {
       gameEngine.opponentMoveReceived(widget.opponentMoveToApply!);
     }
@@ -147,6 +147,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildGameBody() {
+
     return WillPopScope(
       onWillPop: () async {
         await gameEngine.pauseGame(); //await to get the play saved to avoid race conditions
@@ -191,25 +192,24 @@ class _HyleXGroundState extends State<HyleXGround> {
                               await gameEngine.savePlayState();
                             }
                             else {
-      
+
                               final recentRole = gameEngine.play.opponentRole.name;
                               final currentRole = gameEngine.play.currentRole.name;
-                              var message = translate('dialogs.undoLastMove', args: {"recentRole" : recentRole});
+                              var message = l10n.dialog_undoLastMove(recentRole);
 
                               if (gameEngine.play.isWithAiPlay && gameEngine.play.journal.length > 1) {
-                                message = translate('dialogs.undoLastTwoMoves',
-                                    args: {"recentRole" : recentRole, "currentRole": currentRole});
+                                message = l10n.dialog_undoLastTwoMoves(currentRole, recentRole);
                               }
 
-                              ask(message, () {
+                              ask(message, l10n, () {
                                   setState(() async {
                                     await gameEngine.undoLastMove();
-                                    toastInfo(context, translate('dialogs.undoCompleted'));
+                                    toastInfo(context, l10n.dialog_undoCompleted);
                                   });
                                 });
                             }
                           });
-      
+
                         },
                       ),
                     ),
@@ -266,9 +266,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                                         .toList();
 
                                     elements.add(const Text(""));
-                                    elements.add(_buildJournalLineSeparator(context, translate("gameStates.gameStarted")));
+                                    elements.add(_buildJournalLineSeparator(context, l10n.gameState_gameStarted));
                                     if (gameEngine.play.isGameOver()) {
-                                      elements.insert(0, _buildJournalLineSeparator(context, translate("gameStates.gameOver")));
+                                      elements.insert(0, _buildJournalLineSeparator(context, l10n.gameState_gameOver));
                                       elements.insert(1, const Text(""));
                                     }
                                     return Container(
@@ -304,7 +304,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                         icon: const Icon(Icons.restart_alt_outlined),
                         onPressed: () => {
 
-                          ask(translate('dialogs.restartGame'), () async {
+                          ask(l10n.dialog_restartGame, l10n, () async {
                                 await gameEngine.stopGame();
                                 _gameOverShown = false;
                                 _changeAutoPlayLock = false;
@@ -336,7 +336,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                       child: IconButton(
                         icon: const Icon(Icons.sentiment_dissatisfied_outlined),
                         onPressed: () {
-                          ask(translate('dialogs.wantToResign'), () async {
+                          ask(l10n.dialog_wantToResign, l10n, () async {
                             await gameEngine.resignGame();
                             setState(() {});
                           });
@@ -366,14 +366,14 @@ class _HyleXGroundState extends State<HyleXGround> {
                           }
                         },
                         itemBuilder: (context) => [
-                          PopupMenuItem<int>(value: 0, child: Text(translate('matchMenu.matchInfo'))),
-                          if (gameEngine.play.header.rolesSwapped == true 
+                          PopupMenuItem<int>(value: 0, child: Text(l10n.matchMenu_matchInfo)),
+                          if (gameEngine.play.header.rolesSwapped == true
                               && gameEngine.play.classicModeFirstMatrix != null)
-                            PopupMenuItem<int>(value: 1, child: Text(translate('matchMenu.showFirstGame'))),
+                            PopupMenuItem<int>(value: 1, child: Text(l10n.matchMenu_showFirstGame)),
                           if (gameEngine.play.header.isStateShareable() && gameEngine.play.header.props[HeaderProps.rememberMessageSending] != null)
-                            PopupMenuItem<int>(value: 2, child: Text(translate("matchMenu.showSendOptions"))),
+                            PopupMenuItem<int>(value: 2, child: Text(l10n.matchMenu_showSendOptions)),
                           if (gameEngine.play.header.props[HeaderProps.rememberMessageReading] != null)
-                            PopupMenuItem<int>(value: 3, child: Text(translate("matchMenu.showReadingOptions"))),
+                            PopupMenuItem<int>(value: 3, child: Text(l10n.matchMenu_showReadingOptions)),
                         ],
                       ),
                   ],
@@ -395,14 +395,9 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 children: [
                                   _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
                                   Column(children: [
-                                    Text(translate("gameHeader.roundOf", args:
-                                      {
-                                        "round": gameEngine.play.currentRound,
-                                        "totalRounds": gameEngine.play.maxRounds
-                                      })
-                                    ),
+                                    Text(l10n.gameHeader_roundOf(gameEngine.play.currentRound, gameEngine.play.maxRounds)),
                                     if (gameEngine.play.header.rolesSwapped != null)
-                                      Text (gameEngine.play.header.rolesSwapped! ? translate("gameHeader.rolesSwapped") : translate("playMode.classic"),
+                                      Text (gameEngine.play.header.rolesSwapped! ? l10n.gameHeader_rolesSwapped : l10n.playMode_classic,
                                         style: TextStyle(fontStyle: FontStyle.italic),),
                                   ]),
                                   _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
@@ -446,7 +441,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                               aspectRatio: 1,
                               child: _buildChipGrid(_buildBoardGrid),
                             ),
-      
+
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                               child: _buildHint(context),
@@ -489,13 +484,14 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   String _getGameTitle() {
+
     return gameEngine.play.isMultiplayerPlay
-                        ? gameEngine.play.header.getTitle()
+                        ? gameEngine.play.header.getTitle(l10n)
                         : gameEngine.play.isFullAutomaticPlay
-                          ? translate('gameTitle.automatic')
+                          ? l10n.gameTitle_automatic
                           : gameEngine.play.isBothSidesSinglePlay
-                            ? translate('gameTitle.alternate')
-                            : translate('gameTitle.againstComputer');
+                            ? l10n.gameTitle_alternate
+                            : l10n.gameTitle_againstComputer;
   }
 
   Widget _buildJournalEvent((int, Move) e) {
@@ -517,7 +513,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final localPlayer = gameEngine.play.getPlayerTypeOf(role);
     final opponentPlayer = gameEngine.play.getPlayerTypeOf(role.opponentRole);
 
-    Widget row = _buildMoveLine(move, prefix: "${translate("gameHeader.round", args: {"round" : round})}: ",
+    Widget row = _buildMoveLine(move, prefix: "${l10n.gameHeader_round(round)})}: ",
         playerType: !gameEngine.play.isBothSidesSinglePlay
             ? (isClassic
               ? (gameEngine.play.header.rolesSwapped == true
@@ -532,7 +528,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (move.toRole() == Role.Order) _buildJournalLineSeparator(context),
         row,
         if (isRoleSwap) Text(""),
-        if (isRoleSwap) _buildJournalLineSeparator(context, translate("gameHeader.rolesSwapped")),
+        if (isRoleSwap) _buildJournalLineSeparator(context, l10n.gameHeader_rolesSwapped),
         if (isRoleSwap) Text(""),
       ]
     );
@@ -559,13 +555,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
 
   Widget _buildMoveLine(Move move, {String? prefix, PlayerType? playerType}) {
-    final l10n = AppLocalizations.of(context)!;
     final eventLineString = move.toReadableStringWithChipPlaceholder(playerType, l10n);
     return _replaceWithChipIcon(prefix, eventLineString, move.chip);
   }
 
   Widget _replaceWithChipIcon(String? prefix, String text, GameChip? chip) {
-    final l10n = AppLocalizations.of(context)!;
 
     if (text.contains("{chip}") && chip != null) {
       final split = text.split("{chip}");
@@ -616,11 +610,10 @@ class _HyleXGroundState extends State<HyleXGround> {
       return _buildAiProgressText();
     }
     else if (gameEngine.play.header.state == PlayState.FirstGameFinished_WaitForOpponent) {
-      return Text(translate("gameStates.firstGameFinishedOfTwo"));
+      return Text(l10n.gameState_firstGameFinishedOfTwo);
     }
     else if (gameEngine.play.currentPlayer == PlayerType.RemoteUser) {
-      return Text(translate("gameStates.waitingForRemoteOpponent",
-          args: {"name": gameEngine.play.currentRole.name}));
+      return Text(l10n.gameState_waitingForRemoteOpponent(gameEngine.play.currentRole.name));
     }
     else {
       return _buildDoneText();
@@ -628,7 +621,6 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   String _buildWinnerOrLooserText() {
-    final l10n = AppLocalizations.of(context)!;
 
     final winnerRole = gameEngine.play.getWinnerRole();
     final looserRole = gameEngine.play.getLooserRole();
@@ -636,57 +628,50 @@ class _HyleXGroundState extends State<HyleXGround> {
     final looserPlayer = gameEngine.play.getLooserPlayer();
 
     if (gameEngine.play.isFullAutomaticPlay || gameEngine.play.isBothSidesSinglePlay) {
-      return translate("gameStates.gameOverWinner",
-          args: { "who" : winnerRole.name});
+      return l10n.gameState_gameOverWinner(winnerRole.name);
     }
     else if (gameEngine.play.isWithAiPlay) {
       if (winnerPlayer == PlayerType.LocalUser) {
-        return translate("gameStates.gameOverWinner",
-            args: { "who" : "${winnerRole.name} (${winnerPlayer.getName(l10n)})"});
+        return l10n.gameState_gameOverWinner("${winnerRole.name} (${winnerPlayer.getName(l10n)})");
       }
       else {
-        return translate("gameStates.gameOverLooser",
-            args: { "who" : "${looserRole.name} (${looserPlayer.getName(l10n)})"});
+        return l10n.gameState_gameOverLooser("${looserRole.name} (${looserPlayer.getName(l10n)})");
       }
     }
     else if (gameEngine.play.isMultiplayerPlay) {
       var localRole = gameEngine.play.header.getLocalRoleForMultiPlay();
 
       if (gameEngine.play.header.state == PlayState.Resigned) {
-        return translate("gameStates.gameOverYouResigned");
+        return l10n.gameState_gameOverYouResigned;
       }
       else if (gameEngine.play.header.state == PlayState.OpponentResigned) {
-        return translate("gameStates.gameOverOpponentResigned");
+        return l10n.gameState_gameOverOpponentResigned;
       }
 
       if (winnerRole == localRole) {
-        return translate("gameStates.gameOverWinner",
-            args: { "who" : "${localRole!.name} (${winnerPlayer.getName(l10n)})"});
+        return l10n.gameState_gameOverWinner("${localRole!.name} (${winnerPlayer.getName(l10n)})");
       }
       else {
-        return translate("gameStates.gameOverLooser",
-            args: { "who" : "${localRole!.name} (${looserPlayer.getName(l10n)})"});
+        return l10n.gameState_gameOverLooser("${localRole!.name} (${looserPlayer.getName(l10n)})");
       }
     }
     else {
       return "";
     }
-    
+
   }
 
   String _buildLooserText() {
-    final l10n = AppLocalizations.of(context)!;
 
     final looserRole = gameEngine.play.getLooserRole();
     final looserPlayer = gameEngine.play.getLooserPlayer();
 
-    return translate("gameStates.gameOverLooser",
-        args: { "who" : "${looserRole.name} (${looserPlayer.getName(l10n)})"});
+    return l10n.gameState_gameOverLooser("${looserRole.name} (${looserPlayer.getName(l10n)})");
   }
 
   Widget _buildAiProgressText() {
     if (gameEngine.play.automaticPlayPaused) {
-      return Text(translate("gameStates.gamePaused")); 
+      return Text(l10n.gameState_gamePaused);
     }
     final text = _buildAiProcessingText();
     return Row(
@@ -717,12 +702,12 @@ class _HyleXGroundState extends State<HyleXGround> {
                 padding: const EdgeInsets.all(8.0),
                 child: buildFilledButton(context,
                     Icons.restart_alt,
-                    translate('submitButton.rematch'),
+                    l10n.submitButton_rematch,
                         () {
 
                       if (gameEngine.play.header.successorPlayId != null) {
-                        showChoiceDialog(translate('dialogs.askForRematchAgain', args: {"playId": toReadableId(gameEngine.play.header.successorPlayId!)}),
-                            firstString: translate('dialogs.askAgain'),
+                        showChoiceDialog(l10n.dialog_askForRematchAgain(toReadableId(gameEngine.play.header.successorPlayId!)),
+                            firstString: l10n.dialog_askAgain,
                             firstHandler: () {
                               globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
                                   context,
@@ -731,7 +716,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                   predecessorPlay: gameEngine.play.header
                               );
                             },
-                            secondString: translate('common.cancel'),
+                            secondString: MaterialLocalizations.of(context).cancelButtonLabel,
                             secondHandler: () {  });
                       }
                       else {
@@ -756,7 +741,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                 child: buildOutlinedButton(
                     context,
                     Icons.near_me,
-                    translate('submitButton.shareAgain'),
+                    l10n.submitButton_shareAgain,
                         () {
                       if (gameEngine is MultiPlayerGameEngine) {
                         (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
@@ -771,7 +756,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         return buildFilledButton(
             context,
             Icons.restart_alt,
-            translate('submitButton.restart'),
+            l10n.submitButton_restart,
             () async {
             await gameEngine.stopGame();
             _gameOverShown = false;
@@ -785,7 +770,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         return buildFilledButton(
             context,
             Icons.swap_horiz_outlined,
-            translate('submitButton.swapRoles'),
+            l10n.submitButton_swapRoles,
                 () {
               gameEngine.play.swapGameForClassicMode();
               gameEngine.savePlayState();
@@ -799,8 +784,8 @@ class _HyleXGroundState extends State<HyleXGround> {
               ? Icons.redo
               : Icons.near_me,
           gameEngine.play.currentRole == Role.Order && !gameEngine.play.selectionCursor.hasEnd
-              ? translate('submitButton.skipMove')
-              : translate('submitButton.submitMove'),
+              ? l10n.submitButton_skipMove
+              : l10n.submitButton_submitMove,
           () {
             if (gameEngine.isBoardLocked()) {
               return;
@@ -809,13 +794,13 @@ class _HyleXGroundState extends State<HyleXGround> {
               return;
             }
             if (gameEngine.play.currentRole == Role.Chaos && !isDirty) {
-              toastInfo(context, translate("errors.chaosHasToPlace"));
+              toastInfo(context, l10n.errors_chaosHasToPlace);
               return;
             }
 
             final skipMove = !isDirty && gameEngine.play.currentRole == Role.Order;
             if (gameEngine.play.multiPlay && skipMove) {
-              ask(translate('dialogs.skipMove'), () async {
+              ask(l10n.dialogs_skipMove, l10n, () async {
                 gameEngine.play.applyStaleMove(Move.skipped());
                 gameEngine.play.commitMove();
                 gameEngine.nextPlayer();
@@ -842,7 +827,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         child: buildOutlinedButton(
             context,
             Icons.near_me,
-            translate('submitButton.shareAgain'),
+            l10n.submitButton_shareAgain,
             () {
             if (gameEngine is MultiPlayerGameEngine) {
               (gameEngine as MultiPlayerGameEngine).shareGameMove(false);
@@ -867,13 +852,13 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (PreferenceService().showHints) {
       if (gameEngine.play.header.state ==
           PlayState.FirstGameFinished_ReadyToSwap) {
-        appendix = "➤ ${translate("requests.swapRoles")}";
+        appendix = "➤ ${l10n.requests_swapRoles}";
       }
       else if (gameEngine.play.currentRole == Role.Order) {
-        appendix = "➤ ${translate("requests.orderToMove")}";
+        appendix = "➤ ${l10n.requests_orderToMove}";
       }
       else if (gameEngine.play.currentRole == Role.Chaos) {
-        appendix = "➤ ${translate("requests.chaosToPlace")}";
+        appendix = "➤ ${l10n.requests_chaosToPlace}";
       }
     }
 
@@ -886,21 +871,17 @@ class _HyleXGroundState extends State<HyleXGround> {
           _replaceWithChipIcon(null, appendix, gameEngine.play.currentChip)
       ],
     );
-    
+
   }
 
 
   Widget _buildAiProcessingText() {
     if (gameEngine.play.currentRole == Role.Order) {
-      return Text(translate("gameStates.waitingForPlayerToMove",
-          args: {"name": gameEngine.play.currentRole.name}));
+      return Text(l10n.gameState_waitingForPlayerToMove(gameEngine.play.currentRole.name));
     }
     else {
       return _replaceWithChipIcon(null,
-          translate("gameStates.waitingForPlayerToPlace",
-              args: {
-                "name": gameEngine.play.currentRole.name,
-              }),
+          l10n.gameState_waitingForPlayerToPlace(gameEngine.play.currentRole.name),
           gameEngine.play.currentChip);
     }
   }
@@ -919,7 +900,6 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildRoleIndicator(Role role, PlayerType player, bool isLeftElseRight) {
-    final l10n = AppLocalizations.of(context)!;
 
     final isSelected = gameEngine.play.currentRole == role;
     final color = gameEngine.play.isGameOver()
@@ -944,14 +924,14 @@ class _HyleXGroundState extends State<HyleXGround> {
     final tooltipPrefix =
       gameEngine.play.isGameOver()
         ? gameEngine.play.getWinnerRole() == role
-            ? translate("common.winner")
-            : translate("common.looser")
+            ? l10n.winner
+            : l10n.looser
         : isSelected
-            ? translate("gameHeader.currentPlayer")
-            : translate("gameHeader.waitingPlayer");
+            ? l10n.gameHeader_currentPlayer
+            : l10n.gameHeader_waitingPlayer;
 
     final secondLine = (role == Role.Chaos && gameEngine.play.header.playMode != PlayMode.Classic)
-        ? "\n${translate("gameHeader.chaosChipCount", args: {"count" : gameEngine.play.getChaosPointsPerChip()})}"
+        ? "\n${l10n.gameHeader_chaosChipCount(gameEngine.play.getChaosPointsPerChip())}"
         : "";
 
     return SuperTooltip(
@@ -1123,13 +1103,13 @@ class _HyleXGroundState extends State<HyleXGround> {
       final points = gameEngine.play.matrix.getPoints(considerPointsAt);
       roleAtPos = points == 0 ? Role.Chaos : Role.Order;
     }
-    return ((_emphasiseAllChipsOf != null && _emphasiseAllChipsOf != chip) 
+    return ((_emphasiseAllChipsOf != null && _emphasiseAllChipsOf != chip)
         || (roleAtPos != null && _emphasiseAllChipsOfRole != roleAtPos))
         ? chip.color.withOpacity(0.2)
         : chip.color;
   }
-  
- 
+
+
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
     if (gameEngine.isBoardLocked()) {
@@ -1160,13 +1140,13 @@ class _HyleXGroundState extends State<HyleXGround> {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != null && !gameEngine.play.matrix.isFree(cursor.end!)) {
       if (PreferenceService().showChipErrors) {
-        toastInfo(context, translate("errors.chaosAlreadyPlaced"));
+        toastInfo(context, l10n.error_chaosAlreadyPlaced);
       }
     }
     else {
       final currentChip = gameEngine.play.currentChip!;
       if (!gameEngine.play.stock.hasStock(currentChip)) {
-        toastInfo(context, translate("errors.noMoreStock"));
+        toastInfo(context, l10n.error_noMoreStock);
       }
       gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate));
       gameEngine.play.selectionCursor.updateEnd(coordinate);
@@ -1177,7 +1157,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != coordinate) {
       if (PreferenceService().showChipErrors) {
-        toastInfo(context, translate("errors.onlyRemoveRecentlyPlacedChip"));
+        toastInfo(context, l10n.error_onlyRemoveRecentlyPlacedChip);
       }
     }
     else {
@@ -1190,7 +1170,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (!selectionCursor.hasStart) {
       if (PreferenceService().showChipErrors) {
-        toastInfo(context, translate("errors.orderHasToSelectAChip"));
+        toastInfo(context, l10n.error_orderHasToSelectAChip);
       }
     }
     else if (/*!cursor.hasEnd && */selectionCursor.start == coordinate) {
@@ -1200,7 +1180,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else if (!selectionCursor.trace.contains(coordinate) && selectionCursor.start != coordinate) {
       if (PreferenceService().showChipErrors) {
-        toastInfo(context, translate("errors.orderMoveInvalid"));
+        toastInfo(context, l10n.error_orderMoveInvalid);
       }
     }
     else if (selectionCursor.hasStart) {
@@ -1230,7 +1210,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (selectionCursor.start != null && selectionCursor.start != coordinate && selectionCursor.end != null) {
       if (PreferenceService().showChipErrors) {
-        toastInfo(context, translate("errors.orderMoveOnOccupied"));
+        toastInfo(context, l10n.error_orderMoveOnOccupied);
       }
     }
     else if (selectionCursor.start == coordinate) {
@@ -1243,7 +1223,6 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _buildChipStock(BuildContext context, int index) {
-    final l10n = AppLocalizations.of(context)!;
 
     final stockEntries = gameEngine.play.stock.getStockEntries();
     if (stockEntries.length <= index) {
@@ -1253,9 +1232,9 @@ class _HyleXGroundState extends State<HyleXGround> {
     final isCurrent = gameEngine.play.currentChip == entry.chip;
     final chipText = isCurrent
         ? (gameEngine.play.currentRole == Role.Chaos
-        ? translate("gameHeader.drawnChip")
-        : translate("gameHeader.recentlyPlacedChip"))
-        : translate("gameHeader.chip") ;
+        ? l10n.gameHeader_drawnChip
+        : l10n.gameHeader_recentlyPlacedChip)
+        : l10n.gameHeader_chip;
     final text = gameEngine.play.dimension > 9 ? "${entry.amount}" : "${entry.amount}x";
     final tooltipKey = "$_stockChipToolTipKey-$index";
     return SuperTooltip(
@@ -1264,7 +1243,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         showBarrier: false,
         hideTooltipOnTap: true,
         content: Text(
-          "$chipText ${entry.chip.getChipName(l10n)}\n${entry.amount} ${translate("common.left")}",
+          "$chipText ${entry.chip.getChipName(l10n)}\n${entry.amount} ${l10n.left}",
           softWrap: true,
           style: TextStyle(
             color: Colors.black,
@@ -1333,12 +1312,14 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   void _showGameDetails(Play play, User user) {
-    final l10n = AppLocalizations.of(context)!;
+
+    final currentLocale = Localizations.localeOf(context);
+    final languageCode = currentLocale.languageCode;
 
     SmartDialog.show(builder: (_) {
       List<Widget> children = [
         Text(
-          translate("matchMenu.matchInfo"),
+          l10n.matchMenu_matchInfo,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         Text(
@@ -1346,15 +1327,15 @@ class _HyleXGroundState extends State<HyleXGround> {
           style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         const Divider(),
-        _buildGameInfoRow(translate("matchMenu.gameMode"), play.header.playMode.getName()),
+        _buildGameInfoRow(l10n.matchMenu_gameMode, play.header.playMode.getName(l10n)),
         if (play.header.playMode == PlayMode.Classic)
-          _buildGameInfoRow(translate("matchMenu.gameInMatch"), play.header.rolesSwapped == true
-              ? translate("matchMenu.gameInMatchSecond")
-              : translate("matchMenu.gameInMatchFirst")),
-        _buildGameInfoRow(translate("matchMenu.gameSize"), "${play.header.playSize.dimension} x ${play.header.playSize.dimension}"),
-        _buildGameInfoRow(translate("matchMenu.gameOpener"), "${play.header.getLocalRoleForMultiPlay() == Role.Chaos ? PlayerType.LocalUser.getName(l10n): PlayerType.RemoteUser.getName()}"),
+          _buildGameInfoRow(l10n.matchMenu_gameInMatch, play.header.rolesSwapped == true
+              ? l10n.matchMenu_gameInMatchSecond
+              : l10n.matchMenu_gameInMatchFirst),
+        _buildGameInfoRow(l10n.matchMenu_gameSize, "${play.header.playSize.dimension} x ${play.header.playSize.dimension}"),
+        _buildGameInfoRow(l10n.matchMenu_gameOpener, "${play.header.getLocalRoleForMultiPlay() == Role.Chaos ? PlayerType.LocalUser.getName(l10n): PlayerType.RemoteUser.getName(l10n)}"),
         if (play.header.playMode == PlayMode.HyleX)
-          _buildGameInfoRow(translate("matchMenu.pointsPerUnorderedChip"), play.getChaosPointsPerChip().toString()),
+          _buildGameInfoRow(l10n.matchMenu_pointsPerUnorderedChip, play.getChaosPointsPerChip().toString()),
 
         if (play.header.opponentName != null && play.header.opponentId != null)
           const Divider(),
@@ -1368,15 +1349,15 @@ class _HyleXGroundState extends State<HyleXGround> {
         const Divider(),
 
 
-        _buildGameInfoRow(translate("matchMenu.startedAt"), format(play.startDate)),
+        _buildGameInfoRow(l10n.matchMenu_startedAt, format(play.startDate, languageCode)),
         if (play.header.lastTimestamp != null)
-          _buildGameInfoRow(translate("matchMenu.lastActivity"), format(play.header.lastTimestamp!)),
+          _buildGameInfoRow(l10n.matchMenu_lastActivity, format(play.header.lastTimestamp!, l10n, languageCode)),
         if (play.endDate != null  && play.header.state.isFinal)
-          _buildGameInfoRow(translate("matchMenu.finishedAt"), format(play.endDate!)),
-        if (play.header.state.toMessage().length > 20)
-          _buildGameInfoWrap(translate("matchMenu.status"), play.header.state.toMessage())
+          _buildGameInfoRow(l10n.matchMenu_finishedAt, format(play.endDate!, l10n, languageCode)),
+        if (play.header.state.toMessage(l10n).length > 20)
+          _buildGameInfoWrap(l10n.matchMenu_matchMenu.status, play.header.state.toMessage(l10n))
         else
-          _buildGameInfoRow(translate("matchMenu.status"), play.header.state.toMessage()),
+          _buildGameInfoRow(l10n.matchMenu_status, play.header.state.toMessage(l10n)),
 
       ];
 
@@ -1444,7 +1425,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                 child: SingleChildScrollView(
                   child: Center(
                     child: Column(children: [
-                      Text(translate("gameStates.firstGameState")),
+                      Text(l10n.gameStates_firstGameState),
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         buildRoleIndicator(Role.Chaos, playerType: chaosPlayerType, isSelected: false, backgroundColor: Colors.white),
                         buildRoleIndicator(Role.Order, playerType: orderPlayerType, isSelected: false, backgroundColor: Colors.white, points: orderPoints),

@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
 import 'package:hyle_x/service/StorageService.dart';
@@ -20,6 +19,7 @@ import 'package:listen_sharing_intent/listen_sharing_intent.dart';
 import 'package:tri_switcher/tri_switcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../model/achievements.dart';
 import '../../model/common.dart';
 import '../../model/messaging.dart';
@@ -61,6 +61,9 @@ class StartPageState extends State<StartPage> {
 
   late StreamSubscription<Uri> _uriLinkStreamSub;
   late StreamSubscription _intentSub;
+
+  get l10n => AppLocalizations.of(context)!;
+
 
   @override
   void initState() {

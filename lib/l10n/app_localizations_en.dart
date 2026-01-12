@@ -9,12 +9,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get ok => 'Ok';
-
-  @override
-  String get cancel => 'Cancel';
-
-  @override
   String get yes => 'Yes';
 
   @override

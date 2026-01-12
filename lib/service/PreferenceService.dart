@@ -1,4 +1,6 @@
 
+import 'dart:ui';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -28,6 +30,8 @@ class PreferenceService {
   bool showPoints = true;
   bool showChipErrors = true;
   SignMessages signMessages = SignMessages.Never;
+
+  Locale? debugLocale;
 
   factory PreferenceService() {
     return _service;

@@ -1,9 +1,9 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../model/common.dart';
 
 
@@ -36,6 +36,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
+    final l10n = AppLocalizations.of(context)!;
+
     const bodyStyle = TextStyle(fontSize: 19.0);
 
     final backgroundColor = Theme.of(context)
@@ -59,15 +62,15 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       },
       pages: [
         PageViewModel(
-          title: translate("intro.page1Title"),
+          title: l10n.intro_page1Title,
           bodyWidget: Align(
             child: Column(
               children: [
-                Text(translate("intro.page1Part1"), style: bodyStyle),
+                Text(l10n.intro_page1Part1, style: bodyStyle),
                 Align(alignment: Alignment.centerLeft,
                     child: buildRoleIndicator(Role.Chaos, isSelected: false)),
                 const Text(""),
-                Text(translate("intro.page1Part2"), style: bodyStyle),
+                Text(l10n.intro_page1Part2, style: bodyStyle),
                 Align(alignment: Alignment.centerRight,
                     child: buildRoleIndicator(Role.Order, isSelected: false)),
 
@@ -78,7 +81,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page2Title"),
+          title: l10n.intro_page2Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -87,7 +90,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               
               return Column(
                   children: [
-                    Text(translate("intro.page2Part1"), style: bodyStyle),
+                    Text(l10n.intro_page2Part1, style: bodyStyle),
                     const Text(""),
                     _buildCellRow(
                         second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
@@ -111,7 +114,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page3Title"),
+          title: l10n.intro_page3Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -120,7 +123,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text(translate("intro.page3Part1"), style: bodyStyle),
+                    Text(l10n.intro_page3Part1, style: bodyStyle),
                     const Text(""),
                     _buildCellRow(),
                     _buildCellRow(
@@ -145,7 +148,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page4Title"),
+          title: l10n.intro_page4Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -155,7 +158,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text(translate("intro.page4Part1"), style: bodyStyle),
+                    Text(l10n.intro_page4Part1, style: bodyStyle),
                     const Text(""),
                     _buildCellRow(
                       first: _buildGameChip(
@@ -218,7 +221,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page5Title"),
+          title: l10n.intro_page5Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -227,7 +230,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
               return Column(
                   children: [
-                    Text(translate("intro.page5Part1"), style: bodyStyle),
+                    Text(l10n.intro_page5Part1, style: bodyStyle),
                     const Text(""),
                     _buildCellRow(
                       second: _buildGameChip(
@@ -256,7 +259,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                         visible: animatedPageController.value.toInt() > 3,
                         child: Column(children: [
                           const Text(""),
-                          Text(translate("intro.page5Part2"), style: bodyStyle),
+                          Text(l10n.intro_page5Part2, style: bodyStyle),
                           Align(alignment: Alignment.centerLeft,
                               child: buildRoleIndicator(Role.Chaos, points: 40, isSelected: false)),
                         ],)
@@ -269,7 +272,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page6Title"),
+          title: l10n.intro_page6Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -279,7 +282,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(translate("intro.page6Part1"), style: bodyStyle),
+                    Text(l10n.intro_page6Part1, style: bodyStyle),
                     const Text(""),
                     _buildCellRow(
                       second: _buildGameChip(
@@ -314,7 +317,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                         visible: animatedPageController.value.toInt() >= 4,
                         child: Column(children: [
                           const Text(""),
-                          Text(translate("intro.page6Part2"), style: bodyStyle),
+                          Text(l10n.intro_page6Part2, style: bodyStyle),
                           Align(alignment: Alignment.centerRight,
                               child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
                         ],)
@@ -327,7 +330,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
         ),
 
         PageViewModel(
-          title: translate("intro.page7Title"),
+          title: l10n.intro_page7Title,
           bodyWidget: AnimatedBuilder(
             animation: animatedPageController,
             builder: (BuildContext context, Widget? child) {
@@ -337,7 +340,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
               return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(translate("intro.page7Part1"), style: bodyStyle),
+                    Text(l10n.intro_page7Part1, style: bodyStyle),
                     const Text(""),
                     Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -488,7 +491,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                         visible: animatedPageController.value.toInt() > 4,
                         child: Column(children: [
                           const Text(""),
-                          Text(translate("intro.page7Part2"), style: bodyStyle),
+                          Text(l10n.intro_page7Part2, style: bodyStyle),
                           Row(children: [
                             Align(alignment: Alignment.centerLeft,
                                 child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
@@ -512,9 +515,9 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
       showSkipButton: true,
       showBackButton: true,
       back: const Icon(Icons.arrow_back),
-      skip: Text(translate("common.close"), style: TextStyle(fontWeight: FontWeight.w600)),
+      skip: Text(l10n.close, style: TextStyle(fontWeight: FontWeight.w600)),
       next: const Icon(Icons.arrow_forward),
-      done: Text(translate("common.done"), style: TextStyle(fontWeight: FontWeight.w600)),
+      done: Text(l10n.done, style: TextStyle(fontWeight: FontWeight.w600)),
       curve: Curves.fastLinearToSlowEaseIn,
     //  controlsMargin: const EdgeInsets.all(16),
       controlsPadding: const EdgeInsets.symmetric(vertical: 16),
