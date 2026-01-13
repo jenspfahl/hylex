@@ -298,80 +298,82 @@ class MessageService {
           bool remember = false;
           bool signMessages = header.props[HeaderProps.signMessages] == true;
 
-          return StatefulBuilder(
-            builder: (BuildContext context, setState) {
-
-
-              return Container(
-                height: 350,
-
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    mainAxisSize: MainAxisSize.max,
-                    spacing: 5,
-                    children: [
-                      Text(l10n.messaging_sendYourMove),
-                      buildFilledButton(
-                          context,
-                          Icons.near_me,
-                          l10n.messaging_sendYourMoveAsMessage,
-                              () async {
-                            header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
-                            header.props[HeaderProps.signMessages] = signMessages;
-                            if (saveState) {
-                              await StorageService().savePlayHeader(header);
-                            }
-
-                            Navigator.of(context).pop();
-                            _shareAsMessage(context, serializedMessage, text, header, user);
-                          }),
-                      buildFilledButton(
-                          context,
-                          Icons.qr_code_2,
-                          l10n.messaging_sendYourMoveAsQrCode,
-                              () async {
-                                header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
-                                header.props[HeaderProps.signMessages] = signMessages;
-
-                                if (saveState) {
-                                  await StorageService().savePlayHeader(header);
-                                }
-                                Navigator.of(context).pop();
-                                _shareAsQrCode(context, serializedMessage, header, user);
-
-                          }),
-                      CheckboxListTile(
-                          title: Text(l10n.messaging_rememberDecision),
-                          value: remember,
-                          dense: true,
-                          checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
-                          onChanged: (value) {
-                            setState(() {
-                              if (value != null) {
-                                remember = value;
+          return SafeArea(
+            child: StatefulBuilder(
+              builder: (BuildContext context, setState) {
+            
+            
+                return Container(
+                  height: 350,
+            
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisSize: MainAxisSize.max,
+                      spacing: 5,
+                      children: [
+                        Text(l10n.messaging_sendYourMove),
+                        buildFilledButton(
+                            context,
+                            Icons.near_me,
+                            l10n.messaging_sendYourMoveAsMessage,
+                                () async {
+                              header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
+                              header.props[HeaderProps.signMessages] = signMessages;
+                              if (saveState) {
+                                await StorageService().savePlayHeader(header);
                               }
-                            });
-                          }),
-                      if (PreferenceService().signMessages == SignMessages.OnDemand)
+            
+                              Navigator.of(context).pop();
+                              _shareAsMessage(context, serializedMessage, text, header, user);
+                            }),
+                        buildFilledButton(
+                            context,
+                            Icons.qr_code_2,
+                            l10n.messaging_sendYourMoveAsQrCode,
+                                () async {
+                                  header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
+                                  header.props[HeaderProps.signMessages] = signMessages;
+            
+                                  if (saveState) {
+                                    await StorageService().savePlayHeader(header);
+                                  }
+                                  Navigator.of(context).pop();
+                                  _shareAsQrCode(context, serializedMessage, header, user);
+            
+                            }),
                         CheckboxListTile(
-                            title: Text(l10n.messaging_signMessages),
-                            value: signMessages,
+                            title: Text(l10n.messaging_rememberDecision),
+                            value: remember,
                             dense: true,
                             checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
                             onChanged: (value) {
                               setState(() {
                                 if (value != null) {
-                                  signMessages = value;
+                                  remember = value;
                                 }
                               });
-                            })
-                    ],
-                  )
-                ),
-              );
-            },
+                            }),
+                        if (PreferenceService().signMessages == SignMessages.OnDemand)
+                          CheckboxListTile(
+                              title: Text(l10n.messaging_signMessages),
+                              value: signMessages,
+                              dense: true,
+                              checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value != null) {
+                                    signMessages = value;
+                                  }
+                                });
+                              })
+                      ],
+                    )
+                  ),
+                );
+              },
+            ),
           );
 
 

@@ -248,49 +248,51 @@ class _HyleXGroundState extends State<HyleXGround> {
 
                               builder: (BuildContext context) {
 
-                                return StatefulBuilder(
-                                  builder: (BuildContext context, setSheetState) {
-
-                                    // TODO potential memory leak, this listener is never removed within an ongoing play
-                                    gameEngine.addListener(() {
-                                      if (context.mounted) {
-                                        setSheetState((){});
+                                return SafeArea(
+                                  child: StatefulBuilder(
+                                    builder: (BuildContext context, setSheetState) {
+                                  
+                                      // TODO potential memory leak, this listener is never removed within an ongoing play
+                                      gameEngine.addListener(() {
+                                        if (context.mounted) {
+                                          setSheetState((){});
+                                        }
+                                      });
+                                  
+                                      final elements = gameEngine.play.journal
+                                          .indexed
+                                          .map((e) => _buildJournalEvent(e))
+                                          .toList()
+                                          .reversed
+                                          .toList();
+                                  
+                                      elements.add(const Text(""));
+                                      elements.add(_buildJournalLineSeparator(context, l10n.gameState_gameStarted));
+                                      if (gameEngine.play.isGameOver()) {
+                                        elements.insert(0, _buildJournalLineSeparator(context, l10n.gameState_gameOver));
+                                        elements.insert(1, const Text(""));
                                       }
-                                    });
-
-                                    final elements = gameEngine.play.journal
-                                        .indexed
-                                        .map((e) => _buildJournalEvent(e))
-                                        .toList()
-                                        .reversed
-                                        .toList();
-
-                                    elements.add(const Text(""));
-                                    elements.add(_buildJournalLineSeparator(context, l10n.gameState_gameStarted));
-                                    if (gameEngine.play.isGameOver()) {
-                                      elements.insert(0, _buildJournalLineSeparator(context, l10n.gameState_gameOver));
-                                      elements.insert(1, const Text(""));
-                                    }
-                                    return Container(
-                                      height: MediaQuery.sizeOf(context).height / 2,
-                                      width: MediaQuery.sizeOf(context).width,
-                                      child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          child: Center(
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: Column(
-                                                  children: elements,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                      return Container(
+                                        height: MediaQuery.sizeOf(context).height / 2,
+                                        width: MediaQuery.sizeOf(context).width,
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.vertical,
+                                            child: Center(
+                                              child: SingleChildScrollView(
+                                                scrollDirection: Axis.horizontal,
+                                                child: Column(
+                                                    children: elements,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
+                                      );
+                                    },
+                                  ),
                                 );
 
 
@@ -378,80 +380,82 @@ class _HyleXGroundState extends State<HyleXGround> {
                       ),
                   ],
                 ),
-                body: SingleChildScrollView(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
-                                  Column(children: [
-                                    Text(l10n.gameHeader_roundOf(gameEngine.play.currentRound, gameEngine.play.maxRounds)),
-                                    if (gameEngine.play.header.rolesSwapped != null)
-                                      Text (gameEngine.play.header.rolesSwapped! ? l10n.gameHeader_rolesSwapped : l10n.playMode_classic,
-                                        style: TextStyle(fontStyle: FontStyle.italic),),
-                                  ]),
-                                  _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
-                                ],
+                body: SafeArea(
+                  child: SingleChildScrollView(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildRoleIndicator(Role.Chaos, gameEngine.play.chaosPlayer, true),
+                                    Column(children: [
+                                      Text(l10n.gameHeader_roundOf(gameEngine.play.currentRound, gameEngine.play.maxRounds)),
+                                      if (gameEngine.play.header.rolesSwapped != null)
+                                        Text (gameEngine.play.header.rolesSwapped! ? l10n.gameHeader_rolesSwapped : l10n.playMode_classic,
+                                          style: TextStyle(fontStyle: FontStyle.italic),),
+                                    ]),
+                                    _buildRoleIndicator(Role.Order, gameEngine.play.orderPlayer, false),
+                                  ],
+                                ),
                               ),
-                            ),
-                            LinearProgressIndicator(
-                              value: gameEngine.play.progress,
-                              backgroundColor: Colors.brown[100],
-                            ),
-                            Column(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                                  child: Center(
+                              LinearProgressIndicator(
+                                value: gameEngine.play.progress,
+                                backgroundColor: Colors.brown[100],
+                              ),
+                              Column(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                                    child: Center(
+                                      child: GridView.builder(
+                                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
+                                          ),
+                                          itemBuilder: _buildChipStock,
+                                          itemCount: gameEngine.play.stock.getTotalChipTypes(),
+                                          shrinkWrap: true,
+                                          physics: const NeverScrollableScrollPhysics()),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                                    height: 20,
                                     child: GridView.builder(
                                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
                                         ),
-                                        itemBuilder: _buildChipStock,
+                                        itemBuilder: _buildChipStockIndicator,
                                         itemCount: gameEngine.play.stock.getTotalChipTypes(),
                                         shrinkWrap: true,
                                         physics: const NeverScrollableScrollPhysics()),
                                   ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-                                  height: 20,
-                                  child: GridView.builder(
-                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: gameEngine.play.stock.getTotalChipTypes(),
-                                      ),
-                                      itemBuilder: _buildChipStockIndicator,
-                                      itemCount: gameEngine.play.stock.getTotalChipTypes(),
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics()),
-                                ),
-                              ],
-                            ),
-                            AspectRatio(
-                              aspectRatio: 1,
-                              child: _buildChipGrid(_buildBoardGrid),
-                            ),
-
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-                              child: _buildHint(context),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 0, top: 0, right: 0, bottom: 16),
-                              child: _buildSubmitButton(context),
-                            ),
-                          ]),
+                                ],
+                              ),
+                              AspectRatio(
+                                aspectRatio: 1,
+                                child: _buildChipGrid(_buildBoardGrid),
+                              ),
+                  
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                                child: _buildHint(context),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 0, top: 0, right: 0, bottom: 16),
+                                child: _buildSubmitButton(context),
+                              ),
+                            ]),
+                      ),
                     ),
                   ),
                 )),
@@ -513,7 +517,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final localPlayer = gameEngine.play.getPlayerTypeOf(role);
     final opponentPlayer = gameEngine.play.getPlayerTypeOf(role.opponentRole);
 
-    Widget row = _buildMoveLine(move, prefix: "${l10n.gameHeader_round(round)})}: ",
+    Widget row = _buildMoveLine(move, prefix: "${l10n.gameHeader_round(round)}): ",
         playerType: !gameEngine.play.isBothSidesSinglePlay
             ? (isClassic
               ? (gameEngine.play.header.rolesSwapped == true
@@ -858,7 +862,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         appendix = "➤ ${l10n.hint_orderToMove}";
       }
       else if (gameEngine.play.currentRole == Role.Chaos) {
-        appendix = "➤ ${l10n.hint_chaosToPlace}";
+        appendix = "➤ ${l10n.hint_chaosToPlace("{chip}")}";
       }
     }
 
@@ -1413,30 +1417,32 @@ class _HyleXGroundState extends State<HyleXGround> {
 
       builder: (BuildContext context) {
 
-        return StatefulBuilder(
-          builder: (BuildContext context, setSheetState) {
-
-            final chaosPlayerType = localRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser;
-            final orderPlayerType = localRole == Role.Chaos ? PlayerType.RemoteUser : PlayerType.LocalUser;
-            return Container(
-              height: MediaQuery.sizeOf(context).height / 1.5,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: Column(children: [
-                      Text(l10n.gameState_firstGameState),
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                        buildRoleIndicator(Role.Chaos, playerType: chaosPlayerType, isSelected: false, backgroundColor: Colors.white),
-                        buildRoleIndicator(Role.Order, playerType: orderPlayerType, isSelected: false, backgroundColor: Colors.white, points: orderPoints),
-                      ],),
-                      AspectRatio(aspectRatio: 1, child: _buildChipGrid(_buildReadOnlyBoardGrid))
-                    ]),
+        return SafeArea(
+          child: StatefulBuilder(
+            builder: (BuildContext context, setSheetState) {
+          
+              final chaosPlayerType = localRole == Role.Chaos ? PlayerType.LocalUser : PlayerType.RemoteUser;
+              final orderPlayerType = localRole == Role.Chaos ? PlayerType.RemoteUser : PlayerType.LocalUser;
+              return Container(
+                height: MediaQuery.sizeOf(context).height / 1.5,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SingleChildScrollView(
+                    child: Center(
+                      child: Column(children: [
+                        Text(l10n.gameState_firstGameState),
+                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                          buildRoleIndicator(Role.Chaos, playerType: chaosPlayerType, isSelected: false, backgroundColor: Colors.white),
+                          buildRoleIndicator(Role.Order, playerType: orderPlayerType, isSelected: false, backgroundColor: Colors.white, points: orderPoints),
+                        ],),
+                        AspectRatio(aspectRatio: 1, child: _buildChipGrid(_buildReadOnlyBoardGrid))
+                      ]),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
 
 

@@ -88,10 +88,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 }),
           ],
         ),
-        body: FutureBuilder<List<PlayHeader>>(
-            future: StorageService().loadAllPlayHeaders(),
-            builder: (BuildContext context,
-                AsyncSnapshot<List<PlayHeader>> snapshot) {
+        body: SafeArea(
+          child: FutureBuilder<List<PlayHeader>>(
+              future: StorageService().loadAllPlayHeaders(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<PlayHeader>> snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final sorted = _sort(snapshot.data!);
 
@@ -138,10 +139,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 print("loading error: ${snapshot.error}");
                 return Center(child: Text("${l10n.matchList_errorDuringLoading}\n${snapshot.error}"));
               }
-              else {
-                return Center(child: Text(l10n.matchList_nothingFound));
-              }
-            })
+                else {
+                  return Center(child: Text(l10n.matchList_nothingFound));
+                }
+              }),
+        )
     );
 
   }
