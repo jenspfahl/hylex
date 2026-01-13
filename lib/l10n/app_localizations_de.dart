@@ -514,6 +514,89 @@ class AppLocalizationsDe extends AppLocalizations {
   String get error_cameraPermissionNeeded => 'Kamera-Berechtigung erforderlich, um QR-Codes scannen zu können!';
 
   @override
+  String get error_linkAlreadyProcessed => 'Dieser Link wurde bereits verarbeitet.';
+
+  @override
+  String get error_linkIntendedForOpponent => 'Dieser Link war für deinen Gegner gedacht, nicht für dich!';
+
+  @override
+  String get error_linkIsNotTheLatest => 'Dieser Link ist nicht der letzte des Matches.';
+
+  @override
+  String get settings => 'Einstellungen';
+
+  @override
+  String get settings_commonSettings => 'Allgemeine Einstellungen';
+
+  @override
+  String get settings_gameSettings => 'Spieleinstellungen';
+
+  @override
+  String get settings_showCoordinates => 'Koordinaten anzeigen';
+
+  @override
+  String get settings_showCoordinatesDescription => 'Koordinaten auf der X- und Y-Achse im Spielfeld anzeigen.';
+
+  @override
+  String get settings_showPointsForOrder => 'Punkte für Order anzeigen';
+
+  @override
+  String get settings_showPointsForOrderDescription => 'Zeigt die Punkte pro Spielstein an, die Order bisher erreicht hat.';
+
+  @override
+  String get settings_showHints => 'Hinweise anzeigen';
+
+  @override
+  String get settings_showHintsDescription => 'Zeigt Hinweise an, die helfen, was als Nächstes im Spiel zu tun ist.';
+
+  @override
+  String get settings_showMoveErrors => 'Fehler beim Spielzug anzeigen';
+
+  @override
+  String get settings_showMoveErrorsDescription => 'Zeigt einen Fehler an, wenn Spielsteine falsch verschoben oder plaziert werden.';
+
+  @override
+  String get settings_multiplayerSettings => 'Multiplayer-Einstellungen';
+
+  @override
+  String settings_changeYourName(Object name) {
+    return 'Ändere deinen Namen \'$name\'';
+  }
+
+  @override
+  String get settings_setYourName => 'Lege deinen Namen fest';
+
+  @override
+  String get settings_setOrChangeYourNameDescription => 'Dein Name wird in Nachrichten an deine Gegner angezeigt.';
+
+  @override
+  String get settings_signMessages => 'Nachrichten signieren';
+
+  @override
+  String get settings_signMessagesDescription => 'Nachrichten, die du in Mehrspieler-Spielen sendest, werden kryptographisch signiert.';
+
+  @override
+  String get settings_signMessagesExplanation => 'Signiere deine Nachrichten mit deinem öffentlichen Schlüssel, wenn du sicherstellen möchtest, dass deine Nachrichten nicht manipuliert werden und um zu beweisen, dass sie von dir stammen. Dies kann wichtig sein, wenn du deine Spielzüge mit der Öffentlichkeit teilest.';
+
+  @override
+  String get settings_signMessages_Never => 'Nie';
+
+  @override
+  String get settings_signMessagesDescription_Never => 'Nachrichten werden NICHT signiert.';
+
+  @override
+  String get settings_signMessages_OnDemand => 'Auf Anfrage';
+
+  @override
+  String get settings_signMessagesDescription_OnDemand => 'Nachrichten werden nur bei Bedarf signiert und vor jedem senden wird danach gefragt.';
+
+  @override
+  String get settings_signMessages_Always => 'Immer';
+
+  @override
+  String get settings_signMessagesDescription_Always => 'Nachrichten werden signiert, ohne danach zu fragen.';
+
+  @override
   String get matchMenu_matchInfo => 'Spielinfos';
 
   @override

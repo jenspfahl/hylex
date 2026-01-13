@@ -1013,6 +1013,168 @@ abstract class AppLocalizations {
   /// **'Camera permission is required to scan QR codes!'**
   String get error_cameraPermissionNeeded;
 
+  /// No description provided for @error_linkAlreadyProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'This link has already been processed.'**
+  String get error_linkAlreadyProcessed;
+
+  /// No description provided for @error_linkIntendedForOpponent.
+  ///
+  /// In en, this message translates to:
+  /// **'This link was intended for your opponent, not for you!'**
+  String get error_linkIntendedForOpponent;
+
+  /// No description provided for @error_linkIsNotTheLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is not the latest of the match.'**
+  String get error_linkIsNotTheLatest;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @settings_commonSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'General Settings'**
+  String get settings_commonSettings;
+
+  /// No description provided for @settings_gameSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Settings'**
+  String get settings_gameSettings;
+
+  /// No description provided for @settings_showCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Show coordinates'**
+  String get settings_showCoordinates;
+
+  /// No description provided for @settings_showCoordinatesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show coordinates on the X and Y axes in the playing field.'**
+  String get settings_showCoordinatesDescription;
+
+  /// No description provided for @settings_showPointsForOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show points for Order'**
+  String get settings_showPointsForOrder;
+
+  /// No description provided for @settings_showPointsForOrderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows the points per chip that Order has achieved so far.'**
+  String get settings_showPointsForOrderDescription;
+
+  /// No description provided for @settings_showHints.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hints'**
+  String get settings_showHints;
+
+  /// No description provided for @settings_showHintsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows hints that help guide what to do next in the game.'**
+  String get settings_showHintsDescription;
+
+  /// No description provided for @settings_showMoveErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'Show move errors'**
+  String get settings_showMoveErrors;
+
+  /// No description provided for @settings_showMoveErrorsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows an error if chips are moved or placed incorrectly.'**
+  String get settings_showMoveErrorsDescription;
+
+  /// No description provided for @settings_multiplayerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiplayer Settings'**
+  String get settings_multiplayerSettings;
+
+  /// No description provided for @settings_changeYourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Change your name \'{name}\''**
+  String settings_changeYourName(Object name);
+
+  /// No description provided for @settings_setYourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your name'**
+  String get settings_setYourName;
+
+  /// No description provided for @settings_setOrChangeYourNameDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name will be displayed in messages to your opponents.'**
+  String get settings_setOrChangeYourNameDescription;
+
+  /// No description provided for @settings_signMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign messages'**
+  String get settings_signMessages;
+
+  /// No description provided for @settings_signMessagesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages you send in multiplayer games are cryptographically signed.'**
+  String get settings_signMessagesDescription;
+
+  /// No description provided for @settings_signMessagesExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign your messages with your public key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.'**
+  String get settings_signMessagesExplanation;
+
+  /// No description provided for @settings_signMessages_Never.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get settings_signMessages_Never;
+
+  /// No description provided for @settings_signMessagesDescription_Never.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages will NOT be signed.'**
+  String get settings_signMessagesDescription_Never;
+
+  /// No description provided for @settings_signMessages_OnDemand.
+  ///
+  /// In en, this message translates to:
+  /// **'On Request'**
+  String get settings_signMessages_OnDemand;
+
+  /// No description provided for @settings_signMessagesDescription_OnDemand.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages will only be signed when necessary and will be asked before each send.'**
+  String get settings_signMessagesDescription_OnDemand;
+
+  /// No description provided for @settings_signMessages_Always.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get settings_signMessages_Always;
+
+  /// No description provided for @settings_signMessagesDescription_Always.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages will be signed without asking.'**
+  String get settings_signMessagesDescription_Always;
+
   /// No description provided for @matchMenu_matchInfo.
   ///
   /// In en, this message translates to:

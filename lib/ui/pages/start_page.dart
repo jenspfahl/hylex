@@ -62,7 +62,7 @@ class StartPageState extends State<StartPage> {
   late StreamSubscription<Uri> _uriLinkStreamSub;
   late StreamSubscription _intentSub;
 
-  get l10n => AppLocalizations.of(context)!;
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
 
   @override
@@ -83,7 +83,7 @@ class StartPageState extends State<StartPage> {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       _readAndParseSharedText(value);
     }, onError: (err) {
-      toastInfo(context, "${translate("errors.cannotExtractUrl")}: $err");
+      toastInfo(context, "${l10n.error_cannotExtractUrl}: $err");
     });
 
     // Get the media sharing coming from outside the app while the app is closed.
@@ -100,7 +100,7 @@ class StartPageState extends State<StartPage> {
 
       final uri = extractAppLinkFromString(message.path);
       if (uri == null) {
-        toastInfo(context, translate("errors.cannotExtractUrl"));
+        toastInfo(context, l10n.error_cannotExtractUrl);
       }
       else {
         handleReceivedMessage(uri);
@@ -115,7 +115,7 @@ class StartPageState extends State<StartPage> {
     }
     else {
       debugPrint("invalid uri: $uri");
-      showAlertDialog("${translate("errors.cannotParseUrl")}: $uri");
+      showAlertDialog("${l10n.error_cannotParseUrl}: $uri");
     }
   }
 
@@ -128,8 +128,7 @@ class StartPageState extends State<StartPage> {
       debugPrint("received: [$playId] ${extractOperation.name}");
       if (extractOperation == Operation.SendInvite) {
         if (header != null) {
-          showAlertDialog(translate("errors.alreadyReactedToInvite",
-              args: { "playId" : header.getReadablePlayId() }));
+          showAlertDialog(l10n.error_alreadyReactedToInvite(header.getReadablePlayId()));
           //TODO add button to jump to this match entry
         }
         else {
@@ -138,7 +137,7 @@ class StartPageState extends State<StartPage> {
           if (message != null) {
             final inviteMessage = message as InviteMessage;
             if (inviteMessage.invitorUserId == _user.id) {
-              showAlertDialog(translate("errors.cannotReactToOwnInvitation"));
+              showAlertDialog(l10n.error_cannotReactToOwnInvitation);
             }
             else {
               _handleReceiveInvite(serializedMessage, inviteMessage, comContext);
@@ -150,12 +149,10 @@ class StartPageState extends State<StartPage> {
         }
       }
       else if (header == null) {
-        showAlertDialog(translate("errors.matchMotFound",
-            args: { "playId" : toReadableId(playId) }));
+        showAlertDialog(l10n.error_matchMotFound(toReadableId(playId)));
       }
       else if (header.state.isFinal) {
-        showAlertDialog(translate("errors.matchAlreadyFinished",
-            args: { "playId" : header.getReadablePlayId() }));
+        showAlertDialog(l10n.error_matchAlreadyFinished(header.getReadablePlayId()));
       }
       else {
         final (message, error) = await serializedMessage.deserialize(
@@ -202,14 +199,14 @@ class StartPageState extends State<StartPage> {
     var playOpener = receivedInviteMessage.playOpener;
 
     showChoiceDialog(
-      translate("messaging.invitationMessage_${playOpener.name}",
-        args: {
-          "opponent": opponentName.isEmpty ? "?" : opponentName,
-          "playMode": playMode.getName(),
-          "dimension": dimension,
-        }),
+      switch (playOpener) {
+        PlayOpener.Invitor => l10n.messaging_invitationMessage_Invitor(dimension, opponentName, playMode.getName(l10n)),
+        PlayOpener.Invitee => l10n.messaging_invitationMessage_Invitee(dimension, opponentName, playMode.getName(l10n)),
+        PlayOpener.InviteeChooses => l10n.messaging_invitationMessage_InviteeChooses(dimension, opponentName, playMode.getName(l10n)),
+        PlayOpener.unused11 => throw UnimplementedError(),
+      },
       width: 300,
-      firstString: translate("common.accept"),
+      firstString: l10n.accept,
       firstHandler: () {
         // first ask for your name
         if (_user.name.isEmpty) {
@@ -222,7 +219,7 @@ class StartPageState extends State<StartPage> {
 
 
       },
-      secondString: translate("common.decline"),
+      secondString: l10n.decline,
       secondHandler: () {
         comContext.registerReceivedMessage(serializedMessage);
 
@@ -232,7 +229,7 @@ class StartPageState extends State<StartPage> {
             PlayState.InvitationRejected);
         MessageService().sendInvitationRejected(header, _user, () => context);
       },
-      thirdString: translate("common.replyLater"),
+      thirdString: l10n.replyLater,
       thirdHandler: () {
         comContext.registerReceivedMessage(serializedMessage);
 
@@ -243,7 +240,7 @@ class StartPageState extends State<StartPage> {
         StorageService().savePlayHeader(header);
 
       },
-      fourthString: translate('common.cancel'),
+      fourthString: MaterialLocalizations.of(context).cancelButtonLabel,
       fourthHandler: () {},
     );
 
@@ -304,14 +301,12 @@ class StartPageState extends State<StartPage> {
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, message.initialMove, () {
-            showAlertDialog(translate("messaging.matchAccepted",
-                args: { "playId" : header.getReadablePlayId() }));
+            showAlertDialog(l10n.messaging_matchAccepted(header.getReadablePlayId()));
           });
         }
         else {
           _startMultiPlayerGame(context, header, message.initialMove, () {
-            showAlertDialog(translate("messaging.matchAccepted",
-                args: { "playId" : header.getReadablePlayId() }));
+            showAlertDialog(l10n.messaging_matchAccepted(header.getReadablePlayId()));
           });
         }
       });
@@ -331,8 +326,8 @@ class StartPageState extends State<StartPage> {
       header.commContext.registerReceivedMessage(serializedMessage);
       await StorageService().savePlayHeader(header);
 
-      showAlertDialog(translate("messaging.matchDeclined",
-          args: { "playId" : header.getReadablePlayId() }));    }
+      showAlertDialog(l10n.messaging_matchDeclined(header.getReadablePlayId()));
+    }
   }
 
   Future<void> _handleMove(
@@ -369,11 +364,8 @@ class StartPageState extends State<StartPage> {
       StorageService().loadPlayFromHeader(header).then((play) {
         if (play != null) {
           _continueMultiPlayerGame(context, play, null, () {
-            showAlertDialog(translate("messaging.opponentResigned",
-                args: {
-                  "opponent" : header.opponentName ?? "?",
-                  "playId" : header.getReadablePlayId(),
-                }));
+            showAlertDialog(l10n.messaging_opponentResigned(
+                header.opponentName ?? "?", header.getReadablePlayId()));
           });
         }
       });
@@ -417,7 +409,7 @@ class StartPageState extends State<StartPage> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
 
-                _buildCell(translate('startMenu.singlePlay'), 0,
+                _buildCell(l10n.startMenu_singlePlay, 0,
                     isMain: true,
                     icon: Icons.person,
                     clickHandler: () =>
@@ -429,14 +421,15 @@ class StartPageState extends State<StartPage> {
                 ),
 
                 _menuMode == MenuMode.SinglePlay
-                    ? _buildCell(translate('startMenu.newGame'), 0,
+                    ? _buildCell(l10n.startMenu_newGame, 0,
                     icon: CupertinoIcons.game_controller,
                     clickHandler: () async {
                       if (context.mounted) {
                         final json = await PreferenceService().getString(
                             PreferenceService.DATA_CURRENT_PLAY);
                         confirmOrDo(json != null,
-                            translate('dialogs.overwriteGame'), () {
+                            l10n.dialog_overwriteGame,
+                            MaterialLocalizations.of(context), () {
                               _selectPlayerGroundSize(context, (dimension) =>
                                   _selectSinglePlayerMode(
                                       context, (chaosPlayer, orderPlayer) =>
@@ -448,7 +441,7 @@ class StartPageState extends State<StartPage> {
                     }
                 )
                     : _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell(translate('startMenu.sendInvite'), 3, icon: Icons.near_me,
+                    ? _buildCell(l10n.startMenu_sendInvite, 3, icon: Icons.near_me,
                     clickHandler: () async {
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (playSize) =>
@@ -460,12 +453,12 @@ class StartPageState extends State<StartPage> {
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.SinglePlay
-                    ? _buildCell(translate('startMenu.resumeGame'), 0,
+                    ? _buildCell(l10n.startMenu_resumeGame, 0,
                     icon: Icons.not_started_outlined,
                     clickHandler: () async {
                       final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
-                        await showShowLoading(translate('dialogs.loadingGame'));
+                        await showShowLoading(l10n.dialog_loadingGame);
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -475,13 +468,13 @@ class StartPageState extends State<StartPage> {
                             ));
                       }
                       else {
-                        showAlertDialog(translate("errors.nothingToResume"));
+                        showAlertDialog(l10n.error_nothingToResume);
                       }
                     }
                 )
                     : _buildEmptyCell(),
 
-                _buildCell(translate('startMenu.multiPlay'), 2,
+                _buildCell(l10n.startMenu_multiPlay, 2,
                     isMain: true,
                     icon: Icons.group,
                     clickHandler: () =>
@@ -502,7 +495,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.Multiplayer ||
                     _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell(translate('startMenu.newMatch'), 3,
+                    ? _buildCell(l10n.startMenu_newMatch, 3,
                     icon: Icons.sports_score,
                     clickHandler: () =>
                         setState(
@@ -514,7 +507,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.Multiplayer ||
                     _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell(translate('startMenu.continueMatch'), 4,
+                    ? _buildCell(l10n.startMenu_continueMatch, 4,
                   icon: Icons.sports_tennis,
                   clickHandler: () {
                     Navigator.push(context,
@@ -527,7 +520,7 @@ class StartPageState extends State<StartPage> {
 
                 _menuMode == MenuMode.More
                     ? _buildCell(
-                    translate('startMenu.howToPlay'), 1, icon: CupertinoIcons.question_circle_fill,
+                    l10n.startMenu_howToPlay, 1, icon: CupertinoIcons.question_circle_fill,
                     clickHandler: () => Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
                           return Intro();
@@ -535,16 +528,16 @@ class StartPageState extends State<StartPage> {
                     : _buildEmptyCell(),
 
                 _menuMode == MenuMode.MultiplayerNew
-                    ? _buildCell(translate('startMenu.scanCode'), 3, icon: Icons.qr_code_scanner,
+                    ? _buildCell(l10n.startMenu_scanCode, 3, icon: Icons.qr_code_scanner,
                           clickHandler: () => scanNextMove(forceShowAllOptions: false),
                           longClickHandler: _showMultiPlayTestDialog
                        )
                     : _menuMode == MenuMode.More
-                    ? _buildCell(translate('startMenu.achievements'), 1, icon: Icons.leaderboard,
+                    ? _buildCell(l10n.startMenu_achievements, 1, icon: Icons.leaderboard,
                     clickHandler: () => _showAchievementDialog())
                     : _buildEmptyCell(),
 
-                _buildCell(translate('startMenu.more'), 1,
+                _buildCell(l10n.startMenu_more, 1,
                     isMain: true,
                     clickHandler: () =>
                         setState(
@@ -577,7 +570,7 @@ class StartPageState extends State<StartPage> {
                   }, icon: const Icon(Icons.settings_outlined)),
 
                   IconButton(onPressed: () {
-                    ask(translate('dialogs.quitTheApp'), () {
+                    ask(l10n.dialog_quitTheApp, l10n, () {
                       SystemNavigator.pop();
                     });
                   }, icon: const Icon(Icons.exit_to_app_outlined)),
@@ -585,7 +578,7 @@ class StartPageState extends State<StartPage> {
                   IconButton(onPressed: () async {
                     final packageInfo = await PackageInfo.fromPlatform();
 
-                    final text = translate('dialogs.aboutDesc2');
+                    final text = l10n.dialog_aboutDesc2("{homepage}");
                     final splitText = text.split("{homepage}");
 
                     showAboutDialog(
@@ -594,7 +587,7 @@ class StartPageState extends State<StartPage> {
                       applicationVersion:packageInfo.version,
                         children: [
                           const Divider(),
-                          Text(translate('dialogs.aboutDesc1')),
+                          Text(l10n.dialog_aboutDesc1),
                           const Text(''),
                           InkWell(
                               child: Text.rich(
@@ -610,7 +603,7 @@ class StartPageState extends State<StartPage> {
                                 launchUrlString(HOMEPAGE_SCHEME + GITHUB_HOMEPAGE + GITHUB_HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
                               }),
                           const Divider(),
-                          const Text('© Jens Pfahl 2025', style: TextStyle(fontSize: 12)),
+                          const Text('© Jens Pfahl 2026', style: TextStyle(fontSize: 12)),
                         ],
                         applicationIcon: SizedBox(width: 56, height: 56,
                             child: _buildGameLogo(12))
@@ -665,6 +658,7 @@ class StartPageState extends State<StartPage> {
       Function(PlaySize) handleChosenDimension) {
     if (isDebug) {
       showInputDialog("Which ground size? Allowed values: 2,3,4,5,7,9,11,13",
+        MaterialLocalizations.of(context),
         okHandler: (value) => handleChosenDimension(PlaySize.fromDimension(int.parse(value))),
         validationMessage: "This language is not supported!",
         validationHandler: (v) => PlaySize.values.map((s) => s.dimension.toString()).contains(v),
@@ -672,22 +666,22 @@ class StartPageState extends State<StartPage> {
     }
     else {
       showChoiceDialog(
-        translate('dialogs.whichGroundSize'),
+        l10n.dialog_whichGroundSize,
         width: 300,
         firstString: "5 x 5",
-        firstDescriptionString: translate('dialogs.groundSize5'),
+        firstDescriptionString: l10n.dialog_groundSize5,
         firstHandler: () => handleChosenDimension(PlaySize.Size5x5),
         secondString: "7 x 7",
-        secondDescriptionString: translate('dialogs.groundSize7'),
+        secondDescriptionString: l10n.dialog_groundSize7,
         secondHandler: () => handleChosenDimension(PlaySize.Size7x7),
         thirdString: "9 x 9",
-        thirdDescriptionString: translate('dialogs.groundSize9'),
+        thirdDescriptionString: l10n.dialog_groundSize9,
         thirdHandler: () => handleChosenDimension(PlaySize.Size9x9),
         fourthString: "11 x 11",
-        fourthDescriptionString: translate('dialogs.groundSize11'),
+        fourthDescriptionString: l10n.dialog_groundSize11,
         fourthHandler: () => handleChosenDimension(PlaySize.Size11x11),
         fifthString: "13 x 13",
-        fifthDescriptionString: translate('dialogs.groundSize13'),
+        fifthDescriptionString: l10n.dialog_groundSize13,
         fifthHandler: () => handleChosenDimension(PlaySize.Size13x13),
       );
     }
@@ -715,20 +709,20 @@ class StartPageState extends State<StartPage> {
   void _selectSinglePlayerMode(BuildContext context,
       Function(PlayerType, PlayerType) handleChosenPlayers) {
     showChoiceDialog(
-      translate('dialogs.whatRole'),
+      l10n.dialog_whatRole,
       width: 300,
       height: 550,
       firstString: Role.Order.name,
-      firstDescriptionString: translate('dialogs.whatRoleOrder'),
+      firstDescriptionString: l10n.dialog_whatRoleOrder,
       firstHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalUser),
       secondString: Role.Chaos.name,
-      secondDescriptionString: translate('dialogs.whatRoleChaos'),
+      secondDescriptionString: l10n.dialog_whatRoleChaos,
       secondHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalAi),
-      thirdString: translate('dialogs.roleBoth'),
-      thirdDescriptionString: translate('dialogs.whatRoleBoth'),
+      thirdString: l10n.dialog_roleBoth,
+      thirdDescriptionString: l10n.dialog_whatRoleBoth,
       thirdHandler: () => handleChosenPlayers(PlayerType.LocalUser, PlayerType.LocalUser),
-      fourthString: translate('dialogs.roleNone'),
-        fourthDescriptionString: translate('dialogs.whatRoleNone'),
+      fourthString: l10n.dialog_roleNone,
+        fourthDescriptionString: l10n.dialog_whatRoleNone,
       fourthHandler: () => handleChosenPlayers(PlayerType.LocalAi, PlayerType.LocalAi),
     );
   }
@@ -736,17 +730,17 @@ class StartPageState extends State<StartPage> {
   void _selectInvitorMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
-      translate('dialogs.whatRole'),
+      l10n.dialog_whatRole,
       width: 300,
       height: 500,
       firstString: Role.Order.name,
-      firstDescriptionString: translate('dialogs.whatRoleOrderForMultiPlay'),
+      firstDescriptionString: l10n.dialog_whatRoleOrderForMultiPlay,
       firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
       secondString: Role.Chaos.name,
-      secondDescriptionString: translate('dialogs.whatRoleChaosForMultiPlay'),
+      secondDescriptionString: l10n.dialog_whatRoleChaosForMultiPlay,
       secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
-      thirdString: translate('dialogs.roleInviteeDecides'),
-      thirdDescriptionString: translate('dialogs.whatRoleInviteeDecides'),
+      thirdString: l10n.dialog_roleInviteeDecides,
+      thirdDescriptionString: l10n.dialog_whatRoleInviteeDecides,
       thirdHandler: () => handlePlayOpener(PlayOpener.InviteeChooses),
     );
   }
@@ -754,32 +748,33 @@ class StartPageState extends State<StartPage> {
   void _selectInviteeMultiPlayerOpener(BuildContext context,
       Function(PlayOpener) handlePlayOpener) {
     showChoiceDialog(
-      translate("dialogs.whoToStart"),
-      firstString: translate("dialogs.whoToStartMe"), firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
-      secondString: translate("dialogs.whoToStartTheOther"), secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
+        l10n.dialog_whoToStart,
+      firstString: l10n.dialog_whoToStartMe, firstHandler: () => handlePlayOpener(PlayOpener.Invitee),
+      secondString: l10n.dialog_whoToStartTheOther, secondHandler: () => handlePlayOpener(PlayOpener.Invitor),
     );
   }
 
   void _selectMultiPlayerMode(BuildContext context,
       Function(PlayMode) handlePlayerMode) {
     showChoiceDialog(
-      translate('dialogs.whatKindOfMatch'),
+      l10n.dialog_whatKindOfMatch,
       width: 300,
       height: 450,
-      firstString: PlayMode.HyleX.getName(),
-      firstDescriptionString: translate('dialogs.whatKindOfMatchHylexStyle'),
+      firstString: PlayMode.HyleX.getName(l10n),
+      firstDescriptionString: l10n.dialog_whatKindOfMatchHylexStyle,
       firstHandler: () => handlePlayerMode(PlayMode.HyleX),
-      secondString: PlayMode.Classic.getName(),
-      secondDescriptionString: translate('dialogs.whatKindOfMatchClassicStyle'),
+      secondString: PlayMode.Classic.getName(l10n),
+      secondDescriptionString: l10n.dialog_whatKindOfMatchClassicStyle,
       secondHandler: () => handlePlayerMode(PlayMode.Classic),
     );
   }
 
   void _inputUserName(BuildContext context, Function(String) handleUsername) {
-    showInputDialog(translate('dialogs.yourName'),
+    showInputDialog(l10n.dialog_yourName,
+            MaterialLocalizations.of(context),
             prefilledText: _user.name,
             maxLength: maxNameLength,
-            validationMessage: translate("errors.illegalCharsForUserName"),
+            validationMessage: l10n.error_illegalCharsForUserName,
             validationHandler: (v) => allowedCharsRegExp.hasMatch(v),
             okHandler: (name) {
               _user.name = name;
@@ -792,7 +787,7 @@ class StartPageState extends State<StartPage> {
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, PlaySize playSize) async {
-    await showShowLoading(translate('dialogs.initGame'));
+    await showShowLoading(l10n.dialog_initGame);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           final header = PlayHeader.singlePlay(playSize);
@@ -810,7 +805,7 @@ class StartPageState extends State<StartPage> {
         Move? firstOpponentMove,
         Function()? loadHandler,
       ]) async {
-    await showShowLoading(translate('dialogs.initGame'));
+    await showShowLoading(l10n.dialog_initGame);
     final play = Play.newMultiPlay(header);
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -834,7 +829,7 @@ class StartPageState extends State<StartPage> {
       Move? opponentMove,
       [Function()? loadHandler]
       ) async {
-    await showShowLoading(translate('dialogs.loadingGame'));
+    await showShowLoading(l10n.dialog_loadingGame);
 
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -936,9 +931,9 @@ class StartPageState extends State<StartPage> {
             final greyed = _user.achievements.getOverallGameCount(filterScope) == 0;
 
             var filterText = switch(filterScope) {
-              Scope.All => translate("achievements.all"),
-              Scope.Single => translate("achievements.single"),
-              Scope.Multi => translate("achievements.multi"),
+              Scope.All => l10n.achievements_all,
+              Scope.Single => l10n.achievements_single,
+              Scope.Multi => l10n.achievements_multi,
             };
 
             List<Widget> children = [
@@ -946,7 +941,7 @@ class StartPageState extends State<StartPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "${translate('startMenu.achievements')} - $filterText",
+                    "${l10n.startMenu_achievements} - $filterText",
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   TriSwitcher(
@@ -981,7 +976,7 @@ class StartPageState extends State<StartPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildWonLostTotalHead(greyed, prefix: translate('achievements.overall') + " ", dense: false),
+                  _buildWonLostTotalHead(greyed, prefix: l10n.achievements_overall + " ", dense: false),
                   _buildWonLostTotalCounts(greyed,
                     _user.achievements.getOverallWonCount(filterScope),
                     _user.achievements.getOverallLostCount(filterScope),
@@ -1008,7 +1003,7 @@ class StartPageState extends State<StartPage> {
                       style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.lightGreenAccent),
                       onPressed: () {
-                        ask(translate('dialogs.resetAchievements'), () {
+                        ask(l10n.dialog_resetAchievements, l10n, () {
                           _user.achievements.clearAll();
                           StorageService().saveUser(_user);
                           SmartDialog.dismiss();
@@ -1016,12 +1011,12 @@ class StartPageState extends State<StartPage> {
                         });
 
                       },
-                      child: Text(translate('common.reset'))),
+                      child: Text(l10n.reset)),
                   OutlinedButton(
                       style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.lightGreenAccent),
                       onPressed: () => SmartDialog.dismiss(),
-                      child: Text(translate('common.close'))),
+                      child: Text(l10n.close)),
                 ],
               ),
             );
@@ -1106,8 +1101,8 @@ class StartPageState extends State<StartPage> {
           color: Colors.white,
         ),
         children: <TextSpan>[
-          TextSpan(text: translate('achievements.overall') + ' '),
-          TextSpan(text: translate('achievements.totalScore'), style: TextStyle(color: Colors.cyanAccent)),
+          TextSpan(text: l10n.achievements_overall + ' '),
+          TextSpan(text: l10n.achievements_totalScore, style: TextStyle(color: Colors.cyanAccent)),
           const TextSpan(text: ': '),
           TextSpan(text: total.toString(), style: const TextStyle(color: Colors.cyanAccent)),
         ],
@@ -1123,9 +1118,9 @@ class StartPageState extends State<StartPage> {
           color: greyed ? Colors.grey : Colors.white,
         ),
         children: <TextSpan>[
-          TextSpan(text: translate('achievements.high'), style: TextStyle(color: greyed ? Colors.grey : Colors.yellowAccent)),
+          TextSpan(text: l10n.achievements_high, style: TextStyle(color: greyed ? Colors.grey : Colors.yellowAccent)),
           const TextSpan(text: '/'),
-          TextSpan(text: translate('achievements.totalScore'), style: TextStyle(color: greyed ? Colors.grey : Colors.cyanAccent)),
+          TextSpan(text: l10n.achievements_totalScore, style: TextStyle(color: greyed ? Colors.grey : Colors.cyanAccent)),
           const TextSpan(text: ': '),
         ],
       ),
@@ -1158,11 +1153,11 @@ class StartPageState extends State<StartPage> {
         children: <TextSpan>[
           if (prefix != null)
             TextSpan(text: prefix),
-          TextSpan(text: translate('achievements.won'), style: TextStyle(color: greyed ? Colors.grey : Colors.lightGreenAccent)),
+          TextSpan(text: l10n.achievements_won, style: TextStyle(color: greyed ? Colors.grey : Colors.lightGreenAccent)),
           const TextSpan(text: '/'),
-          TextSpan(text: translate('achievements.lost'), style: TextStyle(color: greyed ? Colors.grey : Colors.redAccent)),
+          TextSpan(text: l10n.achievements_lost, style: TextStyle(color: greyed ? Colors.grey : Colors.redAccent)),
           const TextSpan(text:'/'),
-          TextSpan(text: translate('achievements.totalCount'), style: TextStyle(color: greyed ? Colors.grey : Colors.lightBlueAccent)),
+          TextSpan(text: l10n.achievements_totalCount, style: TextStyle(color: greyed ? Colors.grey : Colors.lightBlueAccent)),
           const TextSpan(text: ': '),
         ],
       ),
@@ -1208,14 +1203,14 @@ class StartPageState extends State<StartPage> {
     var dimension = playHeader.playSize.dimension;
 
     showChoiceDialog(
-        translate("messaging.invitationMessage_${playOpener!.name}",
-            args: {
-              "opponent": opponentName?? "?",
-              "playMode": playMode.getName(),
-              "dimension": dimension,
-            }),
+      switch (playOpener!) {
+        PlayOpener.Invitor => l10n.messaging_invitationMessage_Invitor(dimension, opponentName?? "?", playMode.getName(l10n)),
+        PlayOpener.Invitee => l10n.messaging_invitationMessage_Invitee(dimension, opponentName?? "?", playMode.getName(l10n)),
+        PlayOpener.InviteeChooses => l10n.messaging_invitationMessage_InviteeChooses(dimension, opponentName?? "?", playMode.getName(l10n)),
+        PlayOpener.unused11 => throw UnimplementedError(),
+      },
       width: 300,
-      firstString: translate('common.accept'),
+      firstString: l10n.accept,
       firstHandler: () {
         // first ask for your name
         if (_user.name.isEmpty) {
@@ -1228,7 +1223,7 @@ class StartPageState extends State<StartPage> {
 
 
       },
-      secondString: translate('common.decline'),
+      secondString: l10n.decline,
       secondHandler: () async {
         final error = await PlayStateManager().doAndHandleRejectInvite(playHeader);
         if (error != null) {
@@ -1238,7 +1233,7 @@ class StartPageState extends State<StartPage> {
           await MessageService().sendInvitationRejected(playHeader, _user, () => context);
         }
       },
-      thirdString: translate('common.cancel'),
+      thirdString: MaterialLocalizations.of(context).cancelButtonLabel,
       thirdHandler: () {},
     );
   }
@@ -1275,12 +1270,12 @@ class StartPageState extends State<StartPage> {
                       mainAxisSize: MainAxisSize.max,
                       spacing: 5,
                       children: [
-                        Text(translate('sheets.scanOrPasteMessage')),
+                        Text(l10n.action_scanOrPasteMessage),
                         Text(""),
                         buildFilledButton(
                             context,
                             Icons.qr_code_scanner,
-                            translate('sheets.scanMessage'),
+                            l10n.action_scanMessage,
                                 () {
 
                                   if (header != null) {
@@ -1294,7 +1289,7 @@ class StartPageState extends State<StartPage> {
                         buildOutlinedButton(
                             context,
                             Icons.paste,
-                            translate('sheets.pasteMessage'),
+                            l10n.action_pasteMessage,
                                 () {
                                   if (header != null) {
                                     header.props[HeaderProps.rememberMessageReading] = remember ? "from_message" : "";
@@ -1304,8 +1299,7 @@ class StartPageState extends State<StartPage> {
                                   _readFromMessage();
                             }),
                         if (header != null) CheckboxListTile(
-                            title: Text(translate(
-                                "messaging.rememberDecision")),
+                            title: Text(l10n.messaging_rememberDecision),
                             value: remember,
                             dense: true,
                             checkboxShape: RoundedRectangleBorder(
@@ -1332,7 +1326,8 @@ class StartPageState extends State<StartPage> {
 
   void _readFromMessage() {
     showInputDialog(
-        translate('sheets.pasteMessageHere'),
+        l10n.action_pasteMessageHere,
+        MaterialLocalizations.of(context),
         height: 380,
         minLines: 3,
         maxLines: 3,
@@ -1340,7 +1335,7 @@ class StartPageState extends State<StartPage> {
           final uri = extractAppLinkFromString(s);
           if (uri == null) {
             showAlertDialog(
-                translate('sheets.pasteMessageError'),
+                l10n.action_pasteMessageError,
                 duration: Duration(seconds: 5)
             );
           }
@@ -1348,7 +1343,7 @@ class StartPageState extends State<StartPage> {
             handleReceivedMessage(uri);
           }
         },
-        thirdText: translate('sheets.pasteMessage'),
+        thirdText: l10n.action_pasteMessage,
         thirdHandler: (controller) async {
           final data = await Clipboard.getData(
               "text/plain");
@@ -1372,7 +1367,7 @@ class StartPageState extends State<StartPage> {
         } catch (e) {
           print(e);
           showAlertDialog(
-              translate('sheets.scanMessageError'),
+              l10n.action_scanMessageError,
               duration: Duration(seconds: 5));
         }
       }
@@ -1387,7 +1382,7 @@ class StartPageState extends State<StartPage> {
       status = await Permission.camera.request();
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(translate("errors.cameraPermissionNeeded"))),
+          SnackBar(content: Text(l10n.error_cameraPermissionNeeded)),
         );
       }
     }
@@ -1397,12 +1392,12 @@ class StartPageState extends State<StartPage> {
     if (_user.name.isNotEmpty)
       return Text(
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-          translate('common.hello', args: {'name' : _user.name})
+          l10n.hello(_user.name)
       );
     else if (isDebug)
       return Text(
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, fontStyle: FontStyle.italic),
-          translate('common.hello', args: {'name' : _user.getReadableId()})
+          l10n.hello(_user.getReadableId())
       );
       else
         return Container();

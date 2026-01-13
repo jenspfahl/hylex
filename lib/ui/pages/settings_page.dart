@@ -38,8 +38,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('$APP_NAME Settings'), elevation: 0),
+      appBar: AppBar(title: Text('$APP_NAME ${l10n.settings}'), elevation: 0),
       body: FutureBuilder(
         future: _loadAllPrefs(),
         builder: (context, AsyncSnapshot snapshot) {
@@ -55,10 +57,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSettingsList(User user)  {
 
     final l10n = AppLocalizations.of(context)!;
-    final supportedLanguages = AppLocalizations
-        .supportedLocales.map((locale) => locale.languageCode)
-        .toList();
-    final currentLocale = Localizations.localeOf(context);
 
     return SettingsList(
       lightTheme: SettingsThemeData(
@@ -69,35 +67,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
       ),
       sections: [
-        if (isDebug) SettingsSection(
-          title: Text('Common', style: TextStyle(color: Colors.brown[800])),
-          tiles: [
-            if (isDebug) SettingsTile(
-              title: Text("Language"),
-              description: Text(currentLocale.languageCode),
-              onPressed: (context) {
-                showInputDialog("Choose a language. Allowed values: $supportedLanguages",
-                    MaterialLocalizations.of(context),
-                    okHandler: (value) => setState(() {
-                      if (supportedLanguages.contains(value)) {
-                        PreferenceService().debugLocale = Locale(value);
-                      }
-                    }),
-                  validationMessage: "This language is not supported!",
-                  validationHandler: (v) => supportedLanguages.contains(v),
-                );
 
-              },
-            ),
-
-          ],
-        ),
         SettingsSection(
-          title: Text('Game Settings', style: TextStyle(color: Colors.brown[800])),
+          title: Text(l10n.settings_gameSettings, style: TextStyle(color: Colors.brown[800])),
           tiles: [
             SettingsTile.switchTile(
-              title: const Text('Show coordinates'),
-              description: const Text('Show coordinates at the x and y axis on the grid'),
+              title: Text(l10n.settings_showCoordinates),
+              description: Text(l10n.settings_showCoordinatesDescription),
               initialValue: PreferenceService().showCoordinates,
               onToggle: (bool value) {
                 PreferenceService().setBool(PreferenceService.PREF_SHOW_COORDINATES, value);
@@ -105,8 +81,8 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             SettingsTile.switchTile(
-              title: const Text('Show points'),
-              description: const Text("Show order points on chips"),
+              title: Text(l10n.settings_showPointsForOrder),
+              description: Text(l10n.settings_showPointsForOrderDescription),
               initialValue: PreferenceService().showPoints,
               onToggle: (bool value) {
                 PreferenceService().setBool(PreferenceService.PREF_SHOW_POINTS, value);
@@ -114,8 +90,8 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             SettingsTile.switchTile(
-              title: const Text('Show hints'),
-              description: const Text("Show hints to help what to do"),
+              title: Text(l10n.settings_showHints),
+              description: Text(l10n.settings_showHintsDescription),
               initialValue: PreferenceService().showHints,
               onToggle: (bool value) {
                 PreferenceService().setBool(PreferenceService.PREF_SHOW_HINTS, value);
@@ -123,8 +99,8 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             SettingsTile.switchTile(
-              title: const Text('Show errors'),
-              description: const Text("Show errors when moving chips wrongly"),
+              title: Text(l10n.settings_showMoveErrors),
+              description: Text(l10n.settings_showMoveErrorsDescription),
               initialValue: PreferenceService().showChipErrors,
               onToggle: (bool value) {
                 PreferenceService().setBool(PreferenceService.PREF_SHOW_CHIP_ERRORS, value);
@@ -135,12 +111,14 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         SettingsSection(
-          title: Text('Multiplayer matches', style: TextStyle(color: Colors.brown[800])),
+          title: Text(l10n.settings_multiplayerSettings, style: TextStyle(color: Colors.brown[800])),
           tiles: [
 
             SettingsTile(
-                title: user.name.isNotEmpty ? Text("Change your name '${user.name}'") : Text('Set your name'),
-                description: const Text("Your name is shown in messages for opponents"),
+                title: user.name.isNotEmpty
+                    ? Text(l10n.settings_changeYourName(user.name))
+                    : Text(l10n.settings_setYourName),
+                description: Text(l10n.settings_setOrChangeYourNameDescription),
                 onPressed: (value) async {
                   showInputDialog(
                     l10n.dialog_yourName,
@@ -160,29 +138,29 @@ class _SettingsPageState extends State<SettingsPage> {
 
             SettingsTile(
               enabled: user.hasSigningCapability(),
-              title: Text('Sign messages: ${PreferenceService().signMessages.name}'),
-              description: const Text("Cryptographically sign messages you send in multi player matches."),
+              title: Text('${l10n.settings_signMessages}: ${PreferenceService().signMessages.getName(l10n)}'),
+              description: Text(l10n.settings_signMessagesDescription),
               onPressed: (_) {
-                showChoiceDialog("Sign messages with your public key, if you want to ensure, your messages are not tampered and to prove, they are originated from you. This might be important if you share your moves with the public.",
+                showChoiceDialog(l10n.settings_signMessagesExplanation,
                   width: 320,
-                  height: 490,
+                  height: 550,
                   highlightButtonIndex: PreferenceService().signMessages.index,
-                  firstString: "Never",
-                  firstDescriptionString: "No signature is added and you are not bothered about this.",
+                  firstString: l10n.settings_signMessages_Never,
+                  firstDescriptionString: l10n.settings_signMessagesDescription_Never,
                   firstHandler: () {
                     PreferenceService().signMessages = SignMessages.Never;
                     PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
                     setState(() {});
                   },
-                  secondString: "On demand",
-                  secondDescriptionString: "You can decide for each single match independently.",
+                  secondString: l10n.settings_signMessages_OnDemand,
+                  secondDescriptionString: l10n.settings_signMessagesDescription_OnDemand,
                   secondHandler: () {
                     PreferenceService().signMessages = SignMessages.OnDemand;
                     PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
                     setState(() {});
                   },
-                  thirdString: "Always",
-                  thirdDescriptionString: "A signature is added to all messages automatically without asking you.",
+                  thirdString: l10n.settings_signMessages_Always,
+                  thirdDescriptionString: l10n.settings_signMessagesDescription_Always,
                   thirdHandler: () {
                     PreferenceService().signMessages = SignMessages.Always;
                     PreferenceService().setInt(PreferenceService.PREF_SIGN_ALL_MESSAGES, PreferenceService().signMessages.index);
@@ -205,7 +183,7 @@ class _SettingsPageState extends State<SettingsPage> {
               description: Text("Save your user identity, all ongoing and finished matches and all achievements"),
               onPressed: (_) {
                 BackupRestoreService().backup(
-                        (message) => toastInfo(context, message ?? "Done!"),
+                        (message) => toastInfo(context, message ?? l10n.done + "!"),
                         (message) => toastLost(context, message));
               },
             ),
@@ -235,7 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 showChoiceDialog("Choose a way how to share your public key:",
                     firstString: 'As JWK format',
                     firstHandler: () {
-                      final publicKeyData = Base64Codec.urlSafe().decoder.convert(user.id);
+                      final publicKeyData = Base64Codec().decoder.convert(user.id);
                       final publicKey = SimplePublicKey(publicKeyData, type: KeyPairType.ed25519);
                       final jwk = Jwk.fromPublicKey(publicKey);
                       final json = jwk.toJson();
@@ -244,7 +222,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                     secondString: 'As PEM format',
                     secondHandler: () {
-                      final publicKey = Base64Codec.urlSafe().decoder.convert(user.id);
+                      final publicKey = Base64Codec().decoder.convert(user.id);
                       final pemBlock = PemCodec(PemLabel.publicKey).encode(publicKey);
                       SharePlus.instance.share(
                           ShareParams(text: pemBlock, subject: 'Public Key PEM from ${toReadableId(user.id)}'));
@@ -280,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
                 child: Padding(padding: EdgeInsets.all(32),
-                  child: Text("Your User-Id: ${toReadableId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
+                  child: Text("User-Id: ${toReadableId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
               )),
 
             const CustomSettingsTile(child: SizedBox(height: 36)),

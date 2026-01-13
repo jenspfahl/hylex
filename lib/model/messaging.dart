@@ -11,6 +11,7 @@ import 'package:hyle_x/model/play.dart';
 import 'package:hyle_x/model/user.dart';
 import 'package:hyle_x/utils/crypto.dart';
 
+import '../l10n/app_localizations.dart';
 import 'chip.dart';
 import 'common.dart';
 import 'coordinate.dart';
@@ -423,14 +424,14 @@ class SerializedMessage {
 
   signMessage(String publicKeyBase64, String privateKeyBase64) async {
     final message = payload + signature;
-    final publicKey = Base64Codec.urlSafe().decode(publicKeyBase64);
-    final privateKey = Base64Codec.urlSafe().decode(privateKeyBase64);
+    final publicKey = Base64Codec().decode(Base64Codec().normalize(publicKeyBase64));
+    final privateKey = Base64Codec().decode(Base64Codec().normalize(privateKeyBase64));
     final keyPair = SimpleKeyPairData(
         privateKey,
         publicKey: SimplePublicKey(publicKey, type: KeyPairType.ed25519),
         type: KeyPairType.ed25519);
     final authSig = await sign(message.codeUnits, keyPair);
-    final authSigBase64 = Base64Codec.urlSafe().encode(authSig.bytes);
+    final authSigBase64 = Base64Codec().encode(authSig.bytes).toUrlSafe();
     auth = authSigBase64;
   }
 
@@ -473,6 +474,7 @@ class SerializedMessage {
   Future<(Message?, String?)> deserialize(
       CommunicationContext comContext,
       String? remotePublicKey,
+      [BuildContext? buildContext]
       ) async {
 
     final payloadBuffer = _createBufferFromPayload();
@@ -480,6 +482,7 @@ class SerializedMessage {
     final errorMessage = _validateSignature(
         payloadBuffer,
         comContext,
+        buildContext,
         comparingSignatureBase64: signature);
     if (errorMessage != null) {
       return (null, errorMessage);
@@ -569,15 +572,15 @@ List<int> createSignature(
       String? previousSignatureBase64,
     }) {
   final previousSignature = previousSignatureBase64 != null
-      ? Base64Codec.urlSafe().decoder.convert(previousSignatureBase64)
+      ? Base64Codec().decoder.convert(Base64Codec().normalize(previousSignatureBase64))
       : (userSeed??"").codeUnits;
   final signature = sha256.convert(blob + previousSignature);
   return signature.bytes.take(6).toList();
 }
 
 Future<bool> _verifyAuth(List<int> blob, String sig, String publicKey) async {
-  final sigBytes = Base64Codec.urlSafe().decode(sig);
-  final publicKeyBytes = Base64Codec.urlSafe().decode(publicKey);
+  final sigBytes = Base64Codec().decode(Base64Codec().normalize(sig));
+  final publicKeyBytes = Base64Codec().decode(Base64Codec().normalize(publicKey));
   return verify(blob, Signature(
       sigBytes,
       publicKey: SimplePublicKey(
@@ -589,13 +592,16 @@ Future<bool> _verifyAuth(List<int> blob, String sig, String publicKey) async {
 String? _validateSignature(
     BitBuffer payloadBuffer,
     CommunicationContext comContext,
+    BuildContext? buildContext,
     {
         required String comparingSignatureBase64,
         String? userSeed
     }) {
+  final l10n = buildContext != null ? AppLocalizations.of(buildContext) : null;
+
   if (comContext.predecessorMessage?.signature == comparingSignatureBase64) {
     print("Message with signature $comparingSignatureBase64 already processed");
-    return "This link has already been processed.";
+    return l10n?.error_linkAlreadyProcessed;
   }
   if (comContext.roundTripSignature == null) {
     print("No validation for first chain element");
@@ -623,11 +629,11 @@ String? _validateSignature(
     }
     if (alreadyProcessed != null) {
       if (alreadyProcessed.channel == Channel.Out) {
-        return "This link was intended for your opponent, not for you!$additionalInfo";
+        return l10n?.error_linkIntendedForOpponent??"" + additionalInfo;
       }
-      return "This link with was already processed by you!$additionalInfo";
+      return l10n?.error_linkAlreadyProcessed??"" + additionalInfo;
     }
-    return "This link is not the latest of the current match.$additionalInfo";
+    return l10n?.error_linkIsNotTheLatest??"" + additionalInfo;
   }
   else {
     return null;

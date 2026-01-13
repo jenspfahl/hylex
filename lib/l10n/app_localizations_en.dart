@@ -514,6 +514,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error_cameraPermissionNeeded => 'Camera permission is required to scan QR codes!';
 
   @override
+  String get error_linkAlreadyProcessed => 'This link has already been processed.';
+
+  @override
+  String get error_linkIntendedForOpponent => 'This link was intended for your opponent, not for you!';
+
+  @override
+  String get error_linkIsNotTheLatest => 'This link is not the latest of the match.';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get settings_commonSettings => 'General Settings';
+
+  @override
+  String get settings_gameSettings => 'Game Settings';
+
+  @override
+  String get settings_showCoordinates => 'Show coordinates';
+
+  @override
+  String get settings_showCoordinatesDescription => 'Show coordinates on the X and Y axes in the playing field.';
+
+  @override
+  String get settings_showPointsForOrder => 'Show points for Order';
+
+  @override
+  String get settings_showPointsForOrderDescription => 'Shows the points per chip that Order has achieved so far.';
+
+  @override
+  String get settings_showHints => 'Show hints';
+
+  @override
+  String get settings_showHintsDescription => 'Shows hints that help guide what to do next in the game.';
+
+  @override
+  String get settings_showMoveErrors => 'Show move errors';
+
+  @override
+  String get settings_showMoveErrorsDescription => 'Shows an error if chips are moved or placed incorrectly.';
+
+  @override
+  String get settings_multiplayerSettings => 'Multiplayer Settings';
+
+  @override
+  String settings_changeYourName(Object name) {
+    return 'Change your name \'$name\'';
+  }
+
+  @override
+  String get settings_setYourName => 'Set your name';
+
+  @override
+  String get settings_setOrChangeYourNameDescription => 'Your name will be displayed in messages to your opponents.';
+
+  @override
+  String get settings_signMessages => 'Sign messages';
+
+  @override
+  String get settings_signMessagesDescription => 'Messages you send in multiplayer games are cryptographically signed.';
+
+  @override
+  String get settings_signMessagesExplanation => 'Sign your messages with your public key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.';
+
+  @override
+  String get settings_signMessages_Never => 'Never';
+
+  @override
+  String get settings_signMessagesDescription_Never => 'Messages will NOT be signed.';
+
+  @override
+  String get settings_signMessages_OnDemand => 'On Request';
+
+  @override
+  String get settings_signMessagesDescription_OnDemand => 'Messages will only be signed when necessary and will be asked before each send.';
+
+  @override
+  String get settings_signMessages_Always => 'Always';
+
+  @override
+  String get settings_signMessagesDescription_Always => 'Messages will be signed without asking.';
+
+  @override
   String get matchMenu_matchInfo => 'Match info';
 
   @override

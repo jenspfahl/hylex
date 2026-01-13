@@ -1,10 +1,21 @@
 
 import 'dart:ui';
 
+import 'package:hyle_x/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-enum SignMessages{Never, OnDemand, Always}
+enum SignMessages {
+  Never, OnDemand, Always;
+
+  String getName(AppLocalizations l10n) {
+    return switch(this) {
+      SignMessages.Never => l10n.settings_signMessages_Never,
+      SignMessages.OnDemand => l10n.settings_signMessages_OnDemand,
+      SignMessages.Always => l10n.settings_signMessages_Always,
+    };
+  }
+}
 
 class PreferenceService {
 

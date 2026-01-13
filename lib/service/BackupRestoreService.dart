@@ -97,8 +97,6 @@ class BackupRestoreService {
         await dstFile.writeAsString(data + "/" + signatureBase64);
 
         successHandler(dstFile.path);
-      } else {
-        errorHandler("missing selection");
       }
     } on Exception catch (e) {
       errorHandler("Cannot export data! " + e.toString());

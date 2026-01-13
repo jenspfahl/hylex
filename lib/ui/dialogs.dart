@@ -40,7 +40,7 @@ void showAlertDialog(String text,
   Future.delayed(Duration(seconds: text.length * 50)).then((_) => SmartDialog.dismiss());
 }
 
-void confirmOrDo(bool confirmCondition, MaterialLocalizations l10n, String confirmText, Function() doHandler) {
+void confirmOrDo(bool confirmCondition, String confirmText, MaterialLocalizations l10n, Function() doHandler) {
   if (confirmCondition) {
     confirm(confirmText, l10n, () {
       doHandler();

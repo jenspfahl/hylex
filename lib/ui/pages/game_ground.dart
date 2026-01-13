@@ -61,7 +61,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   bool _changeAutoPlayLock = false;
 
-  get l10n => AppLocalizations.of(context)!;
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
 
   @override
@@ -794,13 +794,13 @@ class _HyleXGroundState extends State<HyleXGround> {
               return;
             }
             if (gameEngine.play.currentRole == Role.Chaos && !isDirty) {
-              toastInfo(context, l10n.errors_chaosHasToPlace);
+              toastInfo(context, l10n.error_chaosHasToPlace);
               return;
             }
 
             final skipMove = !isDirty && gameEngine.play.currentRole == Role.Order;
             if (gameEngine.play.multiPlay && skipMove) {
-              ask(l10n.dialogs_skipMove, l10n, () async {
+              ask(l10n.dialog_skipMove, l10n, () async {
                 gameEngine.play.applyStaleMove(Move.skipped());
                 gameEngine.play.commitMove();
                 gameEngine.nextPlayer();
@@ -852,13 +852,13 @@ class _HyleXGroundState extends State<HyleXGround> {
     if (PreferenceService().showHints) {
       if (gameEngine.play.header.state ==
           PlayState.FirstGameFinished_ReadyToSwap) {
-        appendix = "➤ ${l10n.requests_swapRoles}";
+        appendix = "➤ ${l10n.hint_swapRoles}";
       }
       else if (gameEngine.play.currentRole == Role.Order) {
-        appendix = "➤ ${l10n.requests_orderToMove}";
+        appendix = "➤ ${l10n.hint_orderToMove}";
       }
       else if (gameEngine.play.currentRole == Role.Chaos) {
-        appendix = "➤ ${l10n.requests_chaosToPlace}";
+        appendix = "➤ ${l10n.hint_chaosToPlace}";
       }
     }
 
@@ -881,7 +881,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
     else {
       return _replaceWithChipIcon(null,
-          l10n.gameState_waitingForPlayerToPlace(gameEngine.play.currentRole.name),
+          l10n.gameState_waitingForPlayerToPlace("{chip}", gameEngine.play.currentRole.name),
           gameEngine.play.currentChip);
     }
   }
@@ -1349,13 +1349,13 @@ class _HyleXGroundState extends State<HyleXGround> {
         const Divider(),
 
 
-        _buildGameInfoRow(l10n.matchMenu_startedAt, format(play.startDate, languageCode)),
+        _buildGameInfoRow(l10n.matchMenu_startedAt, format(play.startDate, l10n, languageCode)),
         if (play.header.lastTimestamp != null)
           _buildGameInfoRow(l10n.matchMenu_lastActivity, format(play.header.lastTimestamp!, l10n, languageCode)),
         if (play.endDate != null  && play.header.state.isFinal)
           _buildGameInfoRow(l10n.matchMenu_finishedAt, format(play.endDate!, l10n, languageCode)),
         if (play.header.state.toMessage(l10n).length > 20)
-          _buildGameInfoWrap(l10n.matchMenu_matchMenu.status, play.header.state.toMessage(l10n))
+          _buildGameInfoWrap(l10n.matchMenu_status, play.header.state.toMessage(l10n))
         else
           _buildGameInfoRow(l10n.matchMenu_status, play.header.state.toMessage(l10n)),
 
@@ -1425,7 +1425,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                 child: SingleChildScrollView(
                   child: Center(
                     child: Column(children: [
-                      Text(l10n.gameStates_firstGameState),
+                      Text(l10n.gameState_firstGameState),
                       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                         buildRoleIndicator(Role.Chaos, playerType: chaosPlayerType, isSelected: false, backgroundColor: Colors.white),
                         buildRoleIndicator(Role.Order, playerType: orderPlayerType, isSelected: false, backgroundColor: Colors.white, points: orderPoints),
