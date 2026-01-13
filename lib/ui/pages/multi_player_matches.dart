@@ -449,7 +449,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
       case SortOrder.BY_OPPONENT:
-        return list.sortedBy((e) => "${e.opponentName ?? e.opponentId??"---"}-${(100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
+        return list.sortedBy((e) => "${e.opponentName?.toUpperCase() ?? (e.opponentId != null ? toReadableId(e.opponentId!) : "        ")}-${(100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
 
     }
   }
