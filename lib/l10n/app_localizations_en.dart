@@ -56,6 +56,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get today => 'Today';
 
   @override
+  String get unknown => 'unknown';
+
+  @override
   String get startMenu_singlePlay => 'Single Play';
 
   @override
@@ -706,6 +709,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get matchList_sortByMatchIdDesc => 'Alphabetically sorted by Match ID for faster match finding';
+
+  @override
+  String get matchList_sortByOpponentTitle => 'Opponent';
+
+  @override
+  String get matchList_sortByOpponentDesc => 'Alphabetically sorted and grouped by the opponent of the matches';
 
   @override
   String get matchListGroup_actionNeeded => 'Action required';

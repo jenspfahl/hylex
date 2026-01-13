@@ -10,6 +10,7 @@ import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
+import 'package:hyle_x/utils/fortune.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../model/common.dart';
@@ -23,7 +24,7 @@ import 'game_ground.dart';
 
 GlobalKey<MultiPlayerMatchesState> globalMultiPlayerMatchesKey = GlobalKey();
 
-enum SortOrder {BY_PLAY_ID, BY_STATE, BY_LATEST}
+enum SortOrder {BY_PLAY_ID, BY_STATE, BY_LATEST, BY_OPPONENT}
 
 class MultiPlayerMatches extends StatefulWidget {
 
@@ -39,13 +40,13 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   late SortOrder _sortOrder;
 
-  Map<PlayStateGroup, bool> _hideGroup = HashMap();
+  Map<String, bool> _hideGroup = HashMap();
 
   @override
   void initState() {
     super.initState();
 
-    PlayStateGroup.values.forEach((group) => _hideGroup[group] = group.isFinal);
+    PlayStateGroup.values.forEach((group) => _hideGroup[group.name] = group.isFinal);
 
     _sortOrder = SortOrder.BY_STATE;
     PreferenceService().getInt(PreferenceService.PREF_MATCH_SORT_ORDER)
@@ -73,7 +74,8 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                 icon: const Icon(Icons.sort),
                 onPressed: () {
                   showChoiceDialog(l10n.matchList_sortBy + ":",
-                      width: 260,
+                      width: 350,
+                      height: 500,
                       firstString: l10n.matchList_sortByCurrentStatusTitle,
                       firstDescriptionString: l10n.matchList_sortByCurrentStatusDesc,
                       firstHandler: () => _triggerSort(SortOrder.BY_STATE),
@@ -83,7 +85,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       thirdString: l10n.matchList_sortByMatchIdTitle,
                       thirdDescriptionString: l10n.matchList_sortByMatchIdDesc,
                       thirdHandler: () => _triggerSort(SortOrder.BY_PLAY_ID),
-                    highlightButtonIndex: _sortOrder == SortOrder.BY_STATE ? 0 : _sortOrder == SortOrder.BY_LATEST ? 1: 2
+                      fourthString: l10n.matchList_sortByOpponentTitle,
+                      fourthDescriptionString: l10n.matchList_sortByOpponentDesc,
+                      fourthHandler: () => _triggerSort(SortOrder.BY_OPPONENT),
+                    highlightButtonIndex: _sortOrder == SortOrder.BY_STATE ? 0 : _sortOrder == SortOrder.BY_LATEST ? 1: _sortOrder == SortOrder.BY_PLAY_ID ? 2 : 3
                   );
                 }),
           ],
@@ -93,52 +98,73 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               future: StorageService().loadAllPlayHeaders(),
               builder: (BuildContext context,
                   AsyncSnapshot<List<PlayHeader>> snapshot) {
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final sorted = _sort(snapshot.data!);
-
-                if (_sortOrder == SortOrder.BY_STATE) {
-                  return SingleChildScrollView(
-                    child: Container(
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .surface,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Column(
-                          children: [
-                            _buildPlayGroupSection(l10n.matchListGroup_actionNeeded, sorted, PlayStateGroup.TakeAction),
-                            _buildPlayGroupSection(l10n.matchListGroup_waitForOpponent, sorted, PlayStateGroup.AwaitOpponentAction),
-                            _buildPlayGroupSection(l10n.matchListGroup_wonMatches, sorted, PlayStateGroup.FinishedAndWon),
-                            _buildPlayGroupSection(l10n.matchListGroup_lostMatches, sorted, PlayStateGroup.FinishedAndLost),
-                            _buildPlayGroupSection(l10n.matchListGroup_rejectedMatches, sorted, PlayStateGroup.Other),
-                          ],
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  final sorted = _sort(snapshot.data!);
+          
+                  if (_sortOrder == SortOrder.BY_STATE) {
+                    return SingleChildScrollView(
+                      child: Container(
+                        color: Theme
+                            .of(context)
+                            .colorScheme
+                            .surface,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: [
+                              _buildPlayGroupSection(l10n.matchListGroup_actionNeeded, null,
+                                  sorted.where((e) => e.state.group == PlayStateGroup.TakeAction).toList(), PlayStateGroup.TakeAction.name),
+                              _buildPlayGroupSection(l10n.matchListGroup_waitForOpponent, null,
+                                  sorted.where((e) => e.state.group == PlayStateGroup.AwaitOpponentAction).toList(), PlayStateGroup.AwaitOpponentAction.name),
+                              _buildPlayGroupSection(l10n.matchListGroup_wonMatches, null,
+                                  sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndWon).toList(), PlayStateGroup.FinishedAndWon.name),
+                              _buildPlayGroupSection(l10n.matchListGroup_lostMatches, null,
+                                  sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndLost).toList(), PlayStateGroup.FinishedAndLost.name),
+                              _buildPlayGroupSection(l10n.matchListGroup_rejectedMatches, null,
+                                  sorted.where((e) => e.state.group == PlayStateGroup.Other).toList(), PlayStateGroup.Other.name),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
-                else {
-                  return SingleChildScrollView(
-                    child: Container(
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .surface,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          children: sorted.map(_buildPlayLine).toList(),
+                    );
+                  }
+                  else if (_sortOrder == SortOrder.BY_OPPONENT) {
+                    return SingleChildScrollView(
+                      child: Container(
+                        color: Theme
+                            .of(context)
+                            .colorScheme
+                            .surface,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: _getOpponentGroups(sorted, l10n),
+                          ),
                         ),
                       ),
-                    ),
-                  );
+                    );
+                  }
+                  else {
+                    return SingleChildScrollView(
+                      child: Container(
+                        color: Theme
+                            .of(context)
+                            .colorScheme
+                            .surface,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            children: sorted.map(_buildPlayLine).toList(),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
                 }
-              }
-              else if (snapshot.hasError) {
-                print("loading error: ${snapshot.error}");
-                return Center(child: Text("${l10n.matchList_errorDuringLoading}\n${snapshot.error}"));
-              }
+                else if (snapshot.hasError) {
+                  print("loading error: ${snapshot.error}");
+                  return Center(child: Text("${l10n.matchList_errorDuringLoading}\n${snapshot.error}"));
+                }
                 else {
                   return Center(child: Text(l10n.matchList_nothingFound));
                 }
@@ -148,12 +174,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   }
 
-  Widget _buildPlayGroupSection(String title, List<PlayHeader> sorted, PlayStateGroup group) {
-    final groupData = sorted.where((e) => e.state.group == group);
+  Widget _buildPlayGroupSection(String title, String? subTitle, List<PlayHeader> groupData, String groupIdentifier) {
     if (groupData.isEmpty) {
       return Container();
     }
-    if (_hideGroup[group] == true) {
+    if (_hideGroup[groupIdentifier] == true) {
       title += " (${groupData.length})";
     }
 
@@ -168,23 +193,29 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                    child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        if (subTitle != null) Text(subTitle, style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+                      ],
+                    ),
                   onTap: () {
                     setState(() {
-                      _hideGroup[group] = !(_hideGroup[group]??false);
+                      _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
                     });
                   },
                 ),
-                IconButton(icon: _hideGroup[group] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
+                IconButton(icon: _hideGroup[groupIdentifier] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
                   onPressed: () {
                     setState(() {
-                      _hideGroup[group] = !(_hideGroup[group]??false);
+                      _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
                     });
                   }),
               ],
             ),
           ),
-          if (_hideGroup[group] != true)
+          if (_hideGroup[groupIdentifier] != true)
             Column(
               children: groupData.map(_buildPlayLine).toList(),
           )
@@ -417,6 +448,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         return list.sortedBy((e) => "${(e.state.group.index * 100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
+      case SortOrder.BY_OPPONENT:
+        return list.sortedBy((e) => "${e.opponentName ?? e.opponentId??"---"}-${(100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
+
     }
   }
 
@@ -432,6 +466,30 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       _sortOrder = sortOrder;
     });
     PreferenceService().setInt(PreferenceService.PREF_MATCH_SORT_ORDER, sortOrder.index);
+  }
+
+  List<Widget> _getOpponentGroups(List<PlayHeader> headers, AppLocalizations l10n) {
+    
+    final groupedByOpponentId = HashMap<String?, List<PlayHeader>>();
+
+    headers.forEach((header) {
+      final group = groupedByOpponentId[header.opponentId];
+      if (group == null) {
+        groupedByOpponentId[header.opponentId] = [header];
+      }
+      else {
+        group.add(header);
+      }
+    });
+
+    return groupedByOpponentId.entries.map((entry) {
+      final opponentId = entry.key;
+      final group = groupedByOpponentId[opponentId]??[];
+      final opponentName = group.firstOrNull?.opponentName;
+      return _buildPlayGroupSection((opponentName ?? "- ${l10n.unknown} -"), opponentId != null ? toReadableId(opponentId) : null, group, opponentId ?? "sdfsdfsdf");
+    }).toList();
+
+    
   }
 
 

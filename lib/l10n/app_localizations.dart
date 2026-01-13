@@ -185,6 +185,12 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get today;
 
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'unknown'**
+  String get unknown;
+
   /// No description provided for @startMenu_singlePlay.
   ///
   /// In en, this message translates to:
@@ -1396,6 +1402,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alphabetically sorted by Match ID for faster match finding'**
   String get matchList_sortByMatchIdDesc;
+
+  /// No description provided for @matchList_sortByOpponentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opponent'**
+  String get matchList_sortByOpponentTitle;
+
+  /// No description provided for @matchList_sortByOpponentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetically sorted and grouped by the opponent of the matches'**
+  String get matchList_sortByOpponentDesc;
 
   /// No description provided for @matchListGroup_actionNeeded.
   ///

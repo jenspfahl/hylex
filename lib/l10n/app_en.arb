@@ -14,6 +14,7 @@
   "as": "as",
   "yesterday": "Yesterday",
   "today": "Today",
+  "unknown": "unknown",
 
   "startMenu_singlePlay": "Single Play",
   "startMenu_multiPlay": "Multiplayer",
@@ -254,6 +255,8 @@
   "matchList_sortByRecentlyPlayedDesc": "Most recently played match at the top",
   "matchList_sortByMatchIdTitle": "Match ID",
   "matchList_sortByMatchIdDesc": "Alphabetically sorted by Match ID for faster match finding",
+  "matchList_sortByOpponentTitle": "Opponent",
+  "matchList_sortByOpponentDesc": "Alphabetically sorted and grouped by the opponent of the matches",
   "matchListGroup_actionNeeded" : "Action required",
   "matchListGroup_waitForOpponent" : "Wait for opponent",
   "matchListGroup_wonMatches" : "Won matches",

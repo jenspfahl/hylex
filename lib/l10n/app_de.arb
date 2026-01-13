@@ -14,6 +14,7 @@
   "as": "als",
   "yesterday": "Gestern",
   "today": "Heute",
+  "unknown": "unbekannt",
 
   "startMenu_singlePlay": "Einfaches Spiel",
   "startMenu_multiPlay": "Mehrspieler",
@@ -247,7 +248,8 @@
   "matchList_sortByRecentlyPlayedDesc" : "Das zuletzt gespielte Match steht oben",
   "matchList_sortByMatchIdTitle" : "Match-ID",
   "matchList_sortByMatchIdDesc" : "Alphabetisch sortiert nach der Match-ID, um Matches schneller zu finden",
-
+  "matchList_sortByOpponentTitle": "Gegner",
+  "matchList_sortByOpponentDesc": "Alphabetisch sortiert und gruppiert nach dem Namen der Gegner",
   "matchListGroup_actionNeeded" : "Aktion erforderlich",
   "matchListGroup_waitForOpponent" : "Warte auf Gegner",
   "matchListGroup_wonMatches" : "Gewonnene Matches",
