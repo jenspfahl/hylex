@@ -588,13 +588,46 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settings_signMessages_OnDemand => 'Auf Anfrage';
 
   @override
-  String get settings_signMessagesDescription_OnDemand => 'Nachrichten werden nur bei Bedarf signiert und vor jedem senden wird danach gefragt.';
+  String get settings_signMessagesDescription_OnDemand => 'Nachrichten werden nur bei Bedarf signiert und vor jedem Senden wird danach gefragt.';
 
   @override
   String get settings_signMessages_Always => 'Immer';
 
   @override
   String get settings_signMessagesDescription_Always => 'Nachrichten werden signiert, ohne danach zu fragen.';
+
+  @override
+  String get settings_backupAndRestore => 'Sichern und Wiederherstellen';
+
+  @override
+  String get settings_backupAll => 'Alles in einer Datei sichern';
+
+  @override
+  String get settings_backupAllDescription => 'Ihre Spieleridentität, alle laufenden und abgeschlossenen Spiele sowie alle Erfolge werden in einer Sicherungsdatei gespeichert.';
+
+  @override
+  String get settings_restoreFromFile => 'Aus einer Sicherungsdatei wiederherstellen';
+
+  @override
+  String get settings_restoreFromFileDescription => 'Zum Beispiel kannst du nach einer Neuinstallation der App eine zuvor erstellte Sicherungsdatei importieren.';
+
+  @override
+  String get settings_restoreFromFileConfirmation => 'Beim Wiederherstellen aus einer Datei werden alle aktuellen Daten überschrieben! Fortfahren?';
+
+  @override
+  String get settings_sharePublicKey => 'Öffentlichen Schlüssel teilen';
+
+  @override
+  String get settings_sharePublicKeyDescription => 'Wenn du deine Nachricht signierest, kann es erforderlich sein, deinen öffentlichen Schlüssel mit anderen zu teilen.';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat => 'Wähle ein Format zum Teilen des öffentlichen Schlüssels:';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat_JWK => 'Im JWK-Format';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat_PEM => 'Im PEM-Format';
 
   @override
   String get matchMenu_matchInfo => 'Spielinfos';

@@ -1175,6 +1175,72 @@ abstract class AppLocalizations {
   /// **'Messages will be signed without asking.'**
   String get settings_signMessagesDescription_Always;
 
+  /// No description provided for @settings_backupAndRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup and Restore'**
+  String get settings_backupAndRestore;
+
+  /// No description provided for @settings_backupAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up everything to one file'**
+  String get settings_backupAll;
+
+  /// No description provided for @settings_backupAllDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your player identity, all current and completed matches, and all achievements will be saved to a backup file.'**
+  String get settings_backupAllDescription;
+
+  /// No description provided for @settings_restoreFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a backup file'**
+  String get settings_restoreFromFile;
+
+  /// No description provided for @settings_restoreFromFileDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, after reinstalling the app, you can import a previously created backup file.'**
+  String get settings_restoreFromFileDescription;
+
+  /// No description provided for @settings_restoreFromFileConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring from a file will overwrite all current data! Continue?'**
+  String get settings_restoreFromFileConfirmation;
+
+  /// No description provided for @settings_sharePublicKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your public key'**
+  String get settings_sharePublicKey;
+
+  /// No description provided for @settings_sharePublicKeyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'When signing your messages, you may be required to share your public key with others.'**
+  String get settings_sharePublicKeyDescription;
+
+  /// No description provided for @settings_sharePublicKeyChooseFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a format to share your public key:'**
+  String get settings_sharePublicKeyChooseFormat;
+
+  /// No description provided for @settings_sharePublicKeyChooseFormat_JWK.
+  ///
+  /// In en, this message translates to:
+  /// **'In JWK format'**
+  String get settings_sharePublicKeyChooseFormat_JWK;
+
+  /// No description provided for @settings_sharePublicKeyChooseFormat_PEM.
+  ///
+  /// In en, this message translates to:
+  /// **'In PEM format'**
+  String get settings_sharePublicKeyChooseFormat_PEM;
+
   /// No description provided for @matchMenu_matchInfo.
   ///
   /// In en, this message translates to:

@@ -105,7 +105,7 @@ class BackupRestoreService {
 
   }
 
-  Future<void> restore(Function(bool) successHandler, Function(String) errorHandler) async {
+  Future<void> restore(Function() successHandler, Function(String) errorHandler) async {
 
     try {
       final result = await FilePicker.platform.pickFiles();
@@ -181,9 +181,7 @@ class BackupRestoreService {
         }
 
 
-        successHandler(true);
-      } else {
-        successHandler(false);
+        successHandler();
       }
     } catch (e) {
       errorHandler("Cannot import backup file!");

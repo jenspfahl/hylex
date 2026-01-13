@@ -175,12 +175,12 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
 
         SettingsSection(
-          title: Text('Backup / Restore', style: TextStyle(color: Colors.brown[800])),
+          title: Text(l10n.settings_backupAndRestore, style: TextStyle(color: Colors.brown[800])),
           tiles: [
             SettingsTile(
               leading: Icon(Icons.download, color: Colors.brown[800]),
-              title: Text("Backup all into a file"),
-              description: Text("Save your user identity, all ongoing and finished matches and all achievements"),
+              title: Text(l10n.settings_backupAll),
+              description: Text(l10n.settings_backupAllDescription),
               onPressed: (_) {
                 BackupRestoreService().backup(
                         (message) => toastInfo(context, message ?? l10n.done + "!"),
@@ -189,15 +189,15 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             SettingsTile(
               leading: Icon(Icons.upload_file, color: Colors.brown[800]),
-              title: Text("Restore from a file"),
-              description: Text("Usually after re-installation of the app, you can import a previously created backup file"),
+              title: Text(l10n.settings_restoreFromFile),
+              description: Text(l10n.settings_restoreFromFileDescription),
               onPressed: (_) {
-                ask("Restoring from a file will overwrite all current data! Are you sure to do this:",
+                ask(l10n.settings_restoreFromFileConfirmation,
                     AppLocalizations.of(context)!,
                     icon: Icons.warning,
                     () {
                       BackupRestoreService().restore(
-                              (b) => toastInfo(context, b ? "Done!" : "Error!"),
+                              () => toastInfo(context,"${l10n.done}!"),
                               (message) => toastLost(context, message));
                     });
 
@@ -207,11 +207,11 @@ class _SettingsPageState extends State<SettingsPage> {
             SettingsTile(
               enabled: user.hasSigningCapability(),
               leading: Icon(Icons.key, color: Colors.brown[800]),
-              title: Text("Share your public key"),
-              description: Text("If you sign your message, it could be necessary to share your public key with others."),
+              title: Text(l10n.settings_sharePublicKey),
+              description: Text(l10n.settings_sharePublicKeyDescription),
               onPressed: (_) {
-                showChoiceDialog("Choose a way how to share your public key:",
-                    firstString: 'As JWK format',
+                showChoiceDialog(l10n.settings_sharePublicKeyChooseFormat,
+                    firstString: l10n.settings_sharePublicKeyChooseFormat_JWK,
                     firstHandler: () {
                       final publicKeyData = Base64Codec().decoder.convert(user.id);
                       final publicKey = SimplePublicKey(publicKeyData, type: KeyPairType.ed25519);
@@ -220,14 +220,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       SharePlus.instance.share(
                           ShareParams(text: json.toString(), subject: 'Public Key JWK from ${toReadableId(user.id)}'));
                     },
-                    secondString: 'As PEM format',
+                    secondString: l10n.settings_sharePublicKeyChooseFormat_PEM,
                     secondHandler: () {
                       final publicKey = Base64Codec().decoder.convert(user.id);
                       final pemBlock = PemCodec(PemLabel.publicKey).encode(publicKey);
                       SharePlus.instance.share(
                           ShareParams(text: pemBlock, subject: 'Public Key PEM from ${toReadableId(user.id)}'));
                     },
-                    fourthString: "Close",
+                    fourthString: l10n.close,
                     fourthHandler: () {}
                 );
 

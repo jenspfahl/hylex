@@ -208,7 +208,17 @@
   "settings_signMessagesDescription_OnDemand": "Nachrichten werden nur bei Bedarf signiert und vor jedem Senden wird danach gefragt.",
   "settings_signMessages_Always": "Immer",
   "settings_signMessagesDescription_Always": "Nachrichten werden signiert, ohne danach zu fragen.",
-
+  "settings_backupAndRestore": "Sichern und Wiederherstellen",
+  "settings_backupAll": "Alles in einer Datei sichern",
+  "settings_backupAllDescription": "Ihre Spieleridentität, alle laufenden und abgeschlossenen Spiele sowie alle Erfolge werden in einer Sicherungsdatei gespeichert.",
+  "settings_restoreFromFile": "Aus einer Sicherungsdatei wiederherstellen",
+  "settings_restoreFromFileDescription": "Zum Beispiel kannst du nach einer Neuinstallation der App eine zuvor erstellte Sicherungsdatei importieren.",
+  "settings_restoreFromFileConfirmation": "Beim Wiederherstellen aus einer Datei werden alle aktuellen Daten überschrieben! Fortfahren?",
+  "settings_sharePublicKey": "Öffentlichen Schlüssel teilen",
+  "settings_sharePublicKeyDescription": "Wenn du deine Nachricht signierest, kann es erforderlich sein, deinen öffentlichen Schlüssel mit anderen zu teilen.",
+  "settings_sharePublicKeyChooseFormat": "Wähle ein Format zum Teilen des öffentlichen Schlüssels:",
+  "settings_sharePublicKeyChooseFormat_JWK": "Im JWK-Format",
+  "settings_sharePublicKeyChooseFormat_PEM": "Im PEM-Format",
   
   "matchMenu_matchInfo": "Spielinfos",
   "matchMenu_showFirstGame": "Ergebnis des ersten Spiels",

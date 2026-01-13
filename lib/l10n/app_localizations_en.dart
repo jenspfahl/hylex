@@ -597,6 +597,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_signMessagesDescription_Always => 'Messages will be signed without asking.';
 
   @override
+  String get settings_backupAndRestore => 'Backup and Restore';
+
+  @override
+  String get settings_backupAll => 'Back up everything to one file';
+
+  @override
+  String get settings_backupAllDescription => 'Your player identity, all current and completed matches, and all achievements will be saved to a backup file.';
+
+  @override
+  String get settings_restoreFromFile => 'Restore from a backup file';
+
+  @override
+  String get settings_restoreFromFileDescription => 'For example, after reinstalling the app, you can import a previously created backup file.';
+
+  @override
+  String get settings_restoreFromFileConfirmation => 'Restoring from a file will overwrite all current data! Continue?';
+
+  @override
+  String get settings_sharePublicKey => 'Share your public key';
+
+  @override
+  String get settings_sharePublicKeyDescription => 'When signing your messages, you may be required to share your public key with others.';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat => 'Choose a format to share your public key:';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat_JWK => 'In JWK format';
+
+  @override
+  String get settings_sharePublicKeyChooseFormat_PEM => 'In PEM format';
+
+  @override
   String get matchMenu_matchInfo => 'Match info';
 
   @override
