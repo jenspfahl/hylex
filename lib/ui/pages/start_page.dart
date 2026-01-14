@@ -62,6 +62,8 @@ class StartPageState extends State<StartPage> {
   late StreamSubscription<Uri> _uriLinkStreamSub;
   late StreamSubscription _intentSub;
 
+  bool _justStarted = true;
+
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
 
@@ -899,26 +901,29 @@ class StartPageState extends State<StartPage> {
 
   Widget _buildGameLogo(double size) {
     const chipPadding = 1.0;
-    return Column(children: [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildChip("H", size, size, chipPadding, 4),
-          _buildChip("Y", size, size, chipPadding, 5),
-          Text("X",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.bold))
-        ],
-      ),
-      Row(
-        children: [
-          _buildChip("L", size, size, chipPadding, 7),
-          _buildChip("E", size, size, chipPadding, 8),
-        ],
-      ),
-    ]);
+    return GestureDetector(
+      onTap: () => setState(() => _justStarted = false),
+      child: Column(children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildChip("H", size, size, chipPadding, _justStarted ? 4 : diceInt(maxDimension + 1)),
+            _buildChip("Y", size, size, chipPadding, _justStarted ? 5 : diceInt(maxDimension + 1)),
+            Text("X",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.bold))
+          ],
+        ),
+        Row(
+          children: [
+            _buildChip("L", size, size, chipPadding, _justStarted ? 7 : diceInt(maxDimension + 1)),
+            _buildChip("E", size, size, chipPadding, _justStarted ? 8 : diceInt(maxDimension + 1)),
+          ],
+        ),
+      ]),
+    );
   }
 
   _showAchievementDialog() {
