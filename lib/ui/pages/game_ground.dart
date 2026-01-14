@@ -710,7 +710,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                         () {
 
                       if (gameEngine.play.header.successorPlayId != null) {
-                        showChoiceDialog(l10n.dialog_askForRematchAgain(toReadableId(gameEngine.play.header.successorPlayId!)),
+                        showChoiceDialog(l10n.dialog_askForRematchAgain(toReadablePlayId(gameEngine.play.header.successorPlayId!)),
                             firstString: l10n.dialog_askAgain,
                             firstHandler: () {
                               globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
@@ -1347,7 +1347,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         if (play.header.opponentName != null)
           _buildGameInfoRow(PlayerType.RemoteUser.getName(l10n), play.header.opponentName!),
         if (play.header.opponentId != null)
-          _buildGameInfoRow("${PlayerType.RemoteUser.getName(l10n)} Id", toReadableId(play.header.opponentId!)),
+          _buildGameInfoRow("${PlayerType.RemoteUser.getName(l10n)} Id", toReadableUserId(play.header.opponentId!)),
 
 
         const Divider(),

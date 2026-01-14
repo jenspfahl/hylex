@@ -218,14 +218,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       final jwk = Jwk.fromPublicKey(publicKey);
                       final json = jwk.toJson();
                       SharePlus.instance.share(
-                          ShareParams(text: json.toString(), subject: 'Public Key JWK from ${toReadableId(user.id)}'));
+                          ShareParams(text: json.toString(), subject: 'Public Key JWK from ${toReadableUserId(user.id)}'));
                     },
                     secondString: l10n.settings_sharePublicKeyChooseFormat_PEM,
                     secondHandler: () {
                       final publicKey = Base64Codec().decoder.convert(user.id);
                       final pemBlock = PemCodec(PemLabel.publicKey).encode(publicKey);
                       SharePlus.instance.share(
-                          ShareParams(text: pemBlock, subject: 'Public Key PEM from ${toReadableId(user.id)}'));
+                          ShareParams(text: pemBlock, subject: 'Public Key PEM from ${toReadableUserId(user.id)}'));
                     },
                     fourthString: l10n.close,
                     fourthHandler: () {}
@@ -258,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
                 child: Padding(padding: EdgeInsets.all(32),
-                  child: Text("User-Id: ${toReadableId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
+                  child: Text("User-Id: ${toReadableUserId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
               )),
 
             CustomSettingsTile(child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 10)),

@@ -469,7 +469,7 @@ class MessageService {
     }
 
     final playId = serializedMessage.extractPlayId();
-    debugPrint("sending: [${toReadableId(playId)}] $text");
+    debugPrint("sending: [${toReadablePlayId(playId)}] $text");
     debugPrint(" >>>>>>> ${serializedMessage.toUrl()}");
     if (share && contextProvider != null) {
       _share(header, user, serializedMessage, text, contextProvider(), saveState, showAllOptions);

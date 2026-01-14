@@ -449,7 +449,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       case SortOrder.BY_LATEST:
         return list.sortedBy((e) => e.lastTimestamp?.toIso8601String() ?? e.getReadablePlayId()).reversed.toList();
       case SortOrder.BY_OPPONENT:
-        return list.sortedBy((e) => "${e.opponentName?.toUpperCase() ?? (e.opponentId != null ? toReadableId(e.opponentId!) : "        ")}-${(100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
+        return list.sortedBy((e) => "${e.opponentName?.toUpperCase() ?? (e.opponentId != null ? toReadableUserId(e.opponentId!) : "        ")}-${(100 + e.state.index)}-${_getReversedTimestamp(e) ?? e.getReadablePlayId()}");
 
     }
   }
@@ -485,9 +485,18 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     final sortedKeys = groupedByOpponentId.keys.sortedBy((k) => k?.toUpperCase()?? "     ");
     return sortedKeys.map((key) {
       final opponentId = key;
+      // Invitations which don't have a opponentId yet, land in the group where opponentId is null
       final group = groupedByOpponentId[opponentId]??[];
+
       final opponentName = group.firstOrNull?.opponentName;
-      return _buildPlayGroupSection((opponentName ?? "- ${l10n.unknown} -"), opponentId != null ? toReadableId(opponentId) : null, group, opponentId ?? "sdfsdfsdf");
+      final title = opponentId != null
+          ? opponentName ?? "User " + toReadableUserId(opponentId)
+          : "- ${l10n.unknown} -";
+      return _buildPlayGroupSection(
+          title,
+          opponentName != null && opponentId != null ? "User-Id: " + toReadableUserId(opponentId) : null,
+          group,
+          opponentId ?? "magic_for_a_group_that_contains_play_headers_with_no_opponent_id");
     }).toList();
 
     

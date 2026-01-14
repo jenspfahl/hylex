@@ -68,7 +68,7 @@ class User {
   };
 
   String getReadableId() {
-    return toReadableId(id);
+    return toReadableUserId(id);
   }
 
 }

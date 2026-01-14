@@ -356,6 +356,9 @@ class PlayHeader {
     if (opponentName != null) {
       return l10n.gameTitle_playAgainstOpponent(opponentName!, getReadablePlayId());
     }
+    else if (opponentId != null) {
+      return l10n.gameTitle_playAgainstOpponent(toReadableUserId(opponentId!), getReadablePlayId());
+    }
     else {
       return getReadablePlayId();
     }
@@ -391,7 +394,7 @@ class PlayHeader {
   int get maxRounds => playSize.dimension * playSize.dimension;
 
   String getReadablePlayId() {
-    return toReadableId(playId);
+    return toReadablePlayId(playId);
   }
 
   Role? getLocalRoleForMultiPlay() {
@@ -946,7 +949,7 @@ class Play {
   }
 
   String getReadablePlayId() {
-    return toReadableId(header.playId);
+    return toReadablePlayId(header.playId);
   }
 
   /**

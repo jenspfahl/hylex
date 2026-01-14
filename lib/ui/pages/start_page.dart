@@ -149,7 +149,7 @@ class StartPageState extends State<StartPage> {
         }
       }
       else if (header == null) {
-        showAlertDialog(l10n.error_matchMotFound(toReadableId(playId)));
+        showAlertDialog(l10n.error_matchMotFound(toReadablePlayId(playId)));
       }
       else if (header.state.isFinal) {
         showAlertDialog(l10n.error_matchAlreadyFinished(header.getReadablePlayId()));
