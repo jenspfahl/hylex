@@ -261,7 +261,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Text("User-Id: ${toReadableId(user.id)} ${isDebug ? "(Debug Mode)" : ""}")),
               )),
 
-            const CustomSettingsTile(child: SizedBox(height: 36)),
+            CustomSettingsTile(child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 10)),
 
           ],
         ),

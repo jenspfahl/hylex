@@ -39,7 +39,7 @@ class HylexApp extends StatelessWidget {
           surface: Colors.brown[50]
         ),
       ),
-      home: new StartPage(
+      home: StartPage(
         key: globalStartPageKey
       ),
     );

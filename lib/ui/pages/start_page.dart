@@ -375,244 +375,242 @@ class StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surface,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 52, 24, 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                  child: _buildGameLogo(20)
-              ),
-      
-              if (isDebug)
-                GestureDetector(
-                  onLongPress: () {
-                    if (_user.hasSigningCapability()) {
-                      showAlertDialog("User Public Key: ${_user.id}");
+    return Container(
+      color: Theme
+          .of(context)
+          .colorScheme
+          .surface,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, 52, 24, 12 + MediaQuery.paddingOf(context).bottom),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+                child: _buildGameLogo(20)
+            ),
+
+            if (isDebug)
+              GestureDetector(
+                onLongPress: () {
+                  if (_user.hasSigningCapability()) {
+                    showAlertDialog("User Public Key: ${_user.id}");
+                  }
+                  else {
+                    showAlertDialog("User ID: ${_user.id}");
+                  }
+                },
+                  child: _buildHello())
+            else
+              _buildHello(),
+
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+
+                _buildCell(l10n.startMenu_singlePlay, 0,
+                    isMain: true,
+                    icon: Icons.person,
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.SinglePlay
+                                ? MenuMode.None
+                                : MenuMode.SinglePlay)
+                ),
+
+                _menuMode == MenuMode.SinglePlay
+                    ? _buildCell(l10n.startMenu_newGame, 0,
+                    icon: CupertinoIcons.game_controller,
+                    clickHandler: () async {
+                      if (context.mounted) {
+                        final json = await PreferenceService().getString(
+                            PreferenceService.DATA_CURRENT_PLAY);
+                        confirmOrDo(json != null,
+                            l10n.dialog_overwriteGame,
+                            MaterialLocalizations.of(context), () {
+                              _selectPlayerGroundSize(context, (dimension) =>
+                                  _selectSinglePlayerMode(
+                                      context, (chaosPlayer, orderPlayer) =>
+                                      _startSinglePlayerGame(
+                                          context, chaosPlayer, orderPlayer,
+                                          dimension)));
+                            });
+                      }
                     }
-                    else {
-                      showAlertDialog("User ID: ${_user.id}");
+                )
+                    : _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell(l10n.startMenu_sendInvite, 3, icon: Icons.near_me,
+                    clickHandler: () async {
+                      if (context.mounted) {
+                        _selectPlayerGroundSize(context, (playSize) =>
+                            _selectMultiPlayerMode(context, (playMode) =>
+                              inviteRemoteOpponentForRevenge(context, playSize, playMode)));
+                      }
                     }
-                  },
-                    child: _buildHello())
-              else
-                _buildHello(),
-      
-              GridView.count(
-                crossAxisCount: 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                )
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.SinglePlay
+                    ? _buildCell(l10n.startMenu_resumeGame, 0,
+                    icon: Icons.not_started_outlined,
+                    clickHandler: () async {
+                      final play = await StorageService().loadCurrentSinglePlay();
+                      if (play != null) {
+                        await showShowLoading(l10n.dialog_loadingGame);
+
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                              return HyleXGround(_user, play);
+                            },
+                                settings: RouteSettings(name: PLAY_GROUND)
+                            ));
+                      }
+                      else {
+                        showAlertDialog(l10n.error_nothingToResume);
+                      }
+                    }
+                )
+                    : _buildEmptyCell(),
+
+                _buildCell(l10n.startMenu_multiPlay, 2,
+                    isMain: true,
+                    icon: Icons.group,
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.Multiplayer
+                                ? MenuMode.None
+                                : MenuMode.Multiplayer),
+                    longClickHandler: () {
+                      if (isDebug) {
+                          setState(() {
+                            isDebug = !isDebug;
+                          });
+                          showAlertDialog("Debug mode set to $isDebug");
+                      }
+                    }
+                ),
+
+                _menuMode == MenuMode.Multiplayer ||
+                    _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell(l10n.startMenu_newMatch, 3,
+                    icon: Icons.sports_score,
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.MultiplayerNew
+                                ? MenuMode.Multiplayer
+                                : MenuMode.MultiplayerNew))
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.Multiplayer ||
+                    _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell(l10n.startMenu_continueMatch, 4,
+                  icon: Icons.sports_tennis,
+                  clickHandler: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return MultiPlayerMatches(_user, key: globalMultiPlayerMatchesKey,);
+                        }));
+                  }
+                )
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.More
+                    ? _buildCell(
+                    l10n.startMenu_howToPlay, 1, icon: CupertinoIcons.question_circle_fill,
+                    clickHandler: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return Intro();
+                        })))
+                    : _buildEmptyCell(),
+
+                _menuMode == MenuMode.MultiplayerNew
+                    ? _buildCell(l10n.startMenu_scanCode, 3, icon: Icons.qr_code_scanner,
+                          clickHandler: () => scanNextMove(forceShowAllOptions: false),
+                          longClickHandler: _showMultiPlayTestDialog
+                       )
+                    : _menuMode == MenuMode.More
+                    ? _buildCell(l10n.startMenu_achievements, 1, icon: Icons.leaderboard,
+                    clickHandler: () => _showAchievementDialog())
+                    : _buildEmptyCell(),
+
+                _buildCell(l10n.startMenu_more, 1,
+                    isMain: true,
+                    clickHandler: () =>
+                        setState(
+                                () =>
+                            _menuMode = _menuMode == MenuMode.More
+                                ? MenuMode.None
+                                : MenuMode.More)
+                ),
+
+
+              ],
+
+            ),
+
+            Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-      
-                  _buildCell(l10n.startMenu_singlePlay, 0,
-                      isMain: true,
-                      icon: Icons.person,
-                      clickHandler: () =>
-                          setState(
-                                  () =>
-                              _menuMode = _menuMode == MenuMode.SinglePlay
-                                  ? MenuMode.None
-                                  : MenuMode.SinglePlay)
-                  ),
-      
-                  _menuMode == MenuMode.SinglePlay
-                      ? _buildCell(l10n.startMenu_newGame, 0,
-                      icon: CupertinoIcons.game_controller,
-                      clickHandler: () async {
-                        if (context.mounted) {
-                          final json = await PreferenceService().getString(
-                              PreferenceService.DATA_CURRENT_PLAY);
-                          confirmOrDo(json != null,
-                              l10n.dialog_overwriteGame,
-                              MaterialLocalizations.of(context), () {
-                                _selectPlayerGroundSize(context, (dimension) =>
-                                    _selectSinglePlayerMode(
-                                        context, (chaosPlayer, orderPlayer) =>
-                                        _startSinglePlayerGame(
-                                            context, chaosPlayer, orderPlayer,
-                                            dimension)));
+                  IconButton(onPressed: () {
+                    Navigator.push(super.context, MaterialPageRoute(builder: (context) => SettingsPage()))
+                        .then((value) {
+                          StorageService().loadUser().then((value) {
+                            if (value != null) {
+                              setState(() {
+                                _user = value;
                               });
-                        }
-                      }
-                  )
-                      : _menuMode == MenuMode.MultiplayerNew
-                      ? _buildCell(l10n.startMenu_sendInvite, 3, icon: Icons.near_me,
-                      clickHandler: () async {
-                        if (context.mounted) {
-                          _selectPlayerGroundSize(context, (playSize) =>
-                              _selectMultiPlayerMode(context, (playMode) =>
-                                inviteRemoteOpponentForRevenge(context, playSize, playMode)));
-                        }
-                      }
-                  )
-                      : _buildEmptyCell(),
-      
-                  _menuMode == MenuMode.SinglePlay
-                      ? _buildCell(l10n.startMenu_resumeGame, 0,
-                      icon: Icons.not_started_outlined,
-                      clickHandler: () async {
-                        final play = await StorageService().loadCurrentSinglePlay();
-                        if (play != null) {
-                          await showShowLoading(l10n.dialog_loadingGame);
-      
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                                return HyleXGround(_user, play);
-                              },
-                                  settings: RouteSettings(name: PLAY_GROUND)
-                              ));
-                        }
-                        else {
-                          showAlertDialog(l10n.error_nothingToResume);
-                        }
-                      }
-                  )
-                      : _buildEmptyCell(),
-      
-                  _buildCell(l10n.startMenu_multiPlay, 2,
-                      isMain: true,
-                      icon: Icons.group,
-                      clickHandler: () =>
-                          setState(
-                                  () =>
-                              _menuMode = _menuMode == MenuMode.Multiplayer
-                                  ? MenuMode.None
-                                  : MenuMode.Multiplayer),
-                      longClickHandler: () {
-                        if (isDebug) {
-                            setState(() {
-                              isDebug = !isDebug;
-                            });
-                            showAlertDialog("Debug mode set to $isDebug");
-                        }
-                      }
-                  ),
-      
-                  _menuMode == MenuMode.Multiplayer ||
-                      _menuMode == MenuMode.MultiplayerNew
-                      ? _buildCell(l10n.startMenu_newMatch, 3,
-                      icon: Icons.sports_score,
-                      clickHandler: () =>
-                          setState(
-                                  () =>
-                              _menuMode = _menuMode == MenuMode.MultiplayerNew
-                                  ? MenuMode.Multiplayer
-                                  : MenuMode.MultiplayerNew))
-                      : _buildEmptyCell(),
-      
-                  _menuMode == MenuMode.Multiplayer ||
-                      _menuMode == MenuMode.MultiplayerNew
-                      ? _buildCell(l10n.startMenu_continueMatch, 4,
-                    icon: Icons.sports_tennis,
-                    clickHandler: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return MultiPlayerMatches(_user, key: globalMultiPlayerMatchesKey,);
-                          }));
-                    }
-                  )
-                      : _buildEmptyCell(),
-      
-                  _menuMode == MenuMode.More
-                      ? _buildCell(
-                      l10n.startMenu_howToPlay, 1, icon: CupertinoIcons.question_circle_fill,
-                      clickHandler: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return Intro();
-                          })))
-                      : _buildEmptyCell(),
-      
-                  _menuMode == MenuMode.MultiplayerNew
-                      ? _buildCell(l10n.startMenu_scanCode, 3, icon: Icons.qr_code_scanner,
-                            clickHandler: () => scanNextMove(forceShowAllOptions: false),
-                            longClickHandler: _showMultiPlayTestDialog
-                         )
-                      : _menuMode == MenuMode.More
-                      ? _buildCell(l10n.startMenu_achievements, 1, icon: Icons.leaderboard,
-                      clickHandler: () => _showAchievementDialog())
-                      : _buildEmptyCell(),
-      
-                  _buildCell(l10n.startMenu_more, 1,
-                      isMain: true,
-                      clickHandler: () =>
-                          setState(
-                                  () =>
-                              _menuMode = _menuMode == MenuMode.More
-                                  ? MenuMode.None
-                                  : MenuMode.More)
-                  ),
-      
-      
-                ],
-      
-              ),
-      
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(onPressed: () {
-                      Navigator.push(super.context, MaterialPageRoute(builder: (context) => SettingsPage()))
-                          .then((value) {
-                            StorageService().loadUser().then((value) {
-                              if (value != null) {
-                                setState(() {
-                                  _user = value;
-                                });
-                              }
-                            });
-      
-                      });
-                    }, icon: const Icon(Icons.settings_outlined)),
-      
-                    IconButton(onPressed: () {
-                      ask(l10n.dialog_quitTheApp, l10n, () {
-                        SystemNavigator.pop();
-                      });
-                    }, icon: const Icon(Icons.exit_to_app_outlined)),
-      
-                    IconButton(onPressed: () async {
-                      final packageInfo = await PackageInfo.fromPlatform();
-      
-                      final text = l10n.dialog_aboutDesc2("{homepage}");
-                      final splitText = text.split("{homepage}");
-      
-                      showAboutDialog(
-                        context: context,
-                        applicationName: APP_NAME,
-                        applicationVersion:packageInfo.version,
-                          children: [
-                            const Divider(),
-                            Text(l10n.dialog_aboutDesc1),
-                            const Text(''),
-                            InkWell(
-                                child: Text.rich(
-                                  TextSpan(
-                                    text: splitText.first,
-                                    children: <TextSpan>[
-                                      TextSpan(text: GITHUB_HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
-                                      TextSpan(text: splitText.last),
-                                    ],
-                                  ),
+                            }
+                          });
+
+                    });
+                  }, icon: const Icon(Icons.settings_outlined)),
+
+                  IconButton(onPressed: () {
+                    ask(l10n.dialog_quitTheApp, l10n, () {
+                      SystemNavigator.pop();
+                    });
+                  }, icon: const Icon(Icons.exit_to_app_outlined)),
+
+                  IconButton(onPressed: () async {
+                    final packageInfo = await PackageInfo.fromPlatform();
+
+                    final text = l10n.dialog_aboutDesc2("{homepage}");
+                    final splitText = text.split("{homepage}");
+
+                    showAboutDialog(
+                      context: context,
+                      applicationName: APP_NAME,
+                      applicationVersion:packageInfo.version,
+                        children: [
+                          const Divider(),
+                          Text(l10n.dialog_aboutDesc1),
+                          const Text(''),
+                          InkWell(
+                              child: Text.rich(
+                                TextSpan(
+                                  text: splitText.first,
+                                  children: <TextSpan>[
+                                    TextSpan(text: GITHUB_HOMEPAGE, style: const TextStyle(decoration: TextDecoration.underline)),
+                                    TextSpan(text: splitText.last),
+                                  ],
                                 ),
-                                onTap: () {
-                                  launchUrlString(HOMEPAGE_SCHEME + GITHUB_HOMEPAGE + GITHUB_HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
-                                }),
-                            const Divider(),
-                            const Text('© Jens Pfahl 2026', style: TextStyle(fontSize: 12)),
-                          ],
-                          applicationIcon: SizedBox(width: 56, height: 56,
-                              child: _buildGameLogo(12))
-                      );
-                    }, icon: const Icon(Icons.info_outline)),
-                  ]),
-            ],
-          ),
+                              ),
+                              onTap: () {
+                                launchUrlString(HOMEPAGE_SCHEME + GITHUB_HOMEPAGE + GITHUB_HOMEPAGE_PATH, mode: LaunchMode.externalApplication);
+                              }),
+                          const Divider(),
+                          const Text('© Jens Pfahl 2026', style: TextStyle(fontSize: 12)),
+                        ],
+                        applicationIcon: SizedBox(width: 56, height: 56,
+                            child: _buildGameLogo(12))
+                    );
+                  }, icon: const Icon(Icons.info_outline)),
+                ]),
+          ],
         ),
       ),
     );

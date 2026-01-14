@@ -482,8 +482,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       }
     });
 
-    return groupedByOpponentId.entries.map((entry) {
-      final opponentId = entry.key;
+    final sortedKeys = groupedByOpponentId.keys.sortedBy((k) => k?.toUpperCase()?? "     ");
+    return sortedKeys.map((key) {
+      final opponentId = key;
       final group = groupedByOpponentId[opponentId]??[];
       final opponentName = group.firstOrNull?.opponentName;
       return _buildPlayGroupSection((opponentName ?? "- ${l10n.unknown} -"), opponentId != null ? toReadableId(opponentId) : null, group, opponentId ?? "sdfsdfsdf");
