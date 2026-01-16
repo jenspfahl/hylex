@@ -225,6 +225,7 @@
   "matchMenu_showFirstGame": "Ergebnis des ersten Spiels",
   "matchMenu_showSendOptions": "An Gegner senden ..",
   "matchMenu_showReadingOptions": "Nachricht von Gegner lesen ..",
+  "matchMenu_redoLastMessage": "Repariere Spielstand ..",
   "matchMenu_gameMode": "Modus",
   "matchMenu_gameInMatch": "Spiel im Match",
   "matchMenu_gameInMatchFirst": "Erstes Spiel",

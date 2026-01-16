@@ -43,15 +43,15 @@ class StorageService {
     return user;
   }
   
-  Future<bool> savePlay(Play play) async {
+  Future<bool> savePlay(Play play, {bool asSnapshot = false}) async {
     if (enableMocking) return Future.value(true);
 
     final headerKey = play.multiPlay
-        ? _getPlayHeaderKey(play.header.playId)
+        ? _getPlayHeaderKey(play.header.playId, asSnapshot)
         : PreferenceService.DATA_CURRENT_PLAY_HEADER;
 
     final key = play.multiPlay
-        ? _getPlayKey(play.header.playId)
+        ? _getPlayKey(play.header.playId, asSnapshot)
         : PreferenceService.DATA_CURRENT_PLAY;
 
 
@@ -73,7 +73,7 @@ class StorageService {
   Future<bool> savePlayHeader(PlayHeader header) async {
     if (enableMocking) return Future.value(true);
 
-    final key = _getPlayHeaderKey(header.playId);
+    final key = _getPlayHeaderKey(header.playId, false);
     var saved = await _saveRawPlayHeader(key, header);
 
     globalMultiPlayerMatchesKey.currentState?.playHeaderChanged();
@@ -94,19 +94,19 @@ class StorageService {
   Future<PlayHeader?> loadPlayHeader(String playId) async {
     if (enableMocking) return Future.value(null);
 
-    final key = _getPlayHeaderKey(playId);
+    final key = _getPlayHeaderKey(playId, false);
     return _loadPlayHeader(key);
   }
 
-  Future<Play?> loadPlayFromHeader(PlayHeader header) async {
+  Future<Play?> loadPlayFromHeader(PlayHeader header, {bool asSnapshot = false}) async {
     if (enableMocking) return Future.value(null);
 
     debugPrint("Load play from header $header");
-    final reloadedHeader = await _loadPlayHeader(_getPlayHeaderKey(header.playId));
+    final reloadedHeader = await _loadPlayHeader(_getPlayHeaderKey(header.playId, asSnapshot));
     if (reloadedHeader == null) {
       return Future.value(null);
     }
-    final play = await _loadPlay(_getPlayKey(header.playId));
+    final play = await _loadPlay(_getPlayKey(header.playId, asSnapshot));
     play?.header = reloadedHeader;
     return play;
   }
@@ -140,12 +140,17 @@ class StorageService {
   Future<void> deletePlayHeaderAndPlay(String playId) async {
     if (enableMocking) return Future.value(null);
 
-    final key = _getPlayHeaderKey(playId);
+    final headerKey = _getPlayHeaderKey(playId, false);
+    final playKey = _getPlayKey(playId, false);
+    final headerSnapshotKey = _getPlayHeaderKey(playId, true);
+    final playSnapshotKey = _getPlayKey(playId, true);
 
     await Future.wait([
-      PreferenceService().remove(key),
-      PreferenceService().remove(key)]
-    );
+      PreferenceService().remove(headerKey),
+      PreferenceService().remove(playKey),
+      PreferenceService().remove(headerSnapshotKey),
+      PreferenceService().remove(playSnapshotKey),
+    ]);
   }
 
   Future<bool> _saveRawPlayHeader(String key, PlayHeader header) {
@@ -155,8 +160,13 @@ class StorageService {
     return PreferenceService().setString(key, jsonToSave);
   }
 
-  String _getPlayKey(String playId) => '${PreferenceService.DATA_PLAY_PREFIX}/$playId';
-  String _getPlayHeaderKey(String playId) => '${PreferenceService.DATA_PLAY_HEADER_PREFIX}/$playId';
+  String _getPlayKey(String playId, bool asSnapshot) => '${asSnapshot
+      ? PreferenceService.DATA_PLAY_SNAPSHOT_PREFIX
+      : PreferenceService.DATA_PLAY_PREFIX}/$playId';
+
+  String _getPlayHeaderKey(String playId, bool asSnapshot) => '${asSnapshot
+      ? PreferenceService.DATA_PLAY_SNAPSHOT_HEADER_PREFIX
+      : PreferenceService.DATA_PLAY_HEADER_PREFIX}/$playId';
 
   Future<Play?> _loadPlay(String key) async {
     final json = await PreferenceService().getString(key);

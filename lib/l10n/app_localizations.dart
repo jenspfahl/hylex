@@ -1268,8 +1268,14 @@ abstract class AppLocalizations {
   /// No description provided for @matchMenu_showReadingOptions.
   ///
   /// In en, this message translates to:
-  /// **'Nachricht von Gegner lesen ..'**
+  /// **'Read message from opponent ..'**
   String get matchMenu_showReadingOptions;
+
+  /// No description provided for @matchMenu_redoLastMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Repair match state ..'**
+  String get matchMenu_redoLastMessage;
 
   /// No description provided for @matchMenu_gameMode.
   ///

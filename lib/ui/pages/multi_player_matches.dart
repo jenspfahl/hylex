@@ -280,10 +280,10 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          playHeader.state.isFinal ? DottedBorder(
+                          playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
                             options: CircularDottedBorderOptions(
                                 padding: EdgeInsets.zero,
-                                strokeWidth: 2.5,
+                                strokeWidth: 3,
                                 strokeCap: StrokeCap.butt,
                                 dashPattern: [1],
                                 color: Colors.black

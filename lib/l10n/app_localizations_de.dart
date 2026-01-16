@@ -645,6 +645,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get matchMenu_showReadingOptions => 'Nachricht von Gegner lesen ..';
 
   @override
+  String get matchMenu_redoLastMessage => 'Repariere Spielstand ..';
+
+  @override
   String get matchMenu_gameMode => 'Modus';
 
   @override

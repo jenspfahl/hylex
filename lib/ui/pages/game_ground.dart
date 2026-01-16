@@ -9,6 +9,7 @@ import 'package:flutter_fgbg/flutter_fgbg.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/model/matrix.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
+import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/multi_player_matches.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
@@ -366,6 +367,20 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 forceShowAllOptions: true,
                                 header: gameEngine.play.header);
                           }
+                          else if (item == 4) {
+                            confirm("Repair state? This will revert your current not yet send move and the last message from your opponent.", MaterialLocalizations.of(context), () async {
+                              final latestSnapshot = await StorageService().loadPlayFromHeader(gameEngine.play.header, asSnapshot: true);
+                              if (latestSnapshot != null) {
+                                await StorageService().savePlay(latestSnapshot);
+                                gameEngine.play = latestSnapshot;
+                                setState(() {});
+                                toastInfo(context, l10n.done);
+                              }
+                              else {
+                                toastInfo(context, "No last state!");
+                              }
+                            }, icon: Icons.warning);
+                          }
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem<int>(value: 0, child: Text(l10n.matchMenu_matchInfo)),
@@ -376,6 +391,8 @@ class _HyleXGroundState extends State<HyleXGround> {
                             PopupMenuItem<int>(value: 2, child: Text(l10n.matchMenu_showSendOptions)),
                           if (gameEngine.play.header.props[HeaderProps.rememberMessageReading] != null)
                             PopupMenuItem<int>(value: 3, child: Text(l10n.matchMenu_showReadingOptions)),
+                          if (gameEngine.play.lastMoveFromJournal != null && !gameEngine.play.header.state.isFinal)
+                            PopupMenuItem<int>(value: 4, child: Text(l10n.matchMenu_redoLastMessage)),
                         ],
                       ),
                   ],

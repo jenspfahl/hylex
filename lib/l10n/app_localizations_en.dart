@@ -642,7 +642,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get matchMenu_showSendOptions => 'Send to opponent ..';
 
   @override
-  String get matchMenu_showReadingOptions => 'Nachricht von Gegner lesen ..';
+  String get matchMenu_showReadingOptions => 'Read message from opponent ..';
+
+  @override
+  String get matchMenu_redoLastMessage => 'Repair match state ..';
 
   @override
   String get matchMenu_gameMode => 'Mode';

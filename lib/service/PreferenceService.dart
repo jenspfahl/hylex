@@ -23,6 +23,8 @@ class PreferenceService {
 
   static final DATA_PLAY_PREFIX = 'data/play';
   static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader';
+  static final DATA_PLAY_SNAPSHOT_PREFIX = 'data/snapshot/play';
+  static final DATA_PLAY_SNAPSHOT_HEADER_PREFIX = 'data/snapshot/playHeader';
   static final DATA_CURRENT_PLAY = '${DATA_PLAY_PREFIX}/current';
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
 

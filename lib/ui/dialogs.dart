@@ -66,8 +66,13 @@ void askOrDo(bool confirmCondition, String confirmText, AppLocalizations l10n, F
   }
 }
 
-void confirm(String text, MaterialLocalizations l10n, Function() okHandler) {
+void confirm(String text, MaterialLocalizations l10n, Function() okHandler, {
+  String? title,
+  IconData? icon,
+}) {
   showChoiceDialog(text,
+      title: title,
+      icon: icon,
       firstString: l10n.okButtonLabel,
       firstHandler: okHandler,
       secondString: l10n.cancelButtonLabel,

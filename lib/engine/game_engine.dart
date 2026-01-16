@@ -279,6 +279,7 @@ class MultiPlayerGameEngine extends GameEngine {
       if (play.currentPlayer == PlayerType.RemoteUser && !play.waitForOpponent) {
         play.waitForOpponent = true;
         shareGameMove(false);
+        _takeSnapshot(play);
       }
       else {
         play.waitForOpponent = false;
@@ -338,6 +339,11 @@ class MultiPlayerGameEngine extends GameEngine {
   resignGame() async {
     await PlayStateManager().doResign(play.header, user);
     await MessageService().sendResignation(play.header, user, contextProvider);
+  }
+
+  void _takeSnapshot(Play play) {
+    debugPrint("Take snapshot for " + play.getReadablePlayId());
+    StorageService().savePlay(play, asSnapshot: true);
   }
 
 }

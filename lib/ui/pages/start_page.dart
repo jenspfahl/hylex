@@ -114,7 +114,6 @@ class StartPageState extends State<StartPage> {
       final uri = extractAppLinkFromString(message.path);
       if (uri == null) {
         if (isDebug) {
-          showChoiceDialog(": " + message.path + " message: " + (message.message??""), firstString: '', firstHandler: () {  }, secondString: '', secondHandler: () {  });
           toastInfo(context, l10n.error_cannotExtractUrl + ": " + message.path + " message: " + (message.message??""));
         }
         else {
