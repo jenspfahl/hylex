@@ -133,10 +133,15 @@ abstract class GameEngine extends ChangeNotifier {
   Future<void> opponentMoveReceived(Move opponentMove) async {
     debugPrint("opponent move received");
 
-    
+    final lastMove = play.journal.lastOrNull;
+    if (lastMove == opponentMove) {
+      print("opponent move $opponentMove already applied");
+      showAlertDialog("Opponent's move already applied!");
+      return;
+    }
     final result = play.validateMove(opponentMove);
     if (result != null) {
-      debugPrint("opponent move $opponentMove is invalid: $result");
+      print("opponent move $opponentMove is invalid: $result");
       showAlertDialog("Cannot apply opponent's move. Reason: $result");
       return;
     }

@@ -15,6 +15,7 @@ void showAlertDialog(String text,
       Duration? duration,
     }) {
 
+  SmartDialog.dismiss();
 
   SmartDialog.showNotify(
     msg: text,
@@ -22,19 +23,22 @@ void showAlertDialog(String text,
     notifyType: NotifyType.error,
     displayTime: duration ?? Duration(milliseconds: max(text.length * 200, 3000)),
     builder: (context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: DIALOG_BG,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (icon != null) Icon(icon, size: 22, color: Colors.white70),
-        Container(
-          margin: const EdgeInsets.only(top: 5),
-          child: Text(text, style: TextStyle(color: Colors.white70)),
+    return GestureDetector(
+      onTap: () => SmartDialog.dismiss(),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: DIALOG_BG,
         ),
-      ]),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (icon != null) Icon(icon, size: 22, color: Colors.white70),
+          Container(
+            margin: const EdgeInsets.only(top: 5),
+            child: Text(text, style: TextStyle(color: Colors.white70)),
+          ),
+        ]),
+      ),
     );
   });
   Future.delayed(Duration(seconds: text.length * 50)).then((_) => SmartDialog.dismiss());
@@ -70,8 +74,14 @@ void confirm(String text, MaterialLocalizations l10n, Function() okHandler) {
       secondHandler: () {});
 }
 
-void ask(String text, AppLocalizations l10n, Function() yesHandler, {String? noString, Function()? noHandler, IconData? icon}) {
+void ask(String text, AppLocalizations l10n, Function() yesHandler, {
+  IconData? icon,
+  String? title,
+  String? noString,
+  Function()? noHandler,
+}) {
   showChoiceDialog(text,
+      title: title,
       icon: icon,
       firstString: l10n.yes,
       firstHandler: yesHandler,
@@ -84,6 +94,7 @@ void ask(String text, AppLocalizations l10n, Function() yesHandler, {String? noS
 void showChoiceDialog(
     String text,
     {
+      String? title,
       IconData? icon,
       double? height,
       double? width,
@@ -104,8 +115,11 @@ void showChoiceDialog(
       Function()? fifthHandler,
       int? highlightButtonIndex
   }) {
-  SmartDialog.show(builder: (_) {
+  SmartDialog.dismiss();
+
+  SmartDialog.show(tag: "CUSTOM", builder: (_) {
     var calcHeight = 180 + text.length.toDouble();
+    if (title != null) calcHeight += 30;
     if (thirdString != null && thirdHandler != null) {
       calcHeight += 50;
     }
@@ -145,7 +159,11 @@ void showChoiceDialog(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (icon != null) Icon(icon, color: Colors.white),
+            if (icon != null || title != null) Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (icon != null) Icon(icon, color: Colors.white),
+              if (icon != null && title != null) const Text(" "),
+              if (title != null) Text(title, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ]),
             Text(
               text,
               style: const TextStyle(color: Colors.white),
@@ -222,6 +240,8 @@ OutlinedButton _buildChoiceButton(
 }
 
 showShowLoading(String text) async {
+  SmartDialog.dismiss();
+
   SmartDialog.showLoading(msg: text, builder: (_) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),

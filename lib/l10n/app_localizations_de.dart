@@ -767,7 +767,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String messaging_invitationMessage_Invitee(Object dimension, Object opponent, Object playMode) {
-    return '$opponent hat dich zu einem $playMode $dimension x $dimension Match eingeladen. Du spielst das Chaos, also beginnst du.';
+    return '$opponent hat dich zu einem $playMode $dimension x $dimension Match eingeladen. Du spielst Chaos, also beginnst du.';
   }
 
   @override

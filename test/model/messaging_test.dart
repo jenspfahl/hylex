@@ -1,4 +1,6 @@
 import 'package:bits/bits.dart';
+import 'package:hyle_x/l10n/app_localizations.dart';
+import 'package:hyle_x/l10n/app_localizations_en.dart';
 import 'package:hyle_x/model/chip.dart';
 import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/model/coordinate.dart';
@@ -253,7 +255,7 @@ Future<void> main() async {
 
       // receive invite
       final deserializedInviteMessage = (await serializedInvitationMessage
-          .deserialize(inviteeContext, null))
+          .deserialize(inviteeContext, null, _l10n()))
           .$1 as InviteMessage;
 
       inviteeContext.registerReceivedMessage(serializedInvitationMessage);
@@ -297,7 +299,7 @@ Future<void> main() async {
 
 
       // receive accept invite
-      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, null)).$1 as AcceptInviteMessage;
+      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, null, _l10n())).$1 as AcceptInviteMessage;
 
       invitorContext.registerReceivedMessage(serializedAcceptInviteMessage);
 
@@ -333,7 +335,7 @@ Future<void> main() async {
 
       final serializedMoveMessage = _send(firstInvitorPlayerMoveMessage.serializeWithContext(invitorContext, "seed"));
 
-      final deserializedMoveMessage = (await serializedMoveMessage.deserialize(inviteeContext, null)).$1 as MoveMessage;
+      final deserializedMoveMessage = (await serializedMoveMessage.deserialize(inviteeContext, null, _l10n())).$1 as MoveMessage;
 
       inviteeContext.registerReceivedMessage(serializedMoveMessage);
 
@@ -388,7 +390,7 @@ Future<void> main() async {
 
       // receive invite
       final deserializedInviteMessage = (await serializedInvitationMessage
-          .deserialize(inviteeContext, invitorUserId))
+          .deserialize(inviteeContext, invitorUserId, _l10n()))
           .$1 as InviteMessage;
 
       inviteeContext.registerReceivedMessage(serializedInvitationMessage);
@@ -428,7 +430,7 @@ Future<void> main() async {
       print("auth sig: ${serializedAcceptInviteMessage.auth}");
 
       // receive accept invite
-      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, inviteeUserId)).$1 as AcceptInviteMessage;
+      final deserializedAcceptInviteMessage = (await serializedAcceptInviteMessage.deserialize(invitorContext, inviteeUserId, _l10n())).$1 as AcceptInviteMessage;
 
       invitorContext.registerReceivedMessage(serializedAcceptInviteMessage);
 
@@ -461,6 +463,10 @@ Future<void> main() async {
       expect(SerializedMessage.fromString("https://hx.jepfa.de/d/payload/chainSignature/authSigh"), SerializedMessage("payload", "chainSignature", "authSig"));
      });
   });
+}
+
+AppLocalizations _l10n() {
+  return AppLocalizationsEn();
 }
 
 

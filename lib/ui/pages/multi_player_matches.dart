@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/app.dart';
@@ -279,9 +280,21 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          CircleAvatar(
+                          playHeader.state.isFinal ? DottedBorder(
+                            options: CircularDottedBorderOptions(
+                                padding: EdgeInsets.zero,
+                                strokeWidth: 2.5,
+                                strokeCap: StrokeCap.butt,
+                                dashPattern: [1],
+                                color: Colors.black
+                            ),
+                            child: CircleAvatar(
+                              backgroundColor: playHeader.state.toColor(),
+                              maxRadius: 6.5,
+                            )
+                          ) : CircleAvatar(
                             backgroundColor: playHeader.state.toColor(),
-                            maxRadius: 6,
+                            maxRadius: 6.5,
                           ),
                           Expanded(
                             child: Text(
@@ -331,6 +344,8 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                           ),
                           IconButton(onPressed: (){
                             ask(
+                                icon: Icons.delete,
+                                title: playHeader.getReadablePlayId(),
                                 playHeader.state.isFinal
                                     ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
                                     : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),

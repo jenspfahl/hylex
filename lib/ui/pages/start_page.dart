@@ -62,7 +62,12 @@ class StartPageState extends State<StartPage> {
   late StreamSubscription<Uri> _uriLinkStreamSub;
   late StreamSubscription _intentSub;
 
-  bool _justStarted = true;
+  int _logoH = 4;
+  int _logoY = 5;
+  int _logoL = 6;
+  int _logoE = 7;
+
+  bool _lockMessageDialog = false;
 
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
@@ -70,6 +75,12 @@ class StartPageState extends State<StartPage> {
   @override
   void initState() {
     super.initState();
+    _lockMessageDialog = false;
+
+    PreferenceService().getInt(PreferenceService.DATA_LOGO_COLOR_H).then((c) => setState(() {if (c != null) _logoH = c;} ));
+    PreferenceService().getInt(PreferenceService.DATA_LOGO_COLOR_Y).then((c) => setState(() {if (c != null) _logoY = c;} ));
+    PreferenceService().getInt(PreferenceService.DATA_LOGO_COLOR_L).then((c) => setState(() {if (c != null) _logoL = c;} ));
+    PreferenceService().getInt(PreferenceService.DATA_LOGO_COLOR_E).then((c) => setState(() {if (c != null) _logoE = c;} ));
 
     StorageService().loadUser().then((user) =>
         setState(() {
@@ -102,7 +113,14 @@ class StartPageState extends State<StartPage> {
 
       final uri = extractAppLinkFromString(message.path);
       if (uri == null) {
-        toastInfo(context, l10n.error_cannotExtractUrl);
+        if (isDebug) {
+          showChoiceDialog(": " + message.path + " message: " + (message.message??""), firstString: '', firstHandler: () {  }, secondString: '', secondHandler: () {  });
+          toastInfo(context, l10n.error_cannotExtractUrl + ": " + message.path + " message: " + (message.message??""));
+        }
+        else {
+          toastInfo(context, l10n.error_cannotExtractUrl);
+        }
+
       }
       else {
         handleReceivedMessage(uri);
@@ -122,6 +140,15 @@ class StartPageState extends State<StartPage> {
   }
 
   Future<void> _handleMessage(SerializedMessage serializedMessage) async {
+
+    if (_lockMessageDialog) {
+      debugPrint("message dialog locked");
+      return;
+    }
+    //Ensure we dismiss all dialogs before to not run into race conditions.
+    _lockMessageDialog = true;
+    Future.delayed(Duration(milliseconds: 500), () => _lockMessageDialog = false);
+
     final playId = serializedMessage.extractPlayId();
     final extractOperation = serializedMessage.extractOperation();
     final header = await StorageService().loadPlayHeader(playId);
@@ -135,7 +162,7 @@ class StartPageState extends State<StartPage> {
         }
         else {
           final comContext = CommunicationContext();
-          final (message, error) = await serializedMessage.deserialize(comContext, null);
+          final (message, error) = await serializedMessage.deserialize(comContext, null, l10n);
           if (message != null) {
             final inviteMessage = message as InviteMessage;
             if (inviteMessage.invitorUserId == _user.id) {
@@ -158,7 +185,7 @@ class StartPageState extends State<StartPage> {
       }
       else {
         final (message, error) = await serializedMessage.deserialize(
-            header.commContext, header.opponentId);
+            header.commContext, header.opponentId, l10n);
         if (error != null) {
           showAlertDialog(error);
           return;
@@ -190,15 +217,18 @@ class StartPageState extends State<StartPage> {
 
   }
 
-  void _handleReceiveInvite(
+  Future<void> _handleReceiveInvite(
       SerializedMessage serializedMessage,
       InviteMessage receivedInviteMessage,
-      CommunicationContext comContext) {
+      CommunicationContext comContext) async {
 
+    var playId = receivedInviteMessage.playId;
     var opponentName = receivedInviteMessage.invitorUserName;
     var playMode = receivedInviteMessage.playMode;
     var dimension = receivedInviteMessage.playSize.dimension;
     var playOpener = receivedInviteMessage.playOpener;
+
+    await SmartDialog.dismiss();
 
     showChoiceDialog(
       switch (playOpener) {
@@ -207,6 +237,7 @@ class StartPageState extends State<StartPage> {
         PlayOpener.InviteeChooses => l10n.messaging_invitationMessage_InviteeChooses(dimension, opponentName, playMode.getName(l10n)),
         PlayOpener.unused11 => throw UnimplementedError(),
       },
+      title: toReadablePlayId(playId),
       width: 300,
       firstString: l10n.accept,
       firstHandler: () {
@@ -255,6 +286,11 @@ class StartPageState extends State<StartPage> {
 
     comContext.registerReceivedMessage(serializedMessage);
 
+    //  check if meanwhile a header exists due to a race condition. This is a last resort if the ui allows it due to a bug.
+    final existingHeader = await StorageService().loadPlayHeader(receivedInviteMessage.playId);
+    if (existingHeader != null) {
+      throw Exception("A play with ID ${existingHeader.getReadablePlayId()} already exists!");
+    }
     final header = PlayHeader.multiPlayInvitee(
         receivedInviteMessage,
         comContext,
@@ -902,13 +938,22 @@ class StartPageState extends State<StartPage> {
   Widget _buildGameLogo(double size) {
     const chipPadding = 1.0;
     return GestureDetector(
-      onTap: () => setState(() => _justStarted = false),
+      onTap: () => setState(() {
+        _logoH = diceInt(maxDimension + 1);
+        _logoY = diceInt(maxDimension + 1);
+        _logoL = diceInt(maxDimension + 1);
+        _logoE = diceInt(maxDimension + 1);
+        PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_H, _logoH);
+        PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_Y, _logoY);
+        PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_L, _logoL);
+        PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_E, _logoE);
+      }),
       child: Column(children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildChip("H", size, size, chipPadding, _justStarted ? 4 : diceInt(maxDimension + 1)),
-            _buildChip("Y", size, size, chipPadding, _justStarted ? 5 : diceInt(maxDimension + 1)),
+            _buildChip("H", size, size, chipPadding, _logoH),
+            _buildChip("Y", size, size, chipPadding, _logoY),
             Text("X",
                 style: TextStyle(
                     fontSize: 14,
@@ -918,8 +963,8 @@ class StartPageState extends State<StartPage> {
         ),
         Row(
           children: [
-            _buildChip("L", size, size, chipPadding, _justStarted ? 7 : diceInt(maxDimension + 1)),
-            _buildChip("E", size, size, chipPadding, _justStarted ? 8 : diceInt(maxDimension + 1)),
+            _buildChip("L", size, size, chipPadding, _logoL),
+            _buildChip("E", size, size, chipPadding, _logoE),
           ],
         ),
       ]),
@@ -1203,6 +1248,7 @@ class StartPageState extends State<StartPage> {
   void handleReplyToInvitation(PlayHeader playHeader) {
 
     var opponentName = playHeader.opponentName;
+    var playId = playHeader.playId;
     var playOpener = playHeader.playOpener;
     var playMode = playHeader.playMode;
     var dimension = playHeader.playSize.dimension;
@@ -1214,6 +1260,7 @@ class StartPageState extends State<StartPage> {
         PlayOpener.InviteeChooses => l10n.messaging_invitationMessage_InviteeChooses(dimension, opponentName?? "?", playMode.getName(l10n)),
         PlayOpener.unused11 => throw UnimplementedError(),
       },
+      title: toReadablePlayId(playId),
       width: 300,
       firstString: l10n.accept,
       firstHandler: () {

@@ -25,7 +25,12 @@ class PreferenceService {
   static final DATA_PLAY_HEADER_PREFIX = 'data/playHeader';
   static final DATA_CURRENT_PLAY = '${DATA_PLAY_PREFIX}/current';
   static final DATA_CURRENT_PLAY_HEADER = '${DATA_CURRENT_PLAY}/header';
-  
+
+  static final DATA_LOGO_COLOR_H = 'data/logoColor/h';
+  static final DATA_LOGO_COLOR_Y = 'data/logoColor/y';
+  static final DATA_LOGO_COLOR_L = 'data/logoColor/l';
+  static final DATA_LOGO_COLOR_E = 'data/logoColor/e';
+
   static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
   static final PREF_SHOW_HINTS = 'pref/showHints';
   static final PREF_SHOW_POINTS = 'pref/showPoints';

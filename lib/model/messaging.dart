@@ -19,7 +19,7 @@ import 'messaging.dart';
 import 'move.dart';
 
 const shareBaseUrl = "https://hx.jepfa.de/d/";
-final deepLinkRegExp = RegExp("${shareBaseUrl}([a-z0-9\-_]+)/([a-z0-9\-_]+)(/[a-z0-9\-_]+)?", caseSensitive: false);
+final deepLinkRegExp = RegExp(r"(https://hx\.jepfa\.de/d/)([a-z0-9\-_]+)/([a-z0-9\-_]+)(/[a-z0-9\-_]+)?", caseSensitive: false);
 
 
 const allowedChars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890- ';
@@ -474,7 +474,7 @@ class SerializedMessage {
   Future<(Message?, String?)> deserialize(
       CommunicationContext comContext,
       String? remotePublicKey,
-      [BuildContext? buildContext]
+      AppLocalizations l10n
       ) async {
 
     final payloadBuffer = _createBufferFromPayload();
@@ -482,7 +482,7 @@ class SerializedMessage {
     final errorMessage = _validateSignature(
         payloadBuffer,
         comContext,
-        buildContext,
+        l10n,
         comparingSignatureBase64: signature);
     if (errorMessage != null) {
       return (null, errorMessage);
@@ -592,16 +592,15 @@ Future<bool> _verifyAuth(List<int> blob, String sig, String publicKey) async {
 String? _validateSignature(
     BitBuffer payloadBuffer,
     CommunicationContext comContext,
-    BuildContext? buildContext,
+    AppLocalizations l10n,
     {
         required String comparingSignatureBase64,
         String? userSeed
     }) {
-  final l10n = buildContext != null ? AppLocalizations.of(buildContext) : null;
 
   if (comContext.predecessorMessage?.signature == comparingSignatureBase64) {
     print("Message with signature $comparingSignatureBase64 already processed");
-    return l10n?.error_linkAlreadyProcessed;
+    return l10n.error_linkAlreadyProcessed;
   }
   if (comContext.roundTripSignature == null) {
     print("No validation for first chain element");
@@ -629,11 +628,11 @@ String? _validateSignature(
     }
     if (alreadyProcessed != null) {
       if (alreadyProcessed.channel == Channel.Out) {
-        return l10n?.error_linkIntendedForOpponent??"" + additionalInfo;
+        return l10n.error_linkIntendedForOpponent + additionalInfo;
       }
-      return l10n?.error_linkAlreadyProcessed??"" + additionalInfo;
+      return l10n.error_linkAlreadyProcessed + additionalInfo;
     }
-    return l10n?.error_linkIsNotTheLatest??"" + additionalInfo;
+    return l10n.error_linkIsNotTheLatest + additionalInfo;
   }
   else {
     return null;

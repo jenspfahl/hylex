@@ -266,7 +266,7 @@
   "messaging_opponentNeedsToReact": "Dein Gegner muss zuerst auf deine letzte Nachricht reagieren.",
   "messaging_shareAgain": "Sende sie erneut",
   "messaging_invitationMessage_Invitor": "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen. Du spielst Order, also beginnt dein Gegner.",
-  "messaging_invitationMessage_Invitee": "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen. Du spielst das Chaos, also beginnst du.",
+  "messaging_invitationMessage_Invitee": "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen. Du spielst Chaos, also beginnst du.",
   "messaging_invitationMessage_InviteeChooses": "{opponent} hat dich zu einem {playMode} {dimension} x {dimension} Match eingeladen. Du kannst wählen, welche Rolle du spielen möchtest.",
   "messaging_matchAccepted": "Das Match {playId} wurde angenommen :)",
   "messaging_matchDeclined": "Das Match {playId} wurde abgelehnt :(",
