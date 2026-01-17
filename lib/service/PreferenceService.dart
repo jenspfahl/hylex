@@ -49,8 +49,6 @@ class PreferenceService {
   bool showChipErrors = true;
   SignMessages signMessages = SignMessages.Never;
 
-  Locale? debugLocale;
-
   factory PreferenceService() {
     return _service;
   }

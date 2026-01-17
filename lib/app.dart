@@ -29,13 +29,11 @@ class HylexApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: PreferenceService().debugLocale,
+      supportedLocales: _ensureEnglishFirst(AppLocalizations.supportedLocales),
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown,
-         // dynamicSchemeVariant: DynamicSchemeVariant.fruitSalad,
           surface: Colors.brown[50]
         ),
       ),
@@ -43,5 +41,13 @@ class HylexApp extends StatelessWidget {
         key: globalStartPageKey
       ),
     );
+  }
+
+  Iterable<Locale> _ensureEnglishFirst(List<Locale> supportedLocales) {
+    if (supportedLocales.firstOrNull?.languageCode == 'en') {
+      return supportedLocales;
+    }
+    final english = supportedLocales.firstWhere((l) => l.languageCode == 'en');
+    return [english]..addAll(supportedLocales.where((l) => l.languageCode != 'en'));
   }
 }
