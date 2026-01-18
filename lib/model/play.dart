@@ -203,7 +203,8 @@ enum PlayState {
 enum HeaderProps {
   rememberMessageSending,
   rememberMessageReading,
-  signMessages
+  signMessages,
+  messageLanguage,
 }
 
 /**

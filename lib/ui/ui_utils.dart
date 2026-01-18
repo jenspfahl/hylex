@@ -40,6 +40,83 @@ Widget buildFilledButton(
   ));
 }
 
+Widget buildFilledButtonWithDropDown(
+    BuildContext context,
+    IconData? iconData,
+    String text,
+    String dropDownText,
+    VoidCallback? onMainButtonPressed,
+    List<PopupMenuEntry<String>> popupItems,
+    ValueChanged<String> onPopupItemSelected,
+    {bool isBold = false}) {
+  final GlobalKey _popupKey = GlobalKey();
+
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      FilledButton(
+          style: FilledButton.styleFrom(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                bottomLeft: Radius.circular(25),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 10, 4, 10),
+          ),
+          onPressed: onMainButtonPressed,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (iconData != null) Icon(iconData),
+              if (iconData != null )const Text("  "),
+              Text(text.toUpperCase(),
+                  style: TextStyle(fontWeight: isBold ? FontWeight.bold : null)),
+            ])
+      ),
+      FilledButton(
+          key: _popupKey,
+          style: FilledButton.styleFrom(
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(25),
+                bottomRight: Radius.circular(25),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(4, 10, 16, 10),
+          ),
+          onPressed: () async {
+            final RenderBox renderBox = _popupKey.currentContext!.findRenderObject() as RenderBox;
+            final Offset offset = renderBox.localToGlobal(Offset.zero);
+            final Size size = renderBox.size;
+
+            final selectedValue = await showMenu<String>(
+              context: context,
+              position: RelativeRect.fromLTRB(
+                offset.dx,
+                offset.dy + size.height,
+                offset.dx + size.width,
+                offset.dy,
+              ),
+              items: popupItems,
+            );
+
+            if (selectedValue != null) {
+              onPopupItemSelected(selectedValue);
+            }
+          },
+          child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.arrow_drop_down),
+                Text(dropDownText.toUpperCase(),
+                    style: TextStyle(fontWeight: isBold ? FontWeight.bold : null)),
+              ])
+      ),
+    ],
+  );
+}
+
 Widget buildOutlinedButton(
     BuildContext context,
     IconData? iconData,
@@ -292,6 +369,7 @@ String _getPositionText(Coordinate where, int dimension) {
     return "";
   }
 }
+
 
 
 

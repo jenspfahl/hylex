@@ -1469,6 +1469,12 @@ abstract class AppLocalizations {
   /// **'As message'**
   String get messaging_sendYourMoveAsMessage;
 
+  /// No description provided for @messaging_sendYourMoveAsMessageInLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Used language: {language}'**
+  String messaging_sendYourMoveAsMessageInLanguage(Object language);
+
   /// No description provided for @messaging_sendYourMoveAsQrCode.
   ///
   /// In en, this message translates to:

@@ -260,6 +260,7 @@
 
   "messaging_sendYourMove": "Sende deine Anfrage oder deinen Zug an deinen Gegner.",
   "messaging_sendYourMoveAsMessage": "Als Nachricht",
+  "messaging_sendYourMoveAsMessageInLanguage": "Verwendete Sprache: {language}",
   "messaging_sendYourMoveAsQrCode": "Als QR-Code",
   "messaging_rememberDecision": "Merke meine Entscheidung für dieses Match.",
   "messaging_signMessages": "Signiere meine Nachrichten für dieses Match.",

@@ -267,6 +267,7 @@
 
   "messaging_sendYourMove": "Send your request or move to your opponent.",
   "messaging_sendYourMoveAsMessage": "As message",
+  "messaging_sendYourMoveAsMessageInLanguage": "Used language: {language}",
   "messaging_sendYourMoveAsQrCode": "As QR code",
   "messaging_rememberDecision": "Remember my decision for this match.",
   "messaging_signMessages": "Sign my messages for this match.",

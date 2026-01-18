@@ -744,6 +744,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get messaging_sendYourMoveAsMessage => 'Als Nachricht';
 
   @override
+  String messaging_sendYourMoveAsMessageInLanguage(Object language) {
+    return 'Verwendete Sprache: $language';
+  }
+
+  @override
   String get messaging_sendYourMoveAsQrCode => 'Als QR-Code';
 
   @override

@@ -15,8 +15,6 @@ import '../model/play.dart';
 import '../model/user.dart';
 import '../ui/dialogs.dart';
 import '../ui/ui_utils.dart';
-import '../utils/fortune.dart';
-
 
 
 class MessageService {
@@ -115,7 +113,6 @@ class MessageService {
         bool showAllOptions = false,
       }) {
 
-    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
 
     final inviteMessage = InviteMessage.fromHeaderAndUser(header, user);
     final serializedMessage = inviteMessage.serializeWithContext(header.commContext, user.userSeed);
@@ -124,9 +121,9 @@ class MessageService {
         serializedMessage, 
         header,
         user,
-        user.name.isEmpty
-            ? l10n?.messaging_inviteMessageWithoutName(header.dimension)??".."
-            : l10n?.messaging_inviteMessage(header.dimension, user.name)??"..",
+        (l10n) => user.name.isEmpty
+            ? l10n.messaging_inviteMessageWithoutName(header.dimension)
+            : l10n.messaging_inviteMessage(header.dimension, user.name),
         contextProvider,
         saveState, 
         share,
@@ -158,8 +155,6 @@ class MessageService {
         initialMove
     );
 
-    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
-
     final serializedMessage = acceptMessage.serializeWithContext(header.commContext, user.userSeed);
 
     final localUserRole = header.actor.getActorRoleFor(playOpener);
@@ -169,7 +164,7 @@ class MessageService {
         serializedMessage,
         header,
         user,
-        l10n?.messaging_acceptInvitation(remoteUserRole?.name??"?", localUserRole?.name??"?") ?? "..",
+        (l10n) => l10n.messaging_acceptInvitation(remoteUserRole?.name??"?", localUserRole?.name??"?"),
         contextProvider,
         saveState,
         share,
@@ -193,13 +188,11 @@ class MessageService {
         user.id);
     final serializedMessage = rejectMessage.serializeWithContext(header.commContext, user.userSeed);
 
-    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
-
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        l10n?.messaging_rejectInvitation ?? "..",
+        (l10n) => l10n.messaging_rejectInvitation,
         contextProvider,
         saveState,
         share,
@@ -225,13 +218,12 @@ class MessageService {
         move);
     final serializedMessage = moveMessage.serializeWithContext(header.commContext, user.userSeed);
 
-    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
 
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        l10n?.messaging_nextMove(header.getLocalRoleForMultiPlay()?.name??"?", round) ?? "..",
+        (l10n) => l10n.messaging_nextMove(header.getLocalRoleForMultiPlay()?.name??"?", round),
         contextProvider,
         saveState,
         share,
@@ -256,13 +248,11 @@ class MessageService {
         round);
     final serializedMessage = resignationMessage.serializeWithContext(header.commContext, user.userSeed);
 
-    final l10n = contextProvider != null ? AppLocalizations.of(contextProvider()) : null;
-
     return _saveAndShare(
         serializedMessage,
         header,
         user,
-        l10n?.messaging_resign(round) ?? "..",
+        (l10n) =>  l10n.messaging_resign(round),
         contextProvider,
         saveState,
         share,
@@ -274,7 +264,7 @@ class MessageService {
       PlayHeader header,
       User user,
       SerializedMessage serializedMessage,
-      String text,
+      String Function(AppLocalizations) getText,
       BuildContext context,
       bool saveState,
       bool showAllOptions,
@@ -283,7 +273,7 @@ class MessageService {
     final l10n = AppLocalizations.of(context)!;
 
     if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_message") {
-      _shareAsMessage(context, serializedMessage, text, header, user);
+      _shareAsMessage(context, serializedMessage, getText, header, user);
     }
     else if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_qr_code") {
       _shareAsQrCode(context, serializedMessage, header, user);
@@ -297,15 +287,21 @@ class MessageService {
 
           bool remember = false;
           bool signMessages = header.props[HeaderProps.signMessages] == true;
+          String _messageLanguage = header.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode;
 
           return SafeArea(
             child: StatefulBuilder(
               builder: (BuildContext context, setState) {
-            
-            
+
+                final languagePopupMenuItems = AppLocalizations.supportedLocales
+                    .map((locale) => PopupMenuItem<String>(
+                        value: locale.languageCode,
+                        child: Text(l10n.messaging_sendYourMoveAsMessageInLanguage(locale.languageCode.toUpperCase())),
+                      ))
+                    .toList();
+
                 return Container(
                   height: 350,
-            
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Column(
@@ -314,11 +310,12 @@ class MessageService {
                       spacing: 5,
                       children: [
                         Text(l10n.messaging_sendYourMove),
-                        buildFilledButton(
+                        buildFilledButtonWithDropDown(
                             context,
                             Icons.near_me,
                             l10n.messaging_sendYourMoveAsMessage,
-                                () async {
+                            _messageLanguage,
+                            () async {
                               header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
                               header.props[HeaderProps.signMessages] = signMessages;
                               if (saveState) {
@@ -326,8 +323,18 @@ class MessageService {
                               }
             
                               Navigator.of(context).pop();
-                              _shareAsMessage(context, serializedMessage, text, header, user);
-                            }),
+                              _shareAsMessage(context, serializedMessage, getText, header, user);
+                            },
+                            languagePopupMenuItems,
+                            (popupId) {
+                              setState(() => _messageLanguage = popupId);
+                              if (header.props[HeaderProps.messageLanguage] != _messageLanguage) {
+                                header.props[HeaderProps.messageLanguage] = _messageLanguage;
+                                StorageService().savePlayHeader(header);
+                              }
+                            },
+
+                        ),
                         buildFilledButton(
                             context,
                             Icons.qr_code_2,
@@ -433,12 +440,17 @@ class MessageService {
   }
 
   void _shareAsMessage(BuildContext context, 
-      SerializedMessage serializedMessage, 
-      String text,
+      SerializedMessage serializedMessage,
+      String Function(AppLocalizations) getText,
       PlayHeader playHeader, 
       User user) {
 
-    _signMessageIfNeeded(serializedMessage, playHeader, user).then((_) {
+    _signMessageIfNeeded(serializedMessage, playHeader, user).then((_) async {
+
+      final language = playHeader.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode;
+      final locale = Locale(language);
+      final l10nForMessage = await AppLocalizations.delegate.load(locale);
+      final text = getText(l10nForMessage);
       final shareMessage = '[${playHeader.getReadablePlayId()}] $text\n${serializedMessage.toUrl()}';
 
       SharePlus.instance.share(
@@ -452,7 +464,7 @@ class MessageService {
       SerializedMessage serializedMessage,
       PlayHeader header,
       User user,
-      String text,
+      String Function(AppLocalizations) getText,
       BuildContext Function()? contextProvider,
       bool saveState,
       bool share,
@@ -468,11 +480,9 @@ class MessageService {
       await StorageService().savePlayHeader(header);
     }
 
-    final playId = serializedMessage.extractPlayId();
-    debugPrint("sending: [${toReadablePlayId(playId)}] $text");
     debugPrint(" >>>>>>> ${serializedMessage.toUrl()}");
     if (share && contextProvider != null) {
-      _share(header, user, serializedMessage, text, contextProvider(), saveState, showAllOptions);
+      _share(header, user, serializedMessage, getText, contextProvider(), saveState, showAllOptions);
     }
     return serializedMessage;
   }
