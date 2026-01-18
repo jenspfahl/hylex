@@ -368,7 +368,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 header: gameEngine.play.header);
                           }
                           else if (item == 4) {
-                            confirm("Repair state? This will revert your current not yet send move and the last message from your opponent.", MaterialLocalizations.of(context), () async {
+                            ask(l10n.matchMenu_redoLastMessageConfirmation, l10n, () async {
                               final latestSnapshot = await StorageService().loadPlayFromHeader(gameEngine.play.header, asSnapshot: true);
                               if (latestSnapshot != null) {
                                 await StorageService().savePlay(latestSnapshot);
@@ -377,7 +377,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                                 toastInfo(context, l10n.done);
                               }
                               else {
-                                toastInfo(context, "No last state!");
+                                showAlertDialog("No last state to use to repair current state!");
                               }
                             }, icon: Icons.warning);
                           }

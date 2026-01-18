@@ -233,6 +233,7 @@
   "matchMenu_showSendOptions": "Send to opponent ..",
   "matchMenu_showReadingOptions": "Read message from opponent ..",
   "matchMenu_redoLastMessage": "Repair match state ..",
+  "matchMenu_redoLastMessageConfirmation": "If something went wrong and you cannot continue the match as expected, you can repair the current state here. When you continue it will revert your current but not yet sent move and the last move from your opponent, so you have to apply it again. Do you want to repair the state now?",
   "matchMenu_gameMode": "Mode",
   "matchMenu_gameInMatch": "Game in match",
   "matchMenu_gameInMatchFirst": "First game",

@@ -648,6 +648,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get matchMenu_redoLastMessage => 'Repair match state ..';
 
   @override
+  String get matchMenu_redoLastMessageConfirmation => 'If something went wrong and you cannot continue the match as expected, you can repair the current state here. When you continue it will revert your current but not yet sent move and the last move from your opponent, so you have to apply it again. Do you want to repair the state now?';
+
+  @override
   String get matchMenu_gameMode => 'Mode';
 
   @override

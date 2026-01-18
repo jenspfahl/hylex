@@ -96,7 +96,7 @@ class StartPageState extends State<StartPage> {
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       _readAndParseSharedText(value);
     }, onError: (err) {
-      toastInfo(context, "${l10n.error_cannotExtractUrl}: $err");
+      showAlertDialog("${l10n.error_cannotExtractUrl}: $err");
     });
 
     // Get the media sharing coming from outside the app while the app is closed.
@@ -114,10 +114,10 @@ class StartPageState extends State<StartPage> {
       final uri = extractAppLinkFromString(message.path);
       if (uri == null) {
         if (isDebug) {
-          toastInfo(context, l10n.error_cannotExtractUrl + ": " + message.path + " message: " + (message.message??""));
+          showAlertDialog(l10n.error_cannotExtractUrl + ": " + message.path + " message: " + (message.message??""));
         }
         else {
-          toastInfo(context, l10n.error_cannotExtractUrl);
+          showAlertDialog(l10n.error_cannotExtractUrl);
         }
 
       }

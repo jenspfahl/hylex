@@ -648,6 +648,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get matchMenu_redoLastMessage => 'Repariere Spielstand ..';
 
   @override
+  String get matchMenu_redoLastMessageConfirmation => 'Falls etwas schiefgelaufen ist und du das Spiel nicht wie erwartet fortsetzen kannst, kannst du hier den aktuellen Zustand reparieren. Wenn du fortfährst, wird dein aktueller, aber noch nicht gesendeter Zug und der letzte Zug deines Gegners rückgängig gemacht, sodass du ihn erneut lesen musst. Soll der Spielstand repariert werden?';
+
+  @override
   String get matchMenu_gameMode => 'Modus';
 
   @override

@@ -226,6 +226,7 @@
   "matchMenu_showSendOptions": "An Gegner senden ..",
   "matchMenu_showReadingOptions": "Nachricht von Gegner lesen ..",
   "matchMenu_redoLastMessage": "Repariere Spielstand ..",
+  "matchMenu_redoLastMessageConfirmation": "Falls etwas schiefgelaufen ist und du das Spiel nicht wie erwartet fortsetzen kannst, kannst du hier den aktuellen Zustand reparieren. Wenn du fortfährst, wird dein aktueller, aber noch nicht gesendeter Zug und der letzte Zug deines Gegners rückgängig gemacht, sodass du ihn erneut lesen musst. Soll der Spielstand repariert werden?",
   "matchMenu_gameMode": "Modus",
   "matchMenu_gameInMatch": "Spiel im Match",
   "matchMenu_gameInMatchFirst": "Erstes Spiel",

@@ -1277,6 +1277,12 @@ abstract class AppLocalizations {
   /// **'Repair match state ..'**
   String get matchMenu_redoLastMessage;
 
+  /// No description provided for @matchMenu_redoLastMessageConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'If something went wrong and you cannot continue the match as expected, you can repair the current state here. When you continue it will revert your current but not yet sent move and the last move from your opponent, so you have to apply it again. Do you want to repair the state now?'**
+  String get matchMenu_redoLastMessageConfirmation;
+
   /// No description provided for @matchMenu_gameMode.
   ///
   /// In en, this message translates to:
