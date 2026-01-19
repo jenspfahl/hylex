@@ -573,6 +573,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_setOrChangeYourNameDescription => 'Your name will be displayed in messages to your opponents.';
 
   @override
+  String get settings_showLanguageSelectorForMessages => 'Send messages in different languages';
+
+  @override
+  String get settings_showLanguageSelectorForMessagesDescription => 'If your opponents speak a different language, enable this to see a language-selector at the Send-button.';
+
+  @override
   String get settings_signMessages => 'Sign messages';
 
   @override

@@ -4,6 +4,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/PreferenceService.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hyle_x/ui/ui_utils.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -29,7 +30,7 @@ class HylexApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
       ],
-      supportedLocales: _ensureEnglishFirst(AppLocalizations.supportedLocales),
+      supportedLocales: ensureEnglishFirst(AppLocalizations.supportedLocales),
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
@@ -43,11 +44,4 @@ class HylexApp extends StatelessWidget {
     );
   }
 
-  Iterable<Locale> _ensureEnglishFirst(List<Locale> supportedLocales) {
-    if (supportedLocales.firstOrNull?.languageCode == 'en') {
-      return supportedLocales;
-    }
-    final english = supportedLocales.firstWhere((l) => l.languageCode == 'en');
-    return [english]..addAll(supportedLocales.where((l) => l.languageCode != 'en'));
-  }
 }

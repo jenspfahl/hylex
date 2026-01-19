@@ -39,6 +39,7 @@ class PreferenceService {
   static final PREF_SHOW_CHIP_ERRORS = 'pref/showPChipErrors';
   static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
   static final PREF_SIGN_ALL_MESSAGES = 'pref/signAllMessages';
+  static final PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES = 'pref/sendMessagesInDifferentLanguages';
 
   static final PreferenceService _service = PreferenceService._internal();
   
@@ -47,6 +48,7 @@ class PreferenceService {
   bool showHints = true;
   bool showPoints = true;
   bool showChipErrors = true;
+  bool showLanguageSelectorForMessages = false;
   SignMessages signMessages = SignMessages.Never;
 
   factory PreferenceService() {
@@ -59,6 +61,7 @@ class PreferenceService {
     _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
     _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);
     _loadCachedBoolPref(PREF_SHOW_CHIP_ERRORS, (v) => showChipErrors = v);
+    _loadCachedBoolPref(PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES, (v) => showLanguageSelectorForMessages = v);
     getInt(PREF_SIGN_ALL_MESSAGES).then((value) {
       if (value != null) {
         signMessages = SignMessages.values.firstWhere((e) => e.index == value);

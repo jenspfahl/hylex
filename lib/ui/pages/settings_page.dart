@@ -136,6 +136,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 }
             ),
 
+            SettingsTile.switchTile(
+              title: Text(l10n.settings_showLanguageSelectorForMessages),
+              description: Text(l10n.settings_showLanguageSelectorForMessagesDescription),
+              initialValue: PreferenceService().showLanguageSelectorForMessages,
+              onToggle: (bool value) {
+                PreferenceService().setBool(PreferenceService.PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES, value);
+                setState(() => PreferenceService().showLanguageSelectorForMessages = value);
+              },
+            ),
+
             SettingsTile(
               enabled: user.hasSigningCapability(),
               title: Text('${l10n.settings_signMessages}: ${PreferenceService().signMessages.getName(l10n)}'),

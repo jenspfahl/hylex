@@ -371,5 +371,14 @@ String _getPositionText(Coordinate where, int dimension) {
 }
 
 
+Iterable<Locale> ensureEnglishFirst(List<Locale> supportedLocales) {
+  if (supportedLocales.firstOrNull?.languageCode == 'en') {
+    return supportedLocales;
+  }
+  final english = supportedLocales.firstWhere((l) => l.languageCode == 'en');
+  return [english]..addAll(supportedLocales.where((l) => l.languageCode != 'en'));
+}
+
+
 
 

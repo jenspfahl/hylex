@@ -200,6 +200,8 @@
   "settings_changeYourName": "Ändere deinen Namen '{name}'",
   "settings_setYourName": "Lege deinen Namen fest",
   "settings_setOrChangeYourNameDescription": "Dein Name wird in Nachrichten an deine Gegner angezeigt.",
+  "settings_showLanguageSelectorForMessages": "Nachrichten in verschiedenen Sprachen senden",
+  "settings_showLanguageSelectorForMessagesDescription": "Wenn deine Gegner eine andere Sprache sprechen, aktiviere diese Option, um eine Sprachauswahl beim Senden-Button anzuzeigen.",
   "settings_signMessages": "Nachrichten signieren",
   "settings_signMessagesDescription": "Nachrichten, die du in Mehrspieler-Spielen sendest, werden kryptographisch signiert.",
   "settings_signMessagesExplanation": "Signiere deine Nachrichten mit deinem öffentlichen Schlüssel, wenn du sicherstellen möchtest, dass deine Nachrichten nicht manipuliert werden und um zu beweisen, dass sie von dir stammen. Dies kann wichtig sein, wenn du deine Spielzüge mit der Öffentlichkeit teilest.",

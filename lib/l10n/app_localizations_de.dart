@@ -573,6 +573,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settings_setOrChangeYourNameDescription => 'Dein Name wird in Nachrichten an deine Gegner angezeigt.';
 
   @override
+  String get settings_showLanguageSelectorForMessages => 'Nachrichten in verschiedenen Sprachen senden';
+
+  @override
+  String get settings_showLanguageSelectorForMessagesDescription => 'Wenn deine Gegner eine andere Sprache sprechen, aktiviere diese Option, um eine Sprachauswahl beim Senden-Button anzuzeigen.';
+
+  @override
   String get settings_signMessages => 'Nachrichten signieren';
 
   @override

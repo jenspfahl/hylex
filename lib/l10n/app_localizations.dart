@@ -1127,6 +1127,18 @@ abstract class AppLocalizations {
   /// **'Your name will be displayed in messages to your opponents.'**
   String get settings_setOrChangeYourNameDescription;
 
+  /// No description provided for @settings_showLanguageSelectorForMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Send messages in different languages'**
+  String get settings_showLanguageSelectorForMessages;
+
+  /// No description provided for @settings_showLanguageSelectorForMessagesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'If your opponents speak a different language, enable this to see a language-selector at the Send-button.'**
+  String get settings_showLanguageSelectorForMessagesDescription;
+
   /// No description provided for @settings_signMessages.
   ///
   /// In en, this message translates to:

@@ -290,96 +290,120 @@ class MessageService {
           String _messageLanguage = header.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode;
 
           return SafeArea(
-            child: StatefulBuilder(
-              builder: (BuildContext context, setState) {
+            child: FutureBuilder(
+              future: PreferenceService().getBool(PreferenceService.PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES),
+              builder: (context, asyncSnapshot) {
+                return StatefulBuilder(
+                  builder: (BuildContext context, setState) {
 
-                final languagePopupMenuItems = AppLocalizations.supportedLocales
-                    .map((locale) => PopupMenuItem<String>(
-                        value: locale.languageCode,
-                        child: Text(l10n.messaging_sendYourMoveAsMessageInLanguage(locale.languageCode.toUpperCase())),
-                      ))
-                    .toList();
+                    final showLanguages = asyncSnapshot.data??false;
+                    final languagePopupMenuItems = showLanguages
+                        ? ensureEnglishFirst(AppLocalizations.supportedLocales)
+                            .map((locale) => PopupMenuItem<String>(
+                                value: locale.languageCode,
+                                child: Text(l10n.messaging_sendYourMoveAsMessageInLanguage(locale.languageCode.toUpperCase())),
+                              ))
+                            .toList()
+                        : <PopupMenuItem<String>>[];
 
-                return Container(
-                  height: 350,
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      mainAxisSize: MainAxisSize.max,
-                      spacing: 5,
-                      children: [
-                        Text(l10n.messaging_sendYourMove),
-                        buildFilledButtonWithDropDown(
-                            context,
-                            Icons.near_me,
-                            l10n.messaging_sendYourMoveAsMessage,
-                            _messageLanguage,
-                            () async {
-                              header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
-                              header.props[HeaderProps.signMessages] = signMessages;
-                              if (saveState) {
-                                await StorageService().savePlayHeader(header);
-                              }
-            
-                              Navigator.of(context).pop();
-                              _shareAsMessage(context, serializedMessage, getText, header, user);
-                            },
-                            languagePopupMenuItems,
-                            (popupId) {
-                              setState(() => _messageLanguage = popupId);
-                              if (header.props[HeaderProps.messageLanguage] != _messageLanguage) {
-                                header.props[HeaderProps.messageLanguage] = _messageLanguage;
-                                StorageService().savePlayHeader(header);
-                              }
-                            },
-
-                        ),
-                        buildFilledButton(
-                            context,
-                            Icons.qr_code_2,
-                            l10n.messaging_sendYourMoveAsQrCode,
+                    return Container(
+                      height: 350,
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          mainAxisSize: MainAxisSize.max,
+                          spacing: 5,
+                          children: [
+                            Text(l10n.messaging_sendYourMove),
+                            showLanguages ? buildFilledButtonWithDropDown(
+                                context,
+                                Icons.near_me,
+                                l10n.messaging_sendYourMoveAsMessage,
+                                _messageLanguage,
                                 () async {
-                                  header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
+                                  header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
                                   header.props[HeaderProps.signMessages] = signMessages;
-            
                                   if (saveState) {
                                     await StorageService().savePlayHeader(header);
                                   }
+
                                   Navigator.of(context).pop();
-                                  _shareAsQrCode(context, serializedMessage, header, user);
-            
-                            }),
-                        CheckboxListTile(
-                            title: Text(l10n.messaging_rememberDecision),
-                            value: remember,
-                            dense: true,
-                            checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value != null) {
-                                  remember = value;
-                                }
-                              });
-                            }),
-                        if (PreferenceService().signMessages == SignMessages.OnDemand)
-                          CheckboxListTile(
-                              title: Text(l10n.messaging_signMessages),
-                              value: signMessages,
-                              dense: true,
-                              checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
-                              onChanged: (value) {
-                                setState(() {
-                                  if (value != null) {
-                                    signMessages = value;
+                                  _shareAsMessage(context, serializedMessage, getText, header, user);
+                                },
+                                languagePopupMenuItems,
+                                (popupId) {
+                                  setState(() => _messageLanguage = popupId);
+                                  if (header.props[HeaderProps.messageLanguage] != _messageLanguage) {
+                                    header.props[HeaderProps.messageLanguage] = _messageLanguage;
+                                    StorageService().savePlayHeader(header);
                                   }
-                                });
-                              })
-                      ],
-                    )
-                  ),
+                                },
+                              )
+                              : buildFilledButton(
+                              context,
+                              Icons.near_me,
+                              l10n.messaging_sendYourMoveAsMessage,
+                              () async {
+                                header.props[HeaderProps.rememberMessageSending] = remember ? "as_message" : "";
+                                header.props[HeaderProps.signMessages] = signMessages;
+                                if (saveState) {
+                                  await StorageService().savePlayHeader(header);
+                                }
+
+                                Navigator.of(context).pop();
+                                _shareAsMessage(context, serializedMessage, getText, header, user);
+                              },
+                            ),
+
+
+                            buildFilledButton(
+                                context,
+                                Icons.qr_code_2,
+                                l10n.messaging_sendYourMoveAsQrCode,
+                                    () async {
+                                      header.props[HeaderProps.rememberMessageSending] = remember ? "as_qr_code" : "";
+                                      header.props[HeaderProps.signMessages] = signMessages;
+
+                                      if (saveState) {
+                                        await StorageService().savePlayHeader(header);
+                                      }
+                                      Navigator.of(context).pop();
+                                      _shareAsQrCode(context, serializedMessage, header, user);
+
+                                }),
+                            CheckboxListTile(
+                                title: Text(l10n.messaging_rememberDecision),
+                                value: remember,
+                                dense: true,
+                                checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value != null) {
+                                      remember = value;
+                                    }
+                                  });
+                                }),
+                            if (PreferenceService().signMessages == SignMessages.OnDemand)
+                              CheckboxListTile(
+                                  title: Text(l10n.messaging_signMessages),
+                                  value: signMessages,
+                                  dense: true,
+                                  checkboxShape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.all(Radius.elliptical(10, 20))),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value != null) {
+                                        signMessages = value;
+                                      }
+                                    });
+                                  })
+                          ],
+                        )
+                      ),
+                    );
+                  },
                 );
-              },
+              }
             ),
           );
 
@@ -446,8 +470,10 @@ class MessageService {
       User user) {
 
     _signMessageIfNeeded(serializedMessage, playHeader, user).then((_) async {
-
-      final language = playHeader.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode;
+      final overwriteLanguages = await PreferenceService().getBool(PreferenceService.PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES)??false;
+      final language = overwriteLanguages
+          ? playHeader.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode
+          : Localizations.localeOf(context).languageCode;
       final locale = Locale(language);
       final l10nForMessage = await AppLocalizations.delegate.load(locale);
       final text = getText(l10nForMessage);

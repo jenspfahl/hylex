@@ -206,6 +206,8 @@
   "settings_changeYourName": "Change your name '{name}'",
   "settings_setYourName": "Set your name",
   "settings_setOrChangeYourNameDescription": "Your name will be displayed in messages to your opponents.",
+  "settings_showLanguageSelectorForMessages": "Send messages in different languages",
+  "settings_showLanguageSelectorForMessagesDescription": "If your opponents speak a different language, enable this to see a language-selector at the Send-button.",
   "settings_signMessages": "Sign messages",
   "settings_signMessagesDescription": "Messages you send in multiplayer games are cryptographically signed.",
   "settings_signMessagesExplanation": "Sign your messages with your public key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.",
