@@ -21,6 +21,7 @@ import '../../engine/game_engine.dart';
 import '../../l10n/app_localizations.dart';
 import '../../model/chip.dart';
 import '../../model/common.dart';
+import '../../model/cursor.dart';
 import '../../service/MessageService.dart';
 import '../chip_extension.dart';
 import '../../model/coordinate.dart';
@@ -53,6 +54,9 @@ class _HyleXGroundState extends State<HyleXGround> {
   GameChip? _emphasiseAllChipsOf;
   Role? _emphasiseAllChipsOfRole;
   bool _gameOverShown = false;
+  Coordinate? _dragStartedAt;
+  Coordinate? _validDragTarget;
+  GameChip? _draggingChip;
 
   late StreamSubscription<FGBGType> fgbgSubscription;
 
@@ -180,36 +184,42 @@ class _HyleXGroundState extends State<HyleXGround> {
                       visible: _isUndoAllowed(),
                       child: IconButton(
                         icon: const Icon(Icons.undo_outlined),
-                        onPressed: () {
+                        onPressed: () async {
                           if (!_isUndoAllowed()) {
                             toastInfo(context, "Undo not possible here");
                             return;
                           }
-
-                          setState(() async {
+                          else {
                             if (gameEngine.play.hasStaleMove) {
                               gameEngine.play.undoStaleMove();
                               gameEngine.play.selectionCursor.clear();
                               await gameEngine.savePlayState();
+                              setState(() {});
                             }
                             else {
+                              final recentRole = gameEngine.play.opponentRole
+                                  .name;
+                              final currentRole = gameEngine.play.currentRole
+                                  .name;
+                              var message = l10n.dialog_undoLastMove(
+                                  recentRole);
 
-                              final recentRole = gameEngine.play.opponentRole.name;
-                              final currentRole = gameEngine.play.currentRole.name;
-                              var message = l10n.dialog_undoLastMove(recentRole);
-
-                              if (gameEngine.play.isWithAiPlay && gameEngine.play.journal.length > 1) {
-                                message = l10n.dialog_undoLastTwoMoves(currentRole, recentRole);
+                              if (gameEngine.play.isWithAiPlay &&
+                                  gameEngine.play.journal.length > 1) {
+                                message = l10n.dialog_undoLastTwoMoves(
+                                    currentRole, recentRole);
                               }
 
-                              ask(message, l10n, () {
-                                  setState(() async {
-                                    await gameEngine.undoLastMove();
-                                    toastInfo(context, l10n.dialog_undoCompleted);
-                                  });
+                              ask(message, l10n, () async {
+                                await gameEngine.undoLastMove();
+                                setState(() {
+                                  toastInfo(context, l10n.dialog_undoCompleted);
                                 });
+                              });
                             }
-                          });
+                          }
+
+
 
                         },
                       ),
@@ -402,7 +412,7 @@ class _HyleXGroundState extends State<HyleXGround> {
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(horizontal: 16.0 - gameEngine.play.dimension),
                         child: Column(
                             mainAxisSize: MainAxisSize.max,
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -994,21 +1004,187 @@ class _HyleXGroundState extends State<HyleXGround> {
     int x, y = 0;
     x = (index % gameEngine.play.matrix.dimension.x);
     y = (index / gameEngine.play.matrix.dimension.y).floor();
+
     final where = Coordinate(x, y);
+    final spot = gameEngine.play.matrix.getSpot(where);
+    final chip = spot.content;
+
     return GestureDetector(
       onTap: () {
         _gridItemTapped(context, where);
       },
       child: GridTile(
-        child: Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: Colors.black.withAlpha(80), width: 0.5)),
-          child: Center(
-            child: _wrapLastMove(_buildGridItem(where), where),
-          ),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black.withAlpha(80), width: 0.5),
+              ),
+              child: _buildDroppableCell(where, constraints, chip),
+            );
+          },
         ),
       ),
     );
+  }
+
+  Widget _buildDroppableCell(Coordinate where, BoxConstraints constraints, GameChip? chip) {
+    if (gameEngine.isBoardLocked()) {
+      return _buildWrappedChip(where);
+    }
+    debugPrint("_validDragTarget=$_validDragTarget _draggingChip=$_draggingChip _dragStartedAt=$_dragStartedAt");
+    return Container(
+      color: _validDragTarget == where
+          ? _draggingChip?.color.withAlpha(gameEngine.play.currentRole == Role.Order ? 140 : 100)
+          : null,
+      child: DragTarget<Coordinate>(
+        onMove: (details) {
+          if (gameEngine.play.currentRole == Role.Order) {
+            if (_validDragTarget != where
+                && chip == null
+                && (gameEngine.play.selectionCursor.trace.contains(where) || gameEngine.play.selectionCursor.start == where)) {
+              setState(() {
+                _validDragTarget = where;
+              });
+            }
+          }
+          else {
+            if (_validDragTarget != where && chip == null) {
+              setState(() {
+                _validDragTarget = where;
+              });
+            }
+          }
+        },
+        onLeave: (details) {
+          setState(() {
+            _validDragTarget = null;
+          });
+        },
+        builder: (BuildContext context, List<Object?> candidateData, List<dynamic> rejectedData) {
+          return chip != null && _isChipDraggableForRole(where, chip)
+              ? _buildDraggableChip(where, constraints, chip)
+              : _buildWrappedChip(where);
+        }),
+    );
+  }
+
+  Widget _buildDraggableChip(
+      Coordinate where,
+      BoxConstraints constraints,
+      GameChip chip) {
+
+    return LongPressDraggable<Coordinate>(
+      maxSimultaneousDrags: 1,
+      data: where,
+      hitTestBehavior: HitTestBehavior.translucent,
+      onDragStarted: () {
+        if (gameEngine.play.currentRole == Role.Chaos) {
+          _handleOccupiedFieldForChaos(where, context);
+        }
+        else if (gameEngine.play.currentRole == Role.Order) {
+          if (gameEngine.play.selectionCursor.start != where) {
+            _handleOccupiedFieldForOrder(where, context);
+          }
+        }
+        debugPrint("Start to drag $where $chip");
+
+        setState(() {
+          _dragStartedAt = where;
+          _draggingChip = chip;
+          _validDragTarget = null;
+        });
+      },
+      onDragCompleted: () {
+        debugPrint("onDragCompleted");
+
+        bool dropAllowed = false;
+        if (_validDragTarget != null) {
+          final chipOnTarget = gameEngine.play.matrix.getChip(_validDragTarget!);
+          if (gameEngine.play.currentRole == Role.Chaos) {
+            if (chipOnTarget == null) {
+              dropAllowed = _handleFreeFieldForChaos(context, _validDragTarget!);
+            }
+            else {
+              dropAllowed = _handleOccupiedFieldForChaos(_validDragTarget!, context);
+            }
+          }
+          else if (gameEngine.play.currentRole == Role.Order) {
+            if (chipOnTarget == null) {
+              dropAllowed = _handleFreeFieldForOrder(context, _validDragTarget!);
+            }
+            else {
+              dropAllowed = _handleOccupiedFieldForOrder(_validDragTarget!, context);
+            }
+          }
+        }
+        else if (_validDragTarget == null && _dragStartedAt != null) {
+          // undo dragging
+          debugPrint("undo dragging to $_dragStartedAt");
+
+          if (gameEngine.play.currentRole == Role.Chaos) {
+            dropAllowed = _handleFreeFieldForChaos(context, _dragStartedAt!);
+          }
+          else if (gameEngine.play.currentRole == Role.Order) {
+            dropAllowed = _handleFreeFieldForOrder(context, _dragStartedAt!);
+          }
+        }
+        debugPrint("dropAllowed=$dropAllowed _dragStartedAt=$_dragStartedAt _dragTarget=$_validDragTarget");
+
+        if (dropAllowed) {
+          setState(() {
+            _dragStartedAt = null;
+            _validDragTarget = null;
+            _draggingChip = null;
+          });
+        }
+      },
+      onDraggableCanceled: (_,__) {
+        debugPrint("onDragCancelled");
+
+        if (_dragStartedAt != null) {
+          // undo dragging
+          debugPrint("undo dragging due to cancel");
+
+          if (gameEngine.play.currentRole == Role.Chaos) {
+            // do nothing, swiped out
+          }
+          else if (gameEngine.play.currentRole == Role.Order) {
+            _handleFreeFieldForOrder(context, _dragStartedAt!);
+            _handleOccupiedFieldForOrder(_dragStartedAt!, context);
+          }
+        }
+
+        setState(() {
+          _dragStartedAt = null;
+          _validDragTarget = null;
+          _draggingChip = null;
+        });
+      },
+      delay: Duration(milliseconds: 150),
+      feedback: SizedBox(
+          height: constraints.maxHeight,
+          width: constraints.maxWidth,
+          child: buildGameChip("", chipColor: chip.color.withAlpha(255), dimension: gameEngine.play.dimension)
+      ),
+      child: Center(
+        child: _buildWrappedChip(where),
+      ),
+    );
+  }
+
+  bool _isChipDraggableForRole(Coordinate where, GameChip chip) {
+    if (gameEngine.play.currentRole == Role.Order) {
+      return !gameEngine.play.hasStaleMove || where == gameEngine.play.staleMove?.to;
+    }
+    else { // Chaos
+      return where == gameEngine.play.staleMove?.to;
+    }
+  }
+
+  Center _buildWrappedChip(Coordinate where) {
+    return Center(
+        child: _wrapLastMove(_buildGridItem(where), where));
   }
 
 
@@ -1100,21 +1276,23 @@ class _HyleXGroundState extends State<HyleXGround> {
     var shadedColor = startSpot?.content?.color.withOpacity(0.2);
 
     return buildGameChip(text,
-      chipColor: chip != null ? _getChipColor(chip, where): null,
+      chipColor: _dragStartedAt == where && _draggingChip != null
+          ? _draggingChip!.color.withAlpha(20)
+          : chip != null ? _getChipColor(chip, where): null,
       backgroundColor: possibleTarget ? shadedColor : null,
       dimension: gameEngine.play.dimension,
       showCoordinates: PreferenceService().showCoordinates,
       where: where,
-      onLongPressStart: (details) {
+      onLongPressStart: where == null ? (details) {
         setState(() {
           _emphasiseAllChipsOf = chip;
         });
-      },
-      onLongPressEnd: (details) => {
+      } : null,
+      onLongPressEnd: where == null ? (details) => {
         setState(() {
           _emphasiseAllChipsOf = null;
         })
-      },
+      } : null,
     );
   }
 
@@ -1133,7 +1311,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   Future<void> _gridItemTapped(BuildContext context, Coordinate where) async {
 
-    if (gameEngine.isBoardLocked()) {
+    if (gameEngine.isBoardLocked() || _dragStartedAt != null || _draggingChip != null) {
       return;
     }
 
@@ -1157,42 +1335,50 @@ class _HyleXGroundState extends State<HyleXGround> {
     });
   }
 
-  void _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
+  bool _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != null && !gameEngine.play.matrix.isFree(cursor.end!)) {
       if (PreferenceService().showChipErrors) {
         toastInfo(context, l10n.error_chaosAlreadyPlaced);
       }
+      return false;
     }
     else {
       final currentChip = gameEngine.play.currentChip!;
       if (!gameEngine.play.stock.hasStock(currentChip)) {
-        toastInfo(context, l10n.error_noMoreStock);
+        if (PreferenceService().showChipErrors) {
+          toastInfo(context, l10n.error_noMoreStock);
+        }
+        return false;
       }
       gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate));
       gameEngine.play.selectionCursor.updateEnd(coordinate);
     }
+    return true;
   }
 
-  void _handleOccupiedFieldForChaos(Coordinate coordinate, BuildContext context) {
+  bool _handleOccupiedFieldForChaos(Coordinate coordinate, BuildContext context) {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != coordinate) {
       if (PreferenceService().showChipErrors) {
         toastInfo(context, l10n.error_onlyRemoveRecentlyPlacedChip);
       }
+      return false;
     }
     else {
       gameEngine.play.undoStaleMove();
       gameEngine.play.selectionCursor.clear();
     }
+    return true;
   }
 
-  void _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
+  bool _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (!selectionCursor.hasStart) {
       if (PreferenceService().showChipErrors) {
         toastInfo(context, l10n.error_orderHasToSelectAChip);
       }
+      return false;
     }
     else if (/*!cursor.hasEnd && */selectionCursor.start == coordinate) {
       // clear start cursor if not target is selected
@@ -1203,6 +1389,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       if (PreferenceService().showChipErrors) {
         toastInfo(context, l10n.error_orderMoveInvalid);
       }
+      return false;
     }
     else if (selectionCursor.hasStart) {
       if (selectionCursor.hasEnd) {
@@ -1225,14 +1412,22 @@ class _HyleXGroundState extends State<HyleXGround> {
       }
 
     }
+    return true;
   }
 
-  void _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
+  bool _handleOccupiedFieldForOrder(Coordinate coordinate, BuildContext context) {
     final selectionCursor = gameEngine.play.selectionCursor;
-    if (selectionCursor.start != null && selectionCursor.start != coordinate && selectionCursor.end != null) {
+    if (selectionCursor.start != null
+        && selectionCursor.start != coordinate
+        && selectionCursor.end != null) {
+      if (selectionCursor.end == coordinate) {
+        // click on same chip, do nothing
+        return true;
+      }
       if (PreferenceService().showChipErrors) {
         toastInfo(context, l10n.error_orderMoveOnOccupied);
       }
+      return false;
     }
     else if (selectionCursor.start == coordinate) {
       selectionCursor.clear();
@@ -1241,6 +1436,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       selectionCursor.updateStart(coordinate);
       selectionCursor.detectTraceForPossibleOrderMoves(coordinate, gameEngine.play.matrix);
     }
+    return true;
   }
 
   Widget _buildChipStock(BuildContext context, int index) {
@@ -1466,6 +1662,7 @@ class _HyleXGroundState extends State<HyleXGround> {
       },
     );
   }
+
 
 }
 

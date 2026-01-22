@@ -713,8 +713,6 @@ class Play {
   bool get hasStaleMove => _staleMove != null;
   
   Move? get staleMove => _staleMove;
-  
-  Move? get currentMove => _staleMove;
 
   int getChaosPointsPerChip() => header.playSize.chaosPointsPerChip;
 
