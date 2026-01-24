@@ -495,7 +495,7 @@ class StartPageState extends State<StartPage> {
                     clickHandler: () async {
                       final play = await StorageService().loadCurrentSinglePlay();
                       if (play != null) {
-                        await showShowLoading(l10n.dialog_loadingGame);
+                        await showProgressDialog(l10n.dialog_loadingGame);
 
                         Navigator.push(context,
                             MaterialPageRoute(builder: (context) {
@@ -824,7 +824,7 @@ class StartPageState extends State<StartPage> {
 
   Future<void> _startSinglePlayerGame(BuildContext context, PlayerType chaosPlayer,
       PlayerType orderPlayer, PlaySize playSize) async {
-    await showShowLoading(l10n.dialog_initGame);
+    await showProgressDialog(l10n.dialog_initGame);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {
           final header = PlayHeader.singlePlay(playSize);
@@ -842,7 +842,7 @@ class StartPageState extends State<StartPage> {
         Move? firstOpponentMove,
         Function()? loadHandler,
       ]) async {
-    await showShowLoading(l10n.dialog_initGame);
+    await showProgressDialog(l10n.dialog_initGame);
     final play = Play.newMultiPlay(header);
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {
@@ -866,7 +866,7 @@ class StartPageState extends State<StartPage> {
       Move? opponentMove,
       [Function()? loadHandler]
       ) async {
-    await showShowLoading(l10n.dialog_loadingGame);
+    await showProgressDialog(l10n.dialog_loadingGame);
 
     Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (context) {

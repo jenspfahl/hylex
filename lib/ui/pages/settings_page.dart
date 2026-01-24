@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/service/BackupRestoreService.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
@@ -192,9 +193,11 @@ class _SettingsPageState extends State<SettingsPage> {
               title: Text(l10n.settings_backupAll),
               description: Text(l10n.settings_backupAllDescription),
               onPressed: (_) {
+                showProgressDialog(l10n.settings_backupAll + " ...");
                 BackupRestoreService().backup(
                         (message) => toastInfo(context, message ?? l10n.done + "!"),
-                        (message) => toastLost(context, message));
+                        (message) => toastLost(context, message))
+                    .then((_) => SmartDialog.dismiss());
               },
             ),
             SettingsTile(
@@ -206,9 +209,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     AppLocalizations.of(context)!,
                     icon: Icons.warning,
                     () {
+                      showProgressDialog(l10n.settings_restoreFromFile + " ...");
+
                       BackupRestoreService().restore(
                               () => toastInfo(context,"${l10n.done}!"),
-                              (message) => toastLost(context, message));
+                              (message) => toastLost(context, message))
+                          .then((_) async {
+                            await _loadAllPrefs();
+                            setState(() {});
+                          }).then((_) => SmartDialog.dismiss());;
                     });
 
               },

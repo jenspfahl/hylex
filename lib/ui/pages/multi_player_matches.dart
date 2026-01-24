@@ -416,7 +416,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   Future<void> _startMultiPlayerGame(BuildContext context, PlayHeader header) async {
     final l10n = AppLocalizations.of(context)!;
 
-    await showShowLoading(l10n.dialog_loadingGame);
+    await showProgressDialog(l10n.dialog_loadingGame);
     final play = await StorageService().loadPlayFromHeader(header);
     Navigator.push(context,
         MaterialPageRoute(builder: (context) {

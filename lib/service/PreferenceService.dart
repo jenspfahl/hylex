@@ -33,13 +33,14 @@ class PreferenceService {
   static final DATA_LOGO_COLOR_L = 'data/logoColor/l';
   static final DATA_LOGO_COLOR_E = 'data/logoColor/e';
 
-  static final PREF_SHOW_COORDINATES = 'pref/showCoordinates';
-  static final PREF_SHOW_HINTS = 'pref/showHints';
-  static final PREF_SHOW_POINTS = 'pref/showPoints';
-  static final PREF_SHOW_CHIP_ERRORS = 'pref/showPChipErrors';
-  static final PREF_MATCH_SORT_ORDER = 'pref/matchSortOrder';
-  static final PREF_SIGN_ALL_MESSAGES = 'pref/signAllMessages';
-  static final PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES = 'pref/sendMessagesInDifferentLanguages';
+  static final PREF_PREFIX = 'pref';
+  static final PREF_SHOW_COORDINATES = '$PREF_PREFIX/showCoordinates';
+  static final PREF_SHOW_HINTS = '$PREF_PREFIX/showHints';
+  static final PREF_SHOW_POINTS = '$PREF_PREFIX/showPoints';
+  static final PREF_SHOW_CHIP_ERRORS = '$PREF_PREFIX/showChipErrors';
+  static final PREF_MATCH_SORT_ORDER = '$PREF_PREFIX/matchSortOrder';
+  static final PREF_SIGN_ALL_MESSAGES = '$PREF_PREFIX/signAllMessages';
+  static final PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES = '$PREF_PREFIX/sendMessagesInDifferentLanguages';
 
   static final PreferenceService _service = PreferenceService._internal();
   
@@ -57,6 +58,11 @@ class PreferenceService {
 
   PreferenceService._internal() {
     // load cache
+    loadCache();
+  }
+
+  void loadCache() {
+    // load cache
     _loadCachedBoolPref(PREF_SHOW_COORDINATES, (v) => showCoordinates = v);
     _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
     _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);
@@ -67,6 +73,12 @@ class PreferenceService {
         signMessages = SignMessages.values.firstWhere((e) => e.index == value);
       }
     });
+  }
+
+  Future<Object?> get(String key) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    return prefs.get(key);
   }
 
   Future<String?> getString(String key) async {

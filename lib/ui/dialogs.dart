@@ -244,7 +244,7 @@ OutlinedButton _buildChoiceButton(
   }
 }
 
-showShowLoading(String text) async {
+showProgressDialog(String text) async {
   SmartDialog.dismiss();
 
   SmartDialog.showLoading(msg: text, builder: (_) {

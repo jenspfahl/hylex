@@ -5,14 +5,12 @@ import 'package:bits/buffer.dart';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hyle_x/model/common.dart';
 import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/service/StorageService.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../model/play.dart';
 import '../model/user.dart';
-import '../ui/pages/multi_player_matches.dart';
 import 'PreferenceService.dart';
 
 
@@ -30,12 +28,15 @@ class BackupRestoreService {
 
   BackupRestoreService._internal();
 
-  Future<void> backup(Function(String?) successHandler, Function(String) errorHandler) async {
+  Future<void> backup(
+      Function(String?) successHandler,
+      Function(String) errorHandler
+      ) async {
     try {
 
       final destPath = await FilePicker.platform.getDirectoryPath();
       if (destPath != null) {
-
+        //TODO avoid to ask twice
         var storagePermission = await Permission.manageExternalStorage.request(); // after Android 10
         if (!storagePermission.isGranted) {
           storagePermission = await Permission.storage.request(); // before Android 10
@@ -94,7 +95,25 @@ class BackupRestoreService {
         debugPrint("Start writing user ... :" + data);
         debugPrint("Signature:" + signatureBase64);
 
-        await dstFile.writeAsString(data + "/" + signatureBase64);
+        final prefKeys = await PreferenceService().getKeys(PreferenceService.PREF_PREFIX);
+        debugPrint("prefKeys: $prefKeys");
+
+        final sb = StringBuffer();
+        for (int i = 0; i < prefKeys.length; i++) {
+          final key = prefKeys[i];
+          final value = await PreferenceService().get(key);
+          debugPrint("pref $key value: $value");
+
+          if (sb.isNotEmpty) {
+            sb.write(",");
+          }
+          sb.write("${key.replaceAll("/", "_")}=$value");
+        }
+
+        final prefs = sb.toString();
+        debugPrint("prefs: $prefs");
+
+        await dstFile.writeAsString(data + "/" + signatureBase64 + "/" + prefs);
 
         successHandler(dstFile.path);
       }
@@ -117,9 +136,10 @@ class BackupRestoreService {
 
           final all = await source.readAsString();
           final split = all.split("/");
-          if (split.length != 2) throw Exception("There is no clear signature");
+          if (split.length < 2 || split.length > 3) throw Exception("Wrong format");
           final data = split[0];
           final signature = split[1];
+          final prefs = split.length> 2 ? split[2] : null;
 
           final bitBuffer = BitBuffer.fromBase64Compressed(data);
 
@@ -169,7 +189,33 @@ class BackupRestoreService {
             }
           }
 
-
+          if (prefs != null) {
+            debugPrint("Importing prefs...");
+            final prefsSplit = prefs.split(",");
+            for (int i = 0; i < prefsSplit.length; i++) {
+              final pref = prefsSplit[i];
+              debugPrint("Importing pref $pref...");
+              final keyPair = pref.split("=");
+              if (keyPair.length == 2) {
+                final key = keyPair.first.replaceAll("_", "/");
+                final value = keyPair.last;
+                debugPrint("Importing pref  for key $key and value $value ...");
+                if (value == 'true' || value == 'false') {
+                  await PreferenceService().setBool(key, value == 'true');
+                }
+                else {
+                  final intValue = int.tryParse(value);
+                  if (intValue != null) {
+                    await PreferenceService().setInt(key, intValue);
+                  }
+                  else {
+                    await PreferenceService().setString(key, value);
+                  }
+                }
+              }
+            }
+            PreferenceService().loadCache();
+          }
 
         } catch (e, trace) {
           print(e);
