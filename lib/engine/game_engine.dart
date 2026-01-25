@@ -146,9 +146,12 @@ abstract class GameEngine extends ChangeNotifier {
       return;
     }
 
-    play.applyStaleMove(opponentMove);
-    play.opponentCursor.adaptFromMove(opponentMove);
-    play.opponentCursor.markTraceForDoneMove();
+    play.applyStaleMove(opponentMove, animate: true);
+    //ChipAnimation().doWhenDone
+    {
+      play.opponentCursor.adaptFromMove(opponentMove);
+      play.opponentCursor.markTraceForDoneMove();
+    }
     play.commitMove();
 
     await nextPlayer();

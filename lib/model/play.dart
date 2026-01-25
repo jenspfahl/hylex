@@ -464,6 +464,8 @@ class Play {
   final List<Move> _journal = [];
   Move? _staleMove;
 
+  Move? moveToAnimate;
+
   Play.newSinglePlay(this.header, this._chaosPlayer, this._orderPlayer) {
     _init(multiPlay: false);
   }
@@ -641,7 +643,7 @@ class Play {
   bool get isJournalEmpty => _journal.isEmpty;
 
 
-  applyStaleMove(Move move) {
+  applyStaleMove(Move move, {bool animate = false}) {
     //check move is valid (against the rules)
     final result = validateMove(move);
 
@@ -660,6 +662,10 @@ class Play {
     _stats.setPoints(Role.Order, _matrix.getTotalPointsForOrder());
     if (header.playMode != PlayMode.Classic) {
       _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
+    }
+
+    if (animate && !move.skipped) {
+      moveToAnimate = move;
     }
   }
 

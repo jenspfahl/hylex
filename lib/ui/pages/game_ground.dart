@@ -47,7 +47,7 @@ class HyleXGround extends StatefulWidget {
 
 }
 
-class _HyleXGroundState extends State<HyleXGround> {
+class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin {
 
   late GameEngine gameEngine;
 
@@ -66,6 +66,11 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   bool _changeAutoPlayLock = false;
 
+  late Animation<double> cellDropAnimation;
+  late Animation<AlignmentGeometry> cellVerticalMoveAnimation;
+  late Animation<AlignmentGeometry> cellHorizontalMoveAnimation;
+  late AnimationController cellAnimationController;
+
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
 
@@ -76,6 +81,26 @@ class _HyleXGroundState extends State<HyleXGround> {
     _changeAutoPlayLock = false;
 
     SmartDialog.dismiss(); // dismiss loading dialog
+
+
+    cellAnimationController = AnimationController(
+        duration: const Duration(milliseconds: 700), vsync: this);
+    cellAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        gameEngine.play.moveToAnimate = null;
+      }
+    });
+    
+    cellDropAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(tween: Tween(begin: 1.25, end: 0.75), weight: 0.75),
+      TweenSequenceItem<double>(tween: Tween(begin: 0.75, end: 1.0), weight: 0.25),
+    ]).animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+    cellVerticalMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.topCenter, end: AlignmentGeometry.bottomCenter)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+    cellHorizontalMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.centerLeft, end: AlignmentGeometry.centerRight)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
 
 
     if (widget.play.multiPlay) {
@@ -144,6 +169,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
   @override
   void dispose() {
+    cellAnimationController.dispose();
     gameEngine.pauseGame();
     gameEngine.removeListener(_gameListener);
     fgbgSubscription.cancel();
@@ -1009,6 +1035,7 @@ class _HyleXGroundState extends State<HyleXGround> {
     final spot = gameEngine.play.matrix.getSpot(where);
     final chip = spot.content;
 
+
     return GestureDetector(
       onTap: () {
         _gridItemTapped(context, where);
@@ -1028,7 +1055,10 @@ class _HyleXGroundState extends State<HyleXGround> {
     );
   }
 
-  Widget _buildDroppableCell(Coordinate where, BoxConstraints constraints, GameChip? chip) {
+  Widget _buildDroppableCell(
+      Coordinate where,
+      BoxConstraints constraints,
+      GameChip? chip) {
     if (gameEngine.isBoardLocked()) {
       return _buildWrappedChip(where);
     }
@@ -1218,6 +1248,7 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     final spot = gameEngine.play.matrix.getSpot(where);
     final chip = spot.content;
+
     var pointText = spot.orderPoints > 0 && PreferenceService().showPoints ? spot.orderPoints.toString() : "";
 
     if (_emphasiseAllChipsOfRole == Role.Chaos) {
@@ -1233,12 +1264,12 @@ class _HyleXGroundState extends State<HyleXGround> {
     }
 
 
-    if (gameEngine.play.selectionCursor.end == where) {
+    if (gameEngine.play.selectionCursor.end == where && !cellAnimationController.isAnimating) {
       return DottedBorder(
         child: _buildChip(chip, pointText, where),
       );
     }
-    else if (gameEngine.play.selectionCursor.start == where) {
+    else if (gameEngine.play.selectionCursor.start == where && !cellAnimationController.isAnimating) {
       return DottedBorder(
         options: RectDottedBorderOptions(
           dashPattern: const [2,4]),
@@ -1275,24 +1306,40 @@ class _HyleXGroundState extends State<HyleXGround> {
 
     var shadedColor = startSpot?.content?.color.withOpacity(0.2);
 
-    return buildGameChip(text,
-      chipColor: _dragStartedAt == where && _draggingChip != null
-          ? _draggingChip!.color.withAlpha(20)
-          : chip != null ? _getChipColor(chip, where): null,
-      backgroundColor: possibleTarget ? shadedColor : null,
-      dimension: gameEngine.play.dimension,
-      showCoordinates: PreferenceService().showCoordinates,
-      where: where,
-      onLongPressStart: where == null ? (details) {
-        setState(() {
-          _emphasiseAllChipsOf = chip;
-        });
-      } : null,
-      onLongPressEnd: where == null ? (details) => {
-        setState(() {
-          _emphasiseAllChipsOf = null;
-        })
-      } : null,
+    Move? moveToAnimate = null;
+    if (where != null && gameEngine.play.moveToAnimate?.to == where) {
+      moveToAnimate = gameEngine.play.moveToAnimate;
+      cellAnimationController.reset();
+      cellAnimationController.forward();
+      debugPrint("Start animation at $moveToAnimate");
+
+    }
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return buildGameChip(text,
+            chipColor: _dragStartedAt == where && _draggingChip != null
+                ? _draggingChip!.color.withAlpha(20)
+                : chip != null ? _getChipColor(chip, where): null,
+            backgroundColor: possibleTarget ? shadedColor : null,
+            dimension: gameEngine.play.dimension,
+            showCoordinates: PreferenceService().showCoordinates,
+            where: where,
+            onLongPressStart: where == null ? (details) {
+              setState(() {
+                _emphasiseAllChipsOf = chip;
+              });
+            } : null,
+            onLongPressEnd: where == null ? (details) => {
+              setState(() {
+                _emphasiseAllChipsOf = null;
+              })
+            } : null,
+            animationController: cellAnimationController,
+            moveToAnimate: moveToAnimate,
+            cellAnimation: moveToAnimate?.isPlaced() == true ? cellDropAnimation : cellHorizontalMoveAnimation,
+            cellConstraints: constraints,
+        );
+      },
     );
   }
 
@@ -1351,7 +1398,7 @@ class _HyleXGroundState extends State<HyleXGround> {
         }
         return false;
       }
-      gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate));
+      gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate), animate: true);
       gameEngine.play.selectionCursor.updateEnd(coordinate);
     }
     return true;
@@ -1396,11 +1443,11 @@ class _HyleXGroundState extends State<HyleXGround> {
         final from = gameEngine.play.matrix.getSpot(selectionCursor.end!);
         // this is a correction move, so undo last move and apply again below
         gameEngine.play.undoStaleMove();
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate));
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate), animate: false);
       }
       else {
         final from = gameEngine.play.matrix.getSpot(selectionCursor.start!);
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate));
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate), animate: true);
       }
 
       if (selectionCursor.start == coordinate) {
@@ -1505,7 +1552,7 @@ class _HyleXGroundState extends State<HyleXGround> {
   }
 
   Widget _wrapLastMove(Widget widget, Coordinate where) {
-    if (gameEngine.play.opponentCursor.hasStart && gameEngine.play.opponentCursor.start == where) {
+    if (gameEngine.play.opponentCursor.hasStart && gameEngine.play.opponentCursor.start == where && !cellAnimationController.isAnimating) {
       return DottedBorder(
           options: CircularDottedBorderOptions(
             padding: EdgeInsets.zero,
@@ -1515,7 +1562,7 @@ class _HyleXGroundState extends State<HyleXGround> {
           ),
           child: widget);
     }
-    else if (gameEngine.play.opponentCursor.hasEnd && gameEngine.play.opponentCursor.end == where) {
+    else if (gameEngine.play.opponentCursor.hasEnd && gameEngine.play.opponentCursor.end == where && !cellAnimationController.isAnimating) {
       return DottedBorder(
           options: CircularDottedBorderOptions(
             padding: EdgeInsets.zero,

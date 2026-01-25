@@ -7,6 +7,7 @@ import '../model/chip.dart';
 import '../model/common.dart';
 import '../model/coordinate.dart';
 import '../model/messaging.dart';
+import '../model/move.dart';
 import 'dialogs.dart';
 
 
@@ -318,6 +319,10 @@ Widget buildGameChip(
       Coordinate? where,
       GestureLongPressStartCallback? onLongPressStart,
       GestureLongPressEndCallback? onLongPressEnd,
+      AnimationController? animationController,
+      BoxConstraints? cellConstraints,
+      Move? moveToAnimate,
+      Animation? cellAnimation,
     }) {
 
   if (chipColor == null) {
@@ -337,18 +342,48 @@ Widget buildGameChip(
     child: GestureDetector(
       onLongPressStart: onLongPressStart,
       onLongPressEnd: onLongPressEnd,
-      child: CircleAvatar(
-        backgroundColor: chipColor,
-        maxRadius: 60,
-        child: Text(text,
-            style: TextStyle(
-              fontSize: dimension > 7 ? 12 : 16,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            )),
-      ),
+      child: moveToAnimate != null
+          ? AnimatedBuilder(animation: animationController!,
+          builder: (BuildContext context, Widget? child) {
+            if (moveToAnimate.isPlaced()) {
+              return Transform.scale(scale: cellAnimation!.value,
+                  child: _buildSingleChip(chipColor, text, dimension));
+            }
+            else {
+              return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Positioned(
+                        left: -20,
+                        child: SizedBox(
+                          height: 60,
+                          width: 120,
+                          child: AnimatedAlign(alignment: cellAnimation!.value,
+                              duration: Duration(milliseconds: 1000),
+                              child: SizedBox(
+                                  height: cellConstraints?.maxHeight,
+                                  width: cellConstraints?.maxWidth,
+                                  child: _buildSingleChip(chipColor, text, dimension))),
+                        ))
+                  ]);
+            }
+          })
+          : _buildSingleChip(chipColor, text, dimension),
     ),
   );
+}
+
+CircleAvatar _buildSingleChip(Color chipColor, String text, int dimension) {
+  return CircleAvatar(
+      backgroundColor: chipColor,
+      maxRadius: 60,
+      child: Text(text,
+          style: TextStyle(
+            fontSize: dimension > 7 ? 12 : 16,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          )),
+    );
 }
 
 
