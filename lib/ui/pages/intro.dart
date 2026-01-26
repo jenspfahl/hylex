@@ -92,25 +92,28 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
                     _startAnimation(-4);
 
-                    return Column(
-                        children: [
-                          Text(l10n.intro_page2Part1, style: bodyStyle),
-                          const Text(""),
-                          _buildCellRow(
-                              second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
-                          ),
-                          _buildCellRow(
-                              third: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(2)),
-                          ),
-                          _buildCellRow(
-                              first: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
-                          ),
-                          _buildCellRow(
-                              fourth: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(1)),
-                              fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
-                          ),
-                          _buildCellRow(),
-                        ]
+                    return GestureDetector(
+                      onTap: () => _startAnimation(1),
+                      child: Column(
+                          children: [
+                            Text(l10n.intro_page2Part1, style: bodyStyle),
+                            const Text(""),
+                            _buildCellRow(
+                                second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(0)),
+                            ),
+                            _buildCellRow(
+                                third: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(2)),
+                            ),
+                            _buildCellRow(
+                                first: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                            ),
+                            _buildCellRow(
+                                fourth: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(1)),
+                                fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                            ),
+                            _buildCellRow(),
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -125,26 +128,29 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
                     _startAnimation(-5);
 
-                    return Column(
-                        children: [
-                          Text(l10n.intro_page3Part1, style: bodyStyle),
-                          const Text(""),
-                          _buildCellRow(),
-                          _buildCellRow(
-                            second: _buildGameChip(chipVisibleFrom: 6, chipColor: getColorFromIdx(3)),
-                          ),
-                          _buildCellRow(
-                            first: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(0)),
-                            second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(1)),
-                            third: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(2)),
-                            fourth: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
-                            fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
-                          ),
-                          _buildCellRow(
-                            second: _buildGameChip(chipVisibleFrom: 7, chipColor: getColorFromIdx(3)),
-                          ),
-                          _buildCellRow(),
-                        ]
+                    return GestureDetector(
+                      onTap: () => _startAnimation(1),
+                      child: Column(
+                          children: [
+                            Text(l10n.intro_page3Part1, style: bodyStyle),
+                            const Text(""),
+                            _buildCellRow(),
+                            _buildCellRow(
+                              second: _buildGameChip(chipVisibleFrom: 6, chipColor: getColorFromIdx(3)),
+                            ),
+                            _buildCellRow(
+                              first: _buildGameChip(chipVisibleFrom: 4, chipColor: getColorFromIdx(0)),
+                              second: _buildGameChip(chipVisibleFrom: 2, chipColor: getColorFromIdx(1)),
+                              third: _buildGameChip(chipVisibleFrom: 1, chipColor: getColorFromIdx(2)),
+                              fourth: _buildGameChip(chipVisibleFrom: 3, chipColor: getColorFromIdx(1)),
+                              fifth: _buildGameChip(chipVisibleFrom: 5, chipColor: getColorFromIdx(0)),
+                            ),
+                            _buildCellRow(
+                              second: _buildGameChip(chipVisibleFrom: 7, chipColor: getColorFromIdx(3)),
+                            ),
+                            _buildCellRow(),
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -160,64 +166,67 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
                     _startAnimation(-5);
                     final chipBackgroundColor = getColorFromIdx(0).withOpacity(0.2);
 
-                    return Column(
-                        children: [
-                          Text(l10n.intro_page4Part1, style: bodyStyle),
-                          const Text(""),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                              backgroundColor: chipBackgroundColor,
-                              backgroundVisibleAt: [2,3,4,5],
+                    return GestureDetector(
+                      onTap: () => _startAnimation(2),
+                      child: Column(
+                          children: [
+                            Text(l10n.intro_page4Part1, style: bodyStyle),
+                            const Text(""),
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                backgroundColor: chipBackgroundColor,
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
                             ),
-                          ),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                              backgroundColor: chipBackgroundColor,
-                              backgroundVisibleAt: [2,3,4,5],
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                backgroundColor: chipBackgroundColor,
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
                             ),
-                          ),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                              chipColor: getColorFromIdx(0),
-                              backgroundColor: chipBackgroundColor,
-                              chipVisibleAt: [-5,-4,-3,-2,-1,0,1,2],
-                              backgroundVisibleAt: [2,3,4,5],
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                chipColor: getColorFromIdx(0),
+                                backgroundColor: chipBackgroundColor,
+                                chipVisibleAt: [-5,-4,-3,-2,-1,0,1,2],
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
+                              second: _buildGameChip(
+                                chipColor: getColorFromIdx(0),
+                                backgroundColor: chipBackgroundColor,
+                                chipVisibleAt: [3],
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
+                              third: _buildGameChip(
+                                chipColor: getColorFromIdx(0),
+                                backgroundColor: chipBackgroundColor,
+                                chipVisibleAt: [4],
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
+                              fourth: _buildGameChip(
+                                chipColor: getColorFromIdx(0),
+                                backgroundColor: chipBackgroundColor,
+                                chipVisibleAt: [5,6,7,8,9,10,11,12,13,14],
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
+                              fifth: _buildGameChip(
+                                chipColor: getColorFromIdx(1),
+                              ),
                             ),
-                            second: _buildGameChip(
-                              chipColor: getColorFromIdx(0),
-                              backgroundColor: chipBackgroundColor,
-                              chipVisibleAt: [3],
-                              backgroundVisibleAt: [2,3,4,5],
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                backgroundColor: chipBackgroundColor,
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
                             ),
-                            third: _buildGameChip(
-                              chipColor: getColorFromIdx(0),
-                              backgroundColor: chipBackgroundColor,
-                              chipVisibleAt: [4],
-                              backgroundVisibleAt: [2,3,4,5],
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                backgroundColor: chipBackgroundColor,
+                                backgroundVisibleAt: [2,3,4,5],
+                              ),
                             ),
-                            fourth: _buildGameChip(
-                              chipColor: getColorFromIdx(0),
-                              backgroundColor: chipBackgroundColor,
-                              chipVisibleAt: [5,6,7,8,9,10,11,12,13,14],
-                              backgroundVisibleAt: [2,3,4,5],
-                            ),
-                            fifth: _buildGameChip(
-                              chipColor: getColorFromIdx(1),
-                            ),
-                          ),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                              backgroundColor: chipBackgroundColor,
-                              backgroundVisibleAt: [2,3,4,5],
-                            ),
-                          ),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                              backgroundColor: chipBackgroundColor,
-                              backgroundVisibleAt: [2,3,4,5],
-                            ),
-                          ),
-                        ]
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -232,43 +241,46 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
                     _startAnimation(-3);
 
-                    return Column(
-                        children: [
-                          Text(l10n.intro_page5Part1, style: bodyStyle),
-                          const Text(""),
-                          _buildCellRow(
-                            second: _buildGameChip(
-                                text: "20",
-                                textVisibleFrom: 2,
-                                chipColor: getColorFromIdx(3)),
-                          ),
-                          _buildCellRow(),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                                chipColor: getColorFromIdx(0)),
-                            second: _buildGameChip(
-                                chipColor: getColorFromIdx(2)),
-                            third: _buildGameChip(
-                                chipColor: getColorFromIdx(2)),
-                            fourth: _buildGameChip(
-                                chipColor: getColorFromIdx(0)),
-                            fifth: _buildGameChip(
-                                text: "20",
-                                textVisibleFrom: 2,
-                                chipColor: getColorFromIdx(1)),
-                          ),
-                          _buildCellRow(),
-                          _buildCellRow(),
-                          Visibility(
-                              visible: animatedPageController.value.toInt() > 3,
-                              child: Column(children: [
-                                const Text(""),
-                                Text(l10n.intro_page5Part2, style: bodyStyle),
-                                Align(alignment: Alignment.centerLeft,
-                                    child: buildRoleIndicator(Role.Chaos, points: 40, isSelected: false)),
-                              ],)
-                          )
-                        ]
+                    return GestureDetector(
+                      onTap: () => _startAnimation(2),
+                      child: Column(
+                          children: [
+                            Text(l10n.intro_page5Part1, style: bodyStyle),
+                            const Text(""),
+                            _buildCellRow(
+                              second: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 2,
+                                  chipColor: getColorFromIdx(3)),
+                            ),
+                            _buildCellRow(),
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  chipColor: getColorFromIdx(0)),
+                              second: _buildGameChip(
+                                  chipColor: getColorFromIdx(2)),
+                              third: _buildGameChip(
+                                  chipColor: getColorFromIdx(2)),
+                              fourth: _buildGameChip(
+                                  chipColor: getColorFromIdx(0)),
+                              fifth: _buildGameChip(
+                                  text: "20",
+                                  textVisibleFrom: 2,
+                                  chipColor: getColorFromIdx(1)),
+                            ),
+                            _buildCellRow(),
+                            _buildCellRow(),
+                            Visibility(
+                                visible: animatedPageController.value.toInt() > 3,
+                                child: Column(children: [
+                                  const Text(""),
+                                  Text(l10n.intro_page5Part2, style: bodyStyle),
+                                  Align(alignment: Alignment.centerLeft,
+                                      child: buildRoleIndicator(Role.Chaos, points: 40, isSelected: false)),
+                                ],)
+                            )
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -283,50 +295,53 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
                     _startAnimation(-3);
 
-                    return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(l10n.intro_page6Part1, style: bodyStyle),
-                          const Text(""),
-                          _buildCellRow(
-                            second: _buildGameChip(
-                              chipColor: getColorFromIdx(3),
+                    return GestureDetector(
+                      onTap: () => _startAnimation(2),
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(l10n.intro_page6Part1, style: bodyStyle),
+                            const Text(""),
+                            _buildCellRow(
+                              second: _buildGameChip(
+                                chipColor: getColorFromIdx(3),
+                              ),
                             ),
-                          ),
-                          _buildCellRow(),
-                          _buildCellRow(
-                            first: _buildGameChip(
-                                text: "1",
-                                textVisibleFrom: 2,
-                                chipColor: getColorFromIdx(0)),
-                            second: _buildGameChip(
-                                text: "2",
-                                textVisibleFrom: 3,
-                                chipColor: getColorFromIdx(2)),
-                            third: _buildGameChip(
-                                text: "2",
-                                textVisibleFrom: 3,
-                                chipColor: getColorFromIdx(2)),
-                            fourth: _buildGameChip(
-                                text: "1",
-                                textVisibleFrom: 2,
-                                chipColor: getColorFromIdx(0)),
-                            fifth: _buildGameChip(
-                              chipColor: getColorFromIdx(1),
+                            _buildCellRow(),
+                            _buildCellRow(
+                              first: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 2,
+                                  chipColor: getColorFromIdx(0)),
+                              second: _buildGameChip(
+                                  text: "2",
+                                  textVisibleFrom: 3,
+                                  chipColor: getColorFromIdx(2)),
+                              third: _buildGameChip(
+                                  text: "2",
+                                  textVisibleFrom: 3,
+                                  chipColor: getColorFromIdx(2)),
+                              fourth: _buildGameChip(
+                                  text: "1",
+                                  textVisibleFrom: 2,
+                                  chipColor: getColorFromIdx(0)),
+                              fifth: _buildGameChip(
+                                chipColor: getColorFromIdx(1),
+                              ),
                             ),
-                          ),
-                          _buildCellRow(),
-                          _buildCellRow(),
-                          Visibility(
-                              visible: animatedPageController.value.toInt() >= 4,
-                              child: Column(children: [
-                                const Text(""),
-                                Text(l10n.intro_page6Part2, style: bodyStyle),
-                                Align(alignment: Alignment.centerRight,
-                                    child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
-                              ],)
-                          )
-                        ]
+                            _buildCellRow(),
+                            _buildCellRow(),
+                            Visibility(
+                                visible: animatedPageController.value.toInt() >= 4,
+                                child: Column(children: [
+                                  const Text(""),
+                                  Text(l10n.intro_page6Part2, style: bodyStyle),
+                                  Align(alignment: Alignment.centerRight,
+                                      child: buildRoleIndicator(Role.Order, points: 6, isSelected: false)),
+                                ],)
+                            )
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -341,172 +356,175 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
 
                     _startAnimation(-3);
 
-                    return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(l10n.intro_page7Part1, style: bodyStyle),
-                          const Text(""),
-                          Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildCellRow(
-                                    first: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.3,
-                                        chipColor: getColorFromIdx(0)),
-                                    second: _buildGameChip(
-                                        text: "3",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 2.6,
-                                        chipColor: getColorFromIdx(2)),
-                                    third: _buildGameChip(
-                                        text: "2",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 0.5,
-                                        chipColor: getColorFromIdx(2)),
-                                    fourth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 2.5,
-                                        chipColor: getColorFromIdx(0)),
-                                    fifth: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 0.3,
-                                        chipColor: getColorFromIdx(1)),
-                                  ),
+                    return GestureDetector(
+                      onTap: () => _startAnimation(0),
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(l10n.intro_page7Part1, style: bodyStyle),
+                            const Text(""),
+                            Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildCellRow(
+                                      first: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.3,
+                                          chipColor: getColorFromIdx(0)),
+                                      second: _buildGameChip(
+                                          text: "3",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 2.6,
+                                          chipColor: getColorFromIdx(2)),
+                                      third: _buildGameChip(
+                                          text: "2",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 0.5,
+                                          chipColor: getColorFromIdx(2)),
+                                      fourth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 2.5,
+                                          chipColor: getColorFromIdx(0)),
+                                      fifth: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 0.3,
+                                          chipColor: getColorFromIdx(1)),
+                                    ),
 
-                                  _buildCellRow(
-                                    first: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 3.0,
-                                        chipColor: getColorFromIdx(4)),
-                                    second: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.7,
-                                        chipColor: getColorFromIdx(2)),
-                                    third: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 2.7,
-                                        chipColor: getColorFromIdx(3)),
-                                    fourth: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 0.9,
-                                        chipColor: getColorFromIdx(1)),
-                                    fifth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 2.8,
-                                        chipColor: getColorFromIdx(2)),
-                                  ),
+                                    _buildCellRow(
+                                      first: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 3.0,
+                                          chipColor: getColorFromIdx(4)),
+                                      second: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.7,
+                                          chipColor: getColorFromIdx(2)),
+                                      third: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 2.7,
+                                          chipColor: getColorFromIdx(3)),
+                                      fourth: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 0.9,
+                                          chipColor: getColorFromIdx(1)),
+                                      fifth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 2.8,
+                                          chipColor: getColorFromIdx(2)),
+                                    ),
 
-                                  _buildCellRow(
-                                    first: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.9,
-                                        chipColor: getColorFromIdx(1)),
-                                    second: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 1.1,
-                                        chipColor: getColorFromIdx(0)),
-                                    third: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 2.4,
-                                        chipColor: getColorFromIdx(4)),
-                                    fourth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.0,
-                                        chipColor: getColorFromIdx(3)),
-                                    fifth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 0.6,
-                                        chipColor: getColorFromIdx(2)),
-                                  ),
+                                    _buildCellRow(
+                                      first: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.9,
+                                          chipColor: getColorFromIdx(1)),
+                                      second: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 1.1,
+                                          chipColor: getColorFromIdx(0)),
+                                      third: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 2.4,
+                                          chipColor: getColorFromIdx(4)),
+                                      fourth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.0,
+                                          chipColor: getColorFromIdx(3)),
+                                      fifth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 0.6,
+                                          chipColor: getColorFromIdx(2)),
+                                    ),
 
-                                  _buildCellRow(
-                                    first: _buildGameChip(
-                                        text: "2",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.1,
-                                        chipColor: getColorFromIdx(4)),
-                                    second: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 2.8,
-                                        chipColor: getColorFromIdx(3)),
-                                    third: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.6,
-                                        chipColor: getColorFromIdx(1)),
-                                    fourth: _buildGameChip(
-                                        text: "3",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 0.7,
-                                        chipColor: getColorFromIdx(3)),
-                                    fifth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.3,
-                                        chipColor: getColorFromIdx(3)),
-                                  ),
+                                    _buildCellRow(
+                                      first: _buildGameChip(
+                                          text: "2",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.1,
+                                          chipColor: getColorFromIdx(4)),
+                                      second: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 2.8,
+                                          chipColor: getColorFromIdx(3)),
+                                      third: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.6,
+                                          chipColor: getColorFromIdx(1)),
+                                      fourth: _buildGameChip(
+                                          text: "3",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 0.7,
+                                          chipColor: getColorFromIdx(3)),
+                                      fifth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.3,
+                                          chipColor: getColorFromIdx(3)),
+                                    ),
 
-                                  _buildCellRow(
-                                    first: _buildGameChip(
-                                        text: "2",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.0,
-                                        chipColor: getColorFromIdx(4)),
-                                    second: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 2.2,
-                                        chipColor: getColorFromIdx(4)),
-                                    third: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.8,
-                                        chipColor: getColorFromIdx(0)),
-                                    fourth: _buildGameChip(
-                                        text: "1",
-                                        textVisibleFrom: 4,
-                                        chipVisibleFrom: 1.4,
-                                        chipColor: getColorFromIdx(0)),
-                                    fifth: _buildGameChip(
-                                        text: "20",
-                                        textVisibleFrom: 6,
-                                        chipVisibleFrom: 2.0,
-                                        chipColor: getColorFromIdx(1)),
-                                  ),
+                                    _buildCellRow(
+                                      first: _buildGameChip(
+                                          text: "2",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.0,
+                                          chipColor: getColorFromIdx(4)),
+                                      second: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 2.2,
+                                          chipColor: getColorFromIdx(4)),
+                                      third: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.8,
+                                          chipColor: getColorFromIdx(0)),
+                                      fourth: _buildGameChip(
+                                          text: "1",
+                                          textVisibleFrom: 4,
+                                          chipVisibleFrom: 1.4,
+                                          chipColor: getColorFromIdx(0)),
+                                      fifth: _buildGameChip(
+                                          text: "20",
+                                          textVisibleFrom: 6,
+                                          chipVisibleFrom: 2.0,
+                                          chipColor: getColorFromIdx(1)),
+                                    ),
 
-                                ],
-                          ),
-                          Visibility(
-                              visible: animatedPageController.value.toInt() > 4,
-                              child: Column(children: [
-                                const Text(""),
-                                Text(l10n.intro_page7Part2, style: bodyStyle),
-                                Row(children: [
-                                  Align(alignment: Alignment.centerLeft,
-                                      child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
-                                  Spacer(),
-                                  Align(alignment: Alignment.centerRight,
-                                      child: buildRoleIndicator(Role.Order, points: 26, isSelected: false, backgroundColor: Colors.redAccent)),
-                                ]),
+                                  ],
+                            ),
+                            Visibility(
+                                visible: animatedPageController.value.toInt() > 4,
+                                child: Column(children: [
+                                  const Text(""),
+                                  Text(l10n.intro_page7Part2, style: bodyStyle),
+                                  Row(children: [
+                                    Align(alignment: Alignment.centerLeft,
+                                        child: buildRoleIndicator(Role.Chaos, points: 120, isSelected: false, backgroundColor: Colors.lightGreenAccent)),
+                                    Spacer(),
+                                    Align(alignment: Alignment.centerRight,
+                                        child: buildRoleIndicator(Role.Order, points: 26, isSelected: false, backgroundColor: Colors.redAccent)),
+                                  ]),
 
-                              ],)
-                          )
-                        ]
+                                ],)
+                            )
+                          ]
+                      ),
                     );
                   },
                 ),
@@ -544,6 +562,7 @@ class IntroState extends State<Intro> with SingleTickerProviderStateMixin {
   }
 
   void _startAnimation(int startAt) {
+   // animatedPageController.stop();
     animatedPageController.repeat(min: startAt.toDouble());
   }
 
