@@ -129,9 +129,10 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
         duration: const Duration(milliseconds: 500), vsync: this);
     cellAnimationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        setState(() {
-          gameEngine.play.moveToAnimate = null;
-        });
+
+        gameEngine.play.moveToAnimate = null;
+        // setting state directly leads to stopping animations
+        Future.delayed(Duration(milliseconds: 500), () => setState(() {}));
       }
     });
 
@@ -1330,7 +1331,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        return buildGameChip(cellAnimationController.isAnimating ? "" : text,
+        return buildGameChip(gameEngine.play.moveToAnimate?.to == where && cellAnimationController.isAnimating ? "" : text,
             chipColor: _dragStartedAt == where && _draggingChip != null
                 ? _draggingChip!.color.withAlpha(20)
                 : chip != null ? _getChipColor(chip, where): null,
@@ -1469,7 +1470,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
         // this is a correction move, so undo last move and apply again below
         final staleMove = gameEngine.play.staleMove;
         gameEngine.play.undoStaleMove();
-        if (animate && staleMove != null) {
+        if (animate && staleMove != null && (staleMove.to?.x == coordinate.x || staleMove.to?.y == coordinate.y)) {
           moveToAnimate = Move.moved(staleMove.chip!, staleMove.to!, coordinate);
         }
         gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate),
