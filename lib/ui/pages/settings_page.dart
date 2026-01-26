@@ -73,6 +73,15 @@ class _SettingsPageState extends State<SettingsPage> {
           title: Text(l10n.settings_gameSettings, style: TextStyle(color: Colors.brown[800])),
           tiles: [
             SettingsTile.switchTile(
+              title: Text(l10n.settings_animateMoves),
+              description: Text(l10n.settings_animateMovesDescription),
+              initialValue: PreferenceService().animateMoves,
+              onToggle: (bool value) {
+                PreferenceService().setBool(PreferenceService.PREF_ANIMATE_MOVES, value);
+                setState(() => PreferenceService().animateMoves = value);
+              },
+            ),
+            SettingsTile.switchTile(
               title: Text(l10n.settings_showCoordinates),
               description: Text(l10n.settings_showCoordinatesDescription),
               initialValue: PreferenceService().showCoordinates,

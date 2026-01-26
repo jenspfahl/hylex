@@ -535,6 +535,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settings_gameSettings => 'Spieleinstellungen';
 
   @override
+  String get settings_animateMoves => 'Spielzüge animieren';
+
+  @override
+  String get settings_animateMovesDescription => 'Spielzüge wie Verschieben order Ablegen von Spielsteinen werden animiert.';
+
+  @override
   String get settings_showCoordinates => 'Koordinaten anzeigen';
 
   @override

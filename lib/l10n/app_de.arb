@@ -187,6 +187,8 @@
   "settings": "Einstellungen",
   "settings_commonSettings": "Allgemeine Einstellungen",
   "settings_gameSettings": "Spieleinstellungen",
+  "settings_animateMoves": "Spielzüge animieren",
+  "settings_animateMovesDescription": "Spielzüge wie Verschieben order Ablegen von Spielsteinen werden animiert.",
   "settings_showCoordinates": "Koordinaten anzeigen",
   "settings_showCoordinatesDescription": "Koordinaten auf der X- und Y-Achse im Spielfeld anzeigen.",
   "settings_showPointsForOrder": "Punkte für Order anzeigen",

@@ -147,11 +147,8 @@ abstract class GameEngine extends ChangeNotifier {
     }
 
     play.applyStaleMove(opponentMove, animate: true);
-    //ChipAnimation().doWhenDone
-    {
-      play.opponentCursor.adaptFromMove(opponentMove);
-      play.opponentCursor.markTraceForDoneMove();
-    }
+    play.opponentCursor.adaptFromMove(opponentMove);
+    play.opponentCursor.markTraceForDoneMove();
     play.commitMove();
 
     await nextPlayer();
@@ -227,7 +224,7 @@ class SinglePlayerGameEngine extends GameEngine {
     aiLoad = null;
     savePlayState();
 
-    var autoplayDelayInSec = 250;
+    var autoplayDelayInSec = PreferenceService().animateMoves ? 1000 : 250; // must be greater than animation duration
     Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInSec :  0), () {
 
       play.startThinking((Load load)

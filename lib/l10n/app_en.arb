@@ -193,6 +193,8 @@
   "settings_commonSettings": "General Settings",
 
   "settings_gameSettings": "Game Settings",
+  "settings_animateMoves": "Animate moves",
+  "settings_animateMovesDescription": "Animate moving or placing of chips.",
   "settings_showCoordinates": "Show coordinates",
   "settings_showCoordinatesDescription": "Show coordinates on the X and Y axes in the playing field.",
   "settings_showPointsForOrder": "Show points for Order",

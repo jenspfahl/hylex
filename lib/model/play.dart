@@ -643,7 +643,7 @@ class Play {
   bool get isJournalEmpty => _journal.isEmpty;
 
 
-  applyStaleMove(Move move, {bool animate = false}) {
+  applyStaleMove(Move move, {bool animate = false, Move? moveToAnimate}) {
     //check move is valid (against the rules)
     final result = validateMove(move);
 
@@ -664,8 +664,8 @@ class Play {
       _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
     }
 
-    if (animate && !move.skipped) {
-      moveToAnimate = move;
+    if (animate && (moveToAnimate != null || !move.skipped)) {
+      this.moveToAnimate = moveToAnimate ?? move;
     }
   }
 

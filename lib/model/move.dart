@@ -73,6 +73,13 @@ class Move {
 
   bool isPlaced() => chip != null && from == null && to != null && !skipped;
 
+  bool isLeftToRightMove() => isMove() && from!.x < to!.x;
+
+  bool isRightToLeftMove() => isMove() && from!.x > to!.x;
+
+  bool isTopToBottomMove() => isMove() && from!.y < to!.y;
+
+  bool isBottomToTopMove() => isMove() && from!.y > to!.y;
   /**
    * Derives the initiating role from the move according to the game rules.
    */

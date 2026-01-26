@@ -67,8 +67,10 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
   bool _changeAutoPlayLock = false;
 
   late Animation<double> cellDropAnimation;
-  late Animation<AlignmentGeometry> cellVerticalMoveAnimation;
-  late Animation<AlignmentGeometry> cellHorizontalMoveAnimation;
+  late Animation<AlignmentGeometry> cellTopToBottomMoveAnimation;
+  late Animation<AlignmentGeometry> cellBottomToTopMoveAnimation;
+  late Animation<AlignmentGeometry> cellLeftToRightMoveAnimation;
+  late Animation<AlignmentGeometry> cellRightToLeftMoveAnimation;
   late AnimationController cellAnimationController;
 
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -81,26 +83,6 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     _changeAutoPlayLock = false;
 
     SmartDialog.dismiss(); // dismiss loading dialog
-
-
-    cellAnimationController = AnimationController(
-        duration: const Duration(milliseconds: 700), vsync: this);
-    cellAnimationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        gameEngine.play.moveToAnimate = null;
-      }
-    });
-    
-    cellDropAnimation = TweenSequence<double>([
-      TweenSequenceItem<double>(tween: Tween(begin: 1.25, end: 0.75), weight: 0.75),
-      TweenSequenceItem<double>(tween: Tween(begin: 0.75, end: 1.0), weight: 0.25),
-    ]).animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
-
-    cellVerticalMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.topCenter, end: AlignmentGeometry.bottomCenter)
-        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
-
-    cellHorizontalMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.centerLeft, end: AlignmentGeometry.centerRight)
-        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
 
 
     if (widget.play.multiPlay) {
@@ -139,6 +121,40 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     });
 
     gameEngine.addListener(_gameListener);
+
+
+    // add animation
+
+    cellAnimationController = AnimationController(
+        duration: const Duration(milliseconds: 500), vsync: this);
+    cellAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          gameEngine.play.moveToAnimate = null;
+        });
+      }
+    });
+
+    cellDropAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(tween: Tween(begin: gameEngine.play.dimension > 9 ? 1.95 : gameEngine.play.dimension > 7 ? 1.75 : 1.25, end: 0.75), weight: 0.75),
+      TweenSequenceItem<double>(tween: Tween(begin: 0.75, end: 1.0), weight: 0.25),
+    ]).animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeIn));
+
+    cellTopToBottomMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.topCenter, end: AlignmentGeometry.bottomCenter)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+    cellBottomToTopMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.bottomCenter, end: AlignmentGeometry.topCenter)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+    cellLeftToRightMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.centerLeft, end: AlignmentGeometry.centerRight)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+    cellRightToLeftMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.centerRight, end: AlignmentGeometry.centerLeft)
+        .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
+
+
+    // start game
+
 
     if (!gameEngine.play.automaticPlayPaused) {
       gameEngine.startGame();
@@ -1041,15 +1057,11 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
         _gridItemTapped(context, where);
       },
       child: GridTile(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            return Container(
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black.withAlpha(80), width: 0.5),
-              ),
-              child: _buildDroppableCell(where, constraints, chip),
-            );
-          },
+        child: Container(
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.black.withAlpha(80), width: 0.5),
+          ),
+          child: _buildDroppableCell(where, chip),
         ),
       ),
     );
@@ -1057,7 +1069,6 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
   Widget _buildDroppableCell(
       Coordinate where,
-      BoxConstraints constraints,
       GameChip? chip) {
     if (gameEngine.isBoardLocked()) {
       return _buildWrappedChip(where);
@@ -1093,7 +1104,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
         },
         builder: (BuildContext context, List<Object?> candidateData, List<dynamic> rejectedData) {
           return chip != null && _isChipDraggableForRole(where, chip)
-              ? _buildDraggableChip(where, constraints, chip)
+              ? _buildDraggableChip(where, chip)
               : _buildWrappedChip(where);
         }),
     );
@@ -1101,105 +1112,108 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
   Widget _buildDraggableChip(
       Coordinate where,
-      BoxConstraints constraints,
       GameChip chip) {
 
-    return LongPressDraggable<Coordinate>(
-      maxSimultaneousDrags: 1,
-      data: where,
-      hitTestBehavior: HitTestBehavior.translucent,
-      onDragStarted: () {
-        if (gameEngine.play.currentRole == Role.Chaos) {
-          _handleOccupiedFieldForChaos(where, context);
-        }
-        else if (gameEngine.play.currentRole == Role.Order) {
-          if (gameEngine.play.selectionCursor.start != where) {
-            _handleOccupiedFieldForOrder(where, context);
-          }
-        }
-        debugPrint("Start to drag $where $chip");
-
-        setState(() {
-          _dragStartedAt = where;
-          _draggingChip = chip;
-          _validDragTarget = null;
-        });
-      },
-      onDragCompleted: () {
-        debugPrint("onDragCompleted");
-
-        bool dropAllowed = false;
-        if (_validDragTarget != null) {
-          final chipOnTarget = gameEngine.play.matrix.getChip(_validDragTarget!);
-          if (gameEngine.play.currentRole == Role.Chaos) {
-            if (chipOnTarget == null) {
-              dropAllowed = _handleFreeFieldForChaos(context, _validDragTarget!);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return LongPressDraggable<Coordinate>(
+          maxSimultaneousDrags: 1,
+          data: where,
+          hitTestBehavior: HitTestBehavior.translucent,
+          onDragStarted: () {
+            if (gameEngine.play.currentRole == Role.Chaos) {
+              _handleOccupiedFieldForChaos(where, context);
             }
-            else {
-              dropAllowed = _handleOccupiedFieldForChaos(_validDragTarget!, context);
+            else if (gameEngine.play.currentRole == Role.Order) {
+              if (gameEngine.play.selectionCursor.start != where) {
+                _handleOccupiedFieldForOrder(where, context);
+              }
             }
-          }
-          else if (gameEngine.play.currentRole == Role.Order) {
-            if (chipOnTarget == null) {
-              dropAllowed = _handleFreeFieldForOrder(context, _validDragTarget!);
+            debugPrint("Start to drag $where $chip");
+
+            setState(() {
+              _dragStartedAt = where;
+              _draggingChip = chip;
+              _validDragTarget = null;
+            });
+          },
+          onDragCompleted: () {
+            debugPrint("onDragCompleted");
+
+            bool dropAllowed = false;
+            if (_validDragTarget != null) {
+              final chipOnTarget = gameEngine.play.matrix.getChip(_validDragTarget!);
+              if (gameEngine.play.currentRole == Role.Chaos) {
+                if (chipOnTarget == null) {
+                  dropAllowed = _handleFreeFieldForChaos(context, _validDragTarget!, false);
+                }
+                else {
+                  dropAllowed = _handleOccupiedFieldForChaos(_validDragTarget!, context);
+                }
+              }
+              else if (gameEngine.play.currentRole == Role.Order) {
+                if (chipOnTarget == null) {
+                  dropAllowed = _handleFreeFieldForOrder(context, _validDragTarget!, false);
+                }
+                else {
+                  dropAllowed = _handleOccupiedFieldForOrder(_validDragTarget!, context);
+                }
+              }
             }
-            else {
-              dropAllowed = _handleOccupiedFieldForOrder(_validDragTarget!, context);
+            else if (_validDragTarget == null && _dragStartedAt != null) {
+              // undo dragging
+              debugPrint("undo dragging to $_dragStartedAt");
+
+              if (gameEngine.play.currentRole == Role.Chaos) {
+                dropAllowed = _handleFreeFieldForChaos(context, _dragStartedAt!, false);
+              }
+              else if (gameEngine.play.currentRole == Role.Order) {
+                dropAllowed = _handleFreeFieldForOrder(context, _dragStartedAt!, false);
+              }
             }
-          }
-        }
-        else if (_validDragTarget == null && _dragStartedAt != null) {
-          // undo dragging
-          debugPrint("undo dragging to $_dragStartedAt");
+            debugPrint("dropAllowed=$dropAllowed _dragStartedAt=$_dragStartedAt _dragTarget=$_validDragTarget");
 
-          if (gameEngine.play.currentRole == Role.Chaos) {
-            dropAllowed = _handleFreeFieldForChaos(context, _dragStartedAt!);
-          }
-          else if (gameEngine.play.currentRole == Role.Order) {
-            dropAllowed = _handleFreeFieldForOrder(context, _dragStartedAt!);
-          }
-        }
-        debugPrint("dropAllowed=$dropAllowed _dragStartedAt=$_dragStartedAt _dragTarget=$_validDragTarget");
+            if (dropAllowed) {
+              setState(() {
+                _dragStartedAt = null;
+                _validDragTarget = null;
+                _draggingChip = null;
+              });
+            }
+          },
+          onDraggableCanceled: (_,__) {
+            debugPrint("onDragCancelled");
 
-        if (dropAllowed) {
-          setState(() {
-            _dragStartedAt = null;
-            _validDragTarget = null;
-            _draggingChip = null;
-          });
-        }
-      },
-      onDraggableCanceled: (_,__) {
-        debugPrint("onDragCancelled");
+            if (_dragStartedAt != null) {
+              // undo dragging
+              debugPrint("undo dragging due to cancel");
 
-        if (_dragStartedAt != null) {
-          // undo dragging
-          debugPrint("undo dragging due to cancel");
+              if (gameEngine.play.currentRole == Role.Chaos) {
+                // do nothing, swiped out
+              }
+              else if (gameEngine.play.currentRole == Role.Order) {
+                _handleFreeFieldForOrder(context, _dragStartedAt!, false);
+                _handleOccupiedFieldForOrder(_dragStartedAt!, context);
+              }
+            }
 
-          if (gameEngine.play.currentRole == Role.Chaos) {
-            // do nothing, swiped out
-          }
-          else if (gameEngine.play.currentRole == Role.Order) {
-            _handleFreeFieldForOrder(context, _dragStartedAt!);
-            _handleOccupiedFieldForOrder(_dragStartedAt!, context);
-          }
-        }
-
-        setState(() {
-          _dragStartedAt = null;
-          _validDragTarget = null;
-          _draggingChip = null;
-        });
-      },
-      delay: Duration(milliseconds: 150),
-      feedback: SizedBox(
-          height: constraints.maxHeight,
-          width: constraints.maxWidth,
-          child: buildGameChip("", chipColor: chip.color.withAlpha(255), dimension: gameEngine.play.dimension)
-      ),
-      child: Center(
-        child: _buildWrappedChip(where),
-      ),
+            setState(() {
+              _dragStartedAt = null;
+              _validDragTarget = null;
+              _draggingChip = null;
+            });
+          },
+          delay: Duration(milliseconds: 150),
+          feedback: SizedBox(
+              height: constraints.maxHeight,
+              width: constraints.maxWidth,
+              child: buildGameChip("", chipColor: chip.color.withAlpha(255), dimension: gameEngine.play.dimension)
+          ),
+          child: Center(
+            child: _buildWrappedChip(where),
+          ),
+        );
+      }
     );
   }
 
@@ -1280,7 +1294,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
   }
 
-  Widget _buildChip(GameChip? chip, String text, [Coordinate? where]) {
+  Widget _buildChip(GameChip? chip, String text, [Coordinate? where, BoxConstraints? constraints]) {
 
     bool possibleTarget = false;
     Spot? startSpot;
@@ -1315,8 +1329,8 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
     }
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        return buildGameChip(text,
+      builder: (context, constraints) {
+        return buildGameChip(cellAnimationController.isAnimating ? "" : text,
             chipColor: _dragStartedAt == where && _draggingChip != null
                 ? _draggingChip!.color.withAlpha(20)
                 : chip != null ? _getChipColor(chip, where): null,
@@ -1334,12 +1348,22 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                 _emphasiseAllChipsOf = null;
               })
             } : null,
-            animationController: cellAnimationController,
+            animationController: PreferenceService().animateMoves ? cellAnimationController : null,
             moveToAnimate: moveToAnimate,
-            cellAnimation: moveToAnimate?.isPlaced() == true ? cellDropAnimation : cellHorizontalMoveAnimation,
-            cellConstraints: constraints,
+            cellAnimation: moveToAnimate?.isPlaced() == true
+                ? cellDropAnimation
+                : moveToAnimate?.isLeftToRightMove() == true
+                ?  cellLeftToRightMoveAnimation
+                : moveToAnimate?.isRightToLeftMove() == true
+                ?  cellRightToLeftMoveAnimation
+                : moveToAnimate?.isTopToBottomMove() == true
+                ?  cellTopToBottomMoveAnimation
+                : moveToAnimate?.isBottomToTopMove() == true
+                ?  cellBottomToTopMoveAnimation
+                : null,
+            cellSize: constraints.maxHeight,
         );
-      },
+      }
     );
   }
 
@@ -1365,7 +1389,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     setState(() {
       if (gameEngine.play.currentRole == Role.Chaos) {
         if (gameEngine.play.matrix.isFree(where)) {
-          _handleFreeFieldForChaos(context, where);
+          _handleFreeFieldForChaos(context, where, true);
         }
         else {
           _handleOccupiedFieldForChaos(where, context);
@@ -1373,7 +1397,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
       }
       if (gameEngine.play.currentRole == Role.Order) {
         if (gameEngine.play.matrix.isFree(where)) {
-          _handleFreeFieldForOrder(context, where);
+          _handleFreeFieldForOrder(context, where, true);
         }
         else {
           _handleOccupiedFieldForOrder(where, context);
@@ -1382,7 +1406,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     });
   }
 
-  bool _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate) {
+  bool _handleFreeFieldForChaos(BuildContext context, Coordinate coordinate, bool animate) {
     final cursor = gameEngine.play.selectionCursor;
     if (cursor.end != null && !gameEngine.play.matrix.isFree(cursor.end!)) {
       if (PreferenceService().showChipErrors) {
@@ -1398,7 +1422,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
         }
         return false;
       }
-      gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate), animate: true);
+      gameEngine.play.applyStaleMove(Move.placed(currentChip, coordinate), animate: animate);
       gameEngine.play.selectionCursor.updateEnd(coordinate);
     }
     return true;
@@ -1419,7 +1443,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     return true;
   }
 
-  bool _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate) {
+  bool _handleFreeFieldForOrder(BuildContext context, Coordinate coordinate, bool animate) {
     final selectionCursor = gameEngine.play.selectionCursor;
     if (!selectionCursor.hasStart) {
       if (PreferenceService().showChipErrors) {
@@ -1441,13 +1465,19 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     else if (selectionCursor.hasStart) {
       if (selectionCursor.hasEnd) {
         final from = gameEngine.play.matrix.getSpot(selectionCursor.end!);
+        Move? moveToAnimate = null;
         // this is a correction move, so undo last move and apply again below
+        final staleMove = gameEngine.play.staleMove;
         gameEngine.play.undoStaleMove();
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate), animate: false);
+        if (animate && staleMove != null) {
+          moveToAnimate = Move.moved(staleMove.chip!, staleMove.to!, coordinate);
+        }
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate),
+            animate: animate, moveToAnimate: moveToAnimate);
       }
       else {
         final from = gameEngine.play.matrix.getSpot(selectionCursor.start!);
-        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate), animate: true);
+        gameEngine.play.applyStaleMove(Move.moved(from.content!, selectionCursor.start!, coordinate), animate: animate);
       }
 
       if (selectionCursor.start == coordinate) {

@@ -34,6 +34,7 @@ class PreferenceService {
   static final DATA_LOGO_COLOR_E = 'data/logoColor/e';
 
   static final PREF_PREFIX = 'pref';
+  static final PREF_ANIMATE_MOVES = '$PREF_PREFIX/animateMoves';
   static final PREF_SHOW_COORDINATES = '$PREF_PREFIX/showCoordinates';
   static final PREF_SHOW_HINTS = '$PREF_PREFIX/showHints';
   static final PREF_SHOW_POINTS = '$PREF_PREFIX/showPoints';
@@ -45,6 +46,7 @@ class PreferenceService {
   static final PreferenceService _service = PreferenceService._internal();
   
 
+  bool animateMoves = true;
   bool showCoordinates = true;
   bool showHints = true;
   bool showPoints = true;
@@ -63,6 +65,7 @@ class PreferenceService {
 
   void loadCache() {
     // load cache
+    _loadCachedBoolPref(PREF_ANIMATE_MOVES, (v) => animateMoves = v);
     _loadCachedBoolPref(PREF_SHOW_COORDINATES, (v) => showCoordinates = v);
     _loadCachedBoolPref(PREF_SHOW_POINTS, (v) => showPoints = v);
     _loadCachedBoolPref(PREF_SHOW_HINTS, (v) => showHints = v);

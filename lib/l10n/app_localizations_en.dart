@@ -535,6 +535,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_gameSettings => 'Game Settings';
 
   @override
+  String get settings_animateMoves => 'Animate moves';
+
+  @override
+  String get settings_animateMovesDescription => 'Animate moving or placing of chips.';
+
+  @override
   String get settings_showCoordinates => 'Show coordinates';
 
   @override

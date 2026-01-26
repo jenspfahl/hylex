@@ -1,14 +1,13 @@
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:hyle_x/engine/game_engine.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-import '../model/chip.dart';
 import '../model/common.dart';
 import '../model/coordinate.dart';
-import '../model/messaging.dart';
 import '../model/move.dart';
-import 'dialogs.dart';
 
 
 
@@ -320,7 +319,7 @@ Widget buildGameChip(
       GestureLongPressStartCallback? onLongPressStart,
       GestureLongPressEndCallback? onLongPressEnd,
       AnimationController? animationController,
-      BoxConstraints? cellConstraints,
+      double? cellSize,
       Move? moveToAnimate,
       Animation? cellAnimation,
     }) {
@@ -342,32 +341,42 @@ Widget buildGameChip(
     child: GestureDetector(
       onLongPressStart: onLongPressStart,
       onLongPressEnd: onLongPressEnd,
-      child: moveToAnimate != null
-          ? AnimatedBuilder(animation: animationController!,
-          builder: (BuildContext context, Widget? child) {
-            if (moveToAnimate.isPlaced()) {
-              return Transform.scale(scale: cellAnimation!.value,
-                  child: _buildSingleChip(chipColor, text, dimension));
-            }
-            else {
-              return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned(
-                        left: -20,
-                        child: SizedBox(
-                          height: 60,
-                          width: 120,
-                          child: AnimatedAlign(alignment: cellAnimation!.value,
-                              duration: Duration(milliseconds: 1000),
-                              child: SizedBox(
-                                  height: cellConstraints?.maxHeight,
-                                  width: cellConstraints?.maxWidth,
-                                  child: _buildSingleChip(chipColor, text, dimension))),
-                        ))
-                  ]);
-            }
-          })
+      child: animationController != null && moveToAnimate != null
+          ? AnimatedBuilder(animation: animationController,
+            builder: (BuildContext context, Widget? child) {
+              if (moveToAnimate.isPlaced()) {
+                return Transform.scale(scale: cellAnimation!.value,
+                    child: _buildSingleChip(chipColor, text, dimension));
+              }
+              else if (cellSize != null) {
+                final deltaX = moveToAnimate.from!.x - moveToAnimate.to!.x;
+                final deltaY = moveToAnimate.from!.y - moveToAnimate.to!.y;
+                debugPrint("delta X: $deltaX Y: $deltaY cellSize $cellSize");
+                return Stack(
+                    clipBehavior: Clip.none,
+                    alignment: AlignmentGeometry.center,
+                    children: [
+                      Positioned(
+                          left: moveToAnimate.isLeftToRightMove() ? (cellSize * deltaX) : 0,
+                          top: moveToAnimate.isTopToBottomMove() ? (cellSize * deltaY) : 0,
+                          child: Center(
+                            child: SizedBox(
+                              height: cellSize * (deltaY.abs() + 1),
+                              width: cellSize * (deltaX.abs() + 1),
+                              child: AnimatedAlign(alignment: cellAnimation!.value,
+                                  duration: Duration(milliseconds: min((deltaX.abs() * 100) + (deltaY.abs() * 100), 500)),
+                                  child: SizedBox(
+                                      height: cellSize,
+                                      width: cellSize,
+                                      child: _buildSingleChip(chipColor, text, dimension))),
+                            ),
+                          ))
+                    ]);
+              }
+              else {
+                return  _buildSingleChip(chipColor, text, dimension);
+              }
+            })
           : _buildSingleChip(chipColor, text, dimension),
     ),
   );

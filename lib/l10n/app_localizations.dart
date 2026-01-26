@@ -1055,6 +1055,18 @@ abstract class AppLocalizations {
   /// **'Game Settings'**
   String get settings_gameSettings;
 
+  /// No description provided for @settings_animateMoves.
+  ///
+  /// In en, this message translates to:
+  /// **'Animate moves'**
+  String get settings_animateMoves;
+
+  /// No description provided for @settings_animateMovesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Animate moving or placing of chips.'**
+  String get settings_animateMovesDescription;
+
   /// No description provided for @settings_showCoordinates.
   ///
   /// In en, this message translates to:
