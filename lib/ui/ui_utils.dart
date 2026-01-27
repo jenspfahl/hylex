@@ -342,41 +342,50 @@ Widget buildGameChip(
       onLongPressStart: onLongPressStart,
       onLongPressEnd: onLongPressEnd,
       child: animationController != null && moveToAnimate != null
-          ? AnimatedBuilder(animation: animationController,
-            builder: (BuildContext context, Widget? child) {
-              if (moveToAnimate.isPlaced()) {
-                return Transform.scale(scale: cellAnimation!.value,
-                    child: _buildSingleChip(chipColor, text, dimension));
-              }
-              else if (cellSize != null) {
-                final deltaX = moveToAnimate.from!.x - moveToAnimate.to!.x;
-                final deltaY = moveToAnimate.from!.y - moveToAnimate.to!.y;
-                debugPrint("delta X: $deltaX Y: $deltaY cellSize $cellSize");
-                return Stack(
-                    clipBehavior: Clip.none,
-                    alignment: AlignmentGeometry.center,
-                    children: [
-                      Positioned(
-                          left: moveToAnimate.isLeftToRightMove() ? (cellSize * deltaX) : 0,
-                          top: moveToAnimate.isTopToBottomMove() ? (cellSize * deltaY) : 0,
-                          child: Center(
-                            child: SizedBox(
-                              height: cellSize * (deltaY.abs() + 1),
-                              width: cellSize * (deltaX.abs() + 1),
-                              child: AnimatedAlign(alignment: cellAnimation!.value,
-                                  duration: Duration(milliseconds: min((deltaX.abs() * 100) + (deltaY.abs() * 100), 500)),
-                                  child: SizedBox(
-                                      height: cellSize,
-                                      width: cellSize,
-                                      child: _buildSingleChip(chipColor, text, dimension))),
-                            ),
-                          ))
-                    ]);
-              }
-              else {
-                return  _buildSingleChip(chipColor, text, dimension);
-              }
-            })
+          ? AnimatedBuilder(
+              animation: animationController,
+              builder: (BuildContext context, Widget? child) {
+                if (moveToAnimate.isPlaced()) {
+                  return Transform.scale(
+                      scale: cellAnimation!.value,
+                      child: _buildSingleChip(chipColor, text, dimension));
+                }
+                else if (cellSize != null && cellAnimation != null) {
+                  final deltaX = moveToAnimate.from!.x - moveToAnimate.to!.x;
+                  final deltaY = moveToAnimate.from!.y - moveToAnimate.to!.y;
+                  debugPrint("delta X: $deltaX Y: $deltaY cellSize $cellSize");
+
+                  final durationMillisPerCell = animationController.duration != null
+                      ? animationController.duration!.inMilliseconds ~/ dimension
+                      : 100;
+                  final duration = Duration(milliseconds: min((deltaX.abs() * durationMillisPerCell) + (deltaY.abs() * durationMillisPerCell), animationController.duration?.inMilliseconds ?? 500));
+                  debugPrint("durationPerCell=$durationMillisPerCell, finalDuration=${duration.inMilliseconds}");
+
+                  return Stack(
+                      clipBehavior: Clip.none,
+                      alignment: AlignmentGeometry.center,
+                      children: [
+                        Positioned(
+                            left: moveToAnimate.isLeftToRightMove() ? (cellSize * deltaX) : 0,
+                            top: moveToAnimate.isTopToBottomMove() ? (cellSize * deltaY) : 0,
+                            child: Center(
+                              child: SizedBox(
+                                height: cellSize * (deltaY.abs() + 1),
+                                width: cellSize * (deltaX.abs() + 1),
+                                child: AnimatedAlign(alignment: cellAnimation!.value,
+                                    duration: duration,
+                                    child: SizedBox(
+                                        height: cellSize,
+                                        width: cellSize,
+                                        child: _buildSingleChip(chipColor, text, dimension))),
+                              ),
+                            ))
+                      ]);
+                }
+                else {
+                  return  _buildSingleChip(chipColor, text, dimension);
+                }
+              })
           : _buildSingleChip(chipColor, text, dimension),
     ),
   );

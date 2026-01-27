@@ -125,19 +125,19 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
     // add animation
 
-    cellAnimationController = AnimationController(
-        duration: const Duration(milliseconds: 500), vsync: this);
+    cellAnimationController = AnimationController(vsync: this);
     cellAnimationController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
 
+        final roleToAnimate = gameEngine.play.moveToAnimate?.toRole();
         gameEngine.play.moveToAnimate = null;
         // setting state directly leads to stopping animations
-        Future.delayed(Duration(milliseconds: 500), () => setState(() {}));
+        Future.delayed(Duration(milliseconds: roleToAnimate == Role.Chaos ? 50 : 500), () => setState(() {}));
       }
     });
 
     cellDropAnimation = TweenSequence<double>([
-      TweenSequenceItem<double>(tween: Tween(begin: gameEngine.play.dimension > 9 ? 1.95 : gameEngine.play.dimension > 7 ? 1.75 : 1.25, end: 0.75), weight: 0.75),
+      TweenSequenceItem<double>(tween: Tween(begin: gameEngine.play.dimension > 9 ? 1.95 : gameEngine.play.dimension > 7 ? 1.75 : 1.4, end: 0.75), weight: 0.75),
       TweenSequenceItem<double>(tween: Tween(begin: 0.75, end: 1.0), weight: 0.25),
     ]).animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeIn));
 
@@ -153,10 +153,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     cellRightToLeftMoveAnimation = Tween<AlignmentGeometry>(begin: AlignmentGeometry.centerRight, end: AlignmentGeometry.centerLeft)
         .animate(CurvedAnimation(parent: cellAnimationController, curve: Curves.easeInOut));
 
-
     // start game
-
-
     if (!gameEngine.play.automaticPlayPaused) {
       gameEngine.startGame();
     }
@@ -283,12 +280,13 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                             gameEngine.play.automaticPlayPaused = false;
                           }
                           else {
+                            cellAnimationController.stop(canceled: false);
                             await gameEngine.pauseGame();
                             gameEngine.play.automaticPlayPaused = true;
                           }
                           setState(() {
                           });
-                          Future.delayed(Duration(milliseconds: 900), () {
+                          Future.delayed(Duration(milliseconds: 1000), () {
                             _changeAutoPlayLock = false;
                           });
                         },
@@ -361,6 +359,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                         onPressed: () => {
 
                           ask(l10n.dialog_restartGame, l10n, () async {
+                                cellAnimationController.stop(canceled: false);
                                 await gameEngine.stopGame();
                                 _gameOverShown = false;
                                 _changeAutoPlayLock = false;
@@ -747,6 +746,13 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     if (gameEngine.play.automaticPlayPaused) {
       return Text(l10n.gameState_gamePaused);
     }
+    else if (gameEngine.play.isFullAutomaticPlay && gameEngine.progressRatio == null && gameEngine.play.moveToAnimate != null) {
+      final lastMove = gameEngine.play.lastMoveFromJournal;
+      if (lastMove != null) {
+        return _buildMoveLine(lastMove);
+      }
+      return Text("");
+    }
     final text = _buildAiProcessingText();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -832,11 +838,12 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
             Icons.restart_alt,
             l10n.submitButton_restart,
             () async {
-            await gameEngine.stopGame();
-            _gameOverShown = false;
-            _changeAutoPlayLock = false;
-            gameEngine.startGame();
-          });
+              cellAnimationController.stop(canceled: false);
+              await gameEngine.stopGame();
+              _gameOverShown = false;
+              _changeAutoPlayLock = false;
+              gameEngine.startGame();
+            });
       }
     }
     else if (gameEngine.play.currentPlayer == PlayerType.LocalUser) {
@@ -1325,8 +1332,10 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
     if (where != null && gameEngine.play.moveToAnimate?.to == where) {
       moveToAnimate = gameEngine.play.moveToAnimate;
       cellAnimationController.reset();
+      final playerToAnimate = gameEngine.play.getPlayerTypeOf(moveToAnimate!.toRole());
+      cellAnimationController.duration = Duration(milliseconds: playerToAnimate == PlayerType.LocalUser ? 250 : 700);
       cellAnimationController.forward();
-      debugPrint("Start animation at $moveToAnimate");
+      debugPrint("Start animation at $moveToAnimate with duration ${cellAnimationController.duration?.inMilliseconds}");
 
     }
     return LayoutBuilder(

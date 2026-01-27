@@ -664,7 +664,7 @@ class Play {
       _stats.setPoints(Role.Chaos, _matrix.getTotalPointsForChaos(header.playSize));
     }
 
-    if (animate && (moveToAnimate != null || !move.skipped)) {
+    if (animate) {
       this.moveToAnimate = moveToAnimate ?? move;
     }
   }

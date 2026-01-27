@@ -132,17 +132,25 @@ abstract class GameEngine extends ChangeNotifier {
    */
   Future<void> opponentMoveReceived(Move opponentMove) async {
     debugPrint("opponent move received");
+    if (play.automaticPlayPaused) {
+      debugPrint("ignoring opponent move");
+      return;
+    }
 
     final lastMove = play.journal.lastOrNull;
     if (lastMove == opponentMove) {
       print("opponent move $opponentMove already applied");
-      showAlertDialog("Opponent's move already applied!");
+      if (!play.isFullAutomaticPlay) {
+        showAlertDialog("Opponent's move already applied!");
+      }
       return;
     }
     final result = play.validateMove(opponentMove);
     if (result != null) {
       print("opponent move $opponentMove is invalid: $result");
-      showAlertDialog("Cannot apply opponent's move. Reason: $result");
+      if (!play.isFullAutomaticPlay) {
+        showAlertDialog("Cannot apply opponent's move. Reason: $result");
+      }
       return;
     }
 
@@ -152,7 +160,7 @@ abstract class GameEngine extends ChangeNotifier {
     play.commitMove();
 
     await nextPlayer();
-    
+
   }
   
   
@@ -193,7 +201,7 @@ class SinglePlayerGameEngine extends GameEngine {
   }
 
   void _thinkOrWait() {
-    if (play.isGameOver()) {
+    if (play.isGameOver() || play.automaticPlayPaused) {
       return;
     }
     if (play.currentPlayer == PlayerType.LocalAi) {
@@ -222,19 +230,21 @@ class SinglePlayerGameEngine extends GameEngine {
 
   void _think() {
     aiLoad = null;
-    savePlayState();
+    savePlayState().then((_) {
+      var autoplayDelayInMilliSec = PreferenceService().animateMoves ? 2500 : 700; // must be greater than animation duration
+      var nonAutoplayDelayInMilliSec = PreferenceService().animateMoves ? 600 : 100; // must be greater than animation duration
+      Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInMilliSec : nonAutoplayDelayInMilliSec), () {
 
-    var autoplayDelayInSec = PreferenceService().animateMoves ? 1000 : 250; // must be greater than animation duration
-    Future.delayed(Duration(milliseconds: play.isFullAutomaticPlay ? autoplayDelayInSec :  0), () {
-
-      play.startThinking((Load load)
-      {
-        aiLoad = load;
-        notifyListeners();
-      },
-          opponentMoveReceived,
-              (SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort);
+        play.startThinking((Load load)
+        {
+          aiLoad = load;
+          notifyListeners();
+        },
+            opponentMoveReceived,
+                (SendPort aiIsolateControlPort) => _aiControlPort = aiIsolateControlPort);
+      });
     });
+
 
   }
   
