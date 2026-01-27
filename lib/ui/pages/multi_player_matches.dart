@@ -12,6 +12,7 @@ import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:hyle_x/utils/fortune.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../model/common.dart';
@@ -30,8 +31,12 @@ enum SortOrder {BY_PLAY_ID, BY_STATE, BY_LATEST, BY_OPPONENT}
 class MultiPlayerMatches extends StatefulWidget {
 
   final User user;
+  final String? scrollToPlayId;
 
-  const MultiPlayerMatches(this.user, {super.key});
+  const MultiPlayerMatches(this.user, {
+    super.key,
+    this.scrollToPlayId = null,
+  });
 
   @override
   State<MultiPlayerMatches> createState() => MultiPlayerMatchesState();
@@ -42,6 +47,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   late SortOrder _sortOrder;
 
   Map<String, bool> _hideGroup = HashMap();
+
+  final _listScrollController = AutoScrollController(suggestedRowHeight: 40);
+
 
   @override
   void initState() {
@@ -61,6 +69,16 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    if (widget.scrollToPlayId != null) {
+      Future.delayed(Duration(milliseconds: 200), () {
+        _listScrollController.scrollToIndex(
+            widget.scrollToPlayId!.hashCode,
+            duration: Duration(milliseconds: 1),
+            preferPosition: AutoScrollPosition.begin,
+        );
+      });
+    }
 
     return Scaffold(
         appBar: AppBar(
@@ -104,6 +122,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
           
                   if (_sortOrder == SortOrder.BY_STATE) {
                     return SingleChildScrollView(
+                      controller: _listScrollController,
                       child: Container(
                         color: Theme
                             .of(context)
@@ -112,6 +131,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Column(
+
                             children: [
                               _buildPlayGroupSection(l10n.matchListGroup_actionNeeded, null,
                                   sorted.where((e) => e.state.group == PlayStateGroup.TakeAction).toList(), PlayStateGroup.TakeAction.name),
@@ -131,6 +151,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   }
                   else if (_sortOrder == SortOrder.BY_OPPONENT) {
                     return SingleChildScrollView(
+                      controller: _listScrollController,
                       child: Container(
                         color: Theme
                             .of(context)
@@ -147,6 +168,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   }
                   else {
                     return SingleChildScrollView(
+                      controller: _listScrollController,
                       child: Container(
                         color: Theme
                             .of(context)
@@ -230,137 +252,142 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     final currentLocale = Localizations.localeOf(context);
     final languageCode = currentLocale.languageCode;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-      child: Container(
-        decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(), left: BorderSide())
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Container(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (playHeader.state == PlayState.InvitationPending) {
-                      globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
-                    }
-                    else if (playHeader.state == PlayState.InvitationRejected) {
-                      final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
-                      final opponentRejected = lastMessage != null
-                          && lastMessage.channel == Channel.In
-                          && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
-                      showAlertDialog(opponentRejected
-                          ? l10n.playState_invitationRejectedByOpponent
-                          : l10n.playState_invitationRejectedByYou);
-                    }
-                    else if (playHeader.isStateShareable()) {
-                      showChoiceDialog(l10n.messaging_opponentNeedsToReact,
-                          width: 270,
-                          firstString: l10n.messaging_shareAgain,
-                          firstHandler: () {
-                            MessageService().sendCurrentPlayState(
-                                playHeader, widget.user, () => context, false);
-                          },
-                          secondString: MaterialLocalizations.of(context).cancelButtonLabel,
-                          secondHandler: () {});
+    return AutoScrollTag(
+      key: ValueKey(playHeader.playId),
+      controller: _listScrollController,
+      index: playHeader.playId.hashCode,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+        child: Container(
+          decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(), left: BorderSide())
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                Container(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      if (playHeader.state == PlayState.InvitationPending) {
+                        globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                      }
+                      else if (playHeader.state == PlayState.InvitationRejected) {
+                        final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
+                        final opponentRejected = lastMessage != null
+                            && lastMessage.channel == Channel.In
+                            && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
+                        showAlertDialog(opponentRejected
+                            ? l10n.playState_invitationRejectedByOpponent
+                            : l10n.playState_invitationRejectedByYou);
+                      }
+                      else if (playHeader.isStateShareable()) {
+                        showChoiceDialog(l10n.messaging_opponentNeedsToReact,
+                            width: 270,
+                            firstString: l10n.messaging_shareAgain,
+                            firstHandler: () {
+                              MessageService().sendCurrentPlayState(
+                                  playHeader, widget.user, () => context, false);
+                            },
+                            secondString: MaterialLocalizations.of(context).cancelButtonLabel,
+                            secondHandler: () {});
 
-                    }
-                    else {
-                      _startMultiPlayerGame(
-                          context, playHeader);
-                    }
+                      }
+                      else {
+                        _startMultiPlayerGame(
+                            context, playHeader);
+                      }
 
-                  },
-                  onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
-                            options: CircularDottedBorderOptions(
-                                padding: EdgeInsets.zero,
-                                strokeWidth: 3,
-                                strokeCap: StrokeCap.butt,
-                                dashPattern: [1],
-                                color: Colors.black
-                            ),
-                            child: CircleAvatar(
+                    },
+                    onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
+                              options: CircularDottedBorderOptions(
+                                  padding: EdgeInsets.zero,
+                                  strokeWidth: 3,
+                                  strokeCap: StrokeCap.butt,
+                                  dashPattern: [1],
+                                  color: Colors.black
+                              ),
+                              child: CircleAvatar(
+                                backgroundColor: playHeader.state.toColor(),
+                                maxRadius: 6.5,
+                              )
+                            ) : CircleAvatar(
                               backgroundColor: playHeader.state.toColor(),
                               maxRadius: 6.5,
-                            )
-                          ) : CircleAvatar(
-                            backgroundColor: playHeader.state.toColor(),
-                            maxRadius: 6.5,
-                          ),
-                          Expanded(
-                            child: Text(
-                                " " + playHeader.getTitle(l10n),
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                              overflow: TextOverflow.ellipsis
                             ),
-                          ),
-                        ],
-                      ),
-                      Text(_getHeaderSubLine(playHeader),
-                          style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
-                      Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
+                            Expanded(
+                              child: Text(
+                                  " " + playHeader.getTitle(l10n),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                overflow: TextOverflow.ellipsis
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(_getHeaderSubLine(playHeader),
+                            style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
+                        Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
 
-                      if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
-                      Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                    ],
+                        if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
+                        Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Divider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    child: OverflowBar(
-                      alignment: MainAxisAlignment.end,
-                      overflowAlignment: OverflowBarAlignment.end,
-                      children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                      child: OverflowBar(
+                        alignment: MainAxisAlignment.end,
+                        overflowAlignment: OverflowBarAlignment.end,
+                        children: [
 
-                          Visibility(
-                            visible: playHeader.state.hasGameBoard,
-                            child: IconButton(onPressed: (){
-                              _startMultiPlayerGame(
-                                  context, playHeader);
-                            }, icon: Icon(Icons.not_started_outlined)),
-                          ),
-                          Visibility(
-                            visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
-                            child: IconButton(onPressed: ()=> _shareCurrentAction(playHeader, false),
-                                icon: GestureDetector(
-                                  child: Icon(Icons.near_me),
-                                  onLongPress: () => _shareCurrentAction(playHeader, true),
-                            )),
-                          ),
-                          IconButton(onPressed: (){
-                            ask(
-                                icon: Icons.delete,
-                                title: playHeader.getReadablePlayId(),
-                                playHeader.state.isFinal
-                                    ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
-                                    : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
-                                l10n, () {
-                              setState(() {
-                                StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                            Visibility(
+                              visible: playHeader.state.hasGameBoard,
+                              child: IconButton(onPressed: (){
+                                _startMultiPlayerGame(
+                                    context, playHeader);
+                              }, icon: Icon(Icons.not_started_outlined)),
+                            ),
+                            Visibility(
+                              visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
+                              child: IconButton(onPressed: ()=> _shareCurrentAction(playHeader, false),
+                                  icon: GestureDetector(
+                                    child: Icon(Icons.near_me),
+                                    onLongPress: () => _shareCurrentAction(playHeader, true),
+                              )),
+                            ),
+                            IconButton(onPressed: (){
+                              ask(
+                                  icon: Icons.delete,
+                                  title: playHeader.getReadablePlayId(),
+                                  playHeader.state.isFinal
+                                      ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
+                                      : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
+                                  l10n, () {
+                                setState(() {
+                                  StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                                });
                               });
-                            });
-                          }, icon: Icon(Icons.delete)),
-                        ]),
-                  )
-                ])
-            ],
-          ),
-        ),),
+                            }, icon: Icon(Icons.delete)),
+                          ]),
+                    )
+                  ])
+              ],
+            ),
+          ),),
+      ),
     );
   }
 

@@ -549,7 +549,7 @@ class StartPageState extends State<StartPage> {
                   clickHandler: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                          return MultiPlayerMatches(_user, key: globalMultiPlayerMatchesKey,);
+                          return MultiPlayerMatches(_user, key: globalMultiPlayerMatchesKey);
                         }));
                   }
                 )
@@ -891,7 +891,9 @@ class StartPageState extends State<StartPage> {
     final header = PlayHeader.multiPlayInvitor(playSize, playMode, playOpener);
     StorageService().savePlayHeader(header);
 
-    MessageService().sendRemoteOpponentInvitation(header, _user, () => context, showAllOptions: true)
+    MessageService().sendRemoteOpponentInvitation(header, _user, () => context,
+        showAllOptions: true,
+        showPlayCreatedMessage: true)
         .then((_) {
           if (predecessor != null) {
             predecessor.successorPlayId = header.playId;

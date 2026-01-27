@@ -14,6 +14,7 @@ import '../model/move.dart';
 import '../model/play.dart';
 import '../model/user.dart';
 import '../ui/dialogs.dart';
+import '../ui/pages/multi_player_matches.dart';
 import '../ui/ui_utils.dart';
 
 
@@ -111,6 +112,7 @@ class MessageService {
         bool saveState = true, 
         bool share = true,
         bool showAllOptions = false,
+        bool showPlayCreatedMessage = false,
       }) {
 
 
@@ -128,6 +130,7 @@ class MessageService {
         saveState, 
         share,
         showAllOptions,
+        showPlayCreatedMessage: showPlayCreatedMessage,
     );
   }
 
@@ -265,36 +268,37 @@ class MessageService {
       User user,
       SerializedMessage serializedMessage,
       String Function(AppLocalizations) getText,
-      BuildContext context,
+      BuildContext rootContext,
       bool saveState,
       bool showAllOptions,
+      bool showPlayCreatedMessage,
       ) {
 
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(rootContext)!;
 
     if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_message") {
-      _shareAsMessage(context, serializedMessage, getText, header, user);
+      _shareAsMessage(rootContext, serializedMessage, getText, header, user, showPlayCreatedMessage, l10n);
     }
     else if (!showAllOptions && header.props[HeaderProps.rememberMessageSending] == "as_qr_code") {
-      _shareAsQrCode(context, serializedMessage, header, user);
+      _shareAsQrCode(rootContext, serializedMessage, header, user, showPlayCreatedMessage);
     }
     else {
     
       showModalBottomSheet(
-        context: context,
+        context: rootContext,
 
-        builder: (BuildContext context) {
+        builder: (BuildContext bottomSheetContext) {
 
           bool remember = false;
           bool signMessages = header.props[HeaderProps.signMessages] == true;
-          String _messageLanguage = header.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(context).languageCode;
+          String _messageLanguage = header.props[HeaderProps.messageLanguage] ?? Localizations.localeOf(bottomSheetContext).languageCode;
 
           return SafeArea(
             child: FutureBuilder(
               future: PreferenceService().getBool(PreferenceService.PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES),
-              builder: (context, asyncSnapshot) {
+              builder: (futureContext, asyncSnapshot) {
                 return StatefulBuilder(
-                  builder: (BuildContext context, setState) {
+                  builder: (BuildContext statefulBuilderContext, setState) {
 
                     final showLanguages = asyncSnapshot.data??false;
                     final languagePopupMenuItems = showLanguages
@@ -315,9 +319,10 @@ class MessageService {
                           mainAxisSize: MainAxisSize.max,
                           spacing: 5,
                           children: [
+                            Text("[${header.getReadablePlayId()}]"),
                             Text(l10n.messaging_sendYourMove),
                             showLanguages ? buildFilledButtonWithDropDown(
-                                context,
+                                statefulBuilderContext,
                                 Icons.near_me,
                                 l10n.messaging_sendYourMoveAsMessage,
                                 _messageLanguage,
@@ -328,8 +333,8 @@ class MessageService {
                                     await StorageService().savePlayHeader(header);
                                   }
 
-                                  Navigator.of(context).pop();
-                                  _shareAsMessage(context, serializedMessage, getText, header, user);
+                                  Navigator.of(statefulBuilderContext).pop("as_message");
+                                  _shareAsMessage(rootContext, serializedMessage, getText, header, user, showPlayCreatedMessage, l10n);
                                 },
                                 languagePopupMenuItems,
                                 (popupId) {
@@ -341,7 +346,7 @@ class MessageService {
                                 },
                               )
                               : buildFilledButton(
-                              context,
+                              statefulBuilderContext,
                               Icons.near_me,
                               l10n.messaging_sendYourMoveAsMessage,
                               () async {
@@ -351,14 +356,14 @@ class MessageService {
                                   await StorageService().savePlayHeader(header);
                                 }
 
-                                Navigator.of(context).pop();
-                                _shareAsMessage(context, serializedMessage, getText, header, user);
+                                Navigator.of(statefulBuilderContext).pop("as_message");
+                                _shareAsMessage(rootContext, serializedMessage, getText, header, user, showPlayCreatedMessage, l10n);
                               },
                             ),
 
 
                             buildFilledButton(
-                                context,
+                                statefulBuilderContext,
                                 Icons.qr_code_2,
                                 l10n.messaging_sendYourMoveAsQrCode,
                                     () async {
@@ -368,8 +373,8 @@ class MessageService {
                                       if (saveState) {
                                         await StorageService().savePlayHeader(header);
                                       }
-                                      Navigator.of(context).pop();
-                                      _shareAsQrCode(context, serializedMessage, header, user);
+                                      Navigator.of(statefulBuilderContext).pop("as_qr_code");
+                                      _shareAsQrCode(rootContext, serializedMessage, header, user, showPlayCreatedMessage);
 
                                 }),
                             CheckboxListTile(
@@ -409,9 +414,27 @@ class MessageService {
 
 
         },
-      );
+      ).then((performedAction) {
+        if (showPlayCreatedMessage && performedAction == null) {
+          _showPlayCreatedDialog(rootContext, user, header, l10n);
+        }
+      });
 
     }
+
+  }
+
+  void _showPlayCreatedDialog(BuildContext context, User user, PlayHeader header, AppLocalizations l10n) {
+    showChoiceDialog("Match ${header.getReadablePlayId()} created.",
+        firstString: 'Go to match',
+        firstHandler: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) {
+                return MultiPlayerMatches(user, key: globalMultiPlayerMatchesKey);
+              }));
+        },
+        secondString: l10n.close,
+        secondHandler: () {});
 
   }
   
@@ -425,7 +448,13 @@ class MessageService {
     }
   }
 
-  void _shareAsQrCode(BuildContext context, SerializedMessage message, PlayHeader playHeader, User user) {
+  void _shareAsQrCode(
+      BuildContext context,
+      SerializedMessage message,
+      PlayHeader playHeader,
+      User user,
+      bool showPlayCreatedMessage,
+      ) {
 
     final l10n = AppLocalizations.of(context)!;
 
@@ -458,16 +487,25 @@ class MessageService {
             ),
           ),
         );
-      });
+      })
+      .then((_) {
+        if (showPlayCreatedMessage) {
+          _showPlayCreatedDialog(context, user, playHeader, l10n);
+        }
+      });;
     });
     
   }
 
-  void _shareAsMessage(BuildContext context, 
+  void _shareAsMessage(
+      BuildContext context,
       SerializedMessage serializedMessage,
       String Function(AppLocalizations) getText,
       PlayHeader playHeader, 
-      User user) {
+      User user,
+      bool showPlayCreatedMessage,
+      AppLocalizations l10n,
+      ) {
 
     _signMessageIfNeeded(serializedMessage, playHeader, user).then((_) async {
       final overwriteLanguages = await PreferenceService().getBool(PreferenceService.PREF_SEND_MESSAGE_IN_DIFFERENT_LANGUAGES)??false;
@@ -480,7 +518,12 @@ class MessageService {
       final shareMessage = '[${playHeader.getReadablePlayId()}] $text\n${serializedMessage.toUrl()}';
 
       SharePlus.instance.share(
-          ShareParams(text: shareMessage, subject: '$APP_NAME interaction'));
+          ShareParams(text: shareMessage, subject: '$APP_NAME interaction'))
+          .then((_) {
+        if (showPlayCreatedMessage) {
+          _showPlayCreatedDialog(context, user, playHeader, l10n);
+        }
+      });
     });
     
   }
@@ -494,8 +537,9 @@ class MessageService {
       BuildContext Function()? contextProvider,
       bool saveState,
       bool share,
-      bool showAllOptions,
-      ) async {
+      bool showAllOptions, {
+        bool showPlayCreatedMessage = false,
+      }) async {
     
     if (enableMocking) {
       print("send ${serializedMessage.toUrl()}");
@@ -508,7 +552,7 @@ class MessageService {
 
     debugPrint(" >>>>>>> ${serializedMessage.toUrl()}");
     if (share && contextProvider != null) {
-      _share(header, user, serializedMessage, getText, contextProvider(), saveState, showAllOptions);
+      _share(header, user, serializedMessage, getText, contextProvider(), saveState, showAllOptions, showPlayCreatedMessage);
     }
     return serializedMessage;
   }

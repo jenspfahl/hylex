@@ -50,6 +50,7 @@ dependencies:
   crypto: ^3.0.6
   qr: ^3.0.2
   qr_flutter: ^4.1.0
+  scroll_to_index: ^3.0.1
   qr_code_scanner_plus: ^2.0.14
   permission_handler: ^12.0.1
   listen_sharing_intent: ^1.9.2
