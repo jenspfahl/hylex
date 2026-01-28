@@ -429,6 +429,7 @@ class MessageService {
         firstString: l10n.dialog_goToMatch,
         firstHandler: () {
           if (globalMultiPlayerMatchesKey.currentState != null) {
+            Navigator.pop(context); // pop previous screen
             globalMultiPlayerMatchesKey.currentState?.scrollToPlayId(header.playId);
           }
           else {

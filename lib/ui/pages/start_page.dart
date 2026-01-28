@@ -483,7 +483,7 @@ class StartPageState extends State<StartPage> {
                       if (context.mounted) {
                         _selectPlayerGroundSize(context, (playSize) =>
                             _selectMultiPlayerMode(context, (playMode) =>
-                              inviteRemoteOpponentForRevenge(context, playSize, playMode)));
+                              inviteRemoteOpponent(context, playSize, playMode)));
                       }
                     }
                 )
@@ -653,7 +653,7 @@ class StartPageState extends State<StartPage> {
     );
   }
 
-  void inviteRemoteOpponentForRevenge(
+  void inviteRemoteOpponent(
       BuildContext context,
       PlaySize
       playSize, PlayMode playMode,

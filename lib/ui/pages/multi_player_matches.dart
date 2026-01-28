@@ -277,169 +277,183 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       index: playHeader.playId.hashCode,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-        child: Container(
-          decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(), left: BorderSide()),
-              color: _highlightPlayId == playHeader.playId
-                  ? Theme.of(context).colorScheme.surface.withValues(red: 0.87, green: 0.87, blue: 0.9)
-                  : null,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Container(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      setState(() {
-                        if (_highlightPlayId == playHeader.playId) {
-                          _highlightPlayId = null;
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            _updateHighlightedPlay(playHeader);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(), left: BorderSide()),
+                color: _highlightPlayId == playHeader.playId
+                    ? Theme.of(context).colorScheme.surface.withValues(red: 0.87, green: 0.87, blue: 0.9)
+                    : null,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Container(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        _updateHighlightedPlay(playHeader);
+
+                        if (playHeader.state == PlayState.InvitationPending) {
+                          globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                        }
+                        else if (playHeader.state == PlayState.InvitationRejected) {
+                          final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
+                          final opponentRejected = lastMessage != null
+                              && lastMessage.channel == Channel.In
+                              && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
+                          showAlertDialog(opponentRejected
+                              ? l10n.playState_invitationRejectedByOpponent
+                              : l10n.playState_invitationRejectedByYou);
+                        }
+                        else if (playHeader.isStateShareable()) {
+                          showChoiceDialog(l10n.messaging_opponentNeedsToReact,
+                              width: 270,
+                              firstString: l10n.messaging_shareAgain,
+                              firstHandler: () {
+                                MessageService().sendCurrentPlayState(
+                                    playHeader, widget.user, () => context, false);
+                              },
+                              secondString: MaterialLocalizations.of(context).cancelButtonLabel,
+                              secondHandler: () {});
+
                         }
                         else {
-                          _highlightPlayId = playHeader.playId;
+                          _startMultiPlayerGame(
+                              context, playHeader);
                         }
-                      });
 
-
-                      if (playHeader.state == PlayState.InvitationPending) {
-                        globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
-                      }
-                      else if (playHeader.state == PlayState.InvitationRejected) {
-                        final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
-                        final opponentRejected = lastMessage != null
-                            && lastMessage.channel == Channel.In
-                            && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
-                        showAlertDialog(opponentRejected
-                            ? l10n.playState_invitationRejectedByOpponent
-                            : l10n.playState_invitationRejectedByYou);
-                      }
-                      else if (playHeader.isStateShareable()) {
-                        showChoiceDialog(l10n.messaging_opponentNeedsToReact,
-                            width: 270,
-                            firstString: l10n.messaging_shareAgain,
-                            firstHandler: () {
-                              MessageService().sendCurrentPlayState(
-                                  playHeader, widget.user, () => context, false);
-                            },
-                            secondString: MaterialLocalizations.of(context).cancelButtonLabel,
-                            secondHandler: () {});
-
-                      }
-                      else {
-                        _startMultiPlayerGame(
-                            context, playHeader);
-                      }
-
-                    },
-                    onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
-                              options: CircularDottedBorderOptions(
-                                  padding: EdgeInsets.zero,
-                                  strokeWidth: 3,
-                                  strokeCap: StrokeCap.butt,
-                                  dashPattern: [1],
-                                  color: Colors.black
-                              ),
-                              child: CircleAvatar(
+                      },
+                      onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
+                                options: CircularDottedBorderOptions(
+                                    padding: EdgeInsets.zero,
+                                    strokeWidth: 3,
+                                    strokeCap: StrokeCap.butt,
+                                    dashPattern: [1],
+                                    color: Colors.black
+                                ),
+                                child: CircleAvatar(
+                                  backgroundColor: playHeader.state.toColor(),
+                                  maxRadius: 6.5,
+                                )
+                              ) : CircleAvatar(
                                 backgroundColor: playHeader.state.toColor(),
                                 maxRadius: 6.5,
-                              )
-                            ) : CircleAvatar(
-                              backgroundColor: playHeader.state.toColor(),
-                              maxRadius: 6.5,
-                            ),
-                            Expanded(
-                              child: Container(
-                              //  color: Colors.red,
-                                child: Html(
-                                    data: " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT, asHtml: true),
-                                    style: {
-                                      "p": Style(
-                                          fontSize: FontSize(16),
-                                          fontWeight: FontWeight.w500,
-                                        margin: Margins(bottom: Margin(3), top: Margin(1.5)),
-                                        padding: HtmlPaddings(top: HtmlPadding(4))
-                                      ),
-                                      "b": Style(
-                                          fontSize: FontSize(18),
-                                          fontWeight: FontWeight.bold,
-                                      ),
-                                    }
-                                ),
                               ),
-                           /*   Text(
-                                  " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT),
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                overflow: TextOverflow.ellipsis
-                              ),*/
-                            ),
-                          ],
-                        ),
-                        Text(_getHeaderSubLine(playHeader),
-                            style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
-                        Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
+                              Expanded(
+                                child: Container(
+                                //  color: Colors.red,
+                                  child: Html(
+                                      data: " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT, asHtml: true),
+                                      style: {
+                                        "p": Style(
+                                            fontSize: FontSize(16),
+                                            fontWeight: FontWeight.w500,
+                                          margin: Margins(bottom: Margin(3), top: Margin(1.5)),
+                                          padding: HtmlPaddings(top: HtmlPadding(4))
+                                        ),
+                                        "b": Style(
+                                            fontSize: FontSize(18),
+                                            fontWeight: FontWeight.bold,
+                                        ),
+                                      }
+                                  ),
+                                ),
+                             /*   Text(
+                                    " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                  overflow: TextOverflow.ellipsis
+                                ),*/
+                              ),
+                            ],
+                          ),
+                          Text(_getHeaderSubLine(playHeader),
+                              style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
+                          Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
 
-                        if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
-                        Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                      ],
+                          if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
+                          Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Divider(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                      child: OverflowBar(
-                        alignment: MainAxisAlignment.end,
-                        overflowAlignment: OverflowBarAlignment.end,
-                        children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                        child: OverflowBar(
+                          alignment: MainAxisAlignment.end,
+                          overflowAlignment: OverflowBarAlignment.end,
+                          children: [
 
-                            Visibility(
-                              visible: playHeader.state.hasGameBoard,
-                              child: IconButton(onPressed: (){
-                                _startMultiPlayerGame(
-                                    context, playHeader);
-                              }, icon: Icon(Icons.not_started_outlined)),
-                            ),
-                            Visibility(
-                              visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
-                              child: IconButton(onPressed: ()=> _shareCurrentAction(playHeader, false),
-                                  icon: GestureDetector(
-                                    child: Icon(Icons.near_me),
-                                    onLongPress: () => _shareCurrentAction(playHeader, true),
-                              )),
-                            ),
-                            IconButton(onPressed: (){
-                              ask(
-                                  icon: Icons.delete,
-                                  title: playHeader.getReadablePlayId(),
-                                  playHeader.state.isFinal
-                                      ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
-                                      : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
-                                  l10n, () {
-                                setState(() {
-                                  StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                              Visibility(
+                                visible: playHeader.state.hasGameBoard,
+                                child: IconButton(onPressed: () {
+                                  _updateHighlightedPlay(playHeader);
+                                  _startMultiPlayerGame(
+                                      context, playHeader);
+                                }, icon: Icon(Icons.not_started_outlined)),
+                              ),
+                              Visibility(
+                                visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
+                                child: IconButton(onPressed: () {
+                                  _updateHighlightedPlay(playHeader);
+                                  _shareCurrentAction(playHeader, false);
+                                },
+                                    icon: GestureDetector(
+                                      child: Icon(Icons.near_me),
+                                      onLongPress: () => _shareCurrentAction(playHeader, true),
+                                )),
+                              ),
+                              IconButton(onPressed: () {
+                                _updateHighlightedPlay(playHeader);
+                                ask(
+                                    icon: Icons.delete,
+                                    title: playHeader.getReadablePlayId(),
+                                    playHeader.state.isFinal
+                                        ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
+                                        : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
+                                    l10n, () {
+                                  setState(() {
+                                    StorageService().deletePlayHeaderAndPlay(playHeader.playId);
+                                  });
                                 });
-                              });
-                            }, icon: Icon(Icons.delete)),
-                          ]),
-                    )
-                  ])
-              ],
-            ),
-          ),),
+                              }, icon: Icon(Icons.delete)),
+                            ]),
+                      )
+                    ])
+                ],
+              ),
+            ),),
+        ),
       ),
     );
+  }
+
+  void _updateHighlightedPlay(PlayHeader playHeader) {
+    setState(() {
+      if (_highlightPlayId == playHeader.playId) {
+        _highlightPlayId = null;
+      }
+      else {
+        _highlightPlayId = playHeader.playId;
+      }
+    });
   }
 
   void _shareCurrentAction(PlayHeader playHeader, bool showAllOptions) {

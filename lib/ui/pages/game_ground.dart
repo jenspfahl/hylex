@@ -806,7 +806,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                             },
                             secondString: l10n.dialog_askAgain,
                             secondHandler: () {
-                              globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                              globalStartPageKey.currentState?.inviteRemoteOpponent(
                                   context,
                                   gameEngine.play.header.playSize,
                                   gameEngine.play.header.playMode,
@@ -818,8 +818,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                       }
                       else {
                         // pop current game ground
-                        Navigator.pop(context);
-                        globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
+                        globalStartPageKey.currentState?.inviteRemoteOpponent(
                             context,
                             gameEngine.play.header.playSize,
                             gameEngine.play.header.playMode,

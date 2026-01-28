@@ -30,7 +30,7 @@ String toReadablePlayId(String id) {
   if (id.length < 7) {
     return id;
   }
-  if (id.codeUnits.sum % 3 != 0) {
+  if (id.codeUnits.sum % 4 != 0) {
     return _mapToCharSet(id.codeUnitAt(0), _upperConsonants)
         + _mapToCharSet(id.codeUnitAt(1), _upperVocals)
         + _mapToCharSet(id.codeUnitAt(2), _upperConsonants)
@@ -57,7 +57,7 @@ String toReadableUserId(String id) {
   if (id.length < 8) {
     return id;
   }
-  if (id.codeUnits.sum % 3 != 0) {
+  if (id.codeUnits.sum % 4 != 0) {
     return _mapToCharSet(id.codeUnitAt(0), _upperConsonants)
         + _mapToCharSet(id.codeUnitAt(1), _upperVocals)
         + _mapToCharSet(id.codeUnitAt(2), _upperConsonants)
