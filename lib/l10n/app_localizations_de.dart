@@ -272,6 +272,14 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String dialog_matchCreated(Object playId) {
+    return 'Neues Match $playId erstellt.';
+  }
+
+  @override
+  String get dialog_goToMatch => 'Gehe zu Match';
+
+  @override
   String get gameTitle_againstComputer => 'Einzelspiel';
 
   @override

@@ -98,7 +98,10 @@
 
   "dialog_deleteFinalMatch": "Are you sure you want to remove the match {playId}? This cannot be undone!",
   "dialog_deleteOngoingMatch": "Are you sure you want to remove the match {playId}? After removal, you will no longer be able to play it!",
-  
+
+  "dialog_matchCreated": "New match {playId} has been created.",
+  "dialog_goToMatch": "Go to match",
+
   "gameTitle_againstComputer": "Single Game",
   "gameTitle_alternate": "Alternating Single Game",
   "gameTitle_automatic": "Automatic Game",

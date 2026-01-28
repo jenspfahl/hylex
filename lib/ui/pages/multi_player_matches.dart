@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:collection/collection.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hyle_x/app.dart';
 import 'package:hyle_x/service/MessageService.dart';
@@ -33,7 +34,7 @@ class MultiPlayerMatches extends StatefulWidget {
   final User user;
   final String? scrollToPlayId;
 
-  const MultiPlayerMatches(this.user, {
+  MultiPlayerMatches(this.user, {
     super.key,
     this.scrollToPlayId = null,
   });
@@ -49,11 +50,16 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   Map<String, bool> _hideGroup = HashMap();
 
   final _listScrollController = AutoScrollController(suggestedRowHeight: 40);
+  String? _scrollToPlayId = null;
+  String? _highlightPlayId = null;
 
 
   @override
   void initState() {
     super.initState();
+
+    _scrollToPlayId = widget.scrollToPlayId;
+    _highlightPlayId = _scrollToPlayId;
 
     PlayStateGroup.values.forEach((group) => _hideGroup[group.name] = group.isFinal);
 
@@ -70,15 +76,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    if (widget.scrollToPlayId != null) {
-      Future.delayed(Duration(milliseconds: 200), () {
-        _listScrollController.scrollToIndex(
-            widget.scrollToPlayId!.hashCode,
-            duration: Duration(milliseconds: 1),
-            preferPosition: AutoScrollPosition.begin,
-        );
-      });
-    }
+    _scrollToItemIfNeeded();
 
     return Scaffold(
         appBar: AppBar(
@@ -197,6 +195,27 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   }
 
+  void _scrollToItemIfNeeded() {
+    if (_scrollToPlayId != null) {
+
+      setState(() {
+        // expand all groups
+        PlayStateGroup.values.forEach((group) => _hideGroup[group.name] = false);
+
+      });
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (_scrollToPlayId != null) {
+          _listScrollController.scrollToIndex(
+            _scrollToPlayId!.hashCode,
+            duration: Duration(milliseconds: 1),
+            preferPosition: AutoScrollPosition.begin,
+          );
+        }
+        _scrollToPlayId = null;
+      });
+    }
+  }
+
   Widget _buildPlayGroupSection(String title, String? subTitle, List<PlayHeader> groupData, String groupIdentifier) {
     if (groupData.isEmpty) {
       return Container();
@@ -259,8 +278,11 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
         child: Container(
-          decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(), left: BorderSide())
+          decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(), left: BorderSide()),
+              color: _highlightPlayId == playHeader.playId
+                  ? Theme.of(context).colorScheme.surface.withValues(red: 0.87, green: 0.87, blue: 0.9)
+                  : null,
           ),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -270,6 +292,16 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () {
+                      setState(() {
+                        if (_highlightPlayId == playHeader.playId) {
+                          _highlightPlayId = null;
+                        }
+                        else {
+                          _highlightPlayId = playHeader.playId;
+                        }
+                      });
+
+
                       if (playHeader.state == PlayState.InvitationPending) {
                         globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
                       }
@@ -305,6 +337,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
                               options: CircularDottedBorderOptions(
@@ -323,11 +356,29 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                               maxRadius: 6.5,
                             ),
                             Expanded(
-                              child: Text(
-                                  " " + playHeader.getTitle(l10n),
+                              child: Container(
+                              //  color: Colors.red,
+                                child: Html(
+                                    data: " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT, asHtml: true),
+                                    style: {
+                                      "p": Style(
+                                          fontSize: FontSize(16),
+                                          fontWeight: FontWeight.w500,
+                                        margin: Margins(bottom: Margin(3), top: Margin(1.5)),
+                                        padding: HtmlPaddings(top: HtmlPadding(4))
+                                      ),
+                                      "b": Style(
+                                          fontSize: FontSize(18),
+                                          fontWeight: FontWeight.bold,
+                                      ),
+                                    }
+                                ),
+                              ),
+                           /*   Text(
+                                  " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT),
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                 overflow: TextOverflow.ellipsis
-                              ),
+                              ),*/
                             ),
                           ],
                         ),
@@ -542,6 +593,14 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     }).toList();
 
     
+  }
+
+  void scrollToPlayId(String playId) {
+    setState(() {
+      _scrollToPlayId = playId;
+      _highlightPlayId = playId;
+    });
+    _scrollToItemIfNeeded();
   }
 
 

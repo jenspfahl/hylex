@@ -99,6 +99,10 @@
   "dialog_deleteFinalMatch": "Möchtest du das Match {playId} wirklich entfernen? Dies kann nicht rückgängig gemacht werden!",
   "dialog_deleteOngoingMatch": "Möchtest du das Match {playId} wirklich entfernen? Nach dem Entfernen kannst du es nicht mehr weiterspielen!",
 
+
+  "dialog_matchCreated": "Neues Match {playId} erstellt.",
+  "dialog_goToMatch": "Gehe zu Match",
+
   "gameTitle_againstComputer": "Einzelspiel",
   "gameTitle_alternate": "Abwechselndes Einzelspiel",
   "gameTitle_automatic": "Automatisches Spiel",

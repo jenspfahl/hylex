@@ -593,6 +593,18 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to remove the match {playId}? After removal, you will no longer be able to play it!'**
   String dialog_deleteOngoingMatch(Object playId);
 
+  /// No description provided for @dialog_matchCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'New match {playId} has been created.'**
+  String dialog_matchCreated(Object playId);
+
+  /// No description provided for @dialog_goToMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to match'**
+  String get dialog_goToMatch;
+
   /// No description provided for @gameTitle_againstComputer.
   ///
   /// In en, this message translates to:

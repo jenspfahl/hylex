@@ -777,7 +777,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
       if (gameEngine.play.isMultiplayerPlay) {
         return Column(
           children: [
-            if (gameEngine.play.getWinnerPlayer() != PlayerType.LocalUser && gameEngine.play.header.playMode == PlayMode.HyleX)
+            if (gameEngine.play.getLooserPlayer() == PlayerType.LocalUser && gameEngine.play.header.playMode == PlayMode.HyleX)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: buildFilledButton(context,
@@ -787,8 +787,25 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
 
                       if (gameEngine.play.header.successorPlayId != null) {
                         showChoiceDialog(l10n.dialog_askForRematchAgain(toReadablePlayId(gameEngine.play.header.successorPlayId!)),
-                            firstString: l10n.dialog_askAgain,
+                            firstString: l10n.dialog_goToMatch,
                             firstHandler: () {
+                              // pop current game ground
+                              Navigator.pop(context);
+                              if (globalMultiPlayerMatchesKey.currentState != null) {
+                                globalMultiPlayerMatchesKey.currentState?.scrollToPlayId(gameEngine.play.header.successorPlayId!);
+                              }
+                              else {
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (_) {
+                                      return MultiPlayerMatches(gameEngine.user,
+                                          key: globalMultiPlayerMatchesKey,
+                                          scrollToPlayId: gameEngine.play.header
+                                              .playId);
+                                    }));
+                              }
+                            },
+                            secondString: l10n.dialog_askAgain,
+                            secondHandler: () {
                               globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
                                   context,
                                   gameEngine.play.header.playSize,
@@ -796,10 +813,12 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                                   predecessorPlay: gameEngine.play.header
                               );
                             },
-                            secondString: MaterialLocalizations.of(context).cancelButtonLabel,
-                            secondHandler: () {  });
+                            thirdString: MaterialLocalizations.of(context).cancelButtonLabel,
+                            thirdHandler: () {  });
                       }
                       else {
+                        // pop current game ground
+                        Navigator.pop(context);
                         globalStartPageKey.currentState?.inviteRemoteOpponentForRevenge(
                             context,
                             gameEngine.play.header.playSize,

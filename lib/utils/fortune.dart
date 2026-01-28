@@ -2,13 +2,23 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 
-final rnd = Random.secure();
+final rnd = _getRandom();
+
+
 const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
-const _upperChars = 'ABCDEFGHIJKLMOPQRSTUVWXYZ';
 const _upperVocals = 'AEIJOU';
 const _upperConsonants = 'BCDFGHKLMPQRSTVWXZ';
 const _digits = '1234567890';
 
+
+Random _getRandom() {
+  try {
+    return Random.secure();
+  } catch (e) {
+    print("Cannot get secure random, falling back to insecure");
+    return Random();
+  }
+}
 
 int diceInt(int max) => rnd.nextInt(max);
 
@@ -20,7 +30,7 @@ String toReadablePlayId(String id) {
   if (id.length < 7) {
     return id;
   }
-  if (id.codeUnits.sum % 3 == 0) {
+  if (id.codeUnits.sum % 3 != 0) {
     return _mapToCharSet(id.codeUnitAt(0), _upperConsonants)
         + _mapToCharSet(id.codeUnitAt(1), _upperVocals)
         + _mapToCharSet(id.codeUnitAt(2), _upperConsonants)
@@ -47,7 +57,7 @@ String toReadableUserId(String id) {
   if (id.length < 8) {
     return id;
   }
-  if (id.codeUnits.sum % 3 == 0) {
+  if (id.codeUnits.sum % 3 != 0) {
     return _mapToCharSet(id.codeUnitAt(0), _upperConsonants)
         + _mapToCharSet(id.codeUnitAt(1), _upperVocals)
         + _mapToCharSet(id.codeUnitAt(2), _upperConsonants)

@@ -353,16 +353,26 @@ class PlayHeader {
     _touch();
   }
 
-  String getTitle(AppLocalizations l10n) {
-    if (opponentName != null) {
-      return l10n.gameTitle_playAgainstOpponent(opponentName!, getReadablePlayId());
+  String getTitle(AppLocalizations l10n, {
+    bool showOpponentDetails = true,
+    bool asHtml = false,
+  }) {
+    var playId = getReadablePlayId();
+    if (asHtml) {
+      playId = "<b>$playId</b>";
     }
-    else if (opponentId != null) {
-      return l10n.gameTitle_playAgainstOpponent(toReadableUserId(opponentId!), getReadablePlayId());
+    var text = playId;
+    if (showOpponentDetails && opponentName != null) {
+      text = l10n.gameTitle_playAgainstOpponent(opponentName!, playId);
     }
-    else {
-      return getReadablePlayId();
+    else if (showOpponentDetails && opponentId != null) {
+      text = l10n.gameTitle_playAgainstOpponent(toReadableUserId(opponentId!), playId);
     }
+    if (asHtml) {
+      text = "<p>$text</p>";
+    }
+
+    return text;
   }
 
   _touch() {

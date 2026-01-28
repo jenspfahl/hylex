@@ -425,13 +425,20 @@ class MessageService {
   }
 
   void _showPlayCreatedDialog(BuildContext context, User user, PlayHeader header, AppLocalizations l10n) {
-    showChoiceDialog("Match ${header.getReadablePlayId()} created.",
-        firstString: 'Go to match',
+    showChoiceDialog(l10n.dialog_matchCreated(header.getReadablePlayId()),
+        firstString: l10n.dialog_goToMatch,
         firstHandler: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) {
-                return MultiPlayerMatches(user, key: globalMultiPlayerMatchesKey);
-              }));
+          if (globalMultiPlayerMatchesKey.currentState != null) {
+            globalMultiPlayerMatchesKey.currentState?.scrollToPlayId(header.playId);
+          }
+          else {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) {
+                  return MultiPlayerMatches(
+                      user, key: globalMultiPlayerMatchesKey,
+                      scrollToPlayId: header.playId);
+                }));
+          }
         },
         secondString: l10n.close,
         secondHandler: () {});
