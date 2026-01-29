@@ -280,7 +280,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            _updateHighlightedPlay(playHeader);
+            _updateHighlightedPlay(playHeader, true);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -297,7 +297,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
-                        _updateHighlightedPlay(playHeader);
+                        _updateHighlightedPlay(playHeader, false);
 
                         if (playHeader.state == PlayState.InvitationPending) {
                           globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
@@ -404,7 +404,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                               Visibility(
                                 visible: playHeader.state.hasGameBoard,
                                 child: IconButton(onPressed: () {
-                                  _updateHighlightedPlay(playHeader);
+                                  _updateHighlightedPlay(playHeader, false);
                                   _startMultiPlayerGame(
                                       context, playHeader);
                                 }, icon: Icon(Icons.not_started_outlined)),
@@ -412,7 +412,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                               Visibility(
                                 visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
                                 child: IconButton(onPressed: () {
-                                  _updateHighlightedPlay(playHeader);
+                                  _updateHighlightedPlay(playHeader, false);
                                   _shareCurrentAction(playHeader, false);
                                 },
                                     icon: GestureDetector(
@@ -421,7 +421,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                                 )),
                               ),
                               IconButton(onPressed: () {
-                                _updateHighlightedPlay(playHeader);
+                                _updateHighlightedPlay(playHeader, false);
                                 ask(
                                     icon: Icons.delete,
                                     title: playHeader.getReadablePlayId(),
@@ -445,9 +445,9 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     );
   }
 
-  void _updateHighlightedPlay(PlayHeader playHeader) {
+  void _updateHighlightedPlay(PlayHeader playHeader, bool allowRemoveHighlight) {
     setState(() {
-      if (_highlightPlayId == playHeader.playId) {
+      if (allowRemoveHighlight && _highlightPlayId == playHeader.playId) {
         _highlightPlayId = null;
       }
       else {
