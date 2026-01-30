@@ -628,4 +628,37 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
   }
 
 
+
 }
+
+bool isMultiPlayerMatchesOnTop() {
+  final multiMatchContext = globalMultiPlayerMatchesKey.currentContext;
+  if (multiMatchContext != null && ModalRoute.of(multiMatchContext)?.isCurrent == true) {
+    return true;
+  }
+  return false;
+}
+
+openMultiPlayerMatches(BuildContext context, User user, String playId) {
+  if (globalMultiPlayerMatchesKey.currentState != null) { // MultiPlayerMatches is in route stack
+    // pop until MultiPlayerMatches is on top
+    if (!isMultiPlayerMatchesOnTop()) {
+      Navigator.pop(context);
+      if (!isMultiPlayerMatchesOnTop()) {
+        Navigator.pop(context);
+      }
+    }
+
+    globalMultiPlayerMatchesKey.currentState!.scrollToPlayId(playId);
+  }
+  else {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) {
+          return MultiPlayerMatches(user,
+              key: globalMultiPlayerMatchesKey,
+              scrollToPlayId: playId);
+        }));
+  }
+}
+
+

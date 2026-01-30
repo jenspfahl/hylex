@@ -5,7 +5,7 @@ Das Originalspiel „Entropy“ von Eric Solomon besteht aus zwei Spielrunden mi
 Funktionen:
 
 * Einzelspieler: Spiele gegen den Computer
-* Mehrspieler: Spiele gegen einen Gegner online
+* Mehrspieler: Spiele gegen einen entfernten Gegner
 * Datenschutz: Kein zentraler Server, keine personenbezogenen Daten, keine Werbung, kein Tracking
 * Open Source :-)
 

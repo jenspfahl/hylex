@@ -425,25 +425,20 @@ class MessageService {
   }
 
   void _showPlayCreatedDialog(BuildContext context, User user, PlayHeader header, AppLocalizations l10n) {
-    showChoiceDialog(l10n.dialog_matchCreated(header.getReadablePlayId()),
+    showMessageWithJumpOption(null, l10n.dialog_matchCreated(header.getReadablePlayId()), l10n, header, context, user);
+
+  }
+  
+
+  void showMessageWithJumpOption(IconData? icon, String text, AppLocalizations l10n, PlayHeader header, BuildContext context, User user) {
+    showChoiceDialog(text,
+        icon: icon,
         firstString: l10n.dialog_goToMatch,
         firstHandler: () {
-          if (globalMultiPlayerMatchesKey.currentState != null) {
-            Navigator.pop(context); // pop previous screen
-            globalMultiPlayerMatchesKey.currentState?.scrollToPlayId(header.playId);
-          }
-          else {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) {
-                  return MultiPlayerMatches(
-                      user, key: globalMultiPlayerMatchesKey,
-                      scrollToPlayId: header.playId);
-                }));
-          }
+          openMultiPlayerMatches(context, user, header.playId);
         },
         secondString: l10n.close,
         secondHandler: () {});
-
   }
   
   Future<void> _signMessageIfNeeded(SerializedMessage serializedMessage, PlayHeader header, User user) async {

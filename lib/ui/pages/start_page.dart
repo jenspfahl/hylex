@@ -156,8 +156,7 @@ class StartPageState extends State<StartPage> {
       debugPrint("received: [$playId] ${extractOperation.name}");
       if (extractOperation == Operation.SendInvite) {
         if (header != null) {
-          showAlertDialog(l10n.error_alreadyReactedToInvite(header.getReadablePlayId()));
-          //TODO add button to jump to this match entry
+          MessageService().showMessageWithJumpOption(Icons.warning, l10n.error_alreadyReactedToInvite(header.getReadablePlayId()), l10n, header, context, _user);
         }
         else {
           final comContext = CommunicationContext();
@@ -180,13 +179,15 @@ class StartPageState extends State<StartPage> {
         showAlertDialog(l10n.error_matchMotFound(toReadablePlayId(playId)));
       }
       else if (header.state.isFinal) {
-        showAlertDialog(l10n.error_matchAlreadyFinished(header.getReadablePlayId()));
+        MessageService().showMessageWithJumpOption(Icons.warning, l10n.error_matchAlreadyFinished(header.getReadablePlayId()), l10n, header, context, _user);
+
       }
       else {
         final (message, error) = await serializedMessage.deserialize(
             header.commContext, header.opponentId, l10n);
         if (error != null) {
-          showAlertDialog(error);
+          MessageService().showMessageWithJumpOption(Icons.warning, error, l10n, header, context, _user);
+
           return;
         }
 
@@ -329,7 +330,7 @@ class StartPageState extends State<StartPage> {
     final errorMessage = await PlayStateManager().handleInviteAcceptedByRemote(header, message);
 
     if (errorMessage != null) {
-      showAlertDialog(errorMessage);
+      MessageService().showMessageWithJumpOption(Icons.warning, errorMessage, l10n, header, context, _user);
     }
     else {
       header.commContext.registerReceivedMessage(serializedMessage);
@@ -357,13 +358,14 @@ class StartPageState extends State<StartPage> {
       RejectInviteMessage message) async {
     final error = await PlayStateManager().doAndHandleRejectInvite(header, message);
     if (error != null) {
-      showAlertDialog(error);
+      MessageService().showMessageWithJumpOption(Icons.warning, error, l10n, header, context, _user);
     }
     else {
       header.commContext.registerReceivedMessage(serializedMessage);
       await StorageService().savePlayHeader(header);
 
-      showAlertDialog(l10n.messaging_matchDeclined(header.getReadablePlayId()));
+      MessageService().showMessageWithJumpOption(Icons.warning, l10n.messaging_matchDeclined(header.getReadablePlayId()), l10n, header, context, _user);
+
     }
   }
 
@@ -392,7 +394,7 @@ class StartPageState extends State<StartPage> {
 
     final error = await PlayStateManager().handleResignedByRemote(header, _user);
     if (error != null) {
-      showAlertDialog(error);
+      MessageService().showMessageWithJumpOption(Icons.warning, error, l10n, header, context, _user);
     }
     else {
       header.commContext.registerReceivedMessage(serializedMessage);

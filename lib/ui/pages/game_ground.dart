@@ -789,20 +789,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                         showChoiceDialog(l10n.dialog_askForRematchAgain(toReadablePlayId(gameEngine.play.header.successorPlayId!)),
                             firstString: l10n.dialog_goToMatch,
                             firstHandler: () {
-                              // pop current game ground
-                              Navigator.pop(context);
-                              if (globalMultiPlayerMatchesKey.currentState != null) {
-                                globalMultiPlayerMatchesKey.currentState?.scrollToPlayId(gameEngine.play.header.successorPlayId!);
-                              }
-                              else {
-                                Navigator.push(context,
-                                    MaterialPageRoute(builder: (_) {
-                                      return MultiPlayerMatches(gameEngine.user,
-                                          key: globalMultiPlayerMatchesKey,
-                                          scrollToPlayId: gameEngine.play.header
-                                              .playId);
-                                    }));
-                              }
+                              openMultiPlayerMatches(context, gameEngine.user, gameEngine.play.header.successorPlayId!);
                             },
                             secondString: l10n.dialog_askAgain,
                             secondHandler: () {
