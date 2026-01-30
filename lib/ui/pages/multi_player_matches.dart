@@ -13,7 +13,7 @@ import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/pages/remotetest/remote_test_widget.dart';
 import 'package:hyle_x/ui/pages/start_page.dart';
 import 'package:hyle_x/utils/fortune.dart';
-import 'package:scroll_to_index/scroll_to_index.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../model/common.dart';
@@ -28,6 +28,23 @@ import 'game_ground.dart';
 GlobalKey<MultiPlayerMatchesState> globalMultiPlayerMatchesKey = GlobalKey();
 
 enum SortOrder {BY_PLAY_ID, BY_STATE, BY_LATEST, BY_OPPONENT}
+
+
+class Group {
+  String identifier;
+  String title;
+  String? subTitle;
+  int size;
+
+  Group(this.identifier, this.title, this.subTitle, this.size);
+}
+
+class GroupOrLine {
+  Group? group;
+  PlayHeader? line;
+
+  GroupOrLine(this.group, this.line);
+}
 
 class MultiPlayerMatches extends StatefulWidget {
 
@@ -45,13 +62,16 @@ class MultiPlayerMatches extends StatefulWidget {
 
 class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
+  List<GroupOrLine> _visibleItems = [];
   late SortOrder _sortOrder;
 
   Map<String, bool> _hideGroup = HashMap();
 
-  final _listScrollController = AutoScrollController(suggestedRowHeight: 40);
+  final _listScrollController = ItemScrollController();
   String? _scrollToPlayId = null;
   String? _highlightPlayId = null;
+  
+  
 
 
   @override
@@ -70,13 +90,15 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
             setState(() => _sortOrder = SortOrder.values.firstWhere((p) => p.index == value));
           }
     });
+
+    _scrollToItemIfNeeded();
+
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    _scrollToItemIfNeeded();
 
     return Scaffold(
         appBar: AppBar(
@@ -119,67 +141,28 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
                   final sorted = _sort(snapshot.data!);
           
                   if (_sortOrder == SortOrder.BY_STATE) {
-                    return SingleChildScrollView(
-                      controller: _listScrollController,
-                      child: Container(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .surface,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
+                    final list = 
+                      _buildGroup(l10n.matchListGroup_actionNeeded, null,
+                          sorted.where((e) => e.state.group == PlayStateGroup.TakeAction).toList(), PlayStateGroup.TakeAction.name)
+                      ..addAll(_buildGroup(l10n.matchListGroup_waitForOpponent, null,
+                          sorted.where((e) => e.state.group == PlayStateGroup.AwaitOpponentAction).toList(), PlayStateGroup.AwaitOpponentAction.name))
+                      ..addAll(_buildGroup(l10n.matchListGroup_wonMatches, null,
+                          sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndWon).toList(), PlayStateGroup.FinishedAndWon.name))
+                      ..addAll(_buildGroup(l10n.matchListGroup_lostMatches, null,
+                          sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndLost).toList(), PlayStateGroup.FinishedAndLost.name))
+                      ..addAll(_buildGroup(l10n.matchListGroup_rejectedMatches, null,
+                          sorted.where((e) => e.state.group == PlayStateGroup.Other).toList(), PlayStateGroup.Other.name));
+                    
+                    
+                    return _buildList(list);
 
-                            children: [
-                              _buildPlayGroupSection(l10n.matchListGroup_actionNeeded, null,
-                                  sorted.where((e) => e.state.group == PlayStateGroup.TakeAction).toList(), PlayStateGroup.TakeAction.name),
-                              _buildPlayGroupSection(l10n.matchListGroup_waitForOpponent, null,
-                                  sorted.where((e) => e.state.group == PlayStateGroup.AwaitOpponentAction).toList(), PlayStateGroup.AwaitOpponentAction.name),
-                              _buildPlayGroupSection(l10n.matchListGroup_wonMatches, null,
-                                  sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndWon).toList(), PlayStateGroup.FinishedAndWon.name),
-                              _buildPlayGroupSection(l10n.matchListGroup_lostMatches, null,
-                                  sorted.where((e) => e.state.group == PlayStateGroup.FinishedAndLost).toList(), PlayStateGroup.FinishedAndLost.name),
-                              _buildPlayGroupSection(l10n.matchListGroup_rejectedMatches, null,
-                                  sorted.where((e) => e.state.group == PlayStateGroup.Other).toList(), PlayStateGroup.Other.name),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
                   }
                   else if (_sortOrder == SortOrder.BY_OPPONENT) {
-                    return SingleChildScrollView(
-                      controller: _listScrollController,
-                      child: Container(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .surface,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            children: _getOpponentGroups(sorted, l10n),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildList(_getOpponentGroups(sorted, l10n));
+
                   }
                   else {
-                    return SingleChildScrollView(
-                      controller: _listScrollController,
-                      child: Container(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .surface,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: sorted.map(_buildPlayLine).toList(),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildList(sorted.map((e) => GroupOrLine(null, e)).toList());
                   }
                 }
                 else if (snapshot.hasError) {
@@ -195,73 +178,107 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
 
   }
 
+  Widget _buildList(List<GroupOrLine> items) {
+    _visibleItems = items;
+    return Container(
+      color: Theme
+          .of(context)
+          .colorScheme
+          .surface,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: ScrollablePositionedList.builder(
+            itemScrollController: _listScrollController,
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              if (item.group != null && item.line == null) {
+                return _buildPlayGroupSection(item.group!.title, item.group!.subTitle, item.group!.size, item.group!.identifier);
+              }
+              else if (item.line != null) {
+                return _buildPlayLine(item.line!);
+              }
+              return Container();
+            }),
+      ),
+    );
+  }
+
   void _scrollToItemIfNeeded() {
     if (_scrollToPlayId != null) {
 
-      setState(() {
-        // expand all groups
-        PlayStateGroup.values.forEach((group) => _hideGroup[group.name] = false);
+      Future.delayed(Duration(milliseconds: 10), () {
+        if (mounted && _scrollToPlayId != null) {
+          setState(() {
+            // expand all groups
+            _hideGroup.keys.forEach((k) => _hideGroup[k] = false);
 
-      });
-      Future.delayed(Duration(milliseconds: 200), () {
-        if (_scrollToPlayId != null) {
-          _listScrollController.scrollToIndex(
-            _scrollToPlayId!.hashCode,
-            duration: Duration(milliseconds: 1),
-            preferPosition: AutoScrollPosition.begin,
-          );
+          });
+
+          // give time to build new _visibleItems
+          Future.delayed(Duration(milliseconds: 50), () {
+            final index = _visibleItems.indexWhere((e) => e.line?.playId == _scrollToPlayId);
+            if (index != -1) {
+              _listScrollController.jumpTo(index: index);
+            }
+            _scrollToPlayId = null;
+
+          });
+
         }
-        _scrollToPlayId = null;
       });
     }
   }
 
-  Widget _buildPlayGroupSection(String title, String? subTitle, List<PlayHeader> groupData, String groupIdentifier) {
-    if (groupData.isEmpty) {
+  List<GroupOrLine> _buildGroup(String title, String? subTitle, List<PlayHeader> groupData, String groupIdentifier) {
+    final list = <GroupOrLine>[];
+
+    final group = Group(groupIdentifier, title, subTitle, groupData.length);
+    list.add(GroupOrLine(group, null));
+
+    if (_hideGroup[groupIdentifier] != true) {
+      groupData.forEach((e) => list.add(GroupOrLine(group, e)));
+    }
+    return list;
+  }
+
+  Widget _buildPlayGroupSection(String title, String? subTitle, int groupSize, String groupIdentifier) {
+    if (groupSize == 0) {
       return Container();
     }
     if (_hideGroup[groupIdentifier] == true) {
-      title += " (${groupData.length})";
+      title += " ($groupSize)";
     }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        if (subTitle != null) Text(subTitle, style: TextStyle(fontSize: 14, color: Colors.grey[500])),
-                      ],
-                    ),
-                  onTap: () {
-                    setState(() {
-                      _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
-                    });
-                  },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    if (subTitle != null) Text(subTitle, style: TextStyle(fontSize: 14, color: Colors.grey[500])),
+                  ],
                 ),
-                IconButton(icon: _hideGroup[groupIdentifier] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
-                  onPressed: () {
-                    setState(() {
-                      _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
-                    });
-                  }),
-              ],
+              onTap: () {
+                setState(() {
+                  _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
+                });
+              },
             ),
-          ),
-          if (_hideGroup[groupIdentifier] != true)
-            Column(
-              children: groupData.map(_buildPlayLine).toList(),
-          )
-        ],
+            IconButton(icon: _hideGroup[groupIdentifier] == false ? Icon(Icons.expand_less) : Icon(Icons.expand_more),
+              onPressed: () {
+                setState(() {
+                  _hideGroup[groupIdentifier] = !(_hideGroup[groupIdentifier]??false);
+                });
+              }),
+          ],
+        ),
       ),
     );
   }
@@ -271,176 +288,171 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     final currentLocale = Localizations.localeOf(context);
     final languageCode = currentLocale.languageCode;
 
-    return AutoScrollTag(
-      key: ValueKey(playHeader.playId),
-      controller: _listScrollController,
-      index: playHeader.playId.hashCode,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            _updateHighlightedPlay(playHeader, true);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(), left: BorderSide()),
-                color: _highlightPlayId == playHeader.playId
-                    ? Theme.of(context).colorScheme.surface.withValues(red: 0.87, green: 0.87, blue: 0.9)
-                    : null,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Container(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        _updateHighlightedPlay(playHeader, false);
-
-                        if (playHeader.state == PlayState.InvitationPending) {
-                          globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
-                        }
-                        else if (playHeader.state == PlayState.InvitationRejected) {
-                          final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
-                          final opponentRejected = lastMessage != null
-                              && lastMessage.channel == Channel.In
-                              && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
-                          showAlertDialog(opponentRejected
-                              ? l10n.playState_invitationRejectedByOpponent
-                              : l10n.playState_invitationRejectedByYou);
-                        }
-                        else if (playHeader.isStateShareable()) {
-                          showChoiceDialog(l10n.messaging_opponentNeedsToReact,
-                              width: 270,
-                              firstString: l10n.messaging_shareAgain,
-                              firstHandler: () {
-                                MessageService().sendCurrentPlayState(
-                                    playHeader, widget.user, () => context, false);
-                              },
-                              secondString: MaterialLocalizations.of(context).cancelButtonLabel,
-                              secondHandler: () {});
-
-                        }
-                        else {
-                          _startMultiPlayerGame(
-                              context, playHeader);
-                        }
-
-                      },
-                      onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
-                                options: CircularDottedBorderOptions(
-                                    padding: EdgeInsets.zero,
-                                    strokeWidth: 3,
-                                    strokeCap: StrokeCap.butt,
-                                    dashPattern: [1],
-                                    color: Colors.black
-                                ),
-                                child: CircleAvatar(
-                                  backgroundColor: playHeader.state.toColor(),
-                                  maxRadius: 6.5,
-                                )
-                              ) : CircleAvatar(
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          _updateHighlightedPlay(playHeader, true);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(), left: BorderSide()),
+              color: _highlightPlayId == playHeader.playId
+                  ? Theme.of(context).colorScheme.surface.withValues(red: 0.87, green: 0.87, blue: 0.9)
+                  : null,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                Container(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      _updateHighlightedPlay(playHeader, false);
+    
+                      if (playHeader.state == PlayState.InvitationPending) {
+                        globalStartPageKey.currentState?.handleReplyToInvitation(playHeader);
+                      }
+                      else if (playHeader.state == PlayState.InvitationRejected) {
+                        final lastMessage = playHeader.commContext.messageHistory.lastOrNull;
+                        final opponentRejected = lastMessage != null
+                            && lastMessage.channel == Channel.In
+                            && lastMessage.serializedMessage.extractOperation() == Operation.RejectInvite;
+                        showAlertDialog(opponentRejected
+                            ? l10n.playState_invitationRejectedByOpponent
+                            : l10n.playState_invitationRejectedByYou);
+                      }
+                      else if (playHeader.isStateShareable()) {
+                        showChoiceDialog(l10n.messaging_opponentNeedsToReact,
+                            width: 270,
+                            firstString: l10n.messaging_shareAgain,
+                            firstHandler: () {
+                              MessageService().sendCurrentPlayState(
+                                  playHeader, widget.user, () => context, false);
+                            },
+                            secondString: MaterialLocalizations.of(context).cancelButtonLabel,
+                            secondHandler: () {});
+    
+                      }
+                      else {
+                        _startMultiPlayerGame(
+                            context, playHeader);
+                      }
+    
+                    },
+                    onLongPress: () => _showMultiPlayTestDialog(playHeader, widget.user),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            playHeader.state.group == PlayStateGroup.TakeAction ? DottedBorder(
+                              options: CircularDottedBorderOptions(
+                                  padding: EdgeInsets.zero,
+                                  strokeWidth: 3,
+                                  strokeCap: StrokeCap.butt,
+                                  dashPattern: [1],
+                                  color: Colors.black
+                              ),
+                              child: CircleAvatar(
                                 backgroundColor: playHeader.state.toColor(),
                                 maxRadius: 6.5,
-                              ),
-                              Expanded(
-                                child: Container(
-                                //  color: Colors.red,
-                                  child: Html(
-                                      data: " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT, asHtml: true),
-                                      style: {
-                                        "p": Style(
-                                            fontSize: FontSize(16),
-                                            fontWeight: FontWeight.w500,
-                                          margin: Margins(bottom: Margin(3), top: Margin(1.5)),
-                                          padding: HtmlPaddings(top: HtmlPadding(4))
-                                        ),
-                                        "b": Style(
-                                            fontSize: FontSize(18),
-                                            fontWeight: FontWeight.bold,
-                                        ),
-                                      }
-                                  ),
+                              )
+                            ) : CircleAvatar(
+                              backgroundColor: playHeader.state.toColor(),
+                              maxRadius: 6.5,
+                            ),
+                            Expanded(
+                              child: Container(
+                              //  color: Colors.red,
+                                child: Html(
+                                    data: " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT, asHtml: true),
+                                    style: {
+                                      "p": Style(
+                                          fontSize: FontSize(16),
+                                          fontWeight: FontWeight.w500,
+                                        margin: Margins(bottom: Margin(3), top: Margin(1.5)),
+                                        padding: HtmlPaddings(top: HtmlPadding(4))
+                                      ),
+                                      "b": Style(
+                                          fontSize: FontSize(18),
+                                          fontWeight: FontWeight.bold,
+                                      ),
+                                    }
                                 ),
-                             /*   Text(
-                                    " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT),
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                  overflow: TextOverflow.ellipsis
-                                ),*/
                               ),
-                            ],
-                          ),
-                          Text(_getHeaderSubLine(playHeader),
-                              style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
-                          Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
-
-                          if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
-                          Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
+                           /*   Text(
+                                  " " + playHeader.getTitle(l10n, showOpponentDetails: _sortOrder != SortOrder.BY_OPPONENT),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                overflow: TextOverflow.ellipsis
+                              ),*/
+                            ),
+                          ],
+                        ),
+                        Text(_getHeaderSubLine(playHeader),
+                            style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
+                        Text(_getHeaderBodyLine(playHeader), style: TextStyle(fontStyle: FontStyle.italic)),
+    
+                        if (playHeader.lastTimestamp != null) Text("${l10n.matchMenu_lastActivity} " + format(playHeader.lastTimestamp!, l10n, languageCode), style: TextStyle(color: Colors.grey[500])),
+                        Text("${playHeader.state.toMessage(l10n)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                      ],
                     ),
                   ),
-
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Divider(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                        child: OverflowBar(
-                          alignment: MainAxisAlignment.end,
-                          overflowAlignment: OverflowBarAlignment.end,
-                          children: [
-
-                              Visibility(
-                                visible: playHeader.state.hasGameBoard,
-                                child: IconButton(onPressed: () {
-                                  _updateHighlightedPlay(playHeader, false);
-                                  _startMultiPlayerGame(
-                                      context, playHeader);
-                                }, icon: Icon(Icons.not_started_outlined)),
-                              ),
-                              Visibility(
-                                visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
-                                child: IconButton(onPressed: () {
-                                  _updateHighlightedPlay(playHeader, false);
-                                  _shareCurrentAction(playHeader, false);
-                                },
-                                    icon: GestureDetector(
-                                      child: Icon(Icons.near_me),
-                                      onLongPress: () => _shareCurrentAction(playHeader, true),
-                                )),
-                              ),
-                              IconButton(onPressed: () {
+                ),
+    
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                      child: OverflowBar(
+                        alignment: MainAxisAlignment.end,
+                        overflowAlignment: OverflowBarAlignment.end,
+                        children: [
+    
+                            Visibility(
+                              visible: playHeader.state.hasGameBoard,
+                              child: IconButton(onPressed: () {
                                 _updateHighlightedPlay(playHeader, false);
-                                ask(
-                                    icon: Icons.delete,
-                                    title: playHeader.getReadablePlayId(),
-                                    playHeader.state.isFinal
-                                        ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
-                                        : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
-                                    l10n, () {
-                                  setState(() {
-                                    StorageService().deletePlayHeaderAndPlay(playHeader.playId);
-                                  });
+                                _startMultiPlayerGame(
+                                    context, playHeader);
+                              }, icon: Icon(Icons.not_started_outlined)),
+                            ),
+                            Visibility(
+                              visible: playHeader.state == PlayState.InvitationPending || playHeader.isStateShareable(),
+                              child: IconButton(onPressed: () {
+                                _updateHighlightedPlay(playHeader, false);
+                                _shareCurrentAction(playHeader, false);
+                              },
+                                  icon: GestureDetector(
+                                    child: Icon(Icons.near_me),
+                                    onLongPress: () => _shareCurrentAction(playHeader, true),
+                              )),
+                            ),
+                            IconButton(onPressed: () {
+                              _updateHighlightedPlay(playHeader, false);
+                              ask(
+                                  icon: Icons.delete,
+                                  title: playHeader.getReadablePlayId(),
+                                  playHeader.state.isFinal
+                                      ? l10n.dialog_deleteFinalMatch(playHeader.getReadablePlayId())
+                                      : l10n.dialog_deleteOngoingMatch(playHeader.getReadablePlayId()),
+                                  l10n, () {
+                                setState(() {
+                                  StorageService().deletePlayHeaderAndPlay(playHeader.playId);
                                 });
-                              }, icon: Icon(Icons.delete)),
-                            ]),
-                      )
-                    ])
-                ],
-              ),
-            ),),
-        ),
+                              });
+                            }, icon: Icon(Icons.delete)),
+                          ]),
+                    )
+                  ])
+              ],
+            ),
+          ),),
       ),
     );
   }
@@ -575,7 +587,7 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
     PreferenceService().setInt(PreferenceService.PREF_MATCH_SORT_ORDER, sortOrder.index);
   }
 
-  List<Widget> _getOpponentGroups(List<PlayHeader> headers, AppLocalizations l10n) {
+  List<GroupOrLine> _getOpponentGroups(List<PlayHeader> headers, AppLocalizations l10n) {
     
     final groupedByOpponentId = HashMap<String?, List<PlayHeader>>();
 
@@ -599,21 +611,19 @@ class MultiPlayerMatchesState extends State<MultiPlayerMatches> {
       final title = opponentId != null
           ? opponentName ?? "User " + toReadableUserId(opponentId)
           : "- ${l10n.unknown} -";
-      return _buildPlayGroupSection(
+      return _buildGroup(
           title,
           opponentName != null && opponentId != null ? "User-Id: " + toReadableUserId(opponentId) : null,
           group,
           opponentId ?? "magic_for_a_group_that_contains_play_headers_with_no_opponent_id");
-    }).toList();
+    }).flattenedToList;
 
     
   }
 
   void scrollToPlayId(String playId) {
-    setState(() {
-      _scrollToPlayId = playId;
-      _highlightPlayId = playId;
-    });
+    _scrollToPlayId = playId;
+    _highlightPlayId = playId;
     _scrollToItemIfNeeded();
   }
 

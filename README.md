@@ -2,18 +2,42 @@
 
 A Hyle (Entropy) board game clone
 
+## What is this
 
---- In beta test phase ---
+This is an Entropy / Hyle 7 - like board game clone for Android. Play alone or with friends!
 
-Single player against AI is playable.
+The original game “Entropy” by Eric Solomon requires two game rounds with a swap of roles in between. With HyleX, you can compete yourself with just one round by choosing a role.
 
-Multiplayer is playable too  ---
+Features:
+* Single Play: Compete the computer
+* Multiplayer: play against a remote opponent
+* Privacy: No central server*), no personalised data, no ads, no tracking
+* It's FOSS
 
-Translations and improvements are ongoing.
+
+*) The app uses App Links to open the app from clicking on such links, which requires a web-domain (https://hx.jepfa.de), to prove integrity of these App Links. Otherwise App Links won't open the app and won't perform the opponent's move. No data is sent to this web-server.
+
+Fore more details, see [hylex.jepfa.de](https://hylex.jepfa.de).
+
+## Screenshots
+<details>
+<summary>Show screenshots</summary>
+
+![](metadata/en-US/images/phoneScreenshots/a.png)
+![](metadata/en-US/images/phoneScreenshots/b.png)
+![](metadata/en-US/images/phoneScreenshots/c.png)
+![](metadata/en-US/images/phoneScreenshots/d.png)
+![](metadata/en-US/images/phoneScreenshots/e.png)
+
+
+</details>
+
+## Download
 
 Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
-Also, reading old messages could not work after updating. 
+Also, reading old messages could not work after updating.
+
 
 ## Implementation
 

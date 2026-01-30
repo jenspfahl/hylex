@@ -1,0 +1,14 @@
+Dies ist ein Android-Klon des Brettspiels „Entropy“ (auch bekannt als „Hyle 7“). Spiele allein oder mit Freunden!
+
+Das Originalspiel „Entropy“ von Eric Solomon besteht aus zwei Spielrunden mit Rollenwechsel dazwischen. Mit HyleX kannst du in nur einer Runde gegen den Computer antreten, indem du eine Rolle wählst.
+
+Funktionen:
+
+* Einzelspieler: Spiele gegen den Computer
+* Mehrspieler: Spiele gegen einen Gegner online
+* Datenschutz: Kein zentraler Server, keine personenbezogenen Daten, keine Werbung, kein Tracking
+* Open Source :-)
+
+Mehr Infos auf <a href="https://hylex.jepfa.de">hylex.jepfa.de</a>
+
+Wenn dir die App gefällt, bewerte sie bitte auf <a href="https://github.com/jenspfahl/hylex">GitHub</a>
