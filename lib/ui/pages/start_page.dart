@@ -270,7 +270,11 @@ class StartPageState extends State<StartPage> {
             receivedInviteMessage,
             comContext,
             PlayState.InvitationPending);
-        StorageService().savePlayHeader(header);
+        StorageService().savePlayHeader(header).then((saved) {
+          if (saved) {
+            MessageService().showPlayCreatedDialog(context, _user, header, l10n);
+          }
+        });
 
       },
       fourthString: MaterialLocalizations.of(context).cancelButtonLabel,
@@ -295,29 +299,29 @@ class StartPageState extends State<StartPage> {
         receivedInviteMessage,
         comContext,
         PlayState.InvitationPending);
-    return _handleAcceptInviteAfterReplyLater(header);
+    return _handleAcceptInviteAfterReplyLater(header, true);
   }
 
 
-  Future<void> _handleAcceptInviteAfterReplyLater(PlayHeader header) async {
+  Future<void> _handleAcceptInviteAfterReplyLater(PlayHeader header, bool showPlayCreatedMessage) async {
     if (header.playOpener == PlayOpener.InviteeChooses) {
       _selectInviteeMultiPlayerOpener(context, (playOpener) async {
-        _continueAcceptInvite(header, playOpener);
+        _continueAcceptInvite(header, playOpener, showPlayCreatedMessage);
       });
     }
     else {
-      _continueAcceptInvite(header, header.playOpener!);
+      _continueAcceptInvite(header, header.playOpener!, showPlayCreatedMessage);
     }
   }
 
-  Future<void> _continueAcceptInvite(PlayHeader header, PlayOpener playOpener) async {
+  Future<void> _continueAcceptInvite(PlayHeader header, PlayOpener playOpener, bool showPlayCreatedMessage) async {
     await PlayStateManager().doAcceptInvite(header, playOpener);
 
     if (header.playOpener == PlayOpener.Invitee) {
       _startMultiPlayerGame(context, header);
     }
     else if (header.playOpener == PlayOpener.Invitor) {
-      await MessageService().sendInvitationAccepted(header, _user, null, () => context);
+      await MessageService().sendInvitationAccepted(header, _user, null, () => context, showPlayCreatedMessage: showPlayCreatedMessage);
     }
   }
 
@@ -623,7 +627,7 @@ class StartPageState extends State<StartPage> {
                     showAboutDialog(
                       context: context,
                       applicationName: APP_NAME,
-                      applicationVersion:packageInfo.version,
+                      applicationVersion:packageInfo.version + " (Final)",
                         children: [
                           const Divider(),
                           Text(l10n.dialog_aboutDesc1),
@@ -1270,10 +1274,10 @@ class StartPageState extends State<StartPage> {
         // first ask for your name
         if (_user.name.isEmpty) {
           _inputUserName(context, (username) =>
-              _handleAcceptInviteAfterReplyLater(playHeader));
+              _handleAcceptInviteAfterReplyLater(playHeader, false));
         }
         else {
-          _handleAcceptInviteAfterReplyLater(playHeader);
+          _handleAcceptInviteAfterReplyLater(playHeader, false);
         }
 
 

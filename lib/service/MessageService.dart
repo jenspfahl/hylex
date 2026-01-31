@@ -144,6 +144,7 @@ class MessageService {
         bool saveState = true,
         bool share = true,
         bool showAllOptions = false,
+        bool showPlayCreatedMessage = false
       }) {
     final playOpener = header.playOpener;
     if (playOpener == null  || playOpener == PlayOpener.InviteeChooses) {
@@ -172,6 +173,7 @@ class MessageService {
         saveState,
         share,
         showAllOptions,
+        showPlayCreatedMessage: showPlayCreatedMessage
     );
   }
 
@@ -416,7 +418,7 @@ class MessageService {
         },
       ).then((performedAction) {
         if (showPlayCreatedMessage && performedAction == null) {
-          _showPlayCreatedDialog(rootContext, user, header, l10n);
+          showPlayCreatedDialog(rootContext, user, header, l10n);
         }
       });
 
@@ -424,7 +426,7 @@ class MessageService {
 
   }
 
-  void _showPlayCreatedDialog(BuildContext context, User user, PlayHeader header, AppLocalizations l10n) {
+  void showPlayCreatedDialog(BuildContext context, User user, PlayHeader header, AppLocalizations l10n) {
     showMessageWithJumpOption(null, l10n.dialog_matchCreated(header.getReadablePlayId()), l10n, header, context, user);
 
   }
@@ -493,7 +495,7 @@ class MessageService {
       })
       .then((_) {
         if (showPlayCreatedMessage) {
-          _showPlayCreatedDialog(context, user, playHeader, l10n);
+          showPlayCreatedDialog(context, user, playHeader, l10n);
         }
       });;
     });
@@ -524,7 +526,7 @@ class MessageService {
           ShareParams(text: shareMessage, subject: '$APP_NAME interaction'))
           .then((_) {
         if (showPlayCreatedMessage) {
-          _showPlayCreatedDialog(context, user, playHeader, l10n);
+          showPlayCreatedDialog(context, user, playHeader, l10n);
         }
       });
     });
