@@ -425,7 +425,7 @@ class StartPageState extends State<StartPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-                child: _buildGameLogo(20)
+                child: _buildGameLogo(20, true)
             ),
 
             if (isDebug)
@@ -645,7 +645,7 @@ class StartPageState extends State<StartPage> {
                           const Text('© Jens Pfahl 2026', style: TextStyle(fontSize: 12)),
                         ],
                         applicationIcon: SizedBox(width: 56, height: 56,
-                            child: _buildGameLogo(12))
+                            child: _buildGameLogo(12, false))
                     );
                   }, icon: const Icon(Icons.info_outline)),
                 ]),
@@ -938,10 +938,10 @@ class StartPageState extends State<StartPage> {
     );
   }
 
-  Widget _buildGameLogo(double size) {
+  Widget _buildGameLogo(double size, bool changeColors) {
     const chipPadding = 1.0;
     return GestureDetector(
-      onTap: () => setState(() {
+      onTap: changeColors ? () => setState(() {
         _logoH = diceInt(maxDimension + 1);
         _logoY = diceInt(maxDimension + 1);
         _logoL = diceInt(maxDimension + 1);
@@ -950,7 +950,7 @@ class StartPageState extends State<StartPage> {
         PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_Y, _logoY);
         PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_L, _logoL);
         PreferenceService().setInt(PreferenceService.DATA_LOGO_COLOR_E, _logoE);
-      }),
+      }) : null,
       child: Column(children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
