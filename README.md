@@ -34,6 +34,14 @@ Fore more details, see [hylex.jepfa.de](https://hylex.jepfa.de).
 
 ## Download
 
+Download the app on F-Droid:
+
+- coming soon -
+
+Download the app on Google Play Store:
+
+- coming soon -
+
 Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
 Also, reading old messages could not work after updating.
