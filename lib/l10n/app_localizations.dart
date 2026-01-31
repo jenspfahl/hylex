@@ -191,6 +191,12 @@ abstract class AppLocalizations {
   /// **'unknown'**
   String get unknown;
 
+  /// No description provided for @caution.
+  ///
+  /// In en, this message translates to:
+  /// **'Caution!'**
+  String get caution;
+
   /// No description provided for @startMenu_singlePlay.
   ///
   /// In en, this message translates to:

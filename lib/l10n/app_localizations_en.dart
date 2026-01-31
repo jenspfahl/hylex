@@ -59,6 +59,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unknown => 'unknown';
 
   @override
+  String get caution => 'Caution!';
+
+  @override
   String get startMenu_singlePlay => 'Single Play';
 
   @override

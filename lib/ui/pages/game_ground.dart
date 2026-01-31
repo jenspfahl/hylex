@@ -420,7 +420,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                                 header: gameEngine.play.header);
                           }
                           else if (item == 4) {
-                            ask(l10n.matchMenu_redoLastMessageConfirmation, l10n, () async {
+                            confirm(l10n.matchMenu_redoLastMessageConfirmation, MaterialLocalizations.of(context), () async {
                               final latestSnapshot = await StorageService().loadPlayFromHeader(gameEngine.play.header, asSnapshot: true);
                               if (latestSnapshot != null) {
                                 await StorageService().savePlay(latestSnapshot);
@@ -431,7 +431,7 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                               else {
                                 showAlertDialog("No last state to use to repair current state!");
                               }
-                            }, icon: Icons.warning);
+                            }, icon: Icons.warning, height: 400, width: 300, title: l10n.caution);
                           }
                         },
                         itemBuilder: (context) => [
