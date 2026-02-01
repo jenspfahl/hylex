@@ -23,11 +23,11 @@ Fore more details, see [hylex.jepfa.de](https://hylex.jepfa.de).
 <details>
 <summary>Show screenshots</summary>
 
-![](metadata/en-US/images/phoneScreenshots/a.png)
-![](metadata/en-US/images/phoneScreenshots/b.png)
-![](metadata/en-US/images/phoneScreenshots/c.png)
-![](metadata/en-US/images/phoneScreenshots/d.png)
-![](metadata/en-US/images/phoneScreenshots/e.png)
+![](fastlane/metadata/android/en-US/images/phoneScreenshots/a.png)
+![](fastlane/metadata/android/en-US/images/phoneScreenshots/b.png)
+![](fastlane/metadata/android/en-US/images/phoneScreenshots/c.png)
+![](fastlane/metadata/android/en-US/images/phoneScreenshots/d.png)
+![](fastlane/metadata/android/en-US/images/phoneScreenshots/e.png)
 
 
 </details>
@@ -36,11 +36,11 @@ Fore more details, see [hylex.jepfa.de](https://hylex.jepfa.de).
 
 Download the app on F-Droid:
 
-- coming soon -
+- coming soon
 
 Download the app on Google Play Store:
 
-- coming soon -
+- coming soon
 
 Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
