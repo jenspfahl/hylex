@@ -2,6 +2,7 @@ Dies ist ein Android-Klon des Brettspiels „Entropy“ (auch bekannt als „Hyl
 
 Das Originalspiel „Entropy“ von Eric Solomon besteht aus zwei Spielrunden mit Rollenwechsel dazwischen. Mit HyleX kannst du in nur einer Runde gegen den Computer antreten, indem du eine Rolle wählst.
 
+Du kannst auch gegen Freunde spielen. Beachte, dass es keinen zentralen Spieleserver gibt. Du und dein Gegner müssen die Spielzüge über gewöhnliche Messenger oder QR-Codes teilen.
 Funktionen:
 
 * Einzelspieler: Spiele gegen den Computer

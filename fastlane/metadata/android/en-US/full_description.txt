@@ -2,6 +2,7 @@ This is an Entropy / Hyle 7 - like board game clone for Android. Play alone or w
 
 The original game “Entropy” by Eric Solomon requires two game rounds with a swap of roles in between. With HyleX, you can compete yourself with just one round by choosing a role.
 
+You can also play against friends. Note that there is no central game server. You and your opponent must share your moves via regular messaging apps or QR codes.
 Features:
 * Single Play: Compete the computer
 * Multiplayer: play against a remote opponent

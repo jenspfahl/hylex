@@ -10,12 +10,13 @@ The original game “Entropy” by Eric Solomon requires two game rounds with a 
 
 Features:
 * Single Play: Compete the computer
-* Multiplayer: play against a remote opponent
-* Privacy: No central server*), no personalised data, no ads, no tracking
+* Multiplayer: play against a remote opponent *)
+* Privacy: No central server**), no personalised data, no ads, no tracking
 * It's FOSS
 
+*) You can also play against friends. Note that there is no central game server. You and your opponent must share your moves via regular messaging apps or QR codes.
 
-*) The app uses App Links to open the app from clicking on such links, which requires a web-domain (https://hx.jepfa.de), to prove integrity of these App Links. Otherwise App Links won't open the app and won't perform the opponent's move. No data is sent to this web-server.
+**) The app uses App Links to open the app from clicking on such links, which requires a web-domain (https://hx.jepfa.de), to prove integrity of these App Links. Otherwise App Links won't open the app and won't perform the opponent's move. No data is sent to this web-server.
 
 Fore more details, see [hylex.jepfa.de](https://hylex.jepfa.de).
 
@@ -42,7 +43,7 @@ Download the app on Google Play Store:
 
 - coming soon
 
-Download the latest test version here for testing: https://hyleX.jepfa.de/hylex.apk
+Download the latest **test** version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
 Also, reading old messages could not work after updating.
 
@@ -236,6 +237,7 @@ sequenceDiagram
     end
 
 ```
+
 
 ## License
 
