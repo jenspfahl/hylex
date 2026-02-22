@@ -86,6 +86,9 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/ic_launcher_foreground.png"
   adaptive_icon_background: "assets/ic_launcher_background.png"
   adaptive_icon_monochrome: "assets/ic_launcher_mono.png"
+  # To run it, do:
+  # flutter pub get
+  # dart run flutter_launcher_icons
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
