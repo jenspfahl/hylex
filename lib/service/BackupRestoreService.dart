@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hyle_x/model/messaging.dart';
 import 'package:hyle_x/service/StorageService.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../model/play.dart';
 import '../model/user.dart';
@@ -29,94 +29,80 @@ class BackupRestoreService {
   BackupRestoreService._internal();
 
   Future<void> backup(
-      Function(String?) successHandler,
+      Function(String) successHandler,
       Function(String) errorHandler
       ) async {
     try {
 
-      final destPath = await FilePicker.platform.getDirectoryPath();
-      if (destPath != null) {
-        //TODO avoid to ask twice
-        var storagePermission = await Permission.manageExternalStorage.request(); // after Android 10
-        if (!storagePermission.isGranted) {
-          storagePermission = await Permission.storage.request(); // before Android 10
-          if (!storagePermission.isGranted) {
-            errorHandler('Please give permission');
-            return;
-          }
+      final Directory? downloadsDir = await getDownloadsDirectory();
+      final Directory tempDir = await getTemporaryDirectory();
+      final basePath = "${tempDir.path}/hylex";
+
+      int? version;
+      while(await File(_getFullPath(basePath, version)).exists()) {
+        if (version == null) {
+          version = 1;
         }
-
-
-        final saveIn = Directory(destPath);
-        final basePath = "${saveIn.path}/hylex";
-
-        int? version;
-        while(await File(_getFullPath(basePath, version)).exists()) {
-          if (version == null) {
-            version = 1;
-          }
-          else {
-            version++;
-          }
-          if (version > 100000) {
-            errorHandler('Cannot create backup file!');
-            return;
-          }
+        else {
+          version++;
         }
-
-        final dstFile = await File(_getFullPath(basePath, version));
-
-
-
-        final user = await StorageService().loadUser();
-        final currentSinglePlay = await StorageService().loadCurrentSinglePlay();
-        final allPlayHeaders = await StorageService().loadAllPlayHeaders();
-
-        final bitBuffer = BitBuffer();
-        final writer = bitBuffer.writer();
-
-        writer.writeBits(export_file_magic, getBitsNeeded(export_file_magic));
-        writer.writeInt(export_file_version);
-        writeNullableObject(writer, user);
-        writeNullableObject(writer, currentSinglePlay);
-        writer.writeInt(allPlayHeaders.length);
-
-        for (int i = 0; i < allPlayHeaders.length; i++) {
-          final header = allPlayHeaders[i];
-          writeNullableObject(writer, header);
-          final play = await StorageService().loadPlayFromHeader(header);
-          writeNullableObject(writer, play);
+        if (version > 100000) {
+          errorHandler('Cannot create backup file!');
+          return;
         }
-
-        final data = bitBuffer.toBase64Compressed();
-        final signature = sha256.convert(bitBuffer.getLongs());
-        final signatureBase64 = Base64Codec.urlSafe().encode(signature.bytes);
-
-        debugPrint("Start writing user ... :" + data);
-        debugPrint("Signature:" + signatureBase64);
-
-        final prefKeys = await PreferenceService().getKeys(PreferenceService.PREF_PREFIX);
-        debugPrint("prefKeys: $prefKeys");
-
-        final sb = StringBuffer();
-        for (int i = 0; i < prefKeys.length; i++) {
-          final key = prefKeys[i];
-          final value = await PreferenceService().get(key);
-          debugPrint("pref $key value: $value");
-
-          if (sb.isNotEmpty) {
-            sb.write(",");
-          }
-          sb.write("${key.replaceAll("/", "_")}=$value");
-        }
-
-        final prefs = sb.toString();
-        debugPrint("prefs: $prefs");
-
-        await dstFile.writeAsString(data + "/" + signatureBase64 + "/" + prefs);
-
-        successHandler(dstFile.path);
       }
+
+      final dstFile = await File(_getFullPath(basePath, version));
+
+      final user = await StorageService().loadUser();
+      final currentSinglePlay = await StorageService().loadCurrentSinglePlay();
+      final allPlayHeaders = await StorageService().loadAllPlayHeaders();
+
+      final bitBuffer = BitBuffer();
+      final writer = bitBuffer.writer();
+
+      writer.writeBits(export_file_magic, getBitsNeeded(export_file_magic));
+      writer.writeInt(export_file_version);
+      writeNullableObject(writer, user);
+      writeNullableObject(writer, currentSinglePlay);
+      writer.writeInt(allPlayHeaders.length);
+
+      for (int i = 0; i < allPlayHeaders.length; i++) {
+        final header = allPlayHeaders[i];
+        writeNullableObject(writer, header);
+        final play = await StorageService().loadPlayFromHeader(header);
+        writeNullableObject(writer, play);
+      }
+
+      final data = bitBuffer.toBase64Compressed();
+      final signature = sha256.convert(bitBuffer.getLongs());
+      final signatureBase64 = Base64Codec.urlSafe().encode(signature.bytes);
+
+      debugPrint("Start writing user ... :" + data);
+      debugPrint("Signature:" + signatureBase64);
+
+      final prefKeys = await PreferenceService().getKeys(PreferenceService.PREF_PREFIX);
+      debugPrint("prefKeys: $prefKeys");
+
+      final sb = StringBuffer();
+      for (int i = 0; i < prefKeys.length; i++) {
+        final key = prefKeys[i];
+        final value = await PreferenceService().get(key);
+        debugPrint("pref $key value: $value");
+
+        if (sb.isNotEmpty) {
+          sb.write(",");
+        }
+        sb.write("${key.replaceAll("/", "_")}=$value");
+      }
+
+      final prefs = sb.toString();
+      debugPrint("prefs: $prefs");
+
+      await dstFile.writeAsString(data + "/" + signatureBase64 + "/" + prefs);
+
+      successHandler(dstFile.path);
+
     } on Exception catch (e) {
       errorHandler("Cannot export data! " + e.toString());
       print(e);

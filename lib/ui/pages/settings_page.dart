@@ -204,7 +204,18 @@ class _SettingsPageState extends State<SettingsPage> {
               onPressed: (_) {
                 showProgressDialog(l10n.settings_backupAll + " ...");
                 BackupRestoreService().backup(
-                        (message) => toastInfo(context, message ?? l10n.done + "!"),
+                        (filePath) {
+                          SharePlus.instance.share(
+                              ShareParams(
+                                text: 'HyleX Backup',
+                                files: [XFile('$filePath')],
+                              )
+                          ).then((result) {
+                            if (result.status == ShareResultStatus.success) {
+                              toastInfo(context, l10n.done + "!");
+                            }
+                          });
+                        },
                         (message) => toastLost(context, message))
                     .then((_) => SmartDialog.dismiss());
               },
