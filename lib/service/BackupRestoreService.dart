@@ -34,7 +34,6 @@ class BackupRestoreService {
       ) async {
     try {
 
-      final Directory? downloadsDir = await getDownloadsDirectory();
       final Directory tempDir = await getTemporaryDirectory();
       final basePath = "${tempDir.path}/hylex";
 
