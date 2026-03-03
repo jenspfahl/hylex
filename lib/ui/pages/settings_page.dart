@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:hyle_x/service/StorageService.dart';
 import 'package:hyle_x/ui/ui_utils.dart';
 import 'package:hyle_x/utils/fortune.dart';
 import 'package:jwk/jwk.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pem/pem.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:share_plus/share_plus.dart';
@@ -203,10 +205,26 @@ class _SettingsPageState extends State<SettingsPage> {
               description: Text(l10n.settings_backupAllDescription),
               onPressed: (_) {
                 showProgressDialog(l10n.settings_backupAll + " ...");
-                BackupRestoreService().backup(
-                        (message) => toastInfo(context, message ?? l10n.done + "!"),
-                        (message) => toastLost(context, message))
-                    .then((_) => SmartDialog.dismiss());
+                Future.delayed(Duration(milliseconds: 500), () { // delay to bring up dialog
+                  BackupRestoreService().backup(
+                          (filePath) {
+                        SmartDialog.dismiss();
+                        SharePlus.instance.share(
+                            ShareParams(
+                              text: 'HyleX Backup',
+                              files: [XFile('$filePath', mimeType: "application/hylex")],
+                            )
+                        ).then((result) {
+                          if (result.status == ShareResultStatus.success) {
+                            toastInfo(context, l10n.done + "!");
+                          }
+                        });
+                      },
+                          (message) {
+                        SmartDialog.dismiss();
+                        return toastLost(context, message);
+                      });
+                });
               },
             ),
             SettingsTile(

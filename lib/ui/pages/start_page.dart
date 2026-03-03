@@ -627,7 +627,7 @@ class StartPageState extends State<StartPage> {
                     showAboutDialog(
                       context: context,
                       applicationName: APP_NAME,
-                      applicationVersion:packageInfo.version + " (Final)",
+                      applicationVersion:packageInfo.version,// + " (Final)",
                         children: [
                           const Divider(),
                           Text(l10n.dialog_aboutDesc1),

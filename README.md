@@ -41,7 +41,9 @@ Download the app on F-Droid:
 
 Download the app on Google Play Store:
 
-- coming soon
+[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+alt="Get it on Google Play"
+height="80">](https://play.google.com/store/apps/details?id=de.jepfa.hyle_x)
 
 Download the latest **test** version here for testing: https://hyleX.jepfa.de/hylex.apk
 Note that you might need to delete the app storage if the app behaves incorrectly!
