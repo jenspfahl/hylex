@@ -441,7 +441,8 @@ class _HyleXGroundState extends State<HyleXGround> with TickerProviderStateMixin
                             PopupMenuItem<int>(value: 1, child: Text(l10n.matchMenu_showFirstGame)),
                           if (gameEngine.play.header.isStateShareable() && gameEngine.play.header.props[HeaderProps.rememberMessageSending] != null)
                             PopupMenuItem<int>(value: 2, child: Text(l10n.matchMenu_showSendOptions)),
-                          if (gameEngine.play.header.props[HeaderProps.rememberMessageReading] != null)
+                          if (gameEngine.play.header.props[HeaderProps.rememberMessageReading] != null
+                              && !gameEngine.play.isGameOver())
                             PopupMenuItem<int>(value: 3, child: Text(l10n.matchMenu_showReadingOptions)),
                           if (gameEngine.play.lastMoveFromJournal != null && !gameEngine.play.header.state.isFinal)
                             PopupMenuItem<int>(value: 4, child: Text(l10n.matchMenu_redoLastMessage)),

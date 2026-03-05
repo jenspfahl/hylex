@@ -1184,7 +1184,7 @@ abstract class AppLocalizations {
   /// No description provided for @settings_signMessagesExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Sign your messages with your public key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.'**
+  /// **'Sign your messages with your private key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.'**
   String get settings_signMessagesExplanation;
 
   /// No description provided for @settings_signMessages_Never.

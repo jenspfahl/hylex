@@ -602,7 +602,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_signMessagesDescription => 'Messages you send in multiplayer games are cryptographically signed.';
 
   @override
-  String get settings_signMessagesExplanation => 'Sign your messages with your public key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.';
+  String get settings_signMessagesExplanation => 'Sign your messages with your private key if you want to ensure that your messages are not tampered with and to prove that they come from you. This can be important if you share your moves with the public.';
 
   @override
   String get settings_signMessages_Never => 'Never';

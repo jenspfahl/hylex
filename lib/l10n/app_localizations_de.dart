@@ -602,7 +602,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settings_signMessagesDescription => 'Nachrichten, die du in Mehrspieler-Spielen sendest, werden kryptographisch signiert.';
 
   @override
-  String get settings_signMessagesExplanation => 'Signiere deine Nachrichten mit deinem öffentlichen Schlüssel, wenn du sicherstellen möchtest, dass deine Nachrichten nicht manipuliert werden und um zu beweisen, dass sie von dir stammen. Dies kann wichtig sein, wenn du deine Spielzüge mit der Öffentlichkeit teilest.';
+  String get settings_signMessagesExplanation => 'Signiere deine Nachrichten mit deinem privaten Schlüssel, wenn du sicherstellen möchtest, dass deine Nachrichten nicht manipuliert werden und um zu beweisen, dass sie von dir stammen. Dies kann wichtig sein, wenn du deine Spielzüge mit der Öffentlichkeit teilest.';
 
   @override
   String get settings_signMessages_Never => 'Nie';
